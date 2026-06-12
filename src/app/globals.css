@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: #2dd4bf #0a0a0f;
+  }
+
+  body {
+    background-color: #0a0a0f;
+    color: #f5f5f5;
+    font-family: var(--font-inter), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: rgba(45, 212, 191, 0.3);
+    color: #f5f5f5;
+  }
+
+  :focus-visible {
+    outline: 2px solid #2dd4bf;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .prose-custom {
+    @apply text-foreground/85 leading-relaxed;
+  }
+  .prose-custom h1,
+  .prose-custom h2,
+  .prose-custom h3 {
+    @apply font-serif text-foreground font-bold mt-10 mb-4;
+  }
+  .prose-custom h1 { @apply text-3xl; }
+  .prose-custom h2 { @apply text-2xl; }
+  .prose-custom h3 { @apply text-xl; }
+  .prose-custom p { @apply mb-5; }
+  .prose-custom a { @apply text-accent underline underline-offset-2 hover:text-accent/80 transition-colors; }
+  .prose-custom ul, .prose-custom ol { @apply mb-5 pl-6; }
+  .prose-custom li { @apply mb-2; }
+  .prose-custom blockquote {
+    @apply border-l-2 border-accent pl-4 italic text-foreground/70 my-6;
+  }
+  .prose-custom code {
+    @apply bg-surface border border-surface-border rounded px-1.5 py-0.5 text-sm text-accent;
+  }
+  .prose-custom pre {
+    @apply bg-surface border border-surface-border rounded-lg p-4 overflow-x-auto mb-5;
+  }
+  .prose-custom pre code {
+    @apply bg-transparent border-0 p-0 text-foreground/85;
+  }
+}
+
+@layer utilities {
+  .mask-rise {
+    mask-image: linear-gradient(to top, transparent 0%, black 100%);
+    -webkit-mask-image: linear-gradient(to top, transparent 0%, black 100%);
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-smooth {
+    scroll-behavior: auto;
+  }
+}

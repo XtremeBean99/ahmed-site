@@ -19,13 +19,13 @@ export default async function BlogPage({
 }) {
   const { tag } = await searchParams;
 
-  // Default: show posts without tags (original blog content)
-  // If a tag filter is active, filter by that tag
+  // Default: show posts that aren't in the categorized sections (pc-build, cooking, misc)
+  // If a tag filter is active, filter to just that tag
   const where: Record<string, unknown> = { published: true };
   if (tag) {
     where.tags = { has: tag };
   } else {
-    where.tags = { isEmpty: true };
+    where.NOT = { tags: { hasSome: ["pc-build", "cooking", "misc"] } };
   }
 
   const posts = await prisma.post.findMany({

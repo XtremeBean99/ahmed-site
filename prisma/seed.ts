@@ -205,7 +205,7 @@ async function main() {
   // Original launch post
   await prisma.post.upsert({
     where: { slug: "why-i-study-law-and-computing" },
-    update: {},
+    update: { tags: [] },
     create: {
       slug: "why-i-study-law-and-computing",
       title: "Why I study law and computing at the same time",

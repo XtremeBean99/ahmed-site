@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Fraunces } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Shell } from "@/components/Shell";
 
@@ -40,6 +41,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
       <body>
         <Shell>{children}</Shell>
+        <Analytics />
       </body>
     </html>
   );

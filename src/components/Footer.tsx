@@ -45,7 +45,7 @@ export function Footer() {
         </p>
         <div className="flex items-center gap-4">
           <Link
-            href="https://linkedin.com/in/ahmedyhussain"
+            href="https://www.linkedin.com/in/ahmed-hussain-0880ba25a"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-foreground/40 hover:text-accent transition-colors"

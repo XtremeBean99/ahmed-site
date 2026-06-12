@@ -24,12 +24,12 @@ export default function ContactPage() {
           <p>
             <span className="text-foreground/30">LinkedIn:</span>{" "}
             <a
-              href="https://linkedin.com/in/ahmedyhussain"
+              href="https://linkedin.com/in/ahmed-hussain-0880ba25a"
               target="_blank"
               rel="noopener noreferrer"
               className="text-accent hover:underline"
             >
-              linkedin.com/in/ahmedyhussain
+              linkedin.com/in/ahmed-hussain-0880ba25a
             </a>
           </p>
           <p>

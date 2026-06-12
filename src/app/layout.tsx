@@ -18,16 +18,16 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: {
-    default: "Ahmed Hussain — Law, Computing & AI",
-    template: "%s — Ahmed Hussain",
+    default: "Ahmed Hussain | Law, Computing, AI",
+    template: "%s | Ahmed Hussain",
   },
   description:
-    "Law and computing student at ANU, working at the intersection of artificial intelligence and the legal system.",
+    "Law and computing student at ANU thinking about AI and the rules that have to govern it. Pharmacy assistant, builder of 110+ custom PCs.",
   metadataBase: new URL("https://ahmedyhussain.com"),
   openGraph: {
-    title: "Ahmed Hussain — Law, Computing & AI",
+    title: "Ahmed Hussain | Law, Computing, AI",
     description:
-      "Law and computing student at ANU, working at the intersection of artificial intelligence and the legal system.",
+      "Law and computing student at ANU thinking about AI and the rules that have to govern it. Pharmacy assistant, builder of 110+ custom PCs.",
     type: "website",
   },
 };

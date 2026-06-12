@@ -6,7 +6,7 @@ import { SectionReveal } from "@/components/SectionReveal";
 export const metadata: Metadata = {
   title: "Projects",
   description:
-    "Projects by Ahmed Hussain — hardware consultancy, custom PC builds, and full-stack development.",
+    "Projects by Ahmed Hussain: hardware consultancy, custom PC builds, and full-stack development.",
 };
 
 export const dynamic = "force-dynamic";

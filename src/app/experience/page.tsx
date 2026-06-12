@@ -4,7 +4,7 @@ import { Timeline } from "@/components/Timeline";
 export const metadata: Metadata = {
   title: "Experience",
   description:
-    "Professional experience and education of Ahmed Hussain — pharmacy, consulting, and Microsoft internship.",
+    "Where I have worked and studied: Capital Chemist Garran, Xtreme Builds, Microsoft Canberra, Daydream Machine, and the ANU.",
 };
 
 export default function ExperiencePage() {

@@ -18,11 +18,11 @@ const ENTRIES: TimelineEntry[] = [
     date: "November 2022 – present",
     type: "work",
     items: [
-      "Pharmaceutical dispensing and medication management in compliance with regulatory standards",
-      "Patient-centred client engagement and healthcare consultations",
-      "Supervising and mentoring frontline staff",
-      "Inventory control and supply chain management in a regulated pharmaceutical environment",
-      "Billing documentation and financial records for healthcare transactions",
+      "Dispensary work: preparing and checking scripts alongside the pharmacists, to the letter of the regulations",
+      "Helping patients at the counter, from over-the-counter advice to conversations that need real care",
+      "Training and supervising newer frontline staff",
+      "Stock control for scheduled medicines in a tightly regulated supply chain",
+      "Billing, records and the day-to-day running of a busy suburban pharmacy",
     ],
   },
   {
@@ -32,7 +32,7 @@ const ENTRIES: TimelineEntry[] = [
     type: "work",
     items: [
       "Founded and operated a custom PC building business, completing over 110 builds across gaming, creative workstation, and general-purpose systems",
-      "Sourced, refurbished, and tested secondhand components — reducing client costs while maintaining reliability",
+      "Sourced, refurbished and tested secondhand components, keeping client costs down without sacrificing reliability",
       "Designed and executed themed custom builds (Monster Energy, Hello Kitty, stock-market aesthetic) and water-cooled systems",
       "3D-printed custom accessories using Creality Ender E3 V3 and Bambu Labs P1S with AMS",
       "Managed end-to-end client relationships: consultation, specification, procurement, assembly, testing, and handover",
@@ -54,7 +54,7 @@ const ENTRIES: TimelineEntry[] = [
     date: "December 2022",
     type: "work",
     items: [
-      "Competitive internship placement at Microsoft Australia's Canberra office, with direct exposure to enterprise-level operations in a global technology organisation",
+      "A December placement at Microsoft's Canberra office: a short, sharp look at how a global technology company actually runs day to day",
     ],
   },
   {

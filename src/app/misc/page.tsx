@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Misc",
-  description: "Random things — a car, a poster, a video. The stuff that doesn't fit anywhere else.",
+  description: "Random things: a car, a poster, a video. The stuff that doesn't fit anywhere else.",
 };
 
 export const dynamic = "force-dynamic";

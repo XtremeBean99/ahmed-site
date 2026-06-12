@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { HeroCanvas } from "./HeroCanvas";
+import { NeuralBackground } from "./NeuralBackground";
 import { ScrambleText } from "./ScrambleText";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
@@ -27,8 +27,8 @@ export function Hero() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Canvas background: static for reduced-motion users */}
-      {!prefersReduced && <HeroCanvas />}
+      {/* Live-learning neural network background; static for reduced motion */}
+      {!prefersReduced && <NeuralBackground />}
 
       {/* Content */}
       <div className="relative z-10 max-w-grid mx-auto px-6 text-center">
@@ -78,10 +78,11 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
         >
-          Bachelor of Laws / Bachelor of Computing student at the Australian
-          National University, working at the intersection of artificial
-          intelligence and the legal system. Currently a Pharmacy Assistant at
-          Capital Chemist Garran, where regulation meets practice every day.
+          I study law and computing at the ANU because the questions I care
+          about sit between the two: who answers for an AI system when it gets
+          something wrong? Outside lectures I work the dispensary at Capital
+          Chemist Garran, and before uni I built more than 110 custom PCs as
+          Xtreme Builds.
         </motion.p>
 
         <motion.div

@@ -5,7 +5,7 @@ import { SectionReveal } from "@/components/SectionReveal";
 export const metadata: Metadata = {
   title: "Contact",
   description:
-    "Get in touch with Ahmed Hussain — AI and law, PC builds, or collaboration.",
+    "Get in touch with Ahmed Hussain about AI and law, PC builds, or anything else.",
 };
 
 export default function ContactPage() {

@@ -34,32 +34,37 @@ export default async function HomePage() {
           <p className="text-sm text-foreground/50 mt-2">Canberra College</p>
         </div>
         <div>
-          <StatCounter end={4} suffix="+ years" />
-          <p className="text-sm text-foreground/50 mt-2">At the pharmacy</p>
+          <StatCounter end={110} suffix="+ PC builds" />
+          <p className="text-sm text-foreground/50 mt-2">
+            As Xtreme Builds, 2022 to 2025
+          </p>
         </div>
         <div>
-          <StatCounter end={3} suffix="+ projects" />
-          <p className="text-sm text-foreground/50 mt-2">Shipped</p>
+          <StatCounter end={3.5} decimals={1} suffix=" years" />
+          <p className="text-sm text-foreground/50 mt-2">
+            Behind the counter at Capital Chemist Garran
+          </p>
         </div>
       </SectionReveal>
 
       {/* About teaser */}
       <SectionReveal className="max-w-prose mx-auto px-6 py-24">
         <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-8 text-balance">
-          Law. Computing. Artificial intelligence.
+          Why law and computing at once?
         </h2>
         <p className="text-lg text-foreground/75 leading-relaxed mb-8">
-          Bachelor of Laws / Bachelor of Computing student at the Australian
-          National University, working at the intersection of artificial
-          intelligence and the legal system. Currently a Pharmacy Assistant at
-          Capital Chemist Garran, where regulation meets practice every day.
+          Because AI is moving faster than the rules that govern it, and I want
+          to be fluent on both sides of that gap: able to read the code and the
+          case law. The pharmacy job keeps it practical. Every script that
+          crosses the counter is regulation working in real time, and it works
+          because a human can inspect every step. AI breaks that assumption.
         </p>
         <div className="flex gap-4 flex-wrap">
-          <MagneticButton href="/projects" variant="primary">
-            View my work
+          <MagneticButton href="/about" variant="primary">
+            More about me
           </MagneticButton>
-          <MagneticButton href="/contact" variant="secondary">
-            Get in touch
+          <MagneticButton href="/timeline" variant="secondary">
+            See the builds
           </MagneticButton>
         </div>
       </SectionReveal>
@@ -89,7 +94,10 @@ export default async function HomePage() {
           PC Builds
         </h2>
         <p className="text-foreground/60 mb-12 max-w-prose">
-          From a first ever build to over 110 custom rigs. The Xtreme Builds story.
+          It started in 2022 with the family PC, an i7 2600K, and no idea what
+          I was doing. 110+ builds later there had been a Monster Energy rig, a
+          Hello Kitty PC, a stock-market terminal, and one terrifying
+          water-cooled loop.
         </p>
         <MagneticButton href="/timeline" variant="primary">
           See the build timeline
@@ -135,8 +143,8 @@ export default async function HomePage() {
           Let&apos;s talk
         </h2>
         <p className="text-lg text-foreground/70 mb-8">
-          Want to talk about AI and law, or just need a PC built properly? Get
-          in touch.
+          Want to argue about AI regulation, commission a PC, or ask about the
+          banana bread incident? Get in touch.
         </p>
         <MagneticButton href="/contact" variant="primary">
           Contact me

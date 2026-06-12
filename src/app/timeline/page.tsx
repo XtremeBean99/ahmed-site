@@ -5,7 +5,7 @@ import { PcBuildTimeline } from "@/components/PcBuildTimeline";
 export const metadata: Metadata = {
   title: "PC Builds",
   description:
-    "A chronological history of my PC building journey — from a first ever build to 110+ custom rigs under the Xtreme Bean brand.",
+    "From a torn-apart family PC to 110+ custom rigs: the Xtreme Builds story, one build at a time.",
 };
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,7 @@ export default async function TimelinePage() {
         </h1>
         <p className="text-lg text-foreground/60 mb-12 max-w-prose">
           From a torn-apart family PC in 2022 to over 110 custom builds. This is
-          the story of Xtreme Builds — one rig at a time.
+          the story of Xtreme Builds, one rig at a time.
         </p>
 
         {builds.length === 0 ? (

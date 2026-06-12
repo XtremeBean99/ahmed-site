@@ -5,7 +5,7 @@ import { FoodGrid } from "@/components/FoodGrid";
 export const metadata: Metadata = {
   title: "Cooking",
   description:
-    "A casual collection of things I've cooked and baked. No recipes, no measurements — just good food.",
+    "A casual collection of things I've cooked and baked. No recipes, no measurements, just good food.",
 };
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ export default async function CookingPage() {
           Cooking
         </h1>
         <p className="text-lg text-foreground/60 mb-12 max-w-prose">
-          I mostly cook to eat. No formal recipes, no precise measurements — just
+          I mostly cook to eat. No formal recipes, no precise measurements, just
           things I&apos;ve made along the way. An ongoing random hobby.
         </p>
 

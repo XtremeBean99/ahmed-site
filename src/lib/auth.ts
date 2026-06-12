@@ -2,9 +2,23 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 
-const SESSION_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || "fallback-dev-secret-do-not-use-in-prod"
-);
+function getSessionSecret(): Uint8Array {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "SESSION_SECRET environment variable is required in production"
+      );
+    }
+    console.warn(
+      "SESSION_SECRET not set — using insecure dev fallback. Do not use in production."
+    );
+    return new TextEncoder().encode("fallback-dev-secret-do-not-use-in-prod");
+  }
+  return new TextEncoder().encode(secret);
+}
+
+const SESSION_SECRET = getSessionSecret();
 const COOKIE_NAME = "ahmed_site_session";
 const MAX_AGE = 60 * 60 * 24; // 24 hours
 

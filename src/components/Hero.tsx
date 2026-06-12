@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { HeroCanvas } from "./HeroCanvas";
 import { ScrambleText } from "./ScrambleText";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 const CYCLING_WORDS = [
   "Artificial intelligence.",
@@ -14,18 +15,20 @@ const CYCLING_WORDS = [
 
 export function Hero() {
   const [wordIndex, setWordIndex] = useState(0);
+  const prefersReduced = useReducedMotion();
 
   useEffect(() => {
+    if (prefersReduced) return;
     const interval = setInterval(() => {
       setWordIndex((prev) => (prev + 1) % CYCLING_WORDS.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [prefersReduced]);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Canvas background */}
-      <HeroCanvas />
+      {/* Canvas background: static for reduced-motion users */}
+      {!prefersReduced && <HeroCanvas />}
 
       {/* Content */}
       <div className="relative z-10 max-w-grid mx-auto px-6 text-center">

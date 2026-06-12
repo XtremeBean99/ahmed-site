@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     request.headers.get("x-real-ip") ||
     "unknown";
 
-  if (!checkRateLimit(ip)) {
+  if (!checkRateLimit(ip, 5, "contact")) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
       { status: 429 }

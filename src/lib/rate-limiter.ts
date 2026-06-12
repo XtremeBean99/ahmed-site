@@ -3,16 +3,28 @@
 
 const buckets = new Map<string, { tokens: number; lastRefill: number }>();
 
-const MAX_TOKENS = 5; // max requests per window
+const DEFAULT_MAX_TOKENS = 5; // max requests per window
 const REFILL_MS = 60_000; // 1 minute window
 
-export function checkRateLimit(ip: string): boolean {
+/**
+ * Check if a request should be allowed under the rate limit.
+ *
+ * @param ip     — client IP address
+ * @param limit  — max requests per window (default 5)
+ * @param prefix — namespace to isolate different routes (e.g. "login", "contact")
+ */
+export function checkRateLimit(
+  ip: string,
+  limit = DEFAULT_MAX_TOKENS,
+  prefix = "default"
+): boolean {
+  const key = `${prefix}:${ip}`;
   const now = Date.now();
-  const bucket = buckets.get(ip);
+  const bucket = buckets.get(key);
 
   if (!bucket || now - bucket.lastRefill > REFILL_MS) {
     // Refill
-    buckets.set(ip, { tokens: MAX_TOKENS - 1, lastRefill: now });
+    buckets.set(key, { tokens: limit - 1, lastRefill: now });
     return true;
   }
 

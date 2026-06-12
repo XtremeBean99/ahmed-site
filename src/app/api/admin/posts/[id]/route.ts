@@ -8,6 +8,9 @@ const postUpdateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   excerpt: z.string().max(500).optional(),
   contentMd: z.string().min(1).optional(),
+  coverImage: z.string().optional(),
+  tags: z.string().optional(),
+  date: z.string().optional().nullable(),
   published: z.boolean().optional(),
 });
 
@@ -52,9 +55,20 @@ export async function PUT(
       );
     }
 
+    const updateData: Record<string, unknown> = { ...parsed.data };
+    if (parsed.data.tags !== undefined) {
+      updateData.tags = parsed.data.tags
+        .split(",")
+        .map((t: string) => t.trim())
+        .filter(Boolean);
+    }
+    if (parsed.data.date !== undefined) {
+      updateData.date = parsed.data.date ? new Date(parsed.data.date) : null;
+    }
+
     const post = await prisma.post.update({
       where: { id },
-      data: parsed.data,
+      data: updateData,
     });
 
     return NextResponse.json(post);

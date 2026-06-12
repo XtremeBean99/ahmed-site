@@ -7,6 +7,9 @@ interface PostData {
   title: string;
   excerpt: string;
   contentMd: string;
+  coverImage: string;
+  tags: string;
+  date: string;
   published: boolean;
 }
 
@@ -27,11 +30,14 @@ export function PostEditor({
   const [title, setTitle] = useState(initial?.title || "");
   const [excerpt, setExcerpt] = useState(initial?.excerpt || "");
   const [contentMd, setContentMd] = useState(initial?.contentMd || "");
+  const [coverImage, setCoverImage] = useState(initial?.coverImage || "");
+  const [tags, setTags] = useState(initial?.tags || "");
+  const [date, setDate] = useState(initial?.date || "");
   const [published, setPublished] = useState(initial?.published || false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ slug, title, excerpt, contentMd, published });
+    onSave({ slug, title, excerpt, contentMd, coverImage, tags, date, published });
   };
 
   const generateSlug = () => {
@@ -120,6 +126,57 @@ export function PostEditor({
           onChange={(e) => setContentMd(e.target.value)}
           className="w-full bg-surface border border-surface-border rounded-lg px-4 py-3 text-foreground outline-none focus:border-accent transition-colors font-mono text-sm resize-y"
           required
+        />
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <label
+            htmlFor="coverImage"
+            className="block text-sm text-foreground/60 mb-2"
+          >
+            Cover image path
+          </label>
+          <input
+            id="coverImage"
+            type="text"
+            value={coverImage}
+            onChange={(e) => setCoverImage(e.target.value)}
+            placeholder="/images/example.jpg"
+            className="w-full bg-surface border border-surface-border rounded-lg px-4 py-3 text-foreground outline-none focus:border-accent transition-colors"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="date"
+            className="block text-sm text-foreground/60 mb-2"
+          >
+            Display date (optional)
+          </label>
+          <input
+            id="date"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full bg-surface border border-surface-border rounded-lg px-4 py-3 text-foreground outline-none focus:border-accent transition-colors"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label
+          htmlFor="tags"
+          className="block text-sm text-foreground/60 mb-2"
+        >
+          Tags (comma-separated)
+        </label>
+        <input
+          id="tags"
+          type="text"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+          placeholder="pc-build, cooking, misc"
+          className="w-full bg-surface border border-surface-border rounded-lg px-4 py-3 text-foreground outline-none focus:border-accent transition-colors"
         />
       </div>
 

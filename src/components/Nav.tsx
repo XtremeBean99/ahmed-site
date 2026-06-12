@@ -10,8 +10,10 @@ const NAV_ITEMS = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
   { href: "/experience", label: "Experience" },
+  { href: "/timeline", label: "Builds" },
   { href: "/projects", label: "Projects" },
   { href: "/blog", label: "Blog" },
+  { href: "/cooking", label: "Cooking" },
   { href: "/contact", label: "Contact" },
 ];
 

@@ -8,6 +8,9 @@ const postSchema = z.object({
   title: z.string().min(1).max(200),
   excerpt: z.string().max(500).optional().default(""),
   contentMd: z.string().min(1),
+  coverImage: z.string().optional().default(""),
+  tags: z.string().optional().default(""),
+  date: z.string().optional().nullable(),
   published: z.boolean().default(false),
 });
 
@@ -41,7 +44,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const post = await prisma.post.create({ data: parsed.data });
+    const post = await prisma.post.create({
+      data: {
+        ...parsed.data,
+        tags: parsed.data.tags
+          ? parsed.data.tags.split(",").map((t) => t.trim()).filter(Boolean)
+          : [],
+        date: parsed.data.date ? new Date(parsed.data.date) : null,
+      },
+    });
     return NextResponse.json(post, { status: 201 });
   } catch (error: unknown) {
     if (

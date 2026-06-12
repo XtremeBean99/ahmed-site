@@ -26,6 +26,19 @@ const ENTRIES: TimelineEntry[] = [
     ],
   },
   {
+    title: "PC Builder & Founder",
+    subtitle: "Xtreme Builds, Canberra",
+    date: "2022 – 2025",
+    type: "work",
+    items: [
+      "Founded and operated a custom PC building business, completing over 110 builds across gaming, creative workstation, and general-purpose systems",
+      "Sourced, refurbished, and tested secondhand components — reducing client costs while maintaining reliability",
+      "Designed and executed themed custom builds (Monster Energy, Hello Kitty, stock-market aesthetic) and water-cooled systems",
+      "3D-printed custom accessories using Creality Ender E3 V3 and Bambu Labs P1S with AMS",
+      "Managed end-to-end client relationships: consultation, specification, procurement, assembly, testing, and handover",
+    ],
+  },
+  {
     title: "Consultant",
     subtitle: "Daydream Machine, Fyshwick",
     date: "January 2024 – April 2024",

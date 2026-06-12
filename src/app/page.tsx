@@ -83,6 +83,19 @@ export default async function HomePage() {
         </SectionReveal>
       )}
 
+      {/* Latest PC builds */}
+      <SectionReveal className="max-w-grid mx-auto px-6 py-24 border-t border-surface-border">
+        <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
+          PC Builds
+        </h2>
+        <p className="text-foreground/60 mb-12 max-w-prose">
+          From a first ever build to over 110 custom rigs. The Xtreme Builds story.
+        </p>
+        <MagneticButton href="/timeline" variant="primary">
+          See the build timeline
+        </MagneticButton>
+      </SectionReveal>
+
       {/* Latest posts */}
       {posts.length > 0 && (
         <SectionReveal className="max-w-grid mx-auto px-6 py-24 border-t border-surface-border">

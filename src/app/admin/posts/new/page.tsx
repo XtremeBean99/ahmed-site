@@ -15,6 +15,9 @@ export default function NewPostPage() {
     title: string;
     excerpt: string;
     contentMd: string;
+    coverImage: string;
+    tags: string;
+    date: string;
     published: boolean;
   }) => {
     setSaving(true);

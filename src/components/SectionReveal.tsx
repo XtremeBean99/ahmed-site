@@ -36,7 +36,7 @@ export const fadeUpItem = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
+    transition: { duration: 0.6, ease: [0, 0, 1, 1] as const },
   },
 };
 
@@ -50,6 +50,6 @@ export const maskRiseItem = {
     opacity: 1,
     y: 0,
     clipPath: "inset(0 0 0% 0)",
-    transition: { duration: 0.8, ease: "easeOut" },
+    transition: { duration: 0.8, ease: [0, 0, 1, 1] as const },
   },
 };

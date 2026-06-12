@@ -14,6 +14,9 @@ export default function EditPostPage() {
     title: string;
     excerpt: string;
     contentMd: string;
+    coverImage: string;
+    tags: string;
+    date: string;
     published: boolean;
   } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,7 +31,11 @@ export default function EditPostPage() {
           router.push("/admin/posts");
           return;
         }
-        setPost(data);
+        setPost({
+          ...data,
+          tags: Array.isArray(data.tags) ? data.tags.join(", ") : (data.tags || ""),
+          date: data.date ? new Date(data.date).toISOString().split("T")[0] : "",
+        });
         setLoading(false);
       });
   }, [id, router]);
@@ -38,6 +45,9 @@ export default function EditPostPage() {
     title: string;
     excerpt: string;
     contentMd: string;
+    coverImage: string;
+    tags: string;
+    date: string;
     published: boolean;
   }) => {
     setSaving(true);

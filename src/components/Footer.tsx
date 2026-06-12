@@ -41,7 +41,15 @@ export function Footer() {
       <div className="max-w-grid mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
         <p className="text-sm text-foreground/40">
           &copy; {new Date().getFullYear()} Ahmed Hussain &middot; Canberra,
-          Australia &middot; Built from a spec by AI agents
+          Australia &middot; Built from a spec by AI agents{" "}
+          <a
+            href="/images/funny-random-video.mp4"
+            target="_blank"
+            className="text-foreground/10 hover:text-amber transition-colors cursor-default"
+            title="?"
+          >
+            &middot;
+          </a>
         </p>
         <div className="flex items-center gap-4">
           <Link

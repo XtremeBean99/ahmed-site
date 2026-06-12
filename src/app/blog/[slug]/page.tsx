@@ -49,9 +49,28 @@ export default async function BlogPostPage({ params }: Props) {
       <BlogReadingProgress />
 
       <article className="max-w-prose mx-auto px-6">
+        {/* Cover image hero */}
+        {post.coverImage && (
+          <div className="relative w-full aspect-video rounded-lg overflow-hidden mb-8">
+            <img
+              src={post.coverImage}
+              alt={post.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
         <header className="mb-12">
           <div className="flex items-center gap-4 text-sm text-foreground/40 mb-4">
-            <time>{formatDate(post.createdAt)}</time>
+            <time>
+              {post.date
+                ? new Date(post.date).toLocaleDateString("en-AU", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
+                : formatDate(post.createdAt)}
+            </time>
             <span>&middot;</span>
             <span>{readingTime} min read</span>
           </div>

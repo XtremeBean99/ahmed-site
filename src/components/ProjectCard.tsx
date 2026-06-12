@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { motion } from "motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 
 interface Project {

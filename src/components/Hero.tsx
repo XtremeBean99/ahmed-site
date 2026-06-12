@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { motion } from "motion";
+import Link from "next/link";
+import { motion } from "framer-motion";
 import { HeroCanvas } from "./HeroCanvas";
 import { ScrambleText } from "./ScrambleText";
 
@@ -86,18 +87,18 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1.0 }}
         >
-          <a
+          <Link
             href="/projects"
             className="px-6 py-3 rounded-lg bg-accent text-background font-medium text-sm hover:shadow-[0_0_20px_rgba(45,212,191,0.3)] transition-shadow"
           >
             View my work
-          </a>
-          <a
+          </Link>
+          <Link
             href="/contact"
             className="px-6 py-3 rounded-lg border border-surface-border text-foreground font-medium text-sm hover:border-accent/50 hover:bg-surface-hover transition-all"
           >
             Get in touch
-          </a>
+          </Link>
         </motion.div>
       </div>
 

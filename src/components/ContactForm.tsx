@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { motion, useMotionValue, useSpring } from "motion";
+import { motion, useMotionValue, useSpring } from "framer-motion";
 import { z } from "zod";
 
 const contactSchema = z.object({

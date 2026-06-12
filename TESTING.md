@@ -42,6 +42,8 @@ npx prisma db seed     # Must insert 3 projects and 1 blog post
 | Blog post         | /blog/why-i-study-law-and-computing | Rendered Markdown, reading progress bar, metadata     |
 | Project detail    | /projects/*            | Rendered Markdown, tags, year, back navigation                         |
 | Contact           | /contact               | Form with floating labels, LinkedIn link, no email address in source   |
+| Hussain           | /hussain               | 7 sections, Arabic calligraphy, green/gold theme, no em dashes         |
+| Breakout          | /breakout              | Canvas game loads, paddle moves with mouse/keyboard/touch, build panel |
 
 ### Contact form
 
@@ -117,3 +119,55 @@ npm run build && npm run start
 ```
 
 Repeat the manual checks above against the production build.
+
+## Hussain page (/hussain)
+
+| Check                                  | How to test                                                              |
+| -------------------------------------- | ------------------------------------------------------------------------ |
+| Page loads                             | Visit /hussain, page renders with green/ivory theme                      |
+| No teal grid visible                   | Scroll full page, TechBackground is covered by ivory background          |
+| Arabic calligraphy renders             | "حسين" displayed large in Aref Ruqaa font, white on green                |
+| Gold rule ornaments                    | Thin gold lines between sections and under the title                     |
+| Girih pattern                          | Subtle geometric dot pattern visible on ivory sections                   |
+| All 7 sections present                 | Name, Who, Karbala, Shia Islam, Ethic, Palestine, Closing                |
+| No em dashes                           | Search page source for U+2014, must be zero                              |
+| Arabic text RTL                        | Arabic spans have lang="ar" dir="rtl" attributes                         |
+| Quote attributions                     | "Death with dignity" attributed to Imam Hussain, maxim attributed to tradition |
+| Palestine section tone                 | Principled, humane, no violent rhetoric, no sectarianism                 |
+| Nav link                               | "Hussain" appears in nav after Blog, before Cooking                      |
+| Responsive                             | Text readable at 375px, 768px, 1440px                                    |
+| prefers-reduced-motion                 | Page still renders correctly, no broken animations                       |
+
+## Breakout page (/breakout)
+
+| Check                                  | How to test                                                              |
+| -------------------------------------- | ------------------------------------------------------------------------ |
+| Page loads                             | Visit /breakout, canvas renders with dark background                     |
+| Game starts                            | Click/Space launches ball from paddle, "waiting" prompt disappears       |
+| Mouse control                          | Move mouse, paddle follows horizontally                                  |
+| Keyboard control                       | Arrow keys move paddle left and right                                    |
+| Touch control                          | On mobile/tablet, touch drag moves paddle                                |
+| Ball physics                           | Ball bounces off walls at correct angles, paddle hit position changes angle |
+| Brick collision                        | Ball destroys bricks on hit, PCB-style pins visible                      |
+| Row labels                             | VRM, RAM, PCIe, SATA, I/O labels visible left of grid                    |
+| HP system                              | Top row bricks take 3 hits, second row 2, bottom rows 1                  |
+| Boss brick                             | "i7 2600K" at top centre, 6 HP, orange colour, flashes on hit            |
+| Win condition                          | Destroy boss brick, "POST OK" overlay appears                            |
+| Lives system                           | 3 lives shown as hearts, ball death loses a life, 0 lives = game over    |
+| Score display                          | Score increments on brick hits, shown in side panel                      |
+| High score                             | High score persists across page reloads (localStorage)                   |
+| Build progress sidebar                 | Parts list ticks off as rows are cleared                                 |
+| Thermal Paste drop                     | White blob falls, catching it sticks ball to paddle                      |
+| RGB Kit drop                           | Cycling-colour square, catching it splits ball into 3                    |
+| Overclock drop                         | Amber lightning, catching it speeds ball +40%, x2 score for 10s          |
+| Water Leak drop (bad)                  | Blue droplet, catching it halves paddle width for 4s, blue paddle colour |
+| OneDrive sync event                    | Countdown appears ~43s in, at 45s controls invert with amber toast       |
+| Pause                                   | Press P, game pauses with overlay. Press P again to resume              |
+| Tab hidden pause                       | Switch browser tab away, game auto-pauses                                |
+| Sound toggle                           | SOUND OFF by default, button toggles to SOUND ON, beeps play when on     |
+| Restart after game over                | Click/Space after game over restarts game                                |
+| Restart after win                      | Click/Space after win restarts game                                      |
+| ESC key                                | Pressing Escape releases keyboard focus from canvas                      |
+| Responsive layout                      | Side panel moves below canvas on mobile, side by side on desktop         |
+| Nav link                               | "Breakout" appears in nav after Cooking, before Contact                  |
+| Reduced motion                         | Game still plays, no screen shake or particle effects                    |

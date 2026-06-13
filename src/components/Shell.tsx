@@ -5,6 +5,7 @@ import { Nav } from "./Nav";
 import { Footer } from "./Footer";
 import { ScrollProgress } from "./ScrollProgress";
 import { LenisProvider } from "./LenisProvider";
+import { TechBackground } from "./TechBackground";
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,6 +17,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <LenisProvider>
+      <TechBackground />
       <ScrollProgress />
       <Nav />
       <main>{children}</main>

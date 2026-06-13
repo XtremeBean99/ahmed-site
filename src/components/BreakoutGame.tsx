@@ -75,7 +75,9 @@ const PADDLE_Y = CANVAS_H - 50;
 const PADDLE_BASE_W = 110;
 const PADDLE_H = 14;
 const BALL_RADIUS = 8;
-const BALL_BASE_SPEED = 5.5;
+// px/s. Ball velocity is integrated against dt (seconds), so this must be a
+// per-second speed -- 330px/s is ~5.5px per frame at 60fps.
+const BALL_BASE_SPEED = 330;
 
 const DROP_CHANCE = 0.18;
 const BAD_DROP_CHANCE = 0.12;
@@ -560,12 +562,15 @@ export function BreakoutGame() {
           }
 
           const effectiveSpeed = ball.speed * speedMul;
-          const steps = Math.ceil(effectiveSpeed / 3); // sub-step when fast
+          // Size sub-steps off actual on-screen movement (px/frame), not the
+          // raw px/s speed, so this stays correct as dt varies.
+          const pxPerFrame = effectiveSpeed * dt;
+          const steps = Math.max(1, Math.ceil(pxPerFrame / 3)); // sub-step when fast
           const stepDt = dt / steps;
 
           for (let s = 0; s < steps; s++) {
-            ball.x += ball.vx * stepDt * (effectiveSpeed / ball.speed);
-            ball.y += ball.vy * stepDt * (effectiveSpeed / ball.speed);
+            ball.x += ball.vx * stepDt * speedMul;
+            ball.y += ball.vy * stepDt * speedMul;
 
             // Wall collisions
             if (ball.x - ball.radius < 0) {

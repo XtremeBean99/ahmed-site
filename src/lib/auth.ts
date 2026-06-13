@@ -2,7 +2,15 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 
+let cachedSecret: Uint8Array | null = null;
+
+/**
+ * Resolved lazily (NOT at module scope) so that `next build` page-data
+ * collection never throws on machines without env vars. The production
+ * guard still fires on first real use at runtime.
+ */
 function getSessionSecret(): Uint8Array {
+  if (cachedSecret) return cachedSecret;
   const secret = process.env.SESSION_SECRET;
   if (!secret) {
     if (process.env.NODE_ENV === "production") {
@@ -13,12 +21,14 @@ function getSessionSecret(): Uint8Array {
     console.warn(
       "SESSION_SECRET not set — using insecure dev fallback. Do not use in production."
     );
-    return new TextEncoder().encode("fallback-dev-secret-do-not-use-in-prod");
+    cachedSecret = new TextEncoder().encode(
+      "fallback-dev-secret-do-not-use-in-prod"
+    );
+    return cachedSecret;
   }
-  return new TextEncoder().encode(secret);
+  cachedSecret = new TextEncoder().encode(secret);
+  return cachedSecret;
 }
-
-const SESSION_SECRET = getSessionSecret();
 const COOKIE_NAME = "ahmed_site_session";
 const MAX_AGE = 60 * 60 * 24; // 24 hours
 
@@ -34,14 +44,14 @@ export async function createSessionToken(): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt(now)
     .setExpirationTime(now + MAX_AGE)
-    .sign(SESSION_SECRET);
+    .sign(getSessionSecret());
 }
 
 export async function verifySessionToken(
   token: string
 ): Promise<SessionPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, SESSION_SECRET);
+    const { payload } = await jwtVerify(token, getSessionSecret());
     if (payload.authenticated) {
       return payload as unknown as SessionPayload;
     }

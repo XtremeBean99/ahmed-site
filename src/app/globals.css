@@ -91,6 +91,46 @@ html.lenis body {
   pointer-events: none;
 }
 
+/* Technical background (site-wide) */
+.tech-grid {
+  background-image:
+    linear-gradient(rgba(45, 212, 191, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45, 212, 191, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  animation: grid-drift 90s linear infinite;
+}
+.tech-grid-fine {
+  background-image:
+    linear-gradient(rgba(45, 212, 191, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45, 212, 191, 0.02) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+.tech-vignette {
+  background: radial-gradient(
+    ellipse 120% 90% at 50% 20%,
+    transparent 55%,
+    rgba(10, 10, 15, 0.85) 100%
+  );
+}
+.tech-scanline {
+  height: 22vh;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(45, 212, 191, 0.035),
+    transparent
+  );
+  animation: scan-sweep 16s ease-in-out infinite;
+}
+@keyframes grid-drift {
+  from { background-position: 0 0; }
+  to { background-position: 112px 112px; }
+}
+@keyframes scan-sweep {
+  0%, 100% { transform: translateY(-25vh); }
+  50% { transform: translateY(110vh); }
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -147,10 +147,6 @@ async function main() {
       excerpt: "Yellow, tiny, manual. The car I learned stick in. Almost crashed into a tree. Sold it to a guy who turned it into a rally car.",
       content: "This was my 1999 Daihatsu Sirion. Bright yellow. Tiny engine. Manual transmission. The car that taught me how to drive stick.\n\nFirst time I drove it I nearly crashed into a tree in the neighbour's front yard. Learning manual is humbling. You stall at traffic lights. You jerk through gear changes. Every hill start feels like a gamble. But then one day it just clicks and you can shift without thinking about it.\n\nI sold it eventually. The guy who bought it turned it into a rally car. A rally car. The little yellow Sirion that could barely make it up my driveway without stalling went on to race on dirt tracks. I like to think I gave it the basics and it went on to achieve its potential.\n\nThe Sirion is gone now but I will always remember it. First car, first crash narrowly avoided, first time I really understood how a machine works from the inside.",
       image: "/images/daihatsu-sirion-engine-bay.jpg" },
-    { slug: "mitski-poster-arabic", title: "Mitski poster in Arabic",
-      excerpt: "I like Mitski and this poster is really cool.",
-      content: "Found this Mitski poster with Arabic typography and had to get it. The design is really striking. The script works beautifully with the composition and it is different from any other band poster I have seen.\n\nMitski's music has been a constant for me for years. There is a rawness to her writing that cuts through no matter what language you speak. But seeing her name in Arabic script adds another layer. Representation matters in small ways too. A poster on a wall. A name in your own alphabet.\n\nNot everything needs a deep analysis. I like Mitski. I think this poster is really cool. That is it.",
-      image: "/images/mitski-poster-arabic.jpg" },
   ];
 
   // Insert all posts
@@ -202,6 +198,12 @@ async function main() {
     });
   }
 
+  // Retired posts: upsert never deletes, so prune any that were removed
+  // from the arrays above but may still exist in an already-seeded DB.
+  await prisma.post.deleteMany({
+    where: { slug: { in: ["mitski-poster-arabic"] } },
+  });
+
   // Original launch post
   await prisma.post.upsert({
     where: { slug: "why-i-study-law-and-computing" },
@@ -217,7 +219,7 @@ async function main() {
     },
   });
 
-  console.log("Seed done: 3 projects, 15 builds, 8 cooking, 2 misc, 1 original");
+  console.log("Seed done: 3 projects, 15 builds, 8 cooking, 1 misc, 1 original");
 }
 
 main()

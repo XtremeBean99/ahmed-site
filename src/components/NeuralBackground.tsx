@@ -147,7 +147,7 @@ export function NeuralBackground() {
 
     const net = createNet();
     const buffer: Sample[] = [];
-    const stats = { loss: 1, steps: 0 };
+    const stats = { loss: 1, steps: 0, hist: [] as number[] };
     const pointer = { x: 0.5, y: 0.5, lastMove: 0 };
     const target = { x: 0.5, y: 0.5, px: 0.5, py: 0.5 };
     let width = 0;
@@ -159,6 +159,10 @@ export function NeuralBackground() {
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        window.setTimeout(resize, 200);
+        return;
+      }
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       width = rect.width;
       height = rect.height;
@@ -244,6 +248,43 @@ export function NeuralBackground() {
       ctx.strokeStyle = `rgba(${AMBER}, 0.85)`;
       ctx.lineWidth = 1.5;
       ctx.stroke();
+
+      // input/output labels
+      ctx.font = "10px ui-monospace, SFMono-Regular, monospace";
+      ctx.fillStyle = "rgba(245, 245, 245, 0.4)";
+      const inLabels = ["x", "y", "vx", "vy"];
+      ctx.textAlign = "right";
+      for (let j = 0; j < LAYERS[0]; j++) {
+        const [x, y] = nodePos(0, j);
+        ctx.fillText(inLabels[j] ?? "", x - 12, y + 3);
+      }
+      const outLabels = ["x̂", "ŷ"];
+      ctx.textAlign = "left";
+      for (let j = 0; j < LAYERS[LAYERS.length - 1]; j++) {
+        const [x, y] = nodePos(LAYERS.length - 1, j);
+        ctx.fillText(outLabels[j] ?? "", x + 14, y + 3);
+      }
+
+      // live loss sparkline, bottom right
+      const hist = stats.hist;
+      if (hist.length > 2) {
+        const sw = 120;
+        const sh = 26;
+        const sx = width - sw - 24;
+        const sy = height - sh - 22;
+        const max = Math.max(...hist, 1e-4);
+        ctx.strokeStyle = `rgba(${TEAL}, 0.55)`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = 0; i < hist.length; i++) {
+          const hx = sx + (i / (hist.length - 1)) * sw;
+          const hy = sy + sh - (hist[i] / max) * sh;
+          if (i === 0) ctx.moveTo(hx, hy);
+          else ctx.lineTo(hx, hy);
+        }
+        ctx.stroke();
+        ctx.fillText("loss", sx, sy - 5);
+      }
     };
 
     const frame = () => {
@@ -283,6 +324,8 @@ export function NeuralBackground() {
           stats.loss = stats.loss * 0.97 + loss * 0.03;
           stats.steps += 1;
         }
+        stats.hist.push(stats.loss);
+        if (stats.hist.length > 140) stats.hist.shift();
       }
 
       // visualise on the live input

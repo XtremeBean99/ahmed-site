@@ -41,7 +41,7 @@ const ENTRIES: TimelineEntry[] = [
   {
     title: "Consultant",
     subtitle: "Daydream Machine, Fyshwick",
-    date: "January 2024 – April 2024",
+    date: "Early 2025, invoiced July 2025",
     type: "work",
     items: [
       "End-to-end hardware consultancy for a Canberra creative learning studio supporting neurodivergent young people",

@@ -11,6 +11,7 @@ interface Ball {
   radius: number;
   speed: number;
   stuck: boolean; // true when glued to paddle (Thermal Paste)
+  dead: boolean; // true when lost past the bottom edge
 }
 
 interface Paddle {
@@ -183,6 +184,7 @@ export function BreakoutGame() {
     active: false,
     lastX: 0,
   });
+  const driftRef = useRef(0);
 
   /* ── Init / reset ── */
   const initBricks = useCallback(() => {
@@ -227,6 +229,7 @@ export function BreakoutGame() {
         radius: BALL_RADIUS,
         speed: BALL_BASE_SPEED,
         stuck: true,
+        dead: false,
       },
     ];
 
@@ -265,16 +268,18 @@ export function BreakoutGame() {
 
   /* ── Ball-paddle launch ── */
   const launchBall = useCallback(() => {
-    if (statusRef.current !== "waiting") return;
-    const balls = ballsRef.current;
-    if (balls.length === 0) return;
-    const b = balls[0];
-    if (!b.stuck) return;
-    b.stuck = false;
-    // Launch at a slight random angle upward
-    const angle = (Math.random() * 0.6 + 0.7) * Math.PI; // 0.7pi to 1.3pi (upward)
-    b.vx = Math.cos(angle) * b.speed;
-    b.vy = -Math.abs(Math.sin(angle) * b.speed);
+    const status = statusRef.current;
+    // "playing" included so thermal-pasted (glued) balls can be relaunched
+    if (status !== "waiting" && status !== "playing") return;
+    const stuckBalls = ballsRef.current.filter((b) => b.stuck && !b.dead);
+    if (stuckBalls.length === 0) return;
+    for (const b of stuckBalls) {
+      b.stuck = false;
+      // Launch within a +/- 65 degree cone from vertical, never horizontal
+      const a = Math.random() * 2.27 - 1.135;
+      b.vx = Math.sin(a) * b.speed;
+      b.vy = -Math.cos(a) * b.speed;
+    }
     statusRef.current = "playing";
     setGameStatus("playing");
   }, []);
@@ -309,7 +314,7 @@ export function BreakoutGame() {
             // Set all balls to stuck on next paddle hit
             // We'll handle this in collision logic by setting a flag
             // For simplicity: set the first active ball to stuck
-            const active = balls.filter((b) => !b.stuck);
+            const active = balls.filter((b) => !b.stuck && !b.dead);
             if (active.length > 0) {
               active[0].stuck = true;
             }
@@ -334,6 +339,7 @@ export function BreakoutGame() {
               radius: BALL_RADIUS,
               speed: b.speed,
               stuck: false,
+              dead: false,
             });
             balls.push({
               x: b.x,
@@ -343,6 +349,7 @@ export function BreakoutGame() {
               radius: BALL_RADIUS,
               speed: b.speed,
               stuck: false,
+              dead: false,
             });
           }
           break;
@@ -418,6 +425,7 @@ export function BreakoutGame() {
         radius: BALL_RADIUS,
         speed: BALL_BASE_SPEED,
         stuck: true,
+        dead: false,
       },
     ];
     // Cancel power-ups
@@ -529,12 +537,15 @@ export function BreakoutGame() {
         if (keysRef.current.has("ArrowLeft")) keyDir -= 1;
         if (keysRef.current.has("ArrowRight")) keyDir += 1;
         if (invert) keyDir *= -1;
+        if (keyDir !== 0) driftRef.current = keyDir;
         paddle.x += keyDir * keySpeed * dt;
 
-        // Leak slippery: add momentum/drift
-        if (leak.active && keyDir === 0) {
-          // slight drift in last direction
+        // Leak slippery: the paddle keeps drifting after you let go
+        if (leak.active && keyDir === 0 && Math.abs(driftRef.current) > 0.02) {
+          paddle.x += driftRef.current * keySpeed * dt * 0.6;
+          driftRef.current *= 0.9;
         }
+        if (!leak.active && keyDir === 0) driftRef.current = 0;
 
         // Clamp paddle
         paddle.x = Math.max(0, Math.min(CANVAS_W - paddle.width, paddle.x));
@@ -572,7 +583,7 @@ export function BreakoutGame() {
 
             // Bottom (death)
             if (ball.y + ball.radius > CANVAS_H) {
-              ball.stuck = true; // mark for removal
+              ball.dead = true;
               break;
             }
 
@@ -696,27 +707,11 @@ export function BreakoutGame() {
           }
         }
 
-        // Remove dead balls
-        const aliveBalls = balls.filter((b) => !b.stuck || b.stuck);
-        // Actually: remove balls that went past bottom
-        const remaining = balls.filter((b) => {
-          // If ball was marked stuck during sub-stepping (went past bottom)
-          return !(b.stuck && b.y + b.radius > CANVAS_H);
-        });
-
-        if (remaining.length === 0 && livesRef.current > 0) {
+        // Remove balls lost past the bottom; lose a life only when none remain.
+        // Glued (thermal paste) balls are alive and do NOT cost a life.
+        ballsRef.current = balls.filter((b) => !b.dead);
+        if (ballsRef.current.length === 0) {
           loseLife();
-        } else {
-          ballsRef.current = remaining.filter((b) => {
-            // Keep stuck balls that are on paddle, remove balls that died
-            if (b.stuck && b !== balls[0]) return false;
-            return true;
-          });
-          // If all non-stuck balls gone, reset
-          const activeCount = ballsRef.current.filter((b) => !b.stuck).length;
-          if (activeCount === 0 && statusRef.current === "playing") {
-            loseLife();
-          }
         }
 
         // Update drops
@@ -981,9 +976,9 @@ export function BreakoutGame() {
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Draw balls
+      // Draw balls (glued balls included, sitting on the paddle)
       for (const ball of balls) {
-        if (ball.stuck) continue;
+        if (ball.dead) continue;
         ctx.fillStyle = rgbRef.current.active
           ? `hsl(${(Date.now() / 5) % 360}, 100%, 70%)`
           : "#fdfdf8";
@@ -1178,7 +1173,10 @@ export function BreakoutGame() {
 
       if (e.key === " " || e.key === "Spacebar") {
         e.preventDefault();
-        if (statusRef.current === "waiting") {
+        if (
+          statusRef.current === "waiting" ||
+          statusRef.current === "playing"
+        ) {
           launchBall();
         } else if (
           statusRef.current === "lost" ||
@@ -1232,14 +1230,19 @@ export function BreakoutGame() {
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      const x = getCanvasX(e.clientX);
+      let x = getCanvasX(e.clientX);
+      // OneDrive sync event inverts ALL controls, including the mouse
+      if (oneDriveRef.current.active) x = CANVAS_W - x;
       const paddle = paddleRef.current;
       paddle.x = x - paddle.width / 2;
       paddle.x = Math.max(0, Math.min(CANVAS_W - paddle.width, paddle.x));
     };
 
     const handleClick = () => {
-      if (statusRef.current === "waiting") {
+      if (
+        statusRef.current === "waiting" ||
+        statusRef.current === "playing"
+      ) {
         launchBall();
       } else if (
         statusRef.current === "lost" ||
@@ -1276,7 +1279,8 @@ export function BreakoutGame() {
 
     const handleTouchMove = (e: TouchEvent) => {
       e.preventDefault();
-      const x = getCanvasX(e.touches[0].clientX);
+      let x = getCanvasX(e.touches[0].clientX);
+      if (oneDriveRef.current.active) x = CANVAS_W - x;
       const paddle = paddleRef.current;
       paddle.x = x - paddle.width / 2;
       paddle.x = Math.max(0, Math.min(CANVAS_W - paddle.width, paddle.x));
@@ -1284,7 +1288,10 @@ export function BreakoutGame() {
 
     const handleTouchStart = (e: TouchEvent) => {
       e.preventDefault();
-      if (statusRef.current === "waiting") {
+      if (
+        statusRef.current === "waiting" ||
+        statusRef.current === "playing"
+      ) {
         launchBall();
       } else if (
         statusRef.current === "lost" ||

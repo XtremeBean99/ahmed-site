@@ -1,4 +1,19 @@
 import type { Metadata } from "next";
+import { Amiri, Aref_Ruqaa } from "next/font/google";
+
+const amiri = Amiri({
+  subsets: ["arabic"],
+  weight: ["400", "700"],
+  variable: "--font-amiri",
+  display: "swap",
+});
+
+const arefRuqaa = Aref_Ruqaa({
+  subsets: ["arabic"],
+  weight: ["400", "700"],
+  variable: "--font-aref-ruqaa",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Hussain",
@@ -131,7 +146,7 @@ export default function HussainPage() {
         }
       `}</style>
 
-      <div className="hussain-page">
+      <div className={`hussain-page ${amiri.variable} ${arefRuqaa.variable}`}>
         {/* Section 1: The Name */}
         <section className="hussain-hero pt-32 pb-24 px-6 text-center">
           <div className="max-w-prose mx-auto">
@@ -192,8 +207,8 @@ export default function HussainPage() {
                 That refusal set everything in motion. Hussain left Medina for Mecca,
                 and from Mecca he set out toward Kufa, where supporters had written
                 to him promising backing. He travelled with his family and a small
-                group of companions: around 72 people in total. They never reached
-                Kufa.
+                band of companions; tradition remembers the seventy-two who stood
+                and fell with him. They never reached Kufa.
               </p>
             </div>
           </div>
@@ -358,7 +373,7 @@ export default function HussainPage() {
                 dir="rtl"
                 className="hussain-ar-display block text-4xl md:text-5xl text-[var(--hussain-ivory)]"
               >
-                الموت مع الكرامة خير من الحياة مع الذل
+                موت في عز خير من حياة في ذل
               </span>
             </p>
             <p className="hussain-en-heading text-xl md:text-2xl text-[var(--hussain-ivory)]/80 italic mb-8">

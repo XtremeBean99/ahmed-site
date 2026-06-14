@@ -11,8 +11,11 @@ function getResend(): Resend {
   return _resend
 }
 
-const TO = process.env.CONTACT_TO_EMAIL ?? 'ahmedyhussain07@gmail.com'
-const FROM = 'noreply@ahmedyhussain.com'
+// TO: recipient address. Set CONTACT_TO_EMAIL in Vercel env vars.
+// FROM: must match a domain verified in your Resend dashboard (resend.com/domains).
+//       Set CONTACT_FROM_EMAIL or verify ahmedyhussain.com in Resend.
+const TO = process.env.CONTACT_TO_EMAIL || 'ahmedyhussain07@gmail.com'
+const FROM = process.env.CONTACT_FROM_EMAIL || 'Ahmed Hussain <noreply@ahmedyhussain.com>'
 
 interface ContactEmailPayload {
   name: string

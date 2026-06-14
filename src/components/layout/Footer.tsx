@@ -1,6 +1,5 @@
 import Link from 'next/link'
-
-const year = new Date().getFullYear()
+import { CopyrightYear } from '@/components/ui/CopyrightYear'
 
 const footerLinks = [
   { href: '/projects', label: 'Projects' },
@@ -54,7 +53,7 @@ export function Footer() {
         {/* Copyright */}
         <div className="mt-10 pt-6 border-t border-border-subtle flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <p className="text-xs text-muted-foreground">
-            © {year} Ahmed Hussain. All rights reserved.
+            © <CopyrightYear /> Ahmed Hussain. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
             Canberra, Australia · ahmedyhussain.com

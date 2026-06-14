@@ -6,6 +6,8 @@ import { useState } from 'react'
 import { contactSchema, type ContactFormData } from '@/lib/validations'
 import { cn } from '@/lib/utils'
 
+const MESSAGE_MAX = 5000
+
 interface ContactFormProps {
   /** Optional pre-filled subject for tutoring enquiries */
   defaultSubject?: string
@@ -22,11 +24,14 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
     defaultValues: { subject: defaultSubject ?? '' },
   })
+
+  const messageValue = watch('message') ?? ''
 
   async function onSubmit(data: ContactFormData) {
     setStatus('sending')
@@ -43,7 +48,7 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
         const json = await res.json().catch(() => ({}))
         setErrorMessage(
           res.status === 429
-            ? 'Too many messages sent. Please try again later.'
+            ? 'You have sent too many messages. Please try again in about an hour.'
             : (json.error as string) || 'Something went wrong. Please try again.',
         )
         setStatus('error')
@@ -88,7 +93,7 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="relative space-y-5">
       {/* Honeypot — hidden from real users, filled in by bots */}
       <input
         {...register('website')}
@@ -164,9 +169,14 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
       </div>
 
       <div>
-        <label htmlFor="message" className="block text-xs text-muted-foreground mb-1.5 label-text">
-          Message
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label htmlFor="message" className="block text-xs text-muted-foreground label-text">
+            Message
+          </label>
+          <span className={cn('text-xs tabular-nums', messageValue.length > MESSAGE_MAX * 0.95 ? 'text-red-500' : 'text-muted')}>
+            {messageValue.length}/{MESSAGE_MAX}
+          </span>
+        </div>
         <textarea
           id="message"
           rows={5}

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
@@ -15,6 +15,8 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const pathname = usePathname()
+  const menuRef = useRef<HTMLUListElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 24)
@@ -24,6 +26,37 @@ export function Header() {
 
   // Close menu on route change
   useEffect(() => { setMenuOpen(false) }, [pathname])
+
+  // Move focus into/out of menu and trap Tab while open
+  useEffect(() => {
+    if (menuOpen) {
+      const first = menuRef.current?.querySelector<HTMLElement>('a, button')
+      first?.focus()
+    } else {
+      triggerRef.current?.focus()
+    }
+  }, [menuOpen])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setMenuOpen(false); return }
+      if (e.key !== 'Tab') return
+      const focusable = Array.from(
+        menuRef.current?.querySelectorAll<HTMLElement>('a, button') ?? [],
+      )
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault(); last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus()
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [menuOpen])
 
   return (
     <header
@@ -76,12 +109,13 @@ export function Header() {
 
         {/* Mobile menu button */}
         <button
+          ref={triggerRef}
           onClick={() => setMenuOpen((v) => !v)}
           className="md:hidden p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors"
           aria-expanded={menuOpen}
-          aria-label="Toggle menu"
+          aria-controls="mobile-menu"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
         >
-          <span className="sr-only">{menuOpen ? 'Close menu' : 'Open menu'}</span>
           <svg
             width="20"
             height="20"
@@ -111,13 +145,14 @@ export function Header() {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
+            id="mobile-menu"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="md:hidden overflow-hidden bg-background border-b border-border"
           >
-            <ul className="flex flex-col px-6 py-4 gap-4" role="list">
+            <ul ref={menuRef} className="flex flex-col px-6 py-4 gap-4" role="list">
               {navLinks.map(({ href, label }) => (
                 <li key={href}>
                   <Link

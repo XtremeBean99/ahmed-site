@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { SectionReveal } from '@/components/ui/SectionReveal'
 
 const placeholderProjects = [
@@ -15,22 +14,14 @@ export function ProjectsPreview() {
     >
       <div className="max-w-container mx-auto px-6">
         <SectionReveal>
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-16">
-            <div>
-              <p className="label-text mb-6">Projects</p>
-              <h2
-                id="projects-heading"
-                className="font-serif text-4xl md:text-5xl font-bold text-foreground text-balance max-w-lg"
-              >
-                Work in progress.
-              </h2>
-            </div>
-            <Link
-              href="/projects"
-              className="shrink-0 text-sm text-muted-foreground hover:text-foreground transition-colors border-b border-transparent hover:border-muted-foreground pb-0.5"
+          <div className="mb-16">
+            <p className="label-text mb-6">Projects</p>
+            <h2
+              id="projects-heading"
+              className="font-serif text-4xl md:text-5xl font-bold text-foreground text-balance max-w-lg"
             >
-              View all →
-            </Link>
+              Work in progress.
+            </h2>
           </div>
         </SectionReveal>
 

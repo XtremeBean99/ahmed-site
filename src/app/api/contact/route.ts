@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
   const ip =
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     request.headers.get('x-real-ip') ||
-    'unknown'
+    '127.0.0.1'
 
   let body: unknown
   try {
@@ -30,14 +30,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   }
 
-  const result = await submitContact({ name, email, subject, message, ip })
+  try {
+    const result = await submitContact({ name, email, subject, message, ip })
 
-  if ('rateLimited' in result) {
+    if ('rateLimited' in result) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again in about an hour.' },
+        { status: 429 },
+      )
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error('[contact] Submission failed:', err instanceof Error ? err.message : 'unknown')
     return NextResponse.json(
-      { error: 'Too many requests. Please try again later.' },
-      { status: 429 },
+      { error: 'Unable to process your message right now. Please try again later.' },
+      { status: 500 },
     )
   }
-
-  return NextResponse.json({ success: true })
 }

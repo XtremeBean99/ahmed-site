@@ -98,11 +98,25 @@ export function Hero() {
         transition={{ delay: 1.4, duration: 0.6 }}
         className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
       >
-        <motion.span
-          animate={{ y: [0, 6, 0] }}
-          transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
-          className="block w-px h-8 bg-gradient-to-b from-border to-transparent"
-        />
+        <motion.div
+          className="flex flex-col items-center gap-2"
+          animate={{ y: [0, 5, 0] }}
+          transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+        >
+          <span className="label-text">Scroll</span>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            className="text-muted-foreground"
+            aria-hidden
+          >
+            <path d="M2 4.5l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </motion.div>
       </motion.div>
     </section>
   )

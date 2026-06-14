@@ -3,8 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Direct (unpooled) connection used only by Prisma CLI for db push / migrate.
+  // The Neon Vercel integration provides DATABASE_URL_UNPOOLED. Not used at runtime.
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model ContactSubmission {

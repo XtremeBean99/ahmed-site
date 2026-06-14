@@ -16,11 +16,6 @@ Vercel project: `ahmed-site` (ID: `prj_lF32Zp1qlFEKH7XzEW3yUdddQm61`)
 
 ## Critical Constraints
 
-### 1. No frontend code reuse from git history
-The git history contains a previous Next.js build (commits before `fdc7d2c`). The user explicitly
-instructed that **no frontend code from those commits may be reused**. Backend logic (Prisma schema
-patterns, rate limiting approach, Resend integration) was used as reference only. Always write
-fresh frontend components.
 
 ### 2. Design must remain strictly monochrome
 The design uses zinc-950 (`#09090b`) background, white text, zinc-800 borders. No colour accents.

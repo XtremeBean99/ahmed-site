@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion'
+import { motion, useScroll, useTransform, useSpring, useReducedMotion } from 'framer-motion'
 import Image from 'next/image'
 import { useRef } from 'react'
 
@@ -17,8 +17,10 @@ export function ParallaxImage({ src, alt, className }: ParallaxImageProps) {
     offset: ['start end', 'end start'],
   })
 
+  const reduce = useReducedMotion()
   const rawY = useTransform(scrollYProgress, [0, 1], ['-8%', '8%'])
-  const y = useSpring(rawY, { stiffness: 80, damping: 25 })
+  const springY = useSpring(rawY, { stiffness: 80, damping: 25 })
+  const y = reduce ? '0%' : springY
 
   return (
     <div ref={ref} className={`relative overflow-hidden ${className ?? ''}`}>

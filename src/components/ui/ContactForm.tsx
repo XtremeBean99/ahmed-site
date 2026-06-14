@@ -94,7 +94,7 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="relative space-y-5">
-      {/* Honeypot — hidden from real users, filled in by bots */}
+      {/* Honeypot - hidden from real users, filled in by bots */}
       <input
         {...register('website')}
         type="text"

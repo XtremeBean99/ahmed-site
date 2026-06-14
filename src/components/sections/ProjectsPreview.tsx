@@ -1,8 +1,8 @@
 import { SectionReveal } from '@/components/ui/SectionReveal'
 
 const placeholderProjects = [
-  { label: 'Software', title: 'In Development', description: 'A project at the intersection of law and technology. Details to follow.' },
-  { label: 'Research', title: 'In Development', description: 'Empirical and doctrinal work on AI governance. More soon.' },
+  { label: 'Software', title: 'In Development', description: 'An applied project bringing together law and software. I will publish it here once it is ready to share.' },
+  { label: 'Research', title: 'In Development', description: 'Empirical and doctrinal work on AI governance. I will share it here as it develops.' },
 ]
 
 export function ProjectsPreview() {

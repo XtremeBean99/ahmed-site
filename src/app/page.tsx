@@ -8,9 +8,9 @@ import { ProjectsPreview } from '@/components/sections/ProjectsPreview'
 import { ContactSection } from '@/components/sections/ContactSection'
 
 export const metadata: Metadata = {
-  title: 'Ahmed Hussain — Law, Computing & Technology',
+  title: 'Ahmed Hussain · Law, Computing & Technology',
   description:
-    'Personal website of Ahmed Hussain — BCom / LLB(Hons) candidate at ANU, Canberra. Operating at the intersection of law, computing, and artificial intelligence.',
+    'Personal website of Ahmed Hussain, a BCom / LLB(Hons) candidate at ANU in Canberra, working where law meets computing and the governance of artificial intelligence.',
   alternates: { canonical: 'https://ahmedyhussain.com' },
 }
 

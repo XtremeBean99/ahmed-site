@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
   const { name, email, subject, message, website } = parsed.data
 
-  // Honeypot — silently succeed to confuse bots
+  // Honeypot - silently succeed to confuse bots
   if (website && website.length > 0) {
     return NextResponse.json({ success: true })
   }
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, emailDelivered: result.emailDelivered })
   } catch (err) {
     console.error('[contact] Submission failed:', err instanceof Error ? err.message : 'unknown')
     return NextResponse.json(

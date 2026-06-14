@@ -23,11 +23,11 @@ const baseUrl = 'https://ahmedyhussain.com'
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: 'Ahmed Hussain — Law, Computing & Technology',
+    default: 'Ahmed Hussain · Law, Computing & Technology',
     template: '%s | Ahmed Hussain',
   },
   description:
-    'Personal website of Ahmed Hussain — BCom / LLB(Hons) candidate at the Australian National University. Operating at the intersection of law, computing, and artificial intelligence.',
+    'Personal website of Ahmed Hussain, a BCom / LLB(Hons) candidate at the Australian National University, working where law meets computing and the governance of artificial intelligence.',
   keywords: [
     'Ahmed Hussain',
     'Canberra tutor',
@@ -45,15 +45,15 @@ export const metadata: Metadata = {
     locale: 'en_AU',
     url: baseUrl,
     siteName: 'Ahmed Hussain',
-    title: 'Ahmed Hussain — Law, Computing & Technology',
+    title: 'Ahmed Hussain · Law, Computing & Technology',
     description:
-      'BCom / LLB(Hons) candidate at ANU. At the intersection of law, computing, and artificial intelligence.',
+      'BCom / LLB(Hons) candidate at ANU, working where law meets computing and the governance of AI.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Ahmed Hussain — Law, Computing & Technology',
+    title: 'Ahmed Hussain · Law, Computing & Technology',
     description:
-      'BCom / LLB(Hons) candidate at ANU. At the intersection of law, computing, and artificial intelligence.',
+      'BCom / LLB(Hons) candidate at ANU, working where law meets computing and the governance of AI.',
   },
   alternates: { canonical: baseUrl },
   robots: {

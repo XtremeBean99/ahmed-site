@@ -75,7 +75,7 @@ export function Header() {
         <Link
           href="/"
           className="font-serif text-lg font-semibold text-foreground hover:text-muted-foreground transition-colors"
-          aria-label="Ahmed Hussain — home"
+          aria-label="Ahmed Hussain, home"
         >
           Ahmed Hussain
         </Link>

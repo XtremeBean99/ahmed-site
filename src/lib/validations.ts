@@ -22,7 +22,7 @@ export const contactSchema = z.object({
     .min(10, 'Message must be at least 10 characters')
     .max(5000, 'Message must be under 5000 characters')
     .trim(),
-  // Honeypot — must remain empty; bots fill it in
+  // Honeypot - must remain empty; bots fill it in
   website: z.string().max(0, 'Bot detected').optional(),
 })
 

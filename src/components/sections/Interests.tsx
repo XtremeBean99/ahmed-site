@@ -7,7 +7,7 @@ const interests = [
   },
   {
     title: 'Software Engineering',
-    description: 'Building reliable, well-architected systems — with an emphasis on correctness and clarity.',
+    description: 'Building systems that are reliable and easy to reason about, with care taken over correctness and clarity.',
   },
   {
     title: 'Cybersecurity',
@@ -27,7 +27,7 @@ const interests = [
   },
   {
     title: 'Technology Policy',
-    description: 'How governments legislate technology — and whether existing frameworks are adequate.',
+    description: 'How governments legislate technology, and whether the rules we already have are fit for it.',
   },
   {
     title: 'Research',

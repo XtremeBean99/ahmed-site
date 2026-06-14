@@ -5,7 +5,7 @@ import { ContactForm } from '@/components/ui/ContactForm'
 export const metadata: Metadata = {
   title: 'Tutoring',
   description:
-    'Private tutoring by Ahmed Hussain in Canberra — Years 7–12. Physics, Mathematics, English, Legal Studies and more. Online $50/hr, in-person $60/hr.',
+    'Private tutoring by Ahmed Hussain in Canberra. Years 7–12. Physics, Mathematics, English, Legal Studies and more. Online $50/hr, in-person $60/hr.',
   keywords: [
     'Canberra tutor',
     'private tutor Canberra',
@@ -68,8 +68,8 @@ export default function TutoringPage() {
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mb-4">
             I offer one-on-one tutoring for secondary school students in Canberra. My approach
-            emphasises understanding over memorisation — building the kind of structured thinking that
-            serves well in examinations and beyond.
+            puts understanding ahead of memorisation. The aim is to build the kind of structured thinking that
+            holds up in exams and well after them.
           </p>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mb-16">
             Sessions are available online and in person at the ANU campus or nearby locations.

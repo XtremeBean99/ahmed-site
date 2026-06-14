@@ -42,8 +42,8 @@ export default function TermsPage() {
                 2. Intellectual Property
               </h2>
               <p>
-                All content on this Site — including but not limited to text, design, layout,
-                graphics, and code — is the intellectual property of Ahmed Hussain and is protected
+                All content on this Site, including but not limited to text, design, layout,
+                graphics, and code, is the intellectual property of Ahmed Hussain and is protected
                 by Australian and international copyright law.
               </p>
               <p className="mt-4">

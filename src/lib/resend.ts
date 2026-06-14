@@ -28,7 +28,7 @@ export async function sendContactEmail(payload: ContactEmailPayload) {
   const { name, email, subject, message } = payload
   const resend = getResend()
 
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: FROM,
     to: TO,
     replyTo: email,
@@ -41,4 +41,11 @@ export async function sendContactEmail(payload: ContactEmailPayload) {
       message,
     ].join('\n'),
   })
+
+  // Resend reports API errors (e.g. an unverified sending domain) in the
+  // response body rather than by throwing. Surface them so the caller knows
+  // the email did not actually go out.
+  if (error) {
+    throw new Error(`Resend delivery failed: ${error.message ?? 'unknown error'}`)
+  }
 }

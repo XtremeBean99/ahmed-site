@@ -24,25 +24,25 @@ export function About() {
             <SectionReveal delay={0.1}>
               <p className="text-muted-foreground text-lg leading-relaxed mb-6">
                 I am a dual-degree student at the Australian National University pursuing a Bachelor
-                of Computing alongside a Bachelor of Laws (Honours). My academic work is oriented
-                toward the governance of emerging technologies — particularly the legal and ethical
+                of Computing alongside a Bachelor of Laws (Honours). My academic interest sits in
+                how we govern new technology, and in particular the legal and ethical
                 dimensions of artificial intelligence.
               </p>
             </SectionReveal>
 
             <SectionReveal delay={0.2}>
               <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-                I am interested in how legal systems adapt to rapid technological change, and in
-                building technical skills that allow me to engage with these questions from first
-                principles rather than abstraction. Cybersecurity, privacy, and digital governance
+                I am interested in how legal systems keep pace with fast technological change. I am
+                also building the technical skills to engage with these questions directly, rather
+                than at arm&rsquo;s length. Cybersecurity, privacy, and digital governance
                 are areas I follow closely.
               </p>
             </SectionReveal>
 
             <SectionReveal delay={0.25}>
               <p className="text-muted-foreground text-lg leading-relaxed">
-                Outside of study, I tutor senior secondary students in mathematics, physics, English,
-                and legal studies — subjects I find reward a disciplined, structured approach.
+                Outside of study I tutor senior secondary students in mathematics, physics, English,
+                and legal studies. They are subjects that reward a patient, structured approach, which is the way I like to teach.
               </p>
             </SectionReveal>
           </div>
@@ -51,7 +51,7 @@ export function About() {
           <SectionReveal delay={0.15} className="hidden md:block">
             <ParallaxImage
               src="/lawyer.jpg"
-              alt="A lawyer reviewing documents — representing the legal practice context"
+              alt="Legal documents and a desk, representing legal study and practice"
               className="h-[520px] rounded-lg"
             />
           </SectionReveal>

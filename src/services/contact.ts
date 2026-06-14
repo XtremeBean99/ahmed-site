@@ -35,12 +35,21 @@ export async function submitContact(payload: SubmitContactPayload) {
     data: { name, email, subject, message, ipHash },
   })
 
-  // Fire notification email — failure is non-fatal to the user response
+  // Fire notification email. Failure is non-fatal to the visitor response
+  // because the submission is already saved above, so the enquiry is never
+  // lost. A failure is logged loudly so it is not silently missed.
+  let emailDelivered = true
   try {
     await sendContactEmail({ name, email, subject, message })
   } catch (err) {
-    console.error('[contact] Email delivery failed:', err instanceof Error ? err.message : 'unknown')
+    emailDelivered = false
+    console.error(
+      '[contact] EMAIL DELIVERY FAILED. The submission was saved to the database but the ' +
+        'notification email was not sent. Verify RESEND_API_KEY and that the sending domain ' +
+        'is verified at resend.com/domains. Reason:',
+      err instanceof Error ? err.message : 'unknown',
+    )
   }
 
-  return { success: true } as const
+  return { success: true, emailDelivered } as const
 }

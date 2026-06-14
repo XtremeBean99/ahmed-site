@@ -20,8 +20,8 @@ export function ContactSection() {
             </SectionReveal>
             <SectionReveal delay={0.1}>
               <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-                Whether you have a question about tutoring, want to discuss legal technology, or simply
-                want to connect — I am happy to hear from you.
+                Whether you have a question about tutoring, want to talk about legal technology, or just
+                want to connect, I would be glad to hear from you.
               </p>
               <ul className="space-y-3 text-sm text-muted-foreground" role="list">
                 <li className="flex items-center gap-3">

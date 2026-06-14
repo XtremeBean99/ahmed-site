@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 
 const container = {
@@ -16,6 +16,8 @@ const item = {
 }
 
 export function Hero() {
+  const reduce = useReducedMotion()
+
   return (
     <section
       aria-label="Introduction"
@@ -30,7 +32,7 @@ export function Hero() {
       <div className="relative max-w-container mx-auto px-6 pt-32 pb-24">
         <motion.div
           variants={container}
-          initial="hidden"
+          initial={reduce ? false : 'hidden'}
           animate="show"
           className="max-w-2xl"
         >
@@ -60,7 +62,7 @@ export function Hero() {
             variants={item}
             className="font-sans text-lg md:text-xl text-muted-foreground leading-relaxed mb-12 max-w-xl"
           >
-            At the intersection of law, computing,&nbsp;and artificial intelligence.
+            I work where law meets computing, with a focus on how we govern artificial intelligence.
           </motion.p>
 
           {/* CTAs */}
@@ -100,8 +102,8 @@ export function Hero() {
       >
         <motion.div
           className="flex flex-col items-center gap-2"
-          animate={{ y: [0, 5, 0] }}
-          transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+          animate={reduce ? {} : { y: [0, 5, 0] }}
+          transition={reduce ? undefined : { repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
         >
           <span className="label-text">Scroll</span>
           <svg

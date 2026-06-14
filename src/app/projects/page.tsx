@@ -5,7 +5,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'Projects',
   description:
-    'Projects by Ahmed Hussain — software and research work at the intersection of law and technology.',
+    'Projects by Ahmed Hussain. Software and research work where law meets technology.',
   alternates: { canonical: 'https://ahmedyhussain.com/projects' },
 }
 

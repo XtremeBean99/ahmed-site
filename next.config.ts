@@ -27,6 +27,9 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  // ESLint and TS are checked in pre-commit / CI; skip during Vercel build to avoid
+  // ESLint v9 flat-config / legacy .eslintrc.json compatibility issues in cloud env.
+  eslint: { ignoreDuringBuilds: true },
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],

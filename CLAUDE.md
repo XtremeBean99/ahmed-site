@@ -84,6 +84,12 @@ Models in use today:
 Pre-built for future use (no data yet):
 - `Project`, `Article`, `NewsletterSubscriber`, `TutoringEnquiry`
 
+**Critical for Vercel deploys:** `package.json` has a `"postinstall": "prisma generate"` script.
+This runs automatically after `npm install` on Vercel and regenerates the Prisma client types.
+Without it, the build fails with `Property 'X' does not exist on type 'PrismaClient'` because
+the generated client in `node_modules/@prisma/client` isn't committed to git.
+Do not remove the postinstall script.
+
 To push schema changes:
 ```bash
 npx prisma db push           # dev — no migration history

@@ -1,40 +1,60 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SectionReveal } from '@/components/ui/SectionReveal'
-import { CircuitMesh } from '@/components/ui/CircuitMesh'
-import { StatCounters, type Stat } from '@/components/projects/StatCounters'
-import { CaseList } from '@/components/projects/CaseList'
-import { claimCounts, lastUpdated, litigation, trackerStats } from '@/lib/litigation/data'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { trackerStats } from '@/lib/litigation/data'
 
 export const metadata: Metadata = {
   title: 'Projects',
   description:
-    'AI & Cyber Litigation Tracker — a curated, source-cited dataset of artificial intelligence and data-protection cases, by Ahmed Hussain.',
+    'Selected work by Ahmed Hussain — the AI & Cyber Litigation Tracker, open-source code, and an interactive 3D look at silicon.',
   alternates: { canonical: 'https://ahmedyhussain.com/projects' },
 }
 
-const updatedLabel = new Date(lastUpdated).toLocaleDateString('en-AU', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-})
+type ProjectCard = {
+  label: string
+  title: string
+  description: string
+  href?: string // present = clickable; absent = "in progress"
+}
 
-const counters: Stat[] = [
-  { label: 'Cases tracked', value: trackerStats.total },
-  { label: 'Active matters', value: trackerStats.active },
-  { label: 'Companies named', value: trackerStats.defendants },
-  { label: 'Resolved', value: trackerStats.resolved },
+const projects: ProjectCard[] = [
+  {
+    label: `Live tracker · ${trackerStats.total} cases`,
+    title: 'AI & Cyber Litigation Tracker',
+    description:
+      'A curated, source-cited dataset of AI, copyright and data-protection disputes, each record verified against its primary court docket.',
+    href: '/projects/litigation-tracker',
+  },
+  {
+    label: 'Open source',
+    title: 'Code & open source',
+    description:
+      'Public repositories pulled live from GitHub — the software side of my law-and-computing work.',
+    href: '/projects/code',
+  },
+  {
+    label: 'Interactive',
+    title: 'Silicon — from atom to architecture',
+    description:
+      'An interactive 3D model of a silicon atom, with an explainer on how its four valence electrons end up running every computer.',
+    href: '/projects/silicon',
+  },
+  {
+    label: 'Research',
+    title: 'In development',
+    description:
+      'Empirical and doctrinal work on AI governance. I will publish it here as it develops.',
+    // no href → renders the "coming soon" treatment
+  },
 ]
 
-const claimBreakdown = Object.entries(claimCounts).sort((a, b) => b[1] - a[1])
-
-const webpageSchema = {
+const collectionSchema = {
   '@context': 'https://schema.org',
   '@type': 'CollectionPage',
-  name: 'AI & Cyber Litigation Tracker',
+  name: 'Projects — Ahmed Hussain',
   description:
-    'A curated, source-cited dataset of artificial intelligence, copyright and data-protection disputes.',
+    'Selected work: the AI & Cyber Litigation Tracker, open-source code, and an interactive 3D look at silicon.',
   url: 'https://ahmedyhussain.com/projects',
   isPartOf: { '@type': 'WebSite', name: 'Ahmed Hussain', url: 'https://ahmedyhussain.com' },
   author: { '@type': 'Person', name: 'Ahmed Hussain' },
@@ -42,87 +62,77 @@ const webpageSchema = {
 
 export default function ProjectsPage() {
   return (
-    <div className="relative pt-32 pb-24">
-      <JsonLd data={webpageSchema} />
-      <CircuitMesh />
-
-      <div className="relative max-w-container mx-auto px-6">
+    <div className="pt-32 pb-24">
+      <JsonLd data={collectionSchema} />
+      <div className="max-w-container mx-auto px-6">
         {/* Header */}
         <SectionReveal>
-          <p className="label-text mb-6">Projects · Live tracker</p>
+          <p className="label-text mb-6">Projects</p>
           <h1 className="font-serif text-5xl md:text-6xl font-bold text-foreground leading-tight mb-6 text-balance max-w-3xl">
-            AI &amp; Cyber Litigation Tracker
+            Selected work.
           </h1>
-          <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mb-4">
-            A curated dataset of artificial intelligence, copyright, privacy and data-protection
-            disputes, each record cited to its primary court source. Built where my law and computing
-            work meet.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Last reviewed {updatedLabel}. Figures describe relief sought unless an award or
-            settlement is noted.
+          <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl">
+            Things I have built where law, computing, and the governance of technology meet —
+            from a live litigation dataset to the physics that runs underneath it all.
           </p>
         </SectionReveal>
 
-        {/* Counters */}
-        <SectionReveal delay={0.1}>
-          <div className="mt-12">
-            <StatCounters stats={counters} />
-          </div>
-        </SectionReveal>
-
-        {/* Claim-type breakdown */}
-        <SectionReveal delay={0.1}>
-          <div className="mt-16">
-            <p className="label-text mb-4">By claim type</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-border border border-border rounded-lg overflow-hidden">
-              {claimBreakdown.map(([claim, count]) => (
-                <div key={claim} className="bg-background px-4 py-5 flex flex-col gap-1">
-                  <span className="font-serif text-2xl font-semibold text-foreground tabular-nums">
-                    {count}
+        {/* Cards */}
+        <div className="mt-16 grid sm:grid-cols-2 gap-6">
+          {projects.map((project, i) => (
+            <SectionReveal key={i} delay={0.08 * i}>
+              {project.href ? (
+                /* Real card — clickable */
+                <Link
+                  href={project.href}
+                  className="group block border border-border rounded-lg p-8 bg-surface hover:border-muted-foreground/50 hover:bg-surface-hover transition-colors h-full flex flex-col justify-between min-h-[220px]"
+                >
+                  <div>
+                    <p className="label-text mb-4">{project.label}</p>
+                    <h2 className="font-serif text-xl font-semibold text-foreground group-hover:text-muted-foreground transition-colors mb-3">
+                      {project.title}
+                    </h2>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {project.description}
+                    </p>
+                  </div>
+                  <span className="mt-6 inline-flex items-center gap-1.5 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                    View project
+                    <svg
+                      className="transition-transform group-hover:translate-x-0.5"
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      aria-hidden
+                    >
+                      <path d="M2 10L10 2M4 2h6v6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </span>
-                  <span className="text-xs text-muted-foreground">{claim}</span>
+                </Link>
+              ) : (
+                /* In-progress card — not clickable, dashed border */
+                <div className="border border-dashed border-border rounded-lg p-8 h-full flex flex-col justify-between min-h-[220px]">
+                  <div>
+                    <p className="label-text mb-4">{project.label}</p>
+                    <h2 className="font-serif text-xl font-semibold text-foreground mb-3">
+                      {project.title}
+                    </h2>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {project.description}
+                    </p>
+                  </div>
+                  <span className="mt-6 inline-flex items-center gap-1.5 text-xs text-muted">
+                    <span className="w-1.5 h-1.5 rounded-full bg-muted animate-pulse inline-block" />
+                    Coming soon
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
-        </SectionReveal>
-
-        {/* Case list */}
-        <SectionReveal delay={0.1}>
-          <div className="mt-20">
-            <h2 className="font-serif text-2xl font-semibold text-foreground mb-2">Case index</h2>
-            <p className="text-sm text-muted-foreground mb-8 max-w-2xl">
-              Filter by claim type or status. Each entry links to its source for verification.
-            </p>
-            <CaseList cases={litigation} />
-          </div>
-        </SectionReveal>
-
-        {/* Methodology / disclaimer */}
-        <SectionReveal delay={0.1}>
-          <div className="mt-20 border-t border-border pt-8 max-w-2xl">
-            <p className="label-text mb-3">Method &amp; limitations</p>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-              Records are compiled from public court filings and reporting, then checked against the
-              primary docket, which for United States federal matters is accessed through
-              CourtListener and the RECAP archive. Relief sought is recorded separately from relief
-              awarded; most matters listed are unresolved, so any monetary figure is a claim, not a
-              finding of liability.
-            </p>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              This page is an information resource, not legal advice, and does not characterise the
-              merits of any party&rsquo;s position. To suggest a correction or a case to add,{' '}
-              <Link
-                href="/#contact"
-                className="text-foreground underline underline-offset-2 hover:no-underline"
-              >
-                get in touch
-              </Link>
-              .
-            </p>
-          </div>
-        </SectionReveal>
+              )}
+            </SectionReveal>
+          ))}
+        </div>
       </div>
     </div>
   )

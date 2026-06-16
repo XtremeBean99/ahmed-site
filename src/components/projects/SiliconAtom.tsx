@@ -45,14 +45,14 @@ function OrbitalRing({
 function Nucleus() {
   const groupRef = useRef<THREE.Group>(null)
 
-  // 14 protons + ~14 neutrons = 28 particles in a tight cluster
+  // 14 protons + ~14 neutrons = 28 particles in a tight, clumped cluster.
+  // Gaussian-ish placement (average of two randoms) biases particles toward the
+  // centre so the nucleus reads as a dense ball rather than a loose scatter.
+  const spread = 0.16
+  const rand = () => ((Math.random() + Math.random()) / 2 - 0.5) * spread
   const particles = Array.from({ length: 28 }, () => ({
-    pos: new THREE.Vector3(
-      (Math.random() - 0.5) * 0.35,
-      (Math.random() - 0.5) * 0.35,
-      (Math.random() - 0.5) * 0.35,
-    ),
-    size: 0.025 + Math.random() * 0.04,
+    pos: new THREE.Vector3(rand(), rand(), rand()),
+    size: 0.03 + Math.random() * 0.035,
   }))
 
   return (

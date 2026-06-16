@@ -4,7 +4,6 @@ import { About } from '@/components/sections/About'
 import { Interests } from '@/components/sections/Interests'
 import { Education } from '@/components/sections/Education'
 import { Skills } from '@/components/sections/Skills'
-import { ProjectsPreview } from '@/components/sections/ProjectsPreview'
 import { ContactSection } from '@/components/sections/ContactSection'
 import { JsonLd } from '@/components/seo/JsonLd'
 
@@ -54,7 +53,6 @@ export default function HomePage() {
       <Interests />
       <Education />
       <Skills />
-      <ProjectsPreview />
       <ContactSection />
     </>
   )

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { SectionReveal } from '@/components/ui/SectionReveal'
+import { CircuitMesh } from '@/components/ui/CircuitMesh'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
@@ -11,8 +12,9 @@ export const metadata: Metadata = {
 
 export default function ProjectsPage() {
   return (
-    <div className="pt-32 pb-24">
-      <div className="max-w-container mx-auto px-6">
+    <div className="relative pt-32 pb-24">
+      <CircuitMesh />
+      <div className="relative max-w-container mx-auto px-6">
 
         {/* Header */}
         <SectionReveal>

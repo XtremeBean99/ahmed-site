@@ -3,15 +3,8 @@ import Link from 'next/link'
 import { SectionReveal } from '@/components/ui/SectionReveal'
 import { CircuitMesh } from '@/components/ui/CircuitMesh'
 import { StatCounters, type Stat } from '@/components/projects/StatCounters'
-import { JurisdictionMap } from '@/components/projects/JurisdictionMap'
 import { CaseList } from '@/components/projects/CaseList'
-import {
-  claimCounts,
-  jurisdictionCounts,
-  lastUpdated,
-  litigation,
-  trackerStats,
-} from '@/lib/litigation/data'
+import { claimCounts, lastUpdated, litigation, trackerStats } from '@/lib/litigation/data'
 
 export const metadata: Metadata = {
   title: 'Projects',
@@ -30,7 +23,7 @@ const counters: Stat[] = [
   { label: 'Cases tracked', value: trackerStats.total },
   { label: 'Active matters', value: trackerStats.active },
   { label: 'Companies named', value: trackerStats.defendants },
-  { label: 'Jurisdictions', value: trackerStats.jurisdictions },
+  { label: 'Resolved', value: trackerStats.resolved },
 ]
 
 const claimBreakdown = Object.entries(claimCounts).sort((a, b) => b[1] - a[1])
@@ -65,25 +58,19 @@ export default function ProjectsPage() {
           </div>
         </SectionReveal>
 
-        {/* Map + claim breakdown */}
+        {/* Claim-type breakdown */}
         <SectionReveal delay={0.1}>
-          <div className="mt-16 grid lg:grid-cols-[1.7fr_1fr] gap-8 items-stretch">
-            <div>
-              <p className="label-text mb-4">By jurisdiction</p>
-              <JurisdictionMap counts={jurisdictionCounts} />
-            </div>
-            <div>
-              <p className="label-text mb-4">By claim type</p>
-              <ul role="list" className="border border-border rounded-lg divide-y divide-border">
-                {claimBreakdown.map(([claim, count]) => (
-                  <li key={claim} className="flex items-center justify-between px-4 py-3">
-                    <span className="text-sm text-muted-foreground">{claim}</span>
-                    <span className="font-serif text-base font-semibold text-foreground tabular-nums">
-                      {count}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+          <div className="mt-16">
+            <p className="label-text mb-4">By claim type</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-border border border-border rounded-lg overflow-hidden">
+              {claimBreakdown.map(([claim, count]) => (
+                <div key={claim} className="bg-background px-4 py-5 flex flex-col gap-1">
+                  <span className="font-serif text-2xl font-semibold text-foreground tabular-nums">
+                    {count}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{claim}</span>
+                </div>
+              ))}
             </div>
           </div>
         </SectionReveal>
@@ -93,8 +80,7 @@ export default function ProjectsPage() {
           <div className="mt-20">
             <h2 className="font-serif text-2xl font-semibold text-foreground mb-2">Case index</h2>
             <p className="text-sm text-muted-foreground mb-8 max-w-2xl">
-              Filter by jurisdiction, claim type or status. Each entry links to its source for
-              verification.
+              Filter by claim type or status. Each entry links to its source for verification.
             </p>
             <CaseList cases={litigation} />
           </div>

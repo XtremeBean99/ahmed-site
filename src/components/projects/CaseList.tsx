@@ -5,10 +5,8 @@ import { cn } from '@/lib/utils'
 import {
   CASE_STATUSES,
   CLAIM_TYPES,
-  JURISDICTIONS,
   type CaseStatus,
   type ClaimType,
-  type Jurisdiction,
   type Litigation,
 } from '@/lib/litigation/types'
 
@@ -52,14 +50,12 @@ function toggle<T>(list: T[], v: T): T[] {
 }
 
 export function CaseList({ cases }: { cases: Litigation[] }) {
-  const [jur, setJur] = useState<Jurisdiction[]>([])
   const [claims, setClaims] = useState<ClaimType[]>([])
   const [statuses, setStatuses] = useState<CaseStatus[]>([])
 
   // only show option chips that actually appear in the data
   const present = useMemo(
     () => ({
-      jur: JURISDICTIONS.filter((j) => cases.some((c) => c.jurisdiction === j)),
       claims: CLAIM_TYPES.filter((t) => cases.some((c) => c.claimTypes.includes(t))),
       statuses: CASE_STATUSES.filter((s) => cases.some((c) => c.status === s)),
     }),
@@ -69,17 +65,15 @@ export function CaseList({ cases }: { cases: Litigation[] }) {
   const filtered = useMemo(
     () =>
       cases.filter((c) => {
-        if (jur.length && !jur.includes(c.jurisdiction)) return false
         if (claims.length && !claims.some((t) => c.claimTypes.includes(t))) return false
         if (statuses.length && !statuses.includes(c.status)) return false
         return true
       }),
-    [cases, jur, claims, statuses]
+    [cases, claims, statuses]
   )
 
-  const anyFilter = jur.length || claims.length || statuses.length
+  const anyFilter = claims.length || statuses.length
   const clearAll = () => {
-    setJur([])
     setClaims([])
     setStatuses([])
   }
@@ -88,13 +82,6 @@ export function CaseList({ cases }: { cases: Litigation[] }) {
     <div>
       {/* Filters */}
       <div className="space-y-4 mb-8">
-        <FilterRow label="Jurisdiction">
-          {present.jur.map((j) => (
-            <Chip key={j} active={jur.includes(j)} onClick={() => setJur((p) => toggle(p, j))}>
-              {j}
-            </Chip>
-          ))}
-        </FilterRow>
         <FilterRow label="Claim">
           {present.claims.map((t) => (
             <Chip key={t} active={claims.includes(t)} onClick={() => setClaims((p) => toggle(p, t))}>

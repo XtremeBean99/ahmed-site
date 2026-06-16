@@ -24,16 +24,18 @@ All responses include the following HTTP security headers (configured in `next.c
 
 ## Anti-Spam Measures
 
-1. **Honeypot field**: A hidden `website` field is included in the form. Legitimate users never see or fill it; bots typically do. Non-empty honeypot silently returns success.
-2. **DB-based rate limiting**: The contact API checks `ContactSubmission` count by hashed IP in the last 60 minutes. Maximum 3 submissions per IP per hour. Enforced in `src/services/contact.ts`.
-3. **IP hashing**: IPs are SHA-256 hashed before storage — the hash cannot be reversed. This gives abuse detection without storing PII.
+1. **Honeypot field**: A hidden `website` field is included in the form. Legitimate users never see or fill it; bots typically do. A non-empty honeypot silently returns success, so the bot believes it worked.
+2. **Server-side validation**: Every submission is re-validated with Zod on the server (see Input Validation); malformed data is rejected with a generic 400.
+
+> Note: request-level rate limiting is not currently implemented. The earlier database-backed rate
+> limit was removed when the contact flow became email-only via Resend. See Future Security Work.
 
 ## Data Protection
 
-- All database queries use Prisma ORM — no raw SQL, no SQL injection surface
-- Parameterised queries by default
-- Secrets (DATABASE_URL, RESEND_API_KEY) via environment variables only — never hardcoded
-- `.env` is in `.gitignore`
+- The site uses no database, so there is no stored personal data and no SQL injection surface
+- Contact submissions are delivered as email via Resend and are not persisted
+- Secrets (e.g. `RESEND_API_KEY`) are provided via environment variables only — never hardcoded
+- `.env*` files are git-ignored
 
 ## Error Handling
 
@@ -46,7 +48,6 @@ All responses include the following HTTP security headers (configured in `next.c
 - `robots.txt` explicitly disallows all major AI training crawlers
 - `X-Robots-Tag: noai, noimageai` on all responses
 - Terms of Use explicitly prohibit scraping and AI training use
-- Rate limiting on all API routes limits bulk data collection
 
 ## Dependency Security
 
@@ -59,4 +60,4 @@ All responses include the following HTTP security headers (configured in `next.c
 - Add Vercel Firewall rules for additional bot blocking
 - Consider Cloudflare Turnstile for the contact form on high-traffic scenarios
 - Implement proper CSP nonces to eliminate `unsafe-inline` for scripts
-- Audit and harden rate limits if abuse is observed
+- Reintroduce request-level rate limiting on the contact endpoint (e.g. via Vercel KV or Upstash) if abuse is observed

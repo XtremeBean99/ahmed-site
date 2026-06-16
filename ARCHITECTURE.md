@@ -8,10 +8,10 @@
 | Language | TypeScript 5 (strict) |
 | Styling | Tailwind CSS 3 |
 | Animation | Framer Motion 11 |
-| ORM | Prisma 6 |
-| Database | PostgreSQL (Neon) |
-| Email | Resend |
+| Email | Resend (contact form) |
 | Forms | React Hook Form + Zod |
+| Tracker data | Typed module in `src/lib/litigation` (no database) |
+| Version control | Git + GitHub |
 | Deployment | Vercel |
 
 ## Directory Structure
@@ -19,61 +19,66 @@
 ```
 src/
 ├── app/                    # Next.js App Router
-│   ├── api/contact/        # Contact form API route
+│   ├── api/contact/        # Contact form API route (validate, honeypot, email)
 │   ├── legal/              # Terms and Privacy pages
-│   ├── projects/           # Projects showcase
+│   ├── projects/           # AI & Cyber Litigation Tracker (flagship)
 │   ├── tutoring/           # Tutoring services page
 │   ├── layout.tsx          # Root layout (fonts, metadata, header/footer)
 │   ├── page.tsx            # Homepage
-│   ├── robots.ts           # robots.txt generation
+│   ├── robots.ts           # robots.txt generation (blocks AI crawlers)
 │   └── sitemap.ts          # sitemap.xml generation
 ├── components/
-│   ├── layout/             # Header, Footer (server + client)
+│   ├── layout/             # Header (client), Footer (server)
+│   ├── projects/           # Tracker UI: StatCounters, CaseList
 │   ├── sections/           # Full-width homepage sections
-│   └── ui/                 # Reusable UI primitives
+│   └── ui/                 # Reusable UI primitives (incl. CircuitMesh)
 ├── lib/
-│   ├── prisma.ts           # Prisma singleton
-│   ├── resend.ts           # Resend client + email helpers
-│   ├── utils.ts            # cn(), hashIP()
+│   ├── litigation/         # Tracker dataset + types (types.ts, data.ts)
+│   ├── resend.ts           # Resend client + email helper (lazy init)
+│   ├── utils.ts            # cn()
 │   └── validations.ts      # Zod schemas
-├── services/
-│   └── contact.ts          # Contact submission business logic
-└── types/                  # Shared TypeScript types (future)
+└── services/
+    └── contact.ts          # Contact submission logic (sends email via Resend)
 
-prisma/
-└── schema.prisma           # Database schema
+scripts/
+└── sync-litigation.ts      # CourtListener review helper (read-only)
 
-public/
-├── lawyer.jpg              # Legal/professional hero image
-└── favicon.svg
+public/                     # Static images and assets
 ```
+
+The site currently uses **no database**. The `src/lib/litigation` dataset is a typed
+module compiled into the build. A database and ORM can be reintroduced later if needed.
 
 ## Data Flow — Contact Form
 
 ```
 Client ContactForm (React Hook Form + Zod)
   → POST /api/contact
-    → contactSchema.safeParse()         server-side Zod validation
-    → honeypot check
+    → contactSchema.safeParse()     server-side Zod validation
+    → honeypot check (hidden `website` field)
     → submitContact() service
-      → DB rate-limit check (count by ipHash in last hour)
-      → prisma.contactSubmission.create()
       → sendContactEmail() via Resend
-    → 200 success / 429 rate-limited / 400 validation error
+    → 200 success / 400 validation error / 500 send failure
   → UI success / error state
 ```
+
+There is no database. The contact form emails directly via Resend; submissions are not stored.
 
 ## Component Architecture
 
 - **Server Components** by default for all pages (zero client JS unless needed)
-- **`'use client'`** only on: Header (scroll state), SectionReveal, ParallaxImage, ContactForm
-- **Section components** are server-side; only animated wrappers are client-side
+- **`'use client'`** only where interactivity is needed: Header (scroll state), SectionReveal,
+  ParallaxImage, ContactForm, and the tracker's StatCounters, CaseList and CircuitMesh
+- **Section components** are server-side; only animated/interactive parts are client-side
 - **Layout** is static — no dynamic data fetched at layout level
 
 ## Future Extension Points
 
-- `Project` and `Article` Prisma models are pre-created for future content
-- `NewsletterSubscriber` model ready for a newsletter feature
-- `TutoringEnquiry` model available for a dedicated tutoring booking flow
-- Service layer (`src/services/`) is isolated from the API layer for easy testing
-- Admin dashboard can be added under `/app/admin/` behind an auth middleware
+- The site currently uses no database. If persistent storage is later needed (newsletter,
+  stored enquiries, an admin dashboard), a database and ORM (e.g. Prisma + Postgres) can be
+  reintroduced behind the existing service layer.
+- The litigation tracker runs on a typed dataset (`src/lib/litigation`). It can later be migrated
+  to a database-backed model and an admin route under `/app/admin/` behind auth middleware.
+- The service layer (`src/services/`) is isolated from the API layer for easy testing.
+- The CourtListener review script (`npm run sync:litigation`) keeps the tracker current; it is
+  read-only and a human verifies updates before they are published.

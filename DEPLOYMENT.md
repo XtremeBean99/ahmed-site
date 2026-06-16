@@ -7,9 +7,8 @@ Domain: `ahmedyhussain.com`
 
 ## Prerequisites
 
-1. A Neon PostgreSQL database (https://neon.tech)
-2. A Resend account with API key (https://resend.com)
-3. Resend sending domain verified for `ahmedyhussain.com`
+1. A Resend account with an API key (https://resend.com)
+2. Resend sending domain verified for `ahmedyhussain.com`
 
 ## Environment Variables
 
@@ -17,9 +16,9 @@ Set the following in Vercel project settings → Environment Variables:
 
 | Variable | Required | Description |
 |---|---|---|
-| `DATABASE_URL` | Yes | Neon PostgreSQL connection string |
 | `RESEND_API_KEY` | Yes | Resend API key for email delivery |
-| `CONTACT_TO_EMAIL` | No | Override notification recipient (defaults to `ahmedyhussain07@gmail.com`) |
+| `CONTACT_TO_EMAIL` | No | Notification recipient (defaults to `ahmedyhussain07@gmail.com`) |
+| `CONTACT_FROM_EMAIL` | No | Sender address; must match a verified Resend domain (defaults to `Ahmed Hussain <noreply@ahmedyhussain.com>`) |
 | `NEXT_PUBLIC_BASE_URL` | No | Base URL (defaults to `https://ahmedyhussain.com`) |
 
 ## First-Time Setup
@@ -30,33 +29,23 @@ npm install
 
 # 2. Copy environment template
 cp .env.example .env.local
-# Fill in real values
+# Fill in real values (Resend API key, etc.)
 
-# 3. Run database migrations
-npx prisma db push
-
-# 4. Generate Prisma client
-npx prisma generate
-
-# 5. Run development server
+# 3. Run development server
 npm run dev
 ```
 
-## Database Migrations
+## Litigation Tracker
 
-For schema changes:
+The `/projects` tracker runs on a typed dataset in `src/lib/litigation` (no database).
+To check tracked US dockets for recent activity:
 ```bash
-# Development: push schema changes without migration history
-npx prisma db push
-
-# Production: create and apply a migration
-npx prisma migrate dev --name describe-the-change
-npx prisma migrate deploy
+npm run sync:litigation   # read-only; prints a review queue from CourtListener
 ```
 
 ## Deploy to Production
 
-Pushing to `main` branch triggers an automatic Vercel production deployment.
+Pushing to the default branch (`master`) triggers an automatic Vercel production deployment.
 
 To deploy manually via CLI:
 ```bash
@@ -75,7 +64,7 @@ npm run build        # Full production build
 ## Post-Deployment Checklist
 
 - [ ] Contact form submits successfully and email arrives
-- [ ] Rate limiting works (submit 4+ times rapidly from same IP)
+- [ ] `/projects` tracker renders, filters work, and case source links open
 - [ ] Security headers visible in browser DevTools → Network → Response headers
 - [ ] robots.txt accessible at `/robots.txt`
 - [ ] sitemap.xml accessible at `/sitemap.xml`

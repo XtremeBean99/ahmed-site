@@ -43,7 +43,7 @@ src/
 ├── app/                   Next.js App Router pages + API routes
 │   ├── api/contact/       POST handler — validate, rate-limit, store, email
 │   ├── legal/             Terms + Privacy pages
-│   ├── projects/          Coming-soon scaffold
+│   ├── projects/          AI & Cyber Litigation Tracker (flagship)
 │   ├── tutoring/          Full tutoring page (services, pricing, FAQ, form)
 │   └── page.tsx           Homepage (7 sections, all static)
 │
@@ -213,8 +213,18 @@ npm run build        # full production build
 - **Admin dashboard** — intentionally deferred. Infrastructure (Prisma models, service layer,
   clean separation) is ready for it. When building, add under `/app/admin/` with a
   middleware-based auth guard.
-- **Projects content** — the `/projects` page is a coming-soon scaffold. Real projects go into
-  the `Project` Prisma model and a new `src/app/projects/[slug]/page.tsx` route.
+- **Projects content** — the `/projects` page is the **AI & Cyber Litigation Tracker**, the
+  flagship project. It runs on a self-owned typed dataset (no DB), not the `Project` Prisma model.
+  - Data + types: `src/lib/litigation/` (`types.ts`, `data.ts`). `data.ts` is a curated,
+    source-cited seed; each record has a `source` link and a `lastReviewed` date. Relief is split
+    into `claimed` vs `awarded` — never merge them into one "damages" figure.
+  - UI: `src/components/projects/` (`StatCounters`, `JurisdictionMap`, `CaseList`). Server-rendered
+    except the counters and the filterable case list, which are client components.
+  - Backdrop: `src/components/ui/CircuitMesh.tsx`, a dependency-free canvas mesh scoped to this page.
+  - Currency: `npm run sync:litigation` (`scripts/sync-litigation.ts`) queries the free
+    CourtListener API and prints a review queue of dockets with activity since `lastReviewed`. It is
+    read-only by design — a human verifies and updates the dataset before anything is published.
+  - To add or correct a case, edit `src/lib/litigation/data.ts` and bump its `lastReviewed`.
 - **Newsletter** — `NewsletterSubscriber` model exists. Needs a signup form and Resend audience.
 - **Blog/Articles** — `Article` model exists. Needs a Markdown renderer (consider `next-mdx-remote`
   or `@next/mdx`).

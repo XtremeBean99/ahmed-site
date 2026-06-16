@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SectionReveal } from '@/components/ui/SectionReveal'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { MotionCard } from '@/components/ui/MotionCard'
 
 export const metadata: Metadata = {
   title: 'Games',
@@ -64,10 +65,11 @@ export default function GamesPage() {
         <div className="mt-16 grid sm:grid-cols-2 gap-6">
           {games.map((game, i) => (
             <SectionReveal key={game.href} delay={0.08 * i}>
-              <Link
-                href={game.href}
-                className="group block border border-border rounded-lg p-8 bg-surface hover:border-muted-foreground/50 hover:bg-surface-hover transition-colors h-full flex flex-col justify-between min-h-[220px]"
-              >
+              <MotionCard>
+                <Link
+                  href={game.href}
+                  className="group block border border-border rounded-lg p-8 bg-surface hover:border-muted-foreground/50 hover:bg-surface-hover transition-colors h-full flex flex-col justify-between min-h-[220px]"
+                >
                 <div>
                   <p className="label-text mb-4">{game.label}</p>
                   <h2 className="font-serif text-xl font-semibold text-foreground group-hover:text-muted-foreground transition-colors mb-3">
@@ -91,6 +93,7 @@ export default function GamesPage() {
                   </svg>
                 </span>
               </Link>
+              </MotionCard>
             </SectionReveal>
           ))}
         </div>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SectionReveal } from '@/components/ui/SectionReveal'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { MotionCard } from '@/components/ui/MotionCard'
 import { trackerStats } from '@/lib/litigation/data'
 
 export const metadata: Metadata = {
@@ -83,35 +84,37 @@ export default function ProjectsPage() {
             <SectionReveal key={i} delay={0.08 * i}>
               {project.href ? (
                 /* Real card (clickable) */
-                <Link
-                  href={project.href}
-                  className="group block border border-border rounded-lg p-8 bg-surface hover:border-muted-foreground/50 hover:bg-surface-hover transition-colors h-full flex flex-col justify-between min-h-[220px]"
-                >
-                  <div>
-                    <p className="label-text mb-4">{project.label}</p>
-                    <h2 className="font-serif text-xl font-semibold text-foreground group-hover:text-muted-foreground transition-colors mb-3">
-                      {project.title}
-                    </h2>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {project.description}
-                    </p>
-                  </div>
-                  <span className="mt-6 inline-flex items-center gap-1.5 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
-                    View project
-                    <svg
-                      className="transition-transform group-hover:translate-x-0.5"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      aria-hidden
-                    >
-                      <path d="M2 10L10 2M4 2h6v6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                </Link>
+                <MotionCard>
+                  <Link
+                    href={project.href}
+                    className="group block border border-border rounded-lg p-8 bg-surface hover:border-muted-foreground/50 hover:bg-surface-hover transition-colors h-full flex flex-col justify-between min-h-[220px]"
+                  >
+                    <div>
+                      <p className="label-text mb-4">{project.label}</p>
+                      <h2 className="font-serif text-xl font-semibold text-foreground group-hover:text-muted-foreground transition-colors mb-3">
+                        {project.title}
+                      </h2>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {project.description}
+                      </p>
+                    </div>
+                    <span className="mt-6 inline-flex items-center gap-1.5 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                      View project
+                      <svg
+                        className="transition-transform group-hover:translate-x-0.5"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        aria-hidden
+                      >
+                        <path d="M2 10L10 2M4 2h6v6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  </Link>
+                </MotionCard>
               ) : (
                 /* In-progress card: not clickable, dashed border */
                 <div className="border border-dashed border-border rounded-lg p-8 h-full flex flex-col justify-between min-h-[220px]">

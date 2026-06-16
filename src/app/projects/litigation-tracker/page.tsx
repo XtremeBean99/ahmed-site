@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SectionReveal } from '@/components/ui/SectionReveal'
-import { CircuitMesh } from '@/components/ui/CircuitMesh'
 import { StatCounters, type Stat } from '@/components/projects/StatCounters'
 import { CaseList } from '@/components/projects/CaseList'
 import { claimCounts, lastUpdated, litigation, trackerStats } from '@/lib/litigation/data'
@@ -44,8 +43,6 @@ export default function LitigationTrackerPage() {
   return (
     <div className="relative pt-32 pb-24">
       <JsonLd data={webpageSchema} />
-      <CircuitMesh />
-
       <div className="relative max-w-container mx-auto px-6">
         {/* Back to projects */}
         <SectionReveal>

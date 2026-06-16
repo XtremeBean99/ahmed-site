@@ -8,31 +8,32 @@ Read this before touching any code.
 ## What This Project Is
 
 A production personal website for **Ahmed Hussain** — BCom/LLB(Hons) candidate at ANU, Canberra.
-Domain: `ahmedyhussain.com`  
-Repo: `https://github.com/XtremeBean99/ahmed-site`  
+Domain: `ahmedyhussain.com`
+Repo: `https://github.com/XtremeBean99/ahmed-site`
 Vercel project: `ahmed-site` (ID: `prj_lF32Zp1qlFEKH7XzEW3yUdddQm61`)
 
 ---
 
 ## Critical Constraints
 
-
-### 2. Design must remain strictly monochrome
+### 1. Design must remain strictly monochrome
 The design uses zinc-950 (`#09090b`) background, white text, zinc-800 borders. No colour accents.
 No gradients except the subtle hero vignette. If you add new UI, match this palette exactly.
 References: Vercel, Linear, Stripe aesthetic. Do not introduce any colour.
 
-### 3. All user input is hostile
-The contact form has server-side Zod validation, a honeypot field, and DB-based rate limiting.
-If you add any new form or API route, apply the same pattern from `src/services/contact.ts`.
-Never skip server-side validation even if client validation exists.
+### 2. All user input is hostile
+The contact form has server-side Zod validation and a honeypot field. If you add any new form or
+API route, apply the same pattern from `src/services/contact.ts`. Never skip server-side validation
+even if client validation exists.
 
-### 4. No raw SQL
-All DB access goes through Prisma ORM. Never write raw SQL strings.
+### 3. No database — site is email-only
+There is **no database** in this project. Contact form submissions are emailed via Resend and are
+not persisted. If you add persistent storage in the future, introduce it behind the existing service
+layer in `src/services/`.
 
-### 5. Secrets via environment variables only
-`DATABASE_URL`, `RESEND_API_KEY`, `CONTACT_TO_EMAIL` are env vars.
-They are never hardcoded. Check `.env.example` for the full list.
+### 4. Secrets via environment variables only
+`RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` are env vars. They are never hardcoded.
+Check `.env.example` for the full list.
 
 ---
 
@@ -41,56 +42,49 @@ They are never hardcoded. Check `.env.example` for the full list.
 ```
 src/
 ├── app/                   Next.js App Router pages + API routes
-│   ├── api/contact/       POST handler — validate, rate-limit, store, email
+│   ├── api/contact/       POST handler — validate, honeypot, email
 │   ├── legal/             Terms + Privacy pages
-│   ├── projects/          AI & Cyber Litigation Tracker (flagship)
+│   ├── projects/          Projects hub + litigation tracker + code + silicon
 │   ├── tutoring/          Full tutoring page (services, pricing, FAQ, form)
 │   └── page.tsx           Homepage (7 sections, all static)
 │
 ├── components/
 │   ├── layout/            Header (client — scroll state), Footer (server)
+│   ├── projects/          Tracker UI: StatCounters, CaseList
 │   ├── sections/          One file per homepage section (server components)
-│   └── ui/                Button, SectionReveal, ParallaxImage, ContactForm
+│   └── ui/                Button, SectionReveal, ParallaxImage, ContactForm,
+│                          CircuitMesh, CyberSigils
 │
 ├── lib/
-│   ├── prisma.ts          Prisma singleton (safe for serverless hot-reload)
+│   ├── github/            GitHub API client for the code page
+│   ├── litigation/        Tracker dataset + types (typed module, no DB)
 │   ├── resend.ts          Lazy Resend client (does NOT init at module load)
-│   ├── validations.ts     Zod schemas — single source of truth for form shapes
-│   └── utils.ts           cn() and hashIP()
+│   ├── utils.ts           cn()
+│   └── validations.ts     Zod schemas — single source of truth for form shapes
 │
 └── services/
-    └── contact.ts         Business logic layer — DB rate-limit + create + email
+    └── contact.ts         Business logic — send contact email via Resend
 ```
 
 **Default to Server Components.** Only add `'use client'` when you need browser APIs,
 React state, or Framer Motion hooks. Current client components: Header, SectionReveal,
-ParallaxImage, ContactForm.
+ParallaxImage, ContactForm, CircuitMesh, StatCounters, CaseList.
 
 ---
 
-## Database
+## CircuitMesh — Site-Wide Animated Background
 
-Provider: **Neon** (serverless PostgreSQL)  
-ORM: **Prisma 6**
+`src/components/ui/CircuitMesh.tsx` is a `'use client'` canvas-based animated circuit mesh with 3D
+perspective projection. It is included in the **root layout** and renders behind all page content as
+a fixed backdrop (`pointer-events-none fixed inset-0 -z-10`).
 
-Models in use today:
-- `ContactSubmission` — stores form submissions, used for rate limiting
+- Strictly monochrome: white strokes/dots at low alpha over zinc-950
+- Self-contained: no external dependencies, no global CSS
+- Respects `prefers-reduced-motion`: renders one static frame, no RAF loop
+- Pauses when the tab is hidden or scrolled out of view (IntersectionObserver)
+- Fades toward edges via a CSS `mask-image` radial gradient
 
-Pre-built for future use (no data yet):
-- `Project`, `Article`, `NewsletterSubscriber`, `TutoringEnquiry`
-
-**Critical for Vercel deploys:** `package.json` has a `"postinstall": "prisma generate"` script.
-This runs automatically after `npm install` on Vercel and regenerates the Prisma client types.
-Without it, the build fails with `Property 'X' does not exist on type 'PrismaClient'` because
-the generated client in `node_modules/@prisma/client` isn't committed to git.
-Do not remove the postinstall script.
-
-To push schema changes:
-```bash
-npx prisma db push           # dev — no migration history
-npx prisma migrate dev       # prod — creates a migration file
-npx prisma migrate deploy    # apply migrations in production
-```
+If you add any other fixed-position backgrounds, ensure they do not conflict with CircuitMesh.
 
 ---
 
@@ -102,16 +96,12 @@ POST /api/contact
   2. contactSchema.safeParse() — Zod, server side
   3. Honeypot check (website field must be empty)
   4. submitContact() in src/services/contact.ts
-     a. hashIP(ip) — SHA-256, never store raw IP
-     b. Count ContactSubmission rows by ipHash in last 1 hour
-     c. If >= 3, return { rateLimited: true }
-     d. prisma.contactSubmission.create()
-     e. sendContactEmail() via Resend (failure is non-fatal)
-  5. Return 200 / 429 / 400
+     a. sendContactEmail() via Resend (throws on failure → 500)
+  5. Return 200 / 400 / 500
 ```
 
-Rate limit is DB-based so it works across Vercel's stateless serverless instances.
-In-memory rate limiting would NOT work on Vercel.
+No database. No rate limiting. No IP logging (despite what the privacy policy says — fix that
+if you touch the legal pages).
 
 ---
 
@@ -138,11 +128,10 @@ All `h1`–`h5` elements default to `font-serif` via `globals.css`. Body text is
 ## Security Headers
 
 Set in `next.config.ts` `headers()` function. Applied to all routes (`source: '/(.*)'`).
-Includes: CSP, HSTS, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy,
-Permissions-Policy, and `X-Robots-Tag: noai, noimageai`.
+Includes: HSTS, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy,
+CSP, and `X-Robots-Tag: noai, noimageai`.
 
-The CSP uses `unsafe-inline` for scripts — this is a known trade-off with Next.js (which inlines
-runtime scripts). To harden further, implement CSP nonces via middleware.
+The CSP uses `unsafe-inline` for scripts — this is a known trade-off with Next.js.
 
 ---
 
@@ -159,9 +148,26 @@ Do not remove these protections.
 
 ## Lawyer Image
 
-`public/lawyer.jpg` — source: `a-lawyer-and-a-client-are-writing-on-a-paper-free-photo.JPG`
-in the parent project directory. Used in `src/components/sections/About.tsx` as a parallax
-element via `ParallaxImage`. Rendered with `grayscale` CSS filter to stay monochrome.
+`public/lawyer.jpg` — used in `src/components/sections/About.tsx` as a parallax element via
+`ParallaxImage`. Rendered with `grayscale` CSS filter to stay monochrome.
+
+---
+
+## Litigation Tracker
+
+`/projects/litigation-tracker` is the flagship project. It runs on a self-owned typed dataset
+(no DB), not an external API.
+
+- Data + types: `src/lib/litigation/` (`types.ts`, `data.ts`). `data.ts` is a curated,
+  source-cited seed; each record has a `source` link and a `lastReviewed` date.
+- Relief is split into `claimed` vs `awarded` — never merge them into one "damages" figure.
+- UI: `src/components/projects/` (`StatCounters`, `CaseList`). Server-rendered except the
+  counters and filterable case list, which are client components. CircuitMesh is now in the
+  root layout so the tracker page no longer imports it directly.
+- Currency: `npm run sync:litigation` (`scripts/sync-litigation.ts`) queries the free
+  CourtListener API and prints a review queue. It is read-only by design — a human verifies
+  and updates the dataset before anything is published.
+- To add or correct a case, edit `src/lib/litigation/data.ts` and bump its `lastReviewed`.
 
 ---
 
@@ -169,10 +175,11 @@ element via `ParallaxImage`. Rendered with `grayscale` CSS filter to stay monoch
 
 | Variable | Required | Where set | Notes |
 |---|---|---|---|
-| `DATABASE_URL` | Yes | Vercel + local `.env.local` | Neon PostgreSQL connection string |
 | `RESEND_API_KEY` | Yes | Vercel + local `.env.local` | Resend API key |
 | `CONTACT_TO_EMAIL` | No | Vercel (optional) | Defaults to `ahmedyhussain07@gmail.com` |
+| `CONTACT_FROM_EMAIL` | No | Vercel (optional) | Defaults to `Ahmed Hussain <noreply@ahmedyhussain.com>` |
 | `NEXT_PUBLIC_BASE_URL` | No | Vercel (optional) | Defaults to `https://ahmedyhussain.com` |
+| `GITHUB_TOKEN` | No | Vercel (optional) | Raises unauthenticated API rate limit for code page |
 
 See `.env.example` for exact format. **Never commit `.env.local` or `.env`.**
 
@@ -195,7 +202,6 @@ Tutoring pricing is in `src/app/tutoring/page.tsx`.
 ### Run locally
 ```bash
 cp .env.example .env.local   # add real values
-npx prisma db push           # first time only
 npm run dev
 ```
 
@@ -210,29 +216,12 @@ npm run build        # full production build
 
 ## What Does Not Exist Yet (and Why)
 
-- **Admin dashboard** — intentionally deferred. Infrastructure (Prisma models, service layer,
-  clean separation) is ready for it. When building, add under `/app/admin/` with a
-  middleware-based auth guard.
-- **Projects content** — the `/projects` page is the **AI & Cyber Litigation Tracker**, the
-  flagship project. It runs on a self-owned typed dataset (no DB), not the `Project` Prisma model.
-  - Data + types: `src/lib/litigation/` (`types.ts`, `data.ts`). `data.ts` is a curated,
-    source-cited seed; each record has a `source` link and a `lastReviewed` date. Relief is split
-    into `claimed` vs `awarded` — never merge them into one "damages" figure.
-  - UI: `src/components/projects/` (`StatCounters`, `JurisdictionMap`, `CaseList`). Server-rendered
-    except the counters and the filterable case list, which are client components.
-  - Backdrop: `src/components/ui/CircuitMesh.tsx`, a dependency-free canvas mesh scoped to this page.
-  - Currency: `npm run sync:litigation` (`scripts/sync-litigation.ts`) queries the free
-    CourtListener API and prints a review queue of dockets with activity since `lastReviewed`. It is
-    read-only by design — a human verifies and updates the dataset before anything is published.
-  - To add or correct a case, edit `src/lib/litigation/data.ts` and bump its `lastReviewed`.
-- **Newsletter** — `NewsletterSubscriber` model exists. Needs a signup form and Resend audience.
-- **Blog/Articles** — `Article` model exists. Needs a Markdown renderer (consider `next-mdx-remote`
-  or `@next/mdx`).
-
----
-
-## Git History Note
-
-Commits before `fdc7d2c` are the old codebase. Commit `43f63f0` (or similar) is this new build.
-Do not cherry-pick or reference the old frontend code. The old backend patterns were used as
-reference for the new implementation.
+- **Admin dashboard** — intentionally deferred. Service layer is ready for it. When building,
+  add under `/app/admin/` with middleware-based auth guard.
+- **Database** — currently no database in the project. Contact form emails directly via Resend.
+  If you add persistent storage (newsletter, stored enquiries, admin), introduce it behind the
+  service layer and use environment variables for the connection string.
+- **Newsletter** — needs a signup form and Resend audience integration.
+- **Blog/Articles** — needs a Markdown renderer (consider `next-mdx-remote` or `@next/mdx`).
+- **Rate limiting** — not currently implemented. If abuse of the contact endpoint is observed,
+  add it via Vercel KV, Upstash, or a database-backed approach.

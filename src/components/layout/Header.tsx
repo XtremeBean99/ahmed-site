@@ -94,21 +94,29 @@ export function Header() {
 
         {/* Desktop nav */}
         <ul className="hidden md:flex items-center gap-8" role="list">
-          {navLinks.map(({ href, label }) => (
-            <li key={href}>
-              <Link
-                href={href}
-                className={cn(
-                  'text-sm transition-colors',
-                  pathname === href
-                    ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-foreground',
+          {navLinks.map(({ href, label }) => {
+            const active = pathname === href
+            return (
+              <li key={href} className="relative">
+                <Link
+                  href={href}
+                  className={cn(
+                    'text-sm transition-colors',
+                    active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {label}
+                </Link>
+                {active && (
+                  <motion.span
+                    layoutId="nav-underline"
+                    className="absolute -bottom-1.5 left-0 right-0 h-px bg-foreground"
+                    transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                  />
                 )}
-              >
-                {label}
-              </Link>
-            </li>
-          ))}
+              </li>
+            )
+          })}
           <li>
             <Link
               href="/#contact"

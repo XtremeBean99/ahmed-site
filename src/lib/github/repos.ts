@@ -12,7 +12,7 @@ export interface Repo {
 const USERNAME = 'XtremeBean99'
 
 /**
- * Public, unauthenticated GitHub REST call. 60 req/hr/IP unauthenticated — fine
+ * Public, unauthenticated GitHub REST call. 60 req/hr/IP unauthenticated, fine
  * with Next's revalidate cache (one upstream call per revalidate window per region).
  * If GITHUB_TOKEN is set we send it to raise the limit; it is optional.
  */
@@ -29,7 +29,7 @@ export async function getRepos(): Promise<Repo[]> {
       next: { revalidate: 3600 }, // refresh hourly
     },
   )
-  if (!res.ok) return [] // degrade gracefully — page still renders
+  if (!res.ok) return [] // degrade gracefully; page still renders
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GitHub REST response shape is loosely typed
   const data = (await res.json()) as Record<string, unknown>[]
   return data

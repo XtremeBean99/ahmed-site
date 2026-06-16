@@ -4,7 +4,7 @@ import { SiliconCanvas } from '@/components/projects/SiliconCanvas'
 import { JsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
-  title: 'Silicon — from atom to architecture',
+  title: 'Silicon: from atom to architecture',
   description:
     'An interactive 3D model of a silicon atom, with an explainer on how its four valence electrons end up running every computer.',
   alternates: { canonical: 'https://ahmedyhussain.com/projects/silicon' },
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 const webpageSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
-  name: 'Silicon — from atom to architecture',
+  name: 'Silicon: from atom to architecture',
   description:
     'An interactive 3D model of a silicon atom, with an explainer on how its four valence electrons end up running every computer.',
   url: 'https://ahmedyhussain.com/projects/silicon',
@@ -30,10 +30,10 @@ export default function SiliconPage() {
         <SectionReveal>
           <p className="label-text mb-6">Projects · Silicon</p>
           <h1 className="font-serif text-5xl md:text-6xl font-bold text-foreground leading-tight mb-6 text-balance max-w-3xl">
-            Silicon — from atom to architecture
+            Silicon: from atom to architecture
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mb-4">
-            An interactive 3D Bohr model of a silicon atom — atomic number 14, with
+            An interactive 3D Bohr model of a silicon atom, atomic number 14, with
             2 electrons in its first shell, 8 in the second, and 4 in the third. Drag
             to rotate, scroll to zoom. It is those four valence electrons that make
             silicon more than just the 14th element: they are the reason every modern
@@ -60,7 +60,7 @@ export default function SiliconPage() {
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-3">
               Silicon sits in group 14 of the periodic table, right below carbon. It has
-              four electrons in its outermost shell — exactly the number needed to form
+              four electrons in its outermost shell, exactly the number needed to form
               four covalent bonds and lock into a stable, repeating crystal lattice. Unlike
               a metal (which conducts electricity freely) or an insulator (which blocks it
               entirely), pure silicon is a <strong className="text-foreground font-medium">semiconductor</strong>:
@@ -69,7 +69,7 @@ export default function SiliconPage() {
             <p className="text-muted-foreground leading-relaxed">
               That in-between behaviour is what makes it controllable. Apply a voltage, and
               it switches from off to on. Remove the voltage, and it switches back. That
-              switch — the binary state — is the physical basis for every logical 1 and 0
+              switch, the binary state, is the physical basis for every logical 1 and 0
               in digital computing.
             </p>
           </SectionReveal>
@@ -89,14 +89,14 @@ export default function SiliconPage() {
               <strong className="text-foreground font-medium">n-type</strong> silicon, which
               has spare electrons ready to move. Add boron (three valence electrons) and you
               get <strong className="text-foreground font-medium">p-type</strong> silicon,
-              which has &ldquo;holes&rdquo; — gaps where an electron is missing — that
+              which has &ldquo;holes&rdquo; (gaps where an electron is missing) that
               behave like positive charge carriers.
             </p>
             <p className="text-muted-foreground leading-relaxed">
               Place a piece of n-type silicon next to a piece of p-type silicon and you have
-              a <strong className="text-foreground font-medium">p–n junction</strong>, the
+              a <strong className="text-foreground font-medium">p-n junction</strong>, the
               building block of the diode. Current flows in one direction and is blocked in
-              the other. Stack three layers — p–n–p or n–p–n — and you have the basis of the
+              the other. Stack three layers, p-n-p or n-p-n, and you have the basis of the
               transistor.
             </p>
           </SectionReveal>
@@ -107,18 +107,18 @@ export default function SiliconPage() {
               The transistor
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-3">
-              The modern transistor — the{' '}
+              The modern transistor, the{' '}
               <strong className="text-foreground font-medium">MOSFET</strong>{' '}
-              (Metal-Oxide-Semiconductor Field-Effect Transistor) — is a voltage-controlled
+              (Metal-Oxide-Semiconductor Field-Effect Transistor), is a voltage-controlled
               switch. A small voltage applied to the &ldquo;gate&rdquo; terminal creates an
               electric field that opens or closes a conductive channel between the
               &ldquo;source&rdquo; and &ldquo;drain.&rdquo; No mechanical parts, no moving
-              pieces — just a field and a semiconductor channel.
+              pieces, just a field and a semiconductor channel.
             </p>
             <p className="text-muted-foreground leading-relaxed">
               A single modern CPU contains billions of these switches, fabricated at a scale
               measured in nanometres. Each one flips on and off billions of times per second.
-              Those on/off states — aggregated across billions of transistors — are the 1s
+              Those on/off states, aggregated across billions of transistors, are the 1s
               and 0s of digital logic. Every line of code you write eventually resolves to
               voltages across MOSFET gates.
             </p>
@@ -138,14 +138,14 @@ export default function SiliconPage() {
               <li>
                 <strong className="text-foreground font-medium">Refinement.</strong>{' '}
                 Quartz (silicon dioxide, SiO₂) is reduced with carbon in an arc furnace to
-                produce metallurgical-grade silicon, then further purified to electronic-grade
-                — 99.9999999% pure.
+                produce metallurgical-grade silicon, then further purified to electronic-grade:
+                99.9999999% pure.
               </li>
               <li>
                 <strong className="text-foreground font-medium">Crystal growth.</strong>{' '}
                 The{' '}
                 <strong className="text-foreground font-medium">Czochralski process</strong>{' '}
-                draws a single-crystal ingot from a melt — a flawless cylinder of silicon
+                draws a single-crystal ingot from a melt: a flawless cylinder of silicon
                 atoms in a perfect lattice, up to 300 mm across and a metre long.
               </li>
               <li>
@@ -162,7 +162,7 @@ export default function SiliconPage() {
               <li>
                 <strong className="text-foreground font-medium">Packaging.</strong> The
                 finished die is cut from the wafer, bonded to a substrate, and sealed in a
-                package with electrical contacts — the black rectangle we recognise as a
+                package with electrical contacts, the black rectangle we recognise as a
                 chip.
               </li>
             </ul>
@@ -174,7 +174,7 @@ export default function SiliconPage() {
               <p className="label-text mb-3">Why this matters here</p>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Every question of AI governance, every cybersecurity regulation, every
-                dispute over data sovereignty — they all ultimately run on this physical
+                dispute over data sovereignty: they all ultimately run on this physical
                 substrate. A silicon atom, doped and patterned, switches on and off a
                 few billion times a second. Understanding that layer, however briefly, is
                 part of understanding the law that will govern it.

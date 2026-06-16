@@ -18,7 +18,7 @@ function formatDate(iso: string): string {
   })
 }
 
-/** A single repo card — monochrome, no language colour swatches. */
+/** A single repo card: monochrome, no language colour swatches. */
 function RepoCard({ repo }: { repo: Repo }) {
   return (
     <a
@@ -74,7 +74,7 @@ export default async function CodeProjectsPage() {
             Code &amp; open source
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mb-4">
-            Public repositories pulled live from GitHub — the software side of my
+            Public repositories pulled live from GitHub: the software side of my
             law-and-computing work. Tools, experiments, and projects that run where
             code meets legal reasoning.
           </p>

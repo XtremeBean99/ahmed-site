@@ -7,7 +7,7 @@ import { trackerStats } from '@/lib/litigation/data'
 export const metadata: Metadata = {
   title: 'Projects',
   description:
-    'Selected work by Ahmed Hussain — the AI & Cyber Litigation Tracker, open-source code, and an interactive 3D look at silicon.',
+    'Selected work by Ahmed Hussain: the AI & Cyber Litigation Tracker, open-source code, and an interactive 3D look at silicon.',
   alternates: { canonical: 'https://ahmedyhussain.com/projects' },
 }
 
@@ -30,12 +30,12 @@ const projects: ProjectCard[] = [
     label: 'Open source',
     title: 'Code & open source',
     description:
-      'Public repositories pulled live from GitHub — the software side of my law-and-computing work.',
+      'Public repositories pulled live from GitHub: the software side of my law-and-computing work.',
     href: '/projects/code',
   },
   {
     label: 'Interactive',
-    title: 'Silicon — from atom to architecture',
+    title: 'Silicon: from atom to architecture',
     description:
       'An interactive 3D model of a silicon atom, with an explainer on how its four valence electrons end up running every computer.',
     href: '/projects/silicon',
@@ -52,7 +52,7 @@ const projects: ProjectCard[] = [
 const collectionSchema = {
   '@context': 'https://schema.org',
   '@type': 'CollectionPage',
-  name: 'Projects — Ahmed Hussain',
+  name: 'Projects | Ahmed Hussain',
   description:
     'Selected work: the AI & Cyber Litigation Tracker, open-source code, and an interactive 3D look at silicon.',
   url: 'https://ahmedyhussain.com/projects',
@@ -72,7 +72,7 @@ export default function ProjectsPage() {
             Selected work.
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl">
-            Things I have built where law, computing, and the governance of technology meet —
+            Things I have built where law, computing, and the governance of technology meet:
             from a live litigation dataset to the physics that runs underneath it all.
           </p>
         </SectionReveal>
@@ -82,7 +82,7 @@ export default function ProjectsPage() {
           {projects.map((project, i) => (
             <SectionReveal key={i} delay={0.08 * i}>
               {project.href ? (
-                /* Real card — clickable */
+                /* Real card (clickable) */
                 <Link
                   href={project.href}
                   className="group block border border-border rounded-lg p-8 bg-surface hover:border-muted-foreground/50 hover:bg-surface-hover transition-colors h-full flex flex-col justify-between min-h-[220px]"
@@ -113,7 +113,7 @@ export default function ProjectsPage() {
                   </span>
                 </Link>
               ) : (
-                /* In-progress card — not clickable, dashed border */
+                /* In-progress card: not clickable, dashed border */
                 <div className="border border-dashed border-border rounded-lg p-8 h-full flex flex-col justify-between min-h-[220px]">
                   <div>
                     <p className="label-text mb-4">{project.label}</p>

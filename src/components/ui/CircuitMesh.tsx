@@ -1,10 +1,10 @@
 'use client'
 
 /**
- * CircuitMesh — a monochrome, 3D-projected node/circuit mesh rendered on a
+ * CircuitMesh: a monochrome, 3D-projected node/circuit mesh rendered on a
  * single <canvas>. Decorative only: non-interactive, aria-hidden, sits behind
- * page content. Scoped to the /projects page (imported there, not in the
- * root layout).
+ * page content. Scoped to the litigation tracker page (imported there, not in
+ * the root layout).
  *
  * Design constraints (see CLAUDE.md):
  *   - Strictly monochrome: white strokes/dots at low alpha over the zinc-950

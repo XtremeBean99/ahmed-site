@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * SiliconAtom — a monochrome, interactive 3D Bohr model of a silicon atom
+ * SiliconAtom: a monochrome, interactive 3D Bohr model of a silicon atom
  * (Z = 14, electron configuration 2/8/4) rendered with Three.js via
  * @react-three/fiber.
  *
@@ -41,7 +41,7 @@ function OrbitalRing({
   return <Line points={points} color={color} lineWidth={0.5} />
 }
 
-/* ---------- Nucleus — cluster of small spheres ---------- */
+/* ---------- Nucleus: cluster of small spheres ---------- */
 function Nucleus() {
   const groupRef = useRef<THREE.Group>(null)
 

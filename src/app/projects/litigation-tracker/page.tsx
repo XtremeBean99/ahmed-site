@@ -10,7 +10,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 export const metadata: Metadata = {
   title: 'AI & Cyber Litigation Tracker',
   description:
-    'AI & Cyber Litigation Tracker — a curated, source-cited dataset of artificial intelligence and data-protection cases, by Ahmed Hussain.',
+    'AI & Cyber Litigation Tracker: a curated, source-cited dataset of artificial intelligence and data-protection cases, by Ahmed Hussain.',
   alternates: { canonical: 'https://ahmedyhussain.com/projects/litigation-tracker' },
 }
 

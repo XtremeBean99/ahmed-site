@@ -48,20 +48,25 @@ npm run dev
 src/
 ├── app/                    # Next.js App Router
 │   ├── api/contact/        # Contact form API route
+│   ├── games/              # Games hub + typing test + breakout
 │   ├── legal/              # Terms and Privacy pages
 │   ├── projects/           # Projects hub + litigation tracker
 │   ├── tutoring/           # Tutoring services page
 │   ├── layout.tsx          # Root layout (fonts, metadata, CircuitMesh backdrop)
+│   ├── template.tsx        # Per-route transition wrapper (client)
 │   ├── page.tsx            # Homepage
 │   ├── robots.ts           # robots.txt (blocks AI crawlers)
 │   └── sitemap.ts          # sitemap.xml
 ├── components/
+│   ├── games/              # TypingTest, Breakout, GameShell, GameStat (client)
 │   ├── layout/             # Header (client), Footer (server)
 │   ├── projects/           # Tracker UI: StatCounters, CaseList
 │   ├── sections/           # Homepage sections (server components)
-│   └── ui/                 # Reusable primitives (CircuitMesh, SectionReveal, etc.)
+│   └── ui/                 # Reusable primitives (CircuitMesh, SectionReveal, MotionCard)
 ├── lib/
+│   ├── games/              # Game logic: phrases, wpm, breakout-engine, storage, types
 │   ├── litigation/         # Tracker dataset + types
+│   ├── motion.ts           # Shared Framer Motion tokens and variants
 │   ├── resend.ts           # Resend client + email helper (lazy init)
 │   ├── utils.ts            # cn() utility
 │   └── validations.ts      # Zod schemas
@@ -101,6 +106,15 @@ npm run sync:litigation   # read-only; prints a review queue from CourtListener
 ```
 
 Human review is required before publishing updates — the script is read-only by design.
+
+## Games
+
+The Games section at `/games` has two self-contained browser games:
+
+- **Typing speed test** (`/games/typing-test`) — live WPM and accuracy over curated law, AI governance, and cybersecurity phrases (`src/lib/games/phrases.ts`).
+- **Breakout** (`/games/breakout`) — a monochrome canvas game with falling power-ups (wider paddle, multi-ball, slow ball, extra life).
+
+Game logic lives in `src/lib/games/` as side-effect-free modules (`wpm.ts`, `breakout-engine.ts`) with thin `'use client'` render and input components in `src/components/games/`. Best scores are saved in the browser via `localStorage` (`storage.ts`); there is no server-side score storage.
 
 ## Security
 

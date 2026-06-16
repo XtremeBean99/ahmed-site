@@ -43,21 +43,26 @@ Check `.env.example` for the full list.
 src/
 ├── app/                   Next.js App Router pages + API routes
 │   ├── api/contact/       POST handler — validate, honeypot, email
+│   ├── games/             Games hub + typing-test + breakout
 │   ├── legal/             Terms + Privacy pages
 │   ├── projects/          Projects hub + litigation tracker + code + silicon
 │   ├── tutoring/          Full tutoring page (services, pricing, FAQ, form)
+│   ├── template.tsx       Per-route transition wrapper (client, reduced-motion safe)
 │   └── page.tsx           Homepage (7 sections, all static)
 │
 ├── components/
+│   ├── games/             TypingTest, Breakout (client), GameShell, GameStat
 │   ├── layout/            Header (client — scroll state), Footer (server)
 │   ├── projects/          Tracker UI: StatCounters, CaseList
 │   ├── sections/          One file per homepage section (server components)
 │   └── ui/                Button, SectionReveal, ParallaxImage, ContactForm,
-│                          CircuitMesh, CyberSigils
+│                          CircuitMesh, CyberSigils, MotionCard
 │
 ├── lib/
+│   ├── games/             phrases, wpm, breakout-engine, storage, types (no DB)
 │   ├── github/            GitHub API client for the code page
 │   ├── litigation/        Tracker dataset + types (typed module, no DB)
+│   ├── motion.ts          Shared Framer Motion tokens (easings, durations, variants)
 │   ├── resend.ts          Lazy Resend client (does NOT init at module load)
 │   ├── utils.ts           cn()
 │   └── validations.ts     Zod schemas — single source of truth for form shapes
@@ -68,7 +73,8 @@ src/
 
 **Default to Server Components.** Only add `'use client'` when you need browser APIs,
 React state, or Framer Motion hooks. Current client components: Header, SectionReveal,
-ParallaxImage, ContactForm, CircuitMesh, StatCounters, CaseList.
+ParallaxImage, ContactForm, CircuitMesh, StatCounters, CaseList, Template, MotionCard,
+TypingTest, Breakout.
 
 ---
 
@@ -88,6 +94,47 @@ If you add any other fixed-position backgrounds, ensure they do not conflict wit
 
 ---
 
+## Games
+
+`/games` is a hub (two cards, same pattern as `/projects`) linking two self-contained games.
+No database, no API routes, no server state. Best scores live in the browser only.
+
+- **Typing test** (`/games/typing-test`): live WPM + accuracy. Server shell renders the
+  `'use client'` `TypingTest`. Phrases are a curated, editable dataset in
+  `src/lib/games/phrases.ts` covering law, AI governance, and cybersecurity (NO
+  silicon/computing-hardware copy by design). WPM/accuracy math is pure and isolated in
+  `src/lib/games/wpm.ts`.
+- **Breakout** (`/games/breakout`): canvas + `requestAnimationFrame`, DPR-aware, pauses on
+  tab-hidden / off-screen (same pattern as CircuitMesh). All physics, multi-ball, and the
+  power-up system live in `src/lib/games/breakout-engine.ts` (pure functions over a mutable
+  `GameState`); `Breakout.tsx` is a thin render + input shell. Power-ups: `expand`, `multi`,
+  `slow`, `life` — tune them via the `POWERUP_META` / drop-chance constants in the engine.
+- **Persistence:** `src/lib/games/storage.ts` — SSR-safe `localStorage` helpers
+  (`getBest`, `setBestIfHigher`, `BEST_KEYS`). Namespaced under `ahmed-site:games:*`.
+- **Monochrome:** everything is white-on-zinc; brick depth uses per-row alpha, never colour.
+- **Reduced motion:** decorative animation (caret blink, power-up flourishes) is gated; the
+  games themselves remain fully playable.
+
+To add a game: add a card to `src/app/games/page.tsx`, create the route + shell under
+`src/app/games/<slug>/`, put logic in `src/lib/games/`, and add the URL to `sitemap.ts`.
+
+---
+
+## Site-Wide Motion
+
+All animation is **Framer Motion only (no GSAP)**. Shared tokens live in `src/lib/motion.ts`
+(`EASE_OUT_EXPO`, `DURATION`, `fadeInUp`, `cardHover`, `springSubtle`) — reuse these instead
+of hardcoding values so motion stays consistent.
+
+- `src/app/template.tsx` gives a subtle per-route fade/rise (remounts on navigation). Fixed
+  backgrounds stay in `layout.tsx`, outside the transition wrapper.
+- `Header.tsx` has a shared-`layoutId` underline that slides to the active nav item.
+- `MotionCard` (`src/components/ui/MotionCard.tsx`) is the subtle hover-lift wrapper for cards.
+
+Every motion addition checks `useReducedMotion()` and degrades to no animation.
+
+---
+
 ## Contact System — How It Works
 
 ```
@@ -100,8 +147,10 @@ POST /api/contact
   5. Return 200 / 400 / 500
 ```
 
-No database. No rate limiting. No IP logging (despite what the privacy policy says — fix that
-if you touch the legal pages).
+No database. No rate limiting. No IP logging. The privacy policy (`/legal/privacy`) was
+corrected on 2026-06-16 to match this reality (email-only via Resend, no stored IP, no
+database) and to disclose Vercel Speed Insights and the games' `localStorage` use. Keep it
+accurate if you change data handling.
 
 ---
 

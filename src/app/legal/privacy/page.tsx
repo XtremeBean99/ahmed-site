@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   robots: { index: false },
 }
 
-const EFFECTIVE = '14 June 2026'
+const EFFECTIVE = '16 June 2026'
 
 export default function PrivacyPage() {
   return (
@@ -50,10 +50,10 @@ export default function PrivacyPage() {
                 <li>Your name</li>
                 <li>Your email address</li>
                 <li>The subject and content of your message</li>
-                <li>A hashed (SHA-256) representation of your IP address for rate-limiting purposes</li>
               </ul>
               <p className="mt-4">
-                I do not collect full IP addresses. The hash cannot be reversed to recover your IP.
+                I do not collect or log your IP address, and the contact form does not set
+                cookies or tracking identifiers.
               </p>
             </section>
           </SectionReveal>
@@ -66,11 +66,12 @@ export default function PrivacyPage() {
               <p>Information you submit is used solely to:</p>
               <ul className="mt-3 space-y-2 list-disc list-inside">
                 <li>Respond to your enquiry or message</li>
-                <li>Prevent abuse of the contact system</li>
               </ul>
               <p className="mt-4">
-                Your data is never sold, shared with third parties for marketing, or used for any
-                purpose beyond responding to your contact.
+                The contact form is protected from automated spam by a hidden honeypot field
+                rather than by collecting any data about you. Your data is never sold, shared with
+                third parties for marketing, or used for any purpose beyond responding to your
+                contact.
               </p>
             </section>
           </SectionReveal>
@@ -81,9 +82,9 @@ export default function PrivacyPage() {
                 4. Data Storage and Security
               </h2>
               <p>
-                Contact submissions are stored in a PostgreSQL database hosted by Neon
-                (neon.tech), with servers located in Australia or the United States. Data is
-                transmitted and stored using TLS encryption.
+                This Site has no database. Contact form submissions are delivered to me by email
+                through Resend (resend.com) and are not stored on the Site itself. Email is
+                transmitted using TLS encryption.
               </p>
               <p className="mt-4">
                 Reasonable technical and organisational security measures are in place to protect
@@ -98,9 +99,10 @@ export default function PrivacyPage() {
                 5. Retention
               </h2>
               <p>
-                Contact submissions are retained for as long as necessary to respond to your
-                enquiry and for reasonable record-keeping purposes. You may request deletion of your
-                data at any time.
+                Because submissions are sent by email and not stored on the Site, retention is
+                limited to my email records, kept only as long as necessary to respond to your
+                enquiry and for reasonable record-keeping purposes. You may request deletion of
+                your data at any time.
               </p>
             </section>
           </SectionReveal>
@@ -108,11 +110,20 @@ export default function PrivacyPage() {
           <SectionReveal delay={0.16}>
             <section aria-labelledby="privacy-cookies">
               <h2 id="privacy-cookies" className="font-serif text-xl font-semibold text-foreground mb-3">
-                6. Cookies and Analytics
+                6. Cookies, Analytics and Local Storage
               </h2>
               <p>
-                This Site does not use tracking cookies or third-party analytics at this time. No
-                advertising pixels or social media tracking scripts are loaded.
+                This Site does not use tracking cookies, advertising pixels, or social media
+                tracking scripts.
+              </p>
+              <p className="mt-4">
+                The Site uses Vercel Speed Insights to measure anonymous, aggregated performance
+                metrics such as page load times. It does not use cookies and does not identify you.
+              </p>
+              <p className="mt-4">
+                The games in the Games section save your best score in your browser using local
+                storage. That information stays on your device, is never transmitted to me or any
+                third party, and you can clear it at any time through your browser settings.
               </p>
             </section>
           </SectionReveal>

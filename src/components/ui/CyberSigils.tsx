@@ -1,28 +1,17 @@
 /**
- * Discreet cyber-sigil background, applied site-wide via the root layout.
+ * Cyber-sigil background motifs (decorative, inverted for the dark theme,
+ * non-interactive, behind content, aria-hidden). Drift/pulse is disabled
+ * automatically under prefers-reduced-motion (handled in globals.css).
  *
- * Two layers, all decorative (inverted for the dark theme, non-interactive,
- * behind content, aria-hidden):
- *   1. A large, very faint circuit pattern in the bottom-right, mirrored into
- *      the top-left, spanning roughly half the page.
- *   2. Brighter corner accents with a soft white glow: a corner piece
- *      (top-left), a downward spike with text (top-right), and a motif
- *      (bottom-left).
- *
- * The slow drift/pulse is disabled automatically for visitors who prefer
- * reduced motion (handled globally in globals.css).
+ * Split into two pieces:
+ *   - CircuitBackdrop: the large faint circuit, used site-wide (root layout).
+ *   - CornerSigils:    the brighter corner accents, used only on /lab.
  */
 
-const accents = [
-  { src: '/sigils/tl.svg', className: 'sigil sigil-tl' },
-  { src: '/sigils/tr.svg', className: 'sigil sigil-tr' },
-  { src: '/sigils/bl.svg', className: 'sigil sigil-bl' },
-]
-
-export function CyberSigils() {
+/* Large, faint circuit pattern in the bottom-right, mirrored into the top-left. */
+export function CircuitBackdrop() {
   return (
     <div className="sigil-layer" aria-hidden="true">
-      {/* Large faint circuit backdrop: bottom-right, plus a mirrored copy top-left */}
       {/* eslint-disable @next/next/no-img-element */}
       <img
         src="/sigils/circuit.svg"
@@ -40,8 +29,22 @@ export function CyberSigils() {
         decoding="async"
         draggable={false}
       />
+      {/* eslint-enable @next/next/no-img-element */}
+    </div>
+  )
+}
 
-      {/* Brighter corner accents */}
+const accents = [
+  { src: '/sigils/tl.svg', className: 'sigil sigil-tl' },
+  { src: '/sigils/tr.svg', className: 'sigil sigil-tr' },
+  { src: '/sigils/bl.svg', className: 'sigil sigil-bl' },
+]
+
+/* Brighter corner accents with a soft white glow. Used only on the /lab page. */
+export function CornerSigils() {
+  return (
+    <div className="sigil-layer" aria-hidden="true">
+      {/* eslint-disable @next/next/no-img-element */}
       {accents.map((s) => (
         <img
           key={s.src}

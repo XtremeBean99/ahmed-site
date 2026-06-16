@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { CyberSigils } from '@/components/ui/CyberSigils'
+import { CircuitBackdrop } from '@/components/ui/CyberSigils'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 
@@ -75,7 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to main content
         </a>
-        <CyberSigils />
+        <CircuitBackdrop />
         <Header />
         <main id="main-content" className="relative z-10">{children}</main>
         <Footer />

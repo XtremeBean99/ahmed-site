@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { SectionReveal } from '@/components/ui/SectionReveal'
+import { CornerSigils } from '@/components/ui/CyberSigils'
 
 export const metadata: Metadata = {
   title: 'Lab',
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
 
 export default function LabPage() {
   return (
-    <div className="min-h-screen flex flex-col justify-center">
+    <>
+      <CornerSigils />
+      <div className="min-h-screen flex flex-col justify-center">
       <div className="max-w-container mx-auto px-6 pt-32 pb-24">
         <SectionReveal>
           <p className="label-text mb-6">Lab</p>
@@ -21,15 +24,16 @@ export default function LabPage() {
 
         <SectionReveal delay={0.1}>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-xl mb-4">
-            A space for interface and visual experiments. The faint circuit pattern and
-            corner motifs now sit behind every page, kept deliberately subtle so they add
-            depth without competing with the content.
+            A space for interface and visual experiments. The faint circuit pattern sits
+            behind every page on the site; the brighter corner motifs are exclusive to this
+            page, kept deliberately subtle so they add depth without competing with the content.
           </p>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-xl">
             This page is a testbed, so expect it to change.
           </p>
         </SectionReveal>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

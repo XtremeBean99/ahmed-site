@@ -3,11 +3,6 @@ import { contactSchema } from '@/lib/validations'
 import { submitContact } from '@/services/contact'
 
 export async function POST(request: NextRequest) {
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    '127.0.0.1'
-
   let body: unknown
   try {
     body = await request.json()
@@ -31,20 +26,16 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await submitContact({ name, email, subject, message, ip })
-
-    if ('rateLimited' in result) {
-      return NextResponse.json(
-        { error: 'Too many requests. Please try again in about an hour.' },
-        { status: 429 },
-      )
-    }
-
-    return NextResponse.json({ success: true, emailDelivered: result.emailDelivered })
+    await submitContact({ name, email, subject, message })
+    return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('[contact] Submission failed:', err instanceof Error ? err.message : 'unknown')
+    console.error(
+      '[contact] Email send failed. Check RESEND_API_KEY and that the sending domain is ' +
+        'verified at resend.com/domains. Reason:',
+      err instanceof Error ? err.message : 'unknown',
+    )
     return NextResponse.json(
-      { error: 'Unable to process your message right now. Please try again later.' },
+      { error: 'Unable to send your message right now. Please try again later.' },
       { status: 500 },
     )
   }

@@ -79,7 +79,7 @@
   }
 }
 
-/* ---- Cyber-sigil background motifs (used on /lab) ---- */
+/* ---- Cyber-sigil background motifs (applied site-wide) ---- */
 .sigil-layer {
   position: fixed;
   inset: 0;
@@ -88,28 +88,48 @@
   overflow: hidden;
 }
 
+/* Source art is black; invert to white for the dark theme. */
+
+/* Brighter corner accents, with a soft white glow. */
 .sigil {
   position: absolute;
   width: clamp(220px, 30vw, 460px);
   height: auto;
-  /* Source art is black; invert to a light tone for the dark theme. */
-  filter: invert(1);
-  opacity: 0.06;
+  filter: invert(1) drop-shadow(0 0 10px rgba(255, 255, 255, 0.35));
+  opacity: 0.13;
   will-change: transform, opacity;
 }
 
 .sigil-tl { top: 0; left: 0; animation: sigil-drift-a 26s ease-in-out infinite; }
 .sigil-tr { top: 0; right: 0; animation: sigil-drift-b 32s ease-in-out infinite; }
 .sigil-bl { bottom: 0; left: 0; animation: sigil-drift-b 30s ease-in-out infinite; }
-.sigil-br { bottom: 0; right: 0; animation: sigil-drift-a 36s ease-in-out infinite; }
+
+/* Large, faint circuit backdrop spanning ~half the page. */
+.sigil-circuit {
+  position: absolute;
+  width: clamp(380px, 55vw, 1000px);
+  height: auto;
+  filter: invert(1);
+  opacity: 0.045;
+  will-change: opacity;
+}
+
+.sigil-circuit-br { bottom: 0; right: 0; animation: sigil-pulse 40s ease-in-out infinite; }
+/* Mirror the same circuit into the top-left corner. */
+.sigil-circuit-tl { top: 0; left: 0; transform: scale(-1, -1); animation: sigil-pulse 46s ease-in-out infinite; }
 
 @keyframes sigil-drift-a {
-  0%, 100% { opacity: 0.045; transform: translate(0, 0); }
-  50%      { opacity: 0.085; transform: translate(6px, -6px); }
+  0%, 100% { opacity: 0.10; transform: translate(0, 0); }
+  50%      { opacity: 0.17; transform: translate(6px, -6px); }
 }
 
 @keyframes sigil-drift-b {
-  0%, 100% { opacity: 0.05; transform: translate(0, 0); }
-  50%      { opacity: 0.09; transform: translate(-6px, 6px); }
+  0%, 100% { opacity: 0.11; transform: translate(0, 0); }
+  50%      { opacity: 0.18; transform: translate(-6px, 6px); }
 }
-/* Reduced motion is handled globally above; the sigils settle to their static opacity. */
+
+@keyframes sigil-pulse {
+  0%, 100% { opacity: 0.035; }
+  50%      { opacity: 0.06; }
+}
+/* Reduced motion is handled globally above; sigils settle to their static state. */

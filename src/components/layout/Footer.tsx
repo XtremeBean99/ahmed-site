@@ -10,7 +10,7 @@ const footerLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border mt-24">
+    <footer className="relative z-10 border-t border-border mt-24">
       <div className="max-w-container mx-auto px-6 py-12">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
           {/* Brand */}

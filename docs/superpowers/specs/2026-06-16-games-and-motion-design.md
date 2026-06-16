@@ -16,7 +16,7 @@ across the existing site.
 1. **Typing speed test** — live WPM + accuracy tracker over a curated set of
    on-theme (law / AI governance / cybersecurity / silicon-computing) phrases.
 2. **Atari Breakout-style game** — canvas game: paddle, brick grid, lives, score,
-   win/lose, pause.
+   win/lose, pause, and falling **power-ups**.
 3. **Site-wide Motion polish** — shared motion tokens, route transitions, an animated
    nav indicator, and refined card hover micro-interactions.
 
@@ -30,8 +30,8 @@ no database (client `localStorage` only for scores), Server Components by defaul
 |---|---|---|
 | Animation library | **Framer Motion only — no GSAP** | User chose this in clarifying questions, overriding the initial "Motion + GSAP" ask. Keeps to one engine already in the repo (`framer-motion` v11), leaner bundle. |
 | Score persistence | **`localStorage` only** | Fits the strict no-database constraint. |
-| Typing content | **Law + computing + AI governance mix**, editable data file | On-brand; mirrors the curated litigation dataset pattern. |
-| Game scope | **Focused & complete** (not MVP, not feature-rich) | Polished but bounded. Exact feature list in sections 4 and 5. |
+| Typing content | **Law + AI governance + cybersecurity** (no silicon/computing), editable data file | On-brand; mirrors the curated litigation dataset pattern. |
+| Game scope | **Focused & complete**, including Breakout power-ups | Polished but bounded. Exact feature list in sections 4 and 5. Power-ups are explicitly in scope. |
 
 > If GSAP was selected off by mistake, this spec must be revised before planning — GSAP
 > would change dependencies and the animation architecture in sections 6 and 9.
@@ -52,8 +52,9 @@ no database (client `localStorage` only for scores), Server Components by defaul
 - No server-side scoreboards, accounts, or leaderboards.
 - No database, no new API routes.
 - No GSAP or any second animation engine.
-- No sound effects, power-ups, difficulty settings, or multiple levels in Breakout
-  beyond a single clearable board (see 5.6 for the win/restart behaviour).
+- No sound effects, difficulty settings, or multiple/auto-advancing levels in Breakout
+  beyond a single clearable board (see 5.6 for the win/restart behaviour). Power-ups
+  ARE in scope (see 5.9).
 - No new test framework as a hard requirement (repo has none today). Pure logic is
   isolated so tests *can* be added later; vitest is explicitly out of scope here.
 
@@ -109,12 +110,12 @@ src/
 ### 4.1 Content — `src/lib/games/phrases.ts`
 - Exports `phrases: string[]` (or `Phrase[]` with optional `source`/`topic` tags — see types).
 - 25–40 curated phrases, each one sentence, on-theme across: legal technology,
-  AI governance, cybersecurity, silicon/computing. Monochrome-of-tone: professional,
-  no em dashes (matches repo copy convention — see commit `dfd0c23`).
+  AI governance, and cybersecurity. **No silicon/computing-hardware phrases.**
+  Professional tone, no em dashes (matches repo copy convention — see commit `dfd0c23`).
 - A `pickRandomPhrase(exclude?: string)` helper avoids immediate repeats.
 - Examples (final list curated during implementation):
   - "Good governance of artificial intelligence begins with clear accountability."
-  - "A silicon atom shares four valence electrons with its neighbours."
+  - "Courts increasingly grapple with copyright claims over training data."
   - "Strong passwords and least privilege defend against most intrusions."
 
 ### 4.2 Pure logic — `src/lib/games/wpm.ts`
@@ -171,12 +172,17 @@ Pure functions, no React, unit-testable:
 ### 5.2 Pure-ish engine — `src/lib/games/breakout-engine.ts`
 Holds collision/physics math and state transitions as plain functions/types so the
 component stays a thin render+input shell and the math is testable:
-- Types: `Vec2`, `Ball`, `Paddle`, `Brick`, `GameState`, `GameStatus`
-  (`'ready' | 'playing' | 'paused' | 'won' | 'lost'`).
-- `createInitialState(config)` — builds paddle, ball, brick grid.
-- `stepPhysics(state, dt)` — advances ball, resolves wall/paddle/brick collisions,
-  applies angle-on-paddle-hit (deflection based on hit offset from paddle centre),
-  decrements lives on ball-out, sets `won` when all bricks cleared, `lost` at 0 lives.
+- Types: `Vec2`, `Ball`, `Paddle`, `Brick`, `PowerUp`, `PowerUpKind`, `ActiveEffect`,
+  `GameState`, `GameStatus` (`'ready' | 'playing' | 'paused' | 'won' | 'lost'`).
+- `GameState` carries **`balls: Ball[]`** (not a single ball — multi-ball power-up needs
+  an array), `powerUps: PowerUp[]` (currently falling), and
+  `effects: ActiveEffect[]` (timed effects in force, e.g. expanded paddle / slow ball).
+- `createInitialState(config)` — builds paddle, one ball, brick grid, empty power-ups/effects.
+- `stepPhysics(state, dt)` — for every ball: advance, resolve wall/paddle/brick collisions,
+  apply angle-on-paddle-hit (deflection from hit offset to paddle centre). On brick break,
+  roll the power-up drop chance (5.9). Advance falling power-ups; on paddle catch, apply
+  the effect; expire timed effects via `effects`. Remove balls that fall out; lose a life
+  only when the **last** ball is lost. `won` when all bricks cleared; `lost` at 0 lives.
 - Brick grid: e.g. 10 cols × 6 rows; each brick `alive: boolean` and a `row` used for
   monochrome alpha banding. Score increment per brick.
 
@@ -187,7 +193,8 @@ component stays a thin render+input shell and the math is testable:
   `P` toggles pause; `R` restarts.
 
 ### 5.4 HUD & overlays (monochrome, DOM over canvas or drawn)
-- Top bar: Score, Lives, Best (from `localStorage`).
+- Top bar: Score, Lives, Best (from `localStorage`), and active timed power-up
+  effects with remaining time (see 5.9).
 - Start overlay (`status === 'ready'`): "Press Space or tap to launch."
 - Pause overlay (`status === 'paused'`): "Paused."
 - Win overlay (`status === 'won'`): "Cleared. Score N." + Play again.
@@ -211,11 +218,42 @@ component stays a thin render+input shell and the math is testable:
 
 ### 5.8 Acceptance criteria
 - Ball bounces off walls/paddle/bricks correctly; paddle-hit angle varies by hit position.
-- Losing all balls ends the game; clearing all bricks wins; both show the right overlay.
-- Pause halts physics and resumes cleanly; tab-hidden pauses then resumes.
+- Losing the **last** ball costs a life; losing all lives ends the game; clearing all
+  bricks wins; each shows the right overlay.
+- Pause halts physics (and falling power-ups) and resumes cleanly; tab-hidden pauses then
+  resumes.
 - Score and Best display correctly; Best persists across reloads.
 - Canvas is crisp on high-DPR screens and scales responsively without distortion.
 - Playable with mouse, touch, and keyboard.
+- Power-ups drop, fall, are caught by the paddle, apply their effect, and timed effects
+  expire (see 5.9). Active effects are visible to the player.
+
+### 5.9 Power-ups
+Monochrome, readable without colour. A destroyed brick has a drop chance
+(`POWERUP_DROP_CHANCE`, ~0.18) to spawn one falling **capsule**: a white rounded pill
+with a thin zinc border and a single white glyph/letter identifying the kind. Capsules
+fall at constant speed; catching one with the paddle activates it; a missed capsule is
+removed when it leaves the playfield. Power-ups do not fall while paused.
+
+Set (kept small and positive-leaning so play stays non-frustrating):
+
+| Kind | Glyph | Effect | Duration |
+|---|---|---|---|
+| `expand` | `E` | Paddle width × ~1.5 | Timed (~12s), refreshes if re-caught |
+| `multi` | `M` | Split each active ball into 3 (spread angles) | Instant |
+| `slow` | `S` | Ball speed × ~0.7 | Timed (~10s) |
+| `life` | `+` | Extra life (capped at a max, e.g. 5) | Instant |
+
+- Timed effects live in `state.effects` with a remaining timer decremented in
+  `stepPhysics`; on expiry the paddle width / ball speed revert to base. Re-catching a
+  timed power-up refreshes its timer rather than stacking.
+- `multi` clones the current ball velocity at +/- a fixed angle; new balls share the
+  same physics. Lives are only lost when the last ball is gone (already in 5.2).
+- Implementation MUST treat the power-up set as data (`POWERUPS` table) so kinds can be
+  tuned/added by editing one place.
+- A compact HUD line or small icons show currently-active timed effects and remaining time.
+- Reduced motion: capsules still fall (functional), but any decorative pulse/trail on them
+  is disabled.
 
 ---
 
@@ -324,7 +362,7 @@ Designed so an agent manager can fan out work. Dependencies noted.
 - **B — Typing test** (after A). `components/games/TypingTest.tsx` + wire into its page;
   finalise `phrases.ts` and `wpm.ts`.
 - **C — Breakout** (after A). `components/games/Breakout.tsx` + wire into its page;
-  finalise `breakout-engine.ts`.
+  finalise `breakout-engine.ts` including multi-ball and the power-up system (5.9).
 - **D — Site-wide Motion** (parallel with B/C; touches `Header.tsx`, `template.tsx`,
   card hover, `lib/motion.ts`). Coordinate Header edits with A to avoid conflicts.
 - **E — SEO/OG/JsonLd** (after routes exist). OG/Twitter images + JsonLd + metadata for

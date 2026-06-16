@@ -46,6 +46,14 @@ export function Footer() {
                   LinkedIn
                 </a>
               </li>
+              <li>
+                <a
+                  href="mailto:ahmedyhussain07@gmail.com"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Email
+                </a>
+              </li>
             </ul>
           </nav>
         </div>

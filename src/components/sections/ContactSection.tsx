@@ -37,6 +37,16 @@ export function ContactSection() {
                   Research or academic collaboration
                 </li>
               </ul>
+              <p className="text-sm text-muted-foreground mt-8">
+                Prefer email? Reach me directly at{' '}
+                <a
+                  href="mailto:ahmedyhussain07@gmail.com"
+                  className="text-foreground underline underline-offset-2 hover:no-underline"
+                >
+                  ahmedyhussain07@gmail.com
+                </a>
+                .
+              </p>
             </SectionReveal>
           </div>
 

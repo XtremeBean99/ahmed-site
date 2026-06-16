@@ -78,3 +78,38 @@
     @apply font-sans text-xs tracking-[0.2em] uppercase text-muted-foreground;
   }
 }
+
+/* ---- Cyber-sigil background motifs (used on /lab) ---- */
+.sigil-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.sigil {
+  position: absolute;
+  width: clamp(220px, 30vw, 460px);
+  height: auto;
+  /* Source art is black; invert to a light tone for the dark theme. */
+  filter: invert(1);
+  opacity: 0.06;
+  will-change: transform, opacity;
+}
+
+.sigil-tl { top: 0; left: 0; animation: sigil-drift-a 26s ease-in-out infinite; }
+.sigil-tr { top: 0; right: 0; animation: sigil-drift-b 32s ease-in-out infinite; }
+.sigil-bl { bottom: 0; left: 0; animation: sigil-drift-b 30s ease-in-out infinite; }
+.sigil-br { bottom: 0; right: 0; animation: sigil-drift-a 36s ease-in-out infinite; }
+
+@keyframes sigil-drift-a {
+  0%, 100% { opacity: 0.045; transform: translate(0, 0); }
+  50%      { opacity: 0.085; transform: translate(6px, -6px); }
+}
+
+@keyframes sigil-drift-b {
+  0%, 100% { opacity: 0.05; transform: translate(0, 0); }
+  50%      { opacity: 0.09; transform: translate(-6px, 6px); }
+}
+/* Reduced motion is handled globally above; the sigils settle to their static opacity. */

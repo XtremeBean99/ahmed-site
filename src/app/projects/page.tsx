@@ -5,6 +5,7 @@ import { CircuitMesh } from '@/components/ui/CircuitMesh'
 import { StatCounters, type Stat } from '@/components/projects/StatCounters'
 import { CaseList } from '@/components/projects/CaseList'
 import { claimCounts, lastUpdated, litigation, trackerStats } from '@/lib/litigation/data'
+import { JsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
   title: 'Projects',
@@ -28,9 +29,21 @@ const counters: Stat[] = [
 
 const claimBreakdown = Object.entries(claimCounts).sort((a, b) => b[1] - a[1])
 
+const webpageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'AI & Cyber Litigation Tracker',
+  description:
+    'A curated, source-cited dataset of artificial intelligence, copyright and data-protection disputes.',
+  url: 'https://ahmedyhussain.com/projects',
+  isPartOf: { '@type': 'WebSite', name: 'Ahmed Hussain', url: 'https://ahmedyhussain.com' },
+  author: { '@type': 'Person', name: 'Ahmed Hussain' },
+}
+
 export default function ProjectsPage() {
   return (
     <div className="relative pt-32 pb-24">
+      <JsonLd data={webpageSchema} />
       <CircuitMesh />
 
       <div className="relative max-w-container mx-auto px-6">

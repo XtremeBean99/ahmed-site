@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
@@ -74,10 +75,20 @@ export function Header() {
         {/* Logo */}
         <Link
           href="/"
-          className="font-serif text-lg font-semibold text-foreground hover:text-muted-foreground transition-colors"
+          className="flex items-center gap-2.5 group"
           aria-label="Ahmed Hussain, home"
         >
-          Ahmed Hussain
+          <Image
+            src="/site-logo.jpg"
+            alt=""
+            width={36}
+            height={36}
+            priority
+            className="h-8 w-auto grayscale brightness-0 invert"
+          />
+          <span className="font-serif text-lg font-semibold text-foreground group-hover:text-muted-foreground transition-colors">
+            Ahmed Hussain
+          </span>
         </Link>
 
         {/* Desktop nav */}

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { SectionReveal } from '@/components/ui/SectionReveal'
 import { ContactForm } from '@/components/ui/ContactForm'
+import { JsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
   title: 'Tutoring',
@@ -55,9 +56,47 @@ const faqs = [
   },
 ]
 
+const serviceSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  serviceType: 'Private tutoring',
+  provider: { '@type': 'Person', name: 'Ahmed Hussain' },
+  areaServed: { '@type': 'City', name: 'Canberra' },
+  description:
+    'Private tutoring for Years 7–12: Physics, Mathematics, English and Legal Studies, online or in person.',
+  offers: [
+    {
+      '@type': 'Offer',
+      name: 'Online session',
+      price: '50',
+      priceCurrency: 'AUD',
+      unitText: 'hour',
+    },
+    {
+      '@type': 'Offer',
+      name: 'In-person session',
+      price: '60',
+      priceCurrency: 'AUD',
+      unitText: 'hour',
+    },
+  ],
+}
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map(({ q, a }) => ({
+    '@type': 'Question',
+    name: q,
+    acceptedAnswer: { '@type': 'Answer', text: a },
+  })),
+}
+
 export default function TutoringPage() {
   return (
     <div className="pt-32 pb-24">
+      <JsonLd data={serviceSchema} />
+      <JsonLd data={faqSchema} />
       <div className="max-w-container mx-auto px-6">
 
         {/* Header */}

@@ -56,13 +56,13 @@ export function Hero() {
             variants={item}
             className="font-sans text-lg md:text-xl text-muted-foreground leading-relaxed mb-4 max-w-xl"
           >
-            BCom&thinsp;/&thinsp;LLB(Hons) candidate at the Australian National University.
+            BCom&thinsp;/&thinsp;LLB(Hons) student at the Australian National University.
           </motion.p>
           <motion.p
             variants={item}
             className="font-sans text-lg md:text-xl text-muted-foreground leading-relaxed mb-12 max-w-xl"
           >
-            I work where law meets computing, with a focus on how we govern artificial intelligence.
+            Working toward a future in tech law
           </motion.p>
 
           {/* CTAs */}

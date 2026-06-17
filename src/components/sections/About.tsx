@@ -23,19 +23,17 @@ export function About() {
 
             <SectionReveal delay={0.1}>
               <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-                I am a dual-degree student at the Australian National University pursuing a Bachelor
+                I am a double-degree student at the Australian National University pursuing a Bachelor
                 of Computing alongside a Bachelor of Laws (Honours). My academic interest sits in
-                how we govern new technology, and in particular the legal and ethical
-                dimensions of artificial intelligence.
+                the legal and ethical dimensions of artificial intelligence.
               </p>
             </SectionReveal>
 
             <SectionReveal delay={0.2}>
               <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-                I am interested in how legal systems keep pace with fast technological change. I am
-                also building the technical skills to engage with these questions directly, rather
-                than at arm&rsquo;s length. Cybersecurity, privacy, and digital governance
-                are areas I follow closely.
+                I am interested in how legal systems adapt to fast technological change. I am
+                actively working on technical and professional skills within this industry.
+                Cybersecurity, privacy, and digital governance are areas I follow closely.
               </p>
             </SectionReveal>
 

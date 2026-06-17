@@ -65,8 +65,8 @@ NOT yet pulled in (data-driven, lives in code — ask if you want these too):
 ### Hero  ·  src/components/sections/Hero.tsx
 - eyebrow: Canberra, Australia
 - name: Ahmed Hussain
-- descriptor_1: BCom / LLB(Hons) candidate at the Australian National University.
-- descriptor_2: I work where law meets computing, with a focus on how we govern artificial intelligence.
+- descriptor_1: BCom / LLB(Hons) student at the Australian National University.
+- descriptor_2: Working toward a future in tech law
 - cta_primary: Connect on LinkedIn
 - cta_secondary: Get in touch
 
@@ -76,10 +76,11 @@ NOT yet pulled in (data-driven, lives in code — ask if you want these too):
 - heading: Law. Computing. Technology.   (renders on three lines: "Law. Computing." / "Technology.")
 
 paragraph_1:
-I am a dual-degree student at the Australian National University pursuing a Bachelor of Computing alongside a Bachelor of Laws (Honours). My academic interest sits in how we govern new technology, and in particular the legal and ethical dimensions of artificial intelligence.
+I am a double-degree student at the Australian National University pursuing a Bachelor of Computing alongside a Bachelor of Laws (Honours). My academic interest sits in the legal and ethical dimensions of artificial intelligence.
 
 paragraph_2:
-I am interested in how legal systems keep pace with fast technological change. I am also building the technical skills to engage with these questions directly, rather than at arm's length. Cybersecurity, privacy, and digital governance are areas I follow closely.
+I am interested in how legal systems adapt to fast technological change. I am actively working on technical and professional skills within this industry. Cybersecurity, privacy, and digital governance are areas I follow closely.
+
 
 paragraph_3:
 Outside of study I tutor senior secondary students in mathematics, physics, English, and legal studies. They are subjects that reward a patient, structured approach, which is the way I like to teach.
@@ -158,11 +159,11 @@ Outside of study I tutor senior secondary students in mathematics, physics, Engl
 - meta_description: Selected work by Ahmed Hussain: open-source code, an interactive 3D look at silicon, an AGLC4 citation generator, and a base converter.
 - eyebrow: Projects
 - heading: Selected work.
-- intro: Things I have built where law, computing, and the governance of technology meet: from open-source code to the physics that runs underneath it all.
+- intro: A curated selection of my most recent professional & personal projects.
 
 (Cards — label / title / description)
 - card_code_label: Open source
-- card_code_title: Code & open source
+- card_code_title: My Github Projects
 - card_code_desc: Public repositories pulled live from GitHub: the software side of my law-and-computing work.
 - card_silicon_label: Interactive
 - card_silicon_title: Silicon: from atom to architecture
@@ -184,7 +185,7 @@ Outside of study I tutor senior secondary students in mathematics, physics, Engl
 - meta_description: Public software repositories by Ahmed Hussain, pulled live from GitHub. Open source projects spanning law, computing and tooling.
 - eyebrow: Projects · Code
 - heading: Code & open source
-- intro: Public repositories pulled live from GitHub: the software side of my law-and-computing work. Tools, experiments, and projects that run where code meets legal reasoning.
+- intro: Public repositories pulled live from GitHub: the software side of my law-and-computing work.
 - fallback_title: Unable to load repositories right now.
 - fallback_body: The GitHub API may be temporarily unavailable or rate-limited. You can browse all repositories directly.
 - fallback_link: github.com/XtremeBean99 →
@@ -199,7 +200,7 @@ Outside of study I tutor senior secondary students in mathematics, physics, Engl
 - heading: Silicon: from atom to architecture
 
 intro:
-An interactive 3D Bohr model of a silicon atom, atomic number 14, with 2 electrons in its first shell, 8 in the second, and 4 in the third. Drag to rotate, scroll to zoom. It is those four valence electrons that make silicon more than just the 14th element: they are the reason every modern processor exists.
+An interactive 3D Bohr model of a silicon atom, atomic number 14, with 2 electrons in its first shell, 8 in the second, and 4 in the third. Drag to rotate, scroll to zoom. The four valence electrons are the reason every modern processor exists.
 
 - canvas_caption: Drag to rotate · Scroll to zoom · Reduced-motion users see a static render
 
@@ -239,7 +240,7 @@ Silicon does not come out of the ground ready for a logic gate. The journey from
 #### Explainer — tie-back
 - s5_label: Why this matters here
 s5_body:
-Every question of AI governance, every cybersecurity regulation, every dispute over data sovereignty: they all ultimately run on this physical substrate. A silicon atom, doped and patterned, switches on and off a few billion times a second. Understanding that layer, however briefly, is part of understanding the law that will govern it.
+Every question of AI governance, every cybersecurity regulation, every dispute over data sovereignty: they all ultimately run on this physical substrate. A silicon atom, doped and patterned, switches on and off a few billion times a second.
 
 
 ### AGLC4 generator page  ·  src/app/projects/aglc4/page.tsx

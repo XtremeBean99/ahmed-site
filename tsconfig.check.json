@@ -1,4 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "src/app/layout.tsx", "src/components/layout/Footer.tsx", "src/components/sections/ContactSection.tsx", "src/components/ui/CyberSigils.tsx"]
-}

@@ -75,8 +75,7 @@ export default async function CodeProjectsPage() {
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mb-4">
             Public repositories pulled live from GitHub: the software side of my
-            law-and-computing work. Tools, experiments, and projects that run where
-            code meets legal reasoning.
+            law-and-computing work.
           </p>
         </SectionReveal>
 

@@ -21,7 +21,7 @@ type ProjectCard = {
 const projects: ProjectCard[] = [
   {
     label: 'Open source',
-    title: 'Code & open source',
+    title: 'My Github Projects',
     description:
       'Public repositories pulled live from GitHub: the software side of my law-and-computing work.',
     href: '/projects/code',
@@ -79,8 +79,7 @@ export default function ProjectsPage() {
             Selected work.
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl">
-            Things I have built where law, computing, and the governance of technology meet:
-            from open-source code to the physics that runs underneath it all.
+            A curated selection of my most recent professional &amp; personal projects.
           </p>
         </SectionReveal>
 

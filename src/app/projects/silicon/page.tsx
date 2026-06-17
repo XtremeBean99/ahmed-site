@@ -35,9 +35,8 @@ export default function SiliconPage() {
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mb-4">
             An interactive 3D Bohr model of a silicon atom, atomic number 14, with
             2 electrons in its first shell, 8 in the second, and 4 in the third. Drag
-            to rotate, scroll to zoom. It is those four valence electrons that make
-            silicon more than just the 14th element: they are the reason every modern
-            processor exists.
+            to rotate, scroll to zoom. The four valence electrons are the reason every
+            modern processor exists.
           </p>
         </SectionReveal>
 
@@ -176,8 +175,7 @@ export default function SiliconPage() {
                 Every question of AI governance, every cybersecurity regulation, every
                 dispute over data sovereignty: they all ultimately run on this physical
                 substrate. A silicon atom, doped and patterned, switches on and off a
-                few billion times a second. Understanding that layer, however briefly, is
-                part of understanding the law that will govern it.
+                few billion times a second.
               </p>
             </div>
           </SectionReveal>

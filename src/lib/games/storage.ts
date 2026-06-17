@@ -3,6 +3,7 @@ const NS = 'ahmed-site:games'
 export const BEST_KEYS = {
   typing: 'typing-best',
   breakout: 'breakout-best',
+  contract: 'contract-best',
 } as const
 
 /** Read a numeric best score. SSR-safe; returns 0 on any failure. */

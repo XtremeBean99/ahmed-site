@@ -42,6 +42,20 @@ const projects: ProjectCard[] = [
     href: '/projects/silicon',
   },
   {
+    label: 'Legal tool',
+    title: 'AGLC4 citation generator',
+    description:
+      'Build footnote and bibliography citations in the Australian Guide to Legal Citation (4th ed) style — cases, legislation, articles, books, web pages and Hansard — and copy them straight into your work.',
+    href: '/projects/aglc4',
+  },
+  {
+    label: 'Computing tool',
+    title: 'Base converter',
+    description:
+      'Convert live between decimal, binary, hex, octal and UTF-8 text, with a bitwise playground for AND, OR, XOR, NOT and shifts. Arbitrary-precision, all in the browser.',
+    href: '/projects/base-converter',
+  },
+  {
     label: 'Research',
     title: 'In development',
     description:

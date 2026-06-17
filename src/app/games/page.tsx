@@ -33,6 +33,13 @@ const games: GameCard[] = [
       'A monochrome take on the Atari classic: clear the wall, catch falling power-ups, and chase a personal best.',
     href: '/games/breakout',
   },
+  {
+    label: 'Strategy',
+    title: 'The Clause Game',
+    description:
+      'Sit at the negotiating table and draft the deal: pick clauses across real scenarios and win by landing a balanced, enforceable contract — too greedy or too generous and it falls apart.',
+    href: '/games/contract',
+  },
 ]
 
 const collectionSchema = {

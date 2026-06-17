@@ -16,7 +16,6 @@ Personal website of **Ahmed Hussain** — BCom/LLB(Hons) candidate at the Austra
 | Animation | Framer Motion 11 + Three.js (React Three Fiber) |
 | Email | Resend (contact form) |
 | Forms | React Hook Form + Zod |
-| Tracker data | Typed module in `src/lib/litigation` (no database) |
 | Deployment | Vercel |
 
 ## Getting Started
@@ -48,9 +47,9 @@ npm run dev
 src/
 ├── app/                    # Next.js App Router
 │   ├── api/contact/        # Contact form API route
-│   ├── games/              # Games hub + typing test + breakout
+│   ├── games/              # Games hub + typing test + breakout + contract
 │   ├── legal/              # Terms and Privacy pages
-│   ├── projects/           # Projects hub + litigation tracker
+│   ├── projects/           # Projects hub + code + silicon + aglc4 + base-converter
 │   ├── tutoring/           # Tutoring services page
 │   ├── layout.tsx          # Root layout (fonts, metadata, CircuitMesh backdrop)
 │   ├── template.tsx        # Per-route transition wrapper (client)
@@ -58,23 +57,21 @@ src/
 │   ├── robots.ts           # robots.txt (blocks AI crawlers)
 │   └── sitemap.ts          # sitemap.xml
 ├── components/
-│   ├── games/              # TypingTest, Breakout, GameShell, GameStat (client)
+│   ├── games/              # TypingTest, Breakout, ContractGame, GameShell, GameStat (client)
 │   ├── layout/             # Header (client), Footer (server)
-│   ├── projects/           # Tracker UI: StatCounters, CaseList
+│   ├── projects/           # ToolShell, Aglc4Generator, BaseConverter, Silicon canvas
 │   ├── sections/           # Homepage sections (server components)
 │   └── ui/                 # Reusable primitives (CircuitMesh, SectionReveal, MotionCard)
 ├── lib/
-│   ├── games/              # Game logic: phrases, wpm, breakout-engine, storage, types
-│   ├── litigation/         # Tracker dataset + types
+│   ├── aglc4/              # AGLC4 citation formatters + field config (pure)
+│   ├── convert/            # Base + bitwise conversion (pure, BigInt)
+│   ├── games/              # Game logic: phrases, wpm, breakout-engine, contract-*, storage
 │   ├── motion.ts           # Shared Framer Motion tokens and variants
 │   ├── resend.ts           # Resend client + email helper (lazy init)
 │   ├── utils.ts            # cn() utility
 │   └── validations.ts      # Zod schemas
 └── services/
     └── contact.ts          # Contact submission logic
-
-scripts/
-└── sync-litigation.ts      # CourtListener review helper (read-only)
 ```
 
 ## Design System
@@ -97,24 +94,24 @@ POST /api/contact
 
 The site uses no database. Contact submissions are emailed via Resend and not persisted.
 
-## Litigation Tracker
+## Project Tools
 
-The AI & Cyber Litigation Tracker at `/projects/litigation-tracker` runs on a curated, source-cited dataset in `src/lib/litigation/data.ts`. To check tracked US dockets for recent activity:
+Two browser-side utilities under `/projects`, each pure logic behind a thin client shell:
 
-```bash
-npm run sync:litigation   # read-only; prints a review queue from CourtListener
-```
-
-Human review is required before publishing updates — the script is read-only by design.
+- **AGLC4 citation generator** (`/projects/aglc4`) — footnote + bibliography citations in
+  Australian Guide to Legal Citation (4th ed) style. Logic in `src/lib/aglc4/`.
+- **Base converter** (`/projects/base-converter`) — live decimal/binary/hex/octal/text
+  conversion plus a bitwise playground. Logic in `src/lib/convert/`.
 
 ## Games
 
-The Games section at `/games` has two self-contained browser games:
+The Games section at `/games` has three self-contained browser games:
 
 - **Typing speed test** (`/games/typing-test`) — live WPM and accuracy over curated law, AI governance, and cybersecurity phrases (`src/lib/games/phrases.ts`).
 - **Breakout** (`/games/breakout`) — a monochrome canvas game with falling power-ups (wider paddle, multi-ball, slow ball, extra life).
+- **The Clause Game** (`/games/contract`) — pick contract clauses and win by landing a balanced, enforceable deal (`src/lib/games/contract-engine.ts`).
 
-Game logic lives in `src/lib/games/` as side-effect-free modules (`wpm.ts`, `breakout-engine.ts`) with thin `'use client'` render and input components in `src/components/games/`. Best scores are saved in the browser via `localStorage` (`storage.ts`); there is no server-side score storage.
+Game logic lives in `src/lib/games/` as side-effect-free modules (`wpm.ts`, `breakout-engine.ts`, `contract-engine.ts`) with thin `'use client'` render and input components in `src/components/games/`. Best scores are saved in the browser via `localStorage` (`storage.ts`); there is no server-side score storage.
 
 ## Security
 

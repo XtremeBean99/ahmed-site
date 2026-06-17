@@ -8,6 +8,6 @@ export default function OpengraphImage() {
   return renderOgImage({
     eyebrow: 'Projects',
     title: 'Selected work',
-    subtitle: 'A litigation tracker, open-source code, and an interactive look at silicon.',
+    subtitle: 'Open-source code, an interactive look at silicon, and law-and-computing tools.',
   })
 }

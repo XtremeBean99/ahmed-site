@@ -3,12 +3,11 @@ import Link from 'next/link'
 import { SectionReveal } from '@/components/ui/SectionReveal'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { MotionCard } from '@/components/ui/MotionCard'
-import { trackerStats } from '@/lib/litigation/data'
 
 export const metadata: Metadata = {
   title: 'Projects',
   description:
-    'Selected work by Ahmed Hussain: the AI & Cyber Litigation Tracker, open-source code, and an interactive 3D look at silicon.',
+    'Selected work by Ahmed Hussain: open-source code, an interactive 3D look at silicon, an AGLC4 citation generator, and a base converter.',
   alternates: { canonical: 'https://ahmedyhussain.com/projects' },
 }
 
@@ -20,13 +19,6 @@ type ProjectCard = {
 }
 
 const projects: ProjectCard[] = [
-  {
-    label: `Live tracker · ${trackerStats.total} cases`,
-    title: 'AI & Cyber Litigation Tracker',
-    description:
-      'A curated, source-cited dataset of AI, copyright and data-protection disputes, each record verified against its primary court docket.',
-    href: '/projects/litigation-tracker',
-  },
   {
     label: 'Open source',
     title: 'Code & open source',
@@ -69,7 +61,7 @@ const collectionSchema = {
   '@type': 'CollectionPage',
   name: 'Projects | Ahmed Hussain',
   description:
-    'Selected work: the AI & Cyber Litigation Tracker, open-source code, and an interactive 3D look at silicon.',
+    'Selected work: open-source code, an interactive 3D look at silicon, an AGLC4 citation generator, and a base converter.',
   url: 'https://ahmedyhussain.com/projects',
   isPartOf: { '@type': 'WebSite', name: 'Ahmed Hussain', url: 'https://ahmedyhussain.com' },
   author: { '@type': 'Person', name: 'Ahmed Hussain' },
@@ -88,7 +80,7 @@ export default function ProjectsPage() {
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl">
             Things I have built where law, computing, and the governance of technology meet:
-            from a live litigation dataset to the physics that runs underneath it all.
+            from open-source code to the physics that runs underneath it all.
           </p>
         </SectionReveal>
 

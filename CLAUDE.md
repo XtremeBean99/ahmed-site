@@ -43,25 +43,26 @@ Check `.env.example` for the full list.
 src/
 ├── app/                   Next.js App Router pages + API routes
 │   ├── api/contact/       POST handler — validate, honeypot, email
-│   ├── games/             Games hub + typing-test + breakout
+│   ├── games/             Games hub + typing-test + breakout + contract
 │   ├── legal/             Terms + Privacy pages
-│   ├── projects/          Projects hub + litigation tracker + code + silicon
+│   ├── projects/          Projects hub + code + silicon + aglc4 + base-converter
 │   ├── tutoring/          Full tutoring page (services, pricing, FAQ, form)
 │   ├── template.tsx       Per-route transition wrapper (client, reduced-motion safe)
 │   └── page.tsx           Homepage (7 sections, all static)
 │
 ├── components/
-│   ├── games/             TypingTest, Breakout (client), GameShell, GameStat
+│   ├── games/             TypingTest, Breakout, ContractGame (client), GameShell, GameStat
 │   ├── layout/            Header (client — scroll state), Footer (server)
-│   ├── projects/          Tracker UI: StatCounters, CaseList
+│   ├── projects/          ToolShell, Aglc4Generator, BaseConverter, SiliconCanvas
 │   ├── sections/          One file per homepage section (server components)
 │   └── ui/                Button, SectionReveal, ParallaxImage, ContactForm,
 │                          CircuitMesh, CyberSigils, MotionCard
 │
 ├── lib/
-│   ├── games/             phrases, wpm, breakout-engine, storage, types (no DB)
+│   ├── aglc4/             AGLC4 citation formatters + field config (pure, no DB)
+│   ├── convert/           Base + bitwise conversion (pure, BigInt)
+│   ├── games/             phrases, wpm, breakout-engine, contract-*, storage (no DB)
 │   ├── github/            GitHub API client for the code page
-│   ├── litigation/        Tracker dataset + types (typed module, no DB)
 │   ├── motion.ts          Shared Framer Motion tokens (easings, durations, variants)
 │   ├── resend.ts          Lazy Resend client (does NOT init at module load)
 │   ├── utils.ts           cn()
@@ -73,8 +74,8 @@ src/
 
 **Default to Server Components.** Only add `'use client'` when you need browser APIs,
 React state, or Framer Motion hooks. Current client components: Header, SectionReveal,
-ParallaxImage, ContactForm, CircuitMesh, StatCounters, CaseList, Template, MotionCard,
-TypingTest, Breakout.
+ParallaxImage, ContactForm, CircuitMesh, Template, MotionCard, TypingTest, Breakout,
+ContractGame, Aglc4Generator, BaseConverter.
 
 ---
 
@@ -96,7 +97,7 @@ If you add any other fixed-position backgrounds, ensure they do not conflict wit
 
 ## Games
 
-`/games` is a hub (two cards, same pattern as `/projects`) linking two self-contained games.
+`/games` is a hub (same card pattern as `/projects`) linking self-contained games.
 No database, no API routes, no server state. Best scores live in the browser only.
 
 - **Typing test** (`/games/typing-test`): live WPM + accuracy. Server shell renders the
@@ -109,6 +110,10 @@ No database, no API routes, no server state. Best scores live in the browser onl
   power-up system live in `src/lib/games/breakout-engine.ts` (pure functions over a mutable
   `GameState`); `Breakout.tsx` is a thin render + input shell. Power-ups: `expand`, `multi`,
   `slow`, `life` — tune them via the `POWERUP_META` / drop-chance constants in the engine.
+- **The Clause Game** (`/games/contract`): pick clauses across negotiation scenarios; win by
+  landing the deal in the balanced/enforceable zone. Pure scoring in
+  `src/lib/games/contract-engine.ts` + dataset in `contract-data.ts` (`contract-types.ts` for
+  shared types). Middle option in each category is always `balance: 0`. UI: `ContractGame.tsx`.
 - **Persistence:** `src/lib/games/storage.ts` — SSR-safe `localStorage` helpers
   (`getBest`, `setBestIfHigher`, `BEST_KEYS`). Namespaced under `ahmed-site:games:*`.
 - **Monochrome:** everything is white-on-zinc; brick depth uses per-row alpha, never colour.
@@ -202,21 +207,25 @@ Do not remove these protections.
 
 ---
 
-## Litigation Tracker
+## Project Tools (AGLC4 generator, base converter)
 
-`/projects/litigation-tracker` is the flagship project. It runs on a self-owned typed dataset
-(no DB), not an external API.
+Two interactive utilities live under `/projects`, each a server route + thin `'use client'`
+shell over pure logic. Both share `ToolShell` (`src/components/projects/ToolShell.tsx`) for
+page chrome (back-to-projects link + header), the projects analogue of `GameShell`.
 
-- Data + types: `src/lib/litigation/` (`types.ts`, `data.ts`). `data.ts` is a curated,
-  source-cited seed; each record has a `source` link and a `lastReviewed` date.
-- Relief is split into `claimed` vs `awarded` — never merge them into one "damages" figure.
-- UI: `src/components/projects/` (`StatCounters`, `CaseList`). Server-rendered except the
-  counters and filterable case list, which are client components. CircuitMesh is now in the
-  root layout so the tracker page no longer imports it directly.
-- Currency: `npm run sync:litigation` (`scripts/sync-litigation.ts`) queries the free
-  CourtListener API and prints a review queue. It is read-only by design — a human verifies
-  and updates the dataset before anything is published.
-- To add or correct a case, edit `src/lib/litigation/data.ts` and bump its `lastReviewed`.
+- **AGLC4 citation generator** (`/projects/aglc4`): builds footnote + bibliography citations
+  in AGLC4 (4th ed) style for 9 source types. All rules are pure functions in
+  `src/lib/aglc4/`: `types.ts`, `fields.ts` (declarative field config per source type), and
+  `format.ts` (formatters returning `Segment[]` so italics render as `<em>` and copy as plain
+  text). To add a source type: extend the `SourceType` union, add a `SOURCES` entry + a
+  `FORMATTERS` entry. UI: `src/components/projects/Aglc4Generator.tsx`.
+- **Base converter** (`/projects/base-converter`): live decimal/binary/hex/octal/UTF-8
+  conversion plus a bitwise playground. Pure logic in `src/lib/convert/` — `bases.ts`
+  (BigInt-backed parse/format + text↔value) and `bitwise.ts` (AND/OR/XOR/NOT/shifts; NOT is
+  width-masked). Everything funnels through one canonical non-negative `BigInt`. UI:
+  `src/components/projects/BaseConverter.tsx`.
+
+Note: BigInt literals (`0n`) require `tsconfig` `target` ES2020+ — do not lower it.
 
 ---
 

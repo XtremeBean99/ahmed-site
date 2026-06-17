@@ -101,7 +101,7 @@ export function TypingTest() {
         className="mt-10 w-full text-left rounded-lg border border-border bg-surface p-8 cursor-text focus:outline-none"
         aria-label="Focus typing area"
       >
-        <p className="font-serif text-2xl md:text-3xl leading-relaxed tracking-wide">
+        <p className="font-serif text-2xl md:text-3xl leading-relaxed tracking-wide whitespace-pre-wrap break-words">
           {chars.map((c, i) => (
             <span
               key={i}
@@ -114,7 +114,7 @@ export function TypingTest() {
                   cn('text-muted relative', !reduce && 'border-l-2 border-foreground animate-pulse'),
               )}
             >
-              {c.char === ' ' ? '\u00A0' : c.char}
+              {c.char}
             </span>
           ))}
         </p>

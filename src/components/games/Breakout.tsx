@@ -9,6 +9,7 @@ import {
   stepPhysics,
   togglePause,
   POWERUP_META,
+  SCORE_BASE,
 } from '@/lib/games/breakout-engine'
 import type { GameState } from '@/lib/games/types'
 import { getBest, setBestIfHigher, BEST_KEYS } from '@/lib/games/storage'
@@ -17,6 +18,13 @@ const LOGICAL_W = 800
 const LOGICAL_H = 600
 const CONFIG = { width: LOGICAL_W, height: LOGICAL_H, cols: 10, rows: 6, lives: 3 } as const
 
+/** Format a whole-second count as m:ss. */
+function formatClock(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60)
+  const s = totalSeconds % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 export function Breakout() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stateRef = useRef<GameState>(createInitialState(CONFIG))
@@ -24,13 +32,20 @@ export function Breakout() {
   const lastRef = useRef<number>(0)
   const reduceRef = useRef(false)
 
-  // HUD mirror (read from state each frame, throttled by React batching).
-  const [hud, setHud] = useState<{ score: number; lives: number; status: GameState['status'] }>({ score: 0, lives: CONFIG.lives, status: 'ready' })
+  // HUD mirror. Updates at most once per second (plus on lives/status change)
+  // to avoid a React re-render on every animation frame.
+  const [hud, setHud] = useState<{
+    seconds: number
+    lives: number
+    status: GameState['status']
+    score: number
+    elapsedMs: number
+  }>({ seconds: 0, lives: CONFIG.lives, status: 'ready', score: SCORE_BASE, elapsedMs: 0 })
   const [best, setBest] = useState(0)
 
   const resetGame = useCallback(() => {
     stateRef.current = createInitialState(CONFIG)
-    setHud({ score: 0, lives: CONFIG.lives, status: 'ready' })
+    setHud({ seconds: 0, lives: CONFIG.lives, status: 'ready', score: SCORE_BASE, elapsedMs: 0 })
   }, [])
 
   // Draw a single frame.
@@ -112,12 +127,13 @@ export function Breakout() {
       const active = visible && !document.hidden
       if (active && s.status === 'playing') stepPhysics(s, dt)
       draw(ctx, s)
+      const seconds = Math.floor(s.elapsedMs / 1000)
       setHud((h) =>
-        h.score === s.score && h.lives === s.lives && h.status === s.status
+        h.seconds === seconds && h.lives === s.lives && h.status === s.status
           ? h
-          : { score: s.score, lives: s.lives, status: s.status },
+          : { seconds, lives: s.lives, status: s.status, score: s.score, elapsedMs: s.elapsedMs },
       )
-      if (s.status === 'won' || s.status === 'lost') {
+      if (s.status === 'won') {
         if (setBestIfHigher(BEST_KEYS.breakout, s.score)) setBest(s.score)
       }
       rafRef.current = requestAnimationFrame(tick)
@@ -169,15 +185,15 @@ export function Breakout() {
       : hud.status === 'paused'
         ? 'Paused'
         : hud.status === 'won'
-          ? `Cleared. Score ${hud.score}.`
+          ? `Cleared in ${(hud.elapsedMs / 1000).toFixed(1)}s. Score ${hud.score}.`
           : hud.status === 'lost'
-            ? `Game over. Score ${hud.score}.`
+            ? 'Game over.'
             : ''
 
   return (
     <div className="max-w-3xl">
       <div className="grid grid-cols-3 gap-6 border-y border-border py-6">
-        <GameStat label="Score" value={hud.score} />
+        <GameStat label="Time" value={formatClock(hud.seconds)} />
         <GameStat label="Lives" value={hud.lives} />
         <GameStat label="Best" value={best} />
       </div>
@@ -205,7 +221,8 @@ export function Breakout() {
 
       <p className="mt-4 text-xs text-muted">
         Mouse or touch to move. Arrow keys or A and D also work. Space launches and pauses,
-        P pauses, R restarts. E widens the paddle, M splits the ball, S slows it down, plus adds a life.
+        P pauses, R restarts. Clear the wall fast: the longer you take, the lower your score.
+        E widens the paddle, M splits the ball, S slows it down, plus adds a life.
       </p>
     </div>
   )

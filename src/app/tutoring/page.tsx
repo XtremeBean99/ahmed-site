@@ -6,7 +6,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 export const metadata: Metadata = {
   title: 'Tutoring',
   description:
-    'Private tutoring by Ahmed Hussain in Canberra. Years 7–12. Physics, Mathematics, English, Legal Studies and more. Online $50/hr, in-person $60/hr.',
+    'Private tutoring by Ahmed Hussain in Canberra. Years 7–12. Physics, Mathematics, English, Legal Studies and more. Online $60/hr, in-person $70/hr.',
   keywords: [
     'Canberra tutor',
     'private tutor Canberra',
@@ -68,14 +68,14 @@ const serviceSchema = {
     {
       '@type': 'Offer',
       name: 'Online session',
-      price: '50',
+      price: '60',
       priceCurrency: 'AUD',
       unitText: 'hour',
     },
     {
       '@type': 'Offer',
       name: 'In-person session',
-      price: '60',
+      price: '70',
       priceCurrency: 'AUD',
       unitText: 'hour',
     },
@@ -168,7 +168,7 @@ export default function TutoringPage() {
             <div className="grid sm:grid-cols-2 gap-6 max-w-2xl">
               <div className="border border-border rounded-lg p-8">
                 <p className="label-text mb-4">Online</p>
-                <p className="font-serif text-5xl font-bold text-foreground mb-2">$50</p>
+                <p className="font-serif text-5xl font-bold text-foreground mb-2">$60</p>
                 <p className="text-muted-foreground text-sm">per hour</p>
                 <ul className="mt-6 space-y-2 text-sm text-muted-foreground" role="list">
                   <li>Via video call</li>
@@ -178,7 +178,7 @@ export default function TutoringPage() {
               </div>
               <div className="border border-border rounded-lg p-8">
                 <p className="label-text mb-4">In Person</p>
-                <p className="font-serif text-5xl font-bold text-foreground mb-2">$60</p>
+                <p className="font-serif text-5xl font-bold text-foreground mb-2">$70</p>
                 <p className="text-muted-foreground text-sm">per hour</p>
                 <ul className="mt-6 space-y-2 text-sm text-muted-foreground" role="list">
                   <li>ANU campus</li>

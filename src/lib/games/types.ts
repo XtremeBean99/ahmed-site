@@ -52,7 +52,8 @@ export interface GameState {
   bricks: Brick[]
   powerUps: PowerUp[]
   effects: ActiveEffect[]
-  score: number
+  score: number // time-based: higher for a faster clear
+  elapsedMs: number // total active play time
   lives: number
   width: number // logical playfield width
   height: number // logical playfield height

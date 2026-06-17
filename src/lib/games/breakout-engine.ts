@@ -14,6 +14,16 @@ export const EXPAND_FACTOR = 1.5
 export const MAX_LIVES = 5
 export const EFFECT_MS: Record<'expand' | 'slow', number> = { expand: 12000, slow: 10000 }
 
+// Score is time-based: it starts high and falls the longer a clear takes, so a
+// faster run earns a higher score (more time = lower score). Reaches 0 at 125s.
+export const SCORE_BASE = 10000
+export const SCORE_PER_SEC = 80
+
+/** Derive the time-based score from elapsed play time. */
+export function scoreFromTime(elapsedMs: number): number {
+  return Math.max(0, Math.round(SCORE_BASE - (elapsedMs / 1000) * SCORE_PER_SEC))
+}
+
 export const POWERUP_META: Record<PowerUpKind, { glyph: string; label: string }> = {
   expand: { glyph: 'E', label: 'Wider paddle' },
   multi: { glyph: 'M', label: 'Multi ball' },
@@ -59,7 +69,8 @@ export function createInitialState(config: BreakoutConfig): GameState {
     bricks: buildBricks(width, cols, rows),
     powerUps: [],
     effects: [],
-    score: 0,
+    score: SCORE_BASE,
+    elapsedMs: 0,
     lives,
     width,
     height,
@@ -153,7 +164,6 @@ function collideBricks(ball: Ball, state: GameState): void {
       ball.pos.y - ball.radius < brick.y + brick.height
     ) {
       brick.alive = false
-      state.score += 10
       const overlapX = Math.min(
         ball.pos.x + ball.radius - brick.x,
         brick.x + brick.width - (ball.pos.x - ball.radius),
@@ -270,6 +280,10 @@ function loseBall(state: GameState): void {
 export function stepPhysics(state: GameState, dt: number): void {
   if (state.status !== 'playing') return
   const dtMs = dt * 1000
+
+  // Time-based score: accrues while playing, falls as time passes.
+  state.elapsedMs += dtMs
+  state.score = scoreFromTime(state.elapsedMs)
 
   for (const ball of state.balls) {
     ball.pos.x += ball.vel.x * dt

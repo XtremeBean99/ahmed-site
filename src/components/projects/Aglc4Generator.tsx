@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { useT } from '@/lib/i18n/client'
 import { SOURCES, SOURCE_TYPES } from '@/lib/aglc4/fields'
 import {
   formatFootnote,
@@ -26,6 +27,7 @@ function Citation({ segments }: { segments: Segment[] }) {
 }
 
 function CopyButton({ text, disabled }: { text: string; disabled: boolean }) {
+  const t = useT().aglc4
   const [copied, setCopied] = useState(false)
 
   async function copy() {
@@ -44,14 +46,14 @@ function CopyButton({ text, disabled }: { text: string; disabled: boolean }) {
       onClick={copy}
       disabled={disabled}
       className="shrink-0 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed label-text"
-      aria-label="Copy citation"
+      aria-label={t.copyAria}
     >
       {copied ? (
         <>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
             <path d="M2 6.5L4.5 9 10 3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Copied
+          {t.copied}
         </>
       ) : (
         <>
@@ -59,7 +61,7 @@ function CopyButton({ text, disabled }: { text: string; disabled: boolean }) {
             <rect x="3.5" y="3.5" width="6" height="6" rx="1" />
             <path d="M2 8V2.5A.5.5 0 012.5 2H8" />
           </svg>
-          Copy
+          {t.copy}
         </>
       )}
     </button>
@@ -67,6 +69,7 @@ function CopyButton({ text, disabled }: { text: string; disabled: boolean }) {
 }
 
 function OutputBlock({ label, segments }: { label: string; segments: Segment[] }) {
+  const t = useT().aglc4
   const filled = hasContent(segments)
   return (
     <div className="border border-border rounded-lg bg-surface p-5">
@@ -78,7 +81,7 @@ function OutputBlock({ label, segments }: { label: string; segments: Segment[] }
         {filled ? (
           <Citation segments={segments} />
         ) : (
-          <span className="text-muted">Fill in the fields to build a citation.</span>
+          <span className="text-muted">{t.fillPrompt}</span>
         )}
       </p>
     </div>
@@ -86,6 +89,7 @@ function OutputBlock({ label, segments }: { label: string; segments: Segment[] }
 }
 
 export function Aglc4Generator() {
+  const t = useT().aglc4
   const [type, setType] = useState<SourceType>('reported-case')
   // Values are kept per source type so switching back restores earlier input.
   const [byType, setByType] = useState<Record<string, Values>>({})
@@ -115,7 +119,7 @@ export function Aglc4Generator() {
       {/* Inputs */}
       <div>
         <label htmlFor="aglc-type" className="block text-xs text-muted-foreground mb-1.5 label-text">
-          Source type
+          {t.sourceType}
         </label>
         <select
           id="aglc-type"
@@ -130,7 +134,7 @@ export function Aglc4Generator() {
           ))}
         </select>
         <p className="mt-2 text-xs text-muted leading-relaxed">
-          Example: <span className="text-muted-foreground">{config.example}</span>
+          {t.example} <span className="text-muted-foreground">{config.example}</span>
         </p>
 
         <div className="mt-6 space-y-4">
@@ -162,18 +166,16 @@ export function Aglc4Generator() {
           onClick={clearType}
           className="mt-6 text-xs text-muted underline hover:text-muted-foreground transition-colors"
         >
-          Clear fields
+          {t.clearFields}
         </button>
       </div>
 
       {/* Output */}
       <div className="space-y-4 lg:sticky lg:top-28 self-start">
-        <OutputBlock label="Footnote" segments={footnote} />
-        <OutputBlock label="Bibliography" segments={bibliography} />
+        <OutputBlock label={t.footnote} segments={footnote} />
+        <OutputBlock label={t.bibliography} segments={bibliography} />
         <p className="text-xs text-muted leading-relaxed">
-          A study aid based on AGLC4. It covers common cases, and you should
-          always check the output against the guide before relying on it.
-          Italics are shown as you would type them in a document.
+          {t.disclaimer}
         </p>
       </div>
     </div>

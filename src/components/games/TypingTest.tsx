@@ -8,11 +8,13 @@ import { diffChars, computeWpm, computeAccuracy, countCorrect } from '@/lib/game
 import { pickRandomPhrase } from '@/lib/games/phrases'
 import { getBest, setBestIfHigher, BEST_KEYS } from '@/lib/games/storage'
 import { cn } from '@/lib/utils'
+import { useT } from '@/lib/i18n/client'
 
 type Status = 'idle' | 'running' | 'finished'
 
 export function TypingTest() {
   const reduce = useReducedMotion()
+  const t = useT().typing
   const [phrase, setPhrase] = useState('')
   const [typed, setTyped] = useState('')
   const [status, setStatus] = useState<Status>('idle')
@@ -89,17 +91,18 @@ export function TypingTest() {
     <div className="max-w-3xl">
       {/* Stats */}
       <div className="grid grid-cols-3 gap-6 border-y border-border py-6">
-        <GameStat label="WPM" value={wpm} />
-        <GameStat label="Accuracy" value={`${accuracy}%`} />
-        <GameStat label="Best WPM" value={best} />
+        <GameStat label={t.wpm} value={wpm} />
+        <GameStat label={t.accuracy} value={`${accuracy}%`} />
+        <GameStat label={t.bestWpm} value={best} />
       </div>
 
-      {/* Phrase */}
-      <button
-        type="button"
+      {/* Phrase + capture input. The input overlays the phrase at full size and
+          is transparent: a direct tap focuses it within the user gesture, which
+          reliably summons the on-screen keyboard on mobile (an off-screen
+          sr-only input often does not). */}
+      <div
+        className="relative mt-10 w-full rounded-lg border border-border bg-surface p-8 cursor-text"
         onClick={() => inputRef.current?.focus()}
-        className="mt-10 w-full text-left rounded-lg border border-border bg-surface p-8 cursor-text focus:outline-none"
-        aria-label="Focus typing area"
       >
         <p className="font-serif text-2xl md:text-3xl leading-relaxed tracking-wide whitespace-pre-wrap break-words">
           {chars.map((c, i) => (
@@ -118,36 +121,41 @@ export function TypingTest() {
             </span>
           ))}
         </p>
-      </button>
-
-      {/* Hidden input drives capture; kept off-screen but focusable. */}
-      <input
-        ref={inputRef}
-        value={typed}
-        onChange={onChange}
-        autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-        spellCheck={false}
-        aria-label="Type the phrase above"
-        className="sr-only"
-      />
+        {status === 'idle' && typed.length === 0 && (
+          <span className="pointer-events-none absolute bottom-2 right-3 text-xs text-muted md:hidden">
+            {t.tapToType}
+          </span>
+        )}
+        <input
+          ref={inputRef}
+          value={typed}
+          onChange={onChange}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          inputMode="text"
+          enterKeyHint="done"
+          aria-label={t.typeHere}
+          className="absolute inset-0 h-full w-full cursor-text resize-none bg-transparent p-8 text-transparent caret-transparent opacity-0 focus:outline-none"
+        />
+      </div>
 
       {/* Result + controls */}
       <div className="mt-8 flex items-center gap-4" aria-live="polite">
         {status === 'finished' && (
           <p className="text-sm text-muted-foreground">
-            {wpm} WPM at {accuracy}% accuracy in {finalSeconds.toFixed(1)}s.
-            {isNewBest ? ' New personal best.' : ''}
+            {wpm} {t.resultBefore}{accuracy}{t.resultAccuracyIn}{finalSeconds.toFixed(1)}{t.resultSeconds}
+            {isNewBest ? t.newBest : ''}
           </p>
         )}
         <Button onClick={restart} className="ml-auto">
-          {status === 'finished' ? 'Try another' : 'Restart'}
+          {status === 'finished' ? t.tryAnother : t.restart}
         </Button>
       </div>
 
       {status === 'idle' && (
-        <p className="mt-4 text-xs text-muted">Start typing to begin. Backspace to correct.</p>
+        <p className="mt-4 text-xs text-muted">{t.startHint}</p>
       )}
     </div>
   )

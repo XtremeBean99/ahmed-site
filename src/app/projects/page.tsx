@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { SectionReveal } from '@/components/ui/SectionReveal'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { MotionCard } from '@/components/ui/MotionCard'
+import { getDictionary } from '@/lib/i18n/server'
 
 export const metadata: Metadata = {
   title: 'Projects',
@@ -10,51 +11,6 @@ export const metadata: Metadata = {
     'Selected work by Ahmed Hussain: open-source code, an interactive 3D look at silicon, an AGLC4 citation generator, and a base converter.',
   alternates: { canonical: 'https://ahmedyhussain.com/projects' },
 }
-
-type ProjectCard = {
-  label: string
-  title: string
-  description: string
-  href?: string // present = clickable; absent = "in progress"
-}
-
-const projects: ProjectCard[] = [
-  {
-    label: 'Open source',
-    title: 'My Github Projects',
-    description:
-      'Public repositories pulled live from GitHub: the software side of my law-and-computing work.',
-    href: '/projects/code',
-  },
-  {
-    label: 'Interactive',
-    title: 'Silicon: from atom to architecture',
-    description:
-      'An interactive 3D model of a silicon atom, with an explainer on how its four valence electrons end up running every computer.',
-    href: '/projects/silicon',
-  },
-  {
-    label: 'Legal tool',
-    title: 'AGLC4 citation generator',
-    description:
-      'Build footnote and bibliography citations in the Australian Guide to Legal Citation (4th ed) style — cases, legislation, articles, books, web pages and Hansard — and copy them straight into your work.',
-    href: '/projects/aglc4',
-  },
-  {
-    label: 'Computing tool',
-    title: 'Base converter',
-    description:
-      'Convert live between decimal, binary, hex, octal and UTF-8 text, with a bitwise playground for AND, OR, XOR, NOT and shifts. Arbitrary-precision, all in the browser.',
-    href: '/projects/base-converter',
-  },
-  {
-    label: 'Research',
-    title: 'In development',
-    description:
-      'Empirical and doctrinal work on AI governance. I will publish it here as it develops.',
-    // no href → renders the "coming soon" treatment
-  },
-]
 
 const collectionSchema = {
   '@context': 'https://schema.org',
@@ -67,19 +23,28 @@ const collectionSchema = {
   author: { '@type': 'Person', name: 'Ahmed Hussain' },
 }
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+  const t = (await getDictionary()).projects
+  const projects = [
+    { ...t.cards.code, href: '/projects/code' },
+    { ...t.cards.silicon, href: '/projects/silicon' },
+    { ...t.cards.aglc4, href: '/projects/aglc4' },
+    { ...t.cards.converter, href: '/projects/base-converter' },
+    { ...t.cards.dev, href: undefined as string | undefined },
+  ]
+
   return (
     <div className="pt-32 pb-24">
       <JsonLd data={collectionSchema} />
       <div className="max-w-container mx-auto px-6">
         {/* Header */}
         <SectionReveal>
-          <p className="label-text mb-6">Projects</p>
+          <p className="label-text mb-6">{t.eyebrow}</p>
           <h1 className="font-serif text-5xl md:text-6xl font-bold text-foreground leading-tight mb-6 text-balance max-w-3xl">
-            Selected work.
+            {t.heading}
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl">
-            A curated selection of my most recent professional &amp; personal projects.
+            {t.intro}
           </p>
         </SectionReveal>
 
@@ -100,11 +65,11 @@ export default function ProjectsPage() {
                         {project.title}
                       </h2>
                       <p className="text-sm text-muted-foreground leading-relaxed">
-                        {project.description}
+                        {project.desc}
                       </p>
                     </div>
                     <span className="mt-6 inline-flex items-center gap-1.5 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
-                      View project
+                      {t.view}
                       <svg
                         className="transition-transform group-hover:translate-x-0.5"
                         width="12"
@@ -129,12 +94,12 @@ export default function ProjectsPage() {
                       {project.title}
                     </h2>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {project.description}
+                      {project.desc}
                     </p>
                   </div>
                   <span className="mt-6 inline-flex items-center gap-1.5 text-xs text-muted">
                     <span className="w-1.5 h-1.5 rounded-full bg-muted animate-pulse inline-block" />
-                    Coming soon
+                    {t.comingSoon}
                   </span>
                 </div>
               )}

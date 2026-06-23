@@ -2,9 +2,10 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
-import { contactSchema, type ContactFormData } from '@/lib/validations'
+import { useMemo, useState } from 'react'
+import { makeContactSchema, type ContactFormData } from '@/lib/validations'
 import { cn } from '@/lib/utils'
+import { useT } from '@/lib/i18n/client'
 
 const MESSAGE_MAX = 5000
 
@@ -17,8 +18,11 @@ const inputBase =
   'w-full bg-surface border border-border rounded-md px-4 py-3 text-sm text-foreground placeholder:text-muted transition-colors focus:outline-none focus:border-muted-foreground'
 
 export function ContactForm({ defaultSubject }: ContactFormProps) {
+  const t = useT().contactForm
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const schema = useMemo(() => makeContactSchema(t.validation), [t.validation])
 
   const {
     register,
@@ -27,7 +31,7 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
     watch,
     formState: { errors },
   } = useForm<ContactFormData>({
-    resolver: zodResolver(contactSchema),
+    resolver: zodResolver(schema),
     defaultValues: { subject: defaultSubject ?? '' },
   })
 
@@ -45,12 +49,7 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
       })
 
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}))
-        setErrorMessage(
-          res.status === 429
-            ? 'You have sent too many messages. Please try again in about an hour.'
-            : (json.error as string) || 'Something went wrong. Please try again.',
-        )
+        setErrorMessage(res.status === 429 ? t.errorRate : t.errorGeneric)
         setStatus('error')
         return
       }
@@ -58,7 +57,7 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
       setStatus('success')
       reset()
     } catch {
-      setErrorMessage('Network error. Please check your connection and try again.')
+      setErrorMessage(t.errorNetwork)
       setStatus('error')
     }
   }
@@ -78,15 +77,15 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
         >
           <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <p className="font-serif text-xl font-semibold text-foreground mb-2">Message sent.</p>
+        <p className="font-serif text-xl font-semibold text-foreground mb-2">{t.successTitle}</p>
         <p className="text-muted-foreground text-sm">
-          Thank you for reaching out. I will be in touch shortly.
+          {t.successBody}
         </p>
         <button
           onClick={() => setStatus('idle')}
           className="mt-6 text-xs text-muted underline hover:text-muted-foreground transition-colors"
         >
-          Send another message
+          {t.sendAnother}
         </button>
       </div>
     )
@@ -107,13 +106,13 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
       <div className="grid sm:grid-cols-2 gap-5">
         <div>
           <label htmlFor="name" className="block text-xs text-muted-foreground mb-1.5 label-text">
-            Name
+            {t.name}
           </label>
           <input
             id="name"
             type="text"
             autoComplete="name"
-            placeholder="Your name"
+            placeholder={t.namePlaceholder}
             aria-invalid={!!errors.name}
             aria-describedby={errors.name ? 'name-error' : undefined}
             className={cn(inputBase, errors.name && 'border-red-800')}
@@ -128,13 +127,13 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
 
         <div>
           <label htmlFor="email" className="block text-xs text-muted-foreground mb-1.5 label-text">
-            Email
+            {t.email}
           </label>
           <input
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder={t.emailPlaceholder}
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? 'email-error' : undefined}
             className={cn(inputBase, errors.email && 'border-red-800')}
@@ -150,12 +149,12 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
 
       <div>
         <label htmlFor="subject" className="block text-xs text-muted-foreground mb-1.5 label-text">
-          Subject
+          {t.subject}
         </label>
         <input
           id="subject"
           type="text"
-          placeholder="What is this regarding?"
+          placeholder={t.subjectPlaceholder}
           aria-invalid={!!errors.subject}
           aria-describedby={errors.subject ? 'subject-error' : undefined}
           className={cn(inputBase, errors.subject && 'border-red-800')}
@@ -171,7 +170,7 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <label htmlFor="message" className="block text-xs text-muted-foreground label-text">
-            Message
+            {t.message}
           </label>
           <span className={cn('text-xs tabular-nums', messageValue.length > MESSAGE_MAX * 0.95 ? 'text-red-500' : 'text-muted')}>
             {messageValue.length}/{MESSAGE_MAX}
@@ -180,7 +179,7 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
         <textarea
           id="message"
           rows={5}
-          placeholder="Your message"
+          placeholder={t.messagePlaceholder}
           aria-invalid={!!errors.message}
           aria-describedby={errors.message ? 'message-error' : undefined}
           className={cn(inputBase, 'resize-none', errors.message && 'border-red-800')}
@@ -204,7 +203,7 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
         disabled={status === 'sending'}
         className="w-full sm:w-auto bg-foreground text-background px-7 py-3 rounded-md text-sm font-medium hover:bg-muted-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {status === 'sending' ? 'Sending…' : 'Send message'}
+        {status === 'sending' ? t.sending : t.send}
       </button>
     </form>
   )

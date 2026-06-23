@@ -13,6 +13,7 @@ import {
 } from '@/lib/games/breakout-engine'
 import type { GameState } from '@/lib/games/types'
 import { getBest, setBestIfHigher, BEST_KEYS } from '@/lib/games/storage'
+import { useT } from '@/lib/i18n/client'
 
 const LOGICAL_W = 800
 const LOGICAL_H = 600
@@ -26,6 +27,7 @@ function formatClock(totalSeconds: number): string {
 }
 
 export function Breakout() {
+  const t = useT().breakout
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stateRef = useRef<GameState>(createInitialState(CONFIG))
   const rafRef = useRef<number>(0)
@@ -146,8 +148,9 @@ export function Breakout() {
     }
   }, [draw])
 
-  // Pointer -> paddle.
-  const onPointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+  // Pointer -> paddle. Used by both move and down so the paddle tracks the
+  // finger/cursor immediately.
+  const movePaddleToEvent = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
@@ -155,6 +158,19 @@ export function Breakout() {
     setPaddleX(stateRef.current, x)
   }, [])
 
+  // Touch/click on the canvas moves the paddle and may launch or restart — but
+  // it must NOT toggle pause, otherwise every drag-to-move on a touchscreen
+  // pauses the game. Pausing is done with the dedicated control button.
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    movePaddleToEvent(e)
+    const s = stateRef.current
+    if (s.status === 'ready') startGame(s)
+    else if (s.status === 'won' || s.status === 'lost') resetGame()
+    else if (s.status === 'paused') togglePause(s)
+  }, [movePaddleToEvent, resetGame])
+
+  // Explicit launch/pause/resume/restart — for the keyboard, the overlay, and
+  // the on-screen control button.
   const launchOrPause = useCallback(() => {
     const s = stateRef.current
     if (s.status === 'ready') startGame(s)
@@ -181,30 +197,40 @@ export function Breakout() {
 
   const overlayText =
     hud.status === 'ready'
-      ? 'Press space or tap to launch'
+      ? t.launch
       : hud.status === 'paused'
-        ? 'Paused'
+        ? t.paused
         : hud.status === 'won'
-          ? `Cleared in ${(hud.elapsedMs / 1000).toFixed(1)}s. Score ${hud.score}.`
+          ? `${t.clearedBefore}${(hud.elapsedMs / 1000).toFixed(1)}${t.clearedAfter}${hud.score}.`
           : hud.status === 'lost'
-            ? 'Game over.'
+            ? t.gameOver
             : ''
+
+  // Label for the on-screen control button, by current status.
+  const controlLabel =
+    hud.status === 'ready'
+      ? t.start
+      : hud.status === 'playing'
+        ? t.pause
+        : hud.status === 'paused'
+          ? t.resume
+          : t.restart
 
   return (
     <div className="max-w-3xl">
       <div className="grid grid-cols-3 gap-6 border-y border-border py-6">
-        <GameStat label="Time" value={formatClock(hud.seconds)} />
-        <GameStat label="Lives" value={hud.lives} />
-        <GameStat label="Best" value={best} />
+        <GameStat label={t.time} value={formatClock(hud.seconds)} />
+        <GameStat label={t.lives} value={hud.lives} />
+        <GameStat label={t.best} value={best} />
       </div>
 
       <div className="relative mt-10 select-none">
         <canvas
           ref={canvasRef}
-          onPointerMove={onPointerMove}
-          onPointerDown={launchOrPause}
+          onPointerMove={movePaddleToEvent}
+          onPointerDown={onPointerDown}
           role="img"
-          aria-label="Breakout game playfield"
+          aria-label={t.playfield}
           className="w-full rounded-lg border border-border bg-background touch-none"
           style={{ aspectRatio: `${LOGICAL_W} / ${LOGICAL_H}` }}
         />
@@ -219,10 +245,29 @@ export function Breakout() {
         )}
       </div>
 
+      {/* On-screen controls — essential on touch devices, where there is no
+          keyboard to launch/pause/restart. */}
+      <div className="mt-4 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={launchOrPause}
+          className="bg-foreground text-background px-5 py-2 rounded-md text-sm font-medium hover:bg-muted-foreground transition-colors"
+        >
+          {controlLabel}
+        </button>
+        {(hud.status === 'playing' || hud.status === 'paused') && (
+          <button
+            type="button"
+            onClick={resetGame}
+            className="border border-border text-foreground px-5 py-2 rounded-md text-sm font-medium hover:bg-surface-hover transition-colors"
+          >
+            {t.restart}
+          </button>
+        )}
+      </div>
+
       <p className="mt-4 text-xs text-muted">
-        Mouse or touch to move. Arrow keys or A and D also work. Space launches and pauses,
-        P pauses, R restarts. Clear the wall fast: the longer you take, the lower your score.
-        E widens the paddle, M splits the ball, S slows it down, plus adds a life.
+        {t.instructions}
       </p>
     </div>
   )

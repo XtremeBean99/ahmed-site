@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
+import { useT } from '@/lib/i18n/client'
 
 const container = {
   hidden: {},
@@ -17,10 +18,11 @@ const item = {
 
 export function Hero() {
   const reduce = useReducedMotion()
+  const t = useT()
 
   return (
     <section
-      aria-label="Introduction"
+      aria-label={t.hero.intro}
       className="relative min-h-screen flex flex-col justify-center hero-grid"
     >
       {/* Radial vignette over the grid */}
@@ -38,7 +40,7 @@ export function Hero() {
         >
           {/* Eyebrow */}
           <motion.p variants={item} className="label-text mb-8">
-            Canberra, Australia
+            {t.hero.eyebrow}
           </motion.p>
 
           {/* Name */}
@@ -56,13 +58,13 @@ export function Hero() {
             variants={item}
             className="font-sans text-lg md:text-xl text-muted-foreground leading-relaxed mb-4 max-w-xl"
           >
-            BCom&thinsp;/&thinsp;LLB(Hons) student at the Australian National University.
+            {t.hero.descriptor1}
           </motion.p>
           <motion.p
             variants={item}
             className="font-sans text-lg md:text-xl text-muted-foreground leading-relaxed mb-12 max-w-xl"
           >
-            Working toward a future in tech law
+            {t.hero.descriptor2}
           </motion.p>
 
           {/* CTAs */}
@@ -72,7 +74,7 @@ export function Hero() {
               variant="primary"
               external
             >
-              Connect on LinkedIn
+              {t.hero.ctaPrimary}
               <svg
                 width="14"
                 height="14"
@@ -86,7 +88,7 @@ export function Hero() {
               </svg>
             </Button>
             <Button href="#contact" variant="secondary">
-              Get in touch
+              {t.hero.ctaSecondary}
             </Button>
           </motion.div>
         </motion.div>
@@ -105,7 +107,7 @@ export function Hero() {
           animate={reduce ? {} : { y: [0, 5, 0] }}
           transition={reduce ? undefined : { repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
         >
-          <span className="label-text">Scroll</span>
+          <span className="label-text">{t.hero.scroll}</span>
           <svg
             width="14"
             height="14"

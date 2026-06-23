@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { SectionReveal } from '@/components/ui/SectionReveal'
 import { getRepos, type Repo } from '@/lib/github/repos'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { getDictionary } from '@/lib/i18n/server'
 
 export const metadata: Metadata = {
   title: 'Code & open source',
@@ -61,7 +62,7 @@ const webpageSchema = {
 }
 
 export default async function CodeProjectsPage() {
-  const repos = await getRepos()
+  const [repos, t] = await Promise.all([getRepos(), getDictionary().then((d) => d.code)])
 
   return (
     <div className="pt-32 pb-24">
@@ -69,13 +70,12 @@ export default async function CodeProjectsPage() {
       <div className="max-w-container mx-auto px-6">
         {/* Header */}
         <SectionReveal>
-          <p className="label-text mb-6">Projects · Code</p>
+          <p className="label-text mb-6">{t.eyebrow}</p>
           <h1 className="font-serif text-5xl md:text-6xl font-bold text-foreground leading-tight mb-6 text-balance max-w-3xl">
-            Code &amp; open source
+            {t.heading}
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mb-4">
-            Public repositories pulled live from GitHub: the software side of my
-            law-and-computing work.
+            {t.intro}
           </p>
         </SectionReveal>
 
@@ -91,11 +91,10 @@ export default async function CodeProjectsPage() {
             ) : (
               <div className="border border-border rounded-lg p-8 bg-surface text-center max-w-xl">
                 <p className="text-muted-foreground text-lg mb-4">
-                  Unable to load repositories right now.
+                  {t.fallbackTitle}
                 </p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  The GitHub API may be temporarily unavailable or rate-limited. You can
-                  browse all repositories directly.
+                  {t.fallbackBody}
                 </p>
                 <a
                   href="https://github.com/XtremeBean99"
@@ -103,7 +102,7 @@ export default async function CodeProjectsPage() {
                   rel="noopener noreferrer"
                   className="inline-flex text-sm text-foreground underline underline-offset-2 hover:no-underline transition-colors"
                 >
-                  github.com/XtremeBean99 →
+                  {t.fallbackLink}
                 </a>
               </div>
             )}
@@ -113,10 +112,9 @@ export default async function CodeProjectsPage() {
         {/* Methodology */}
         <SectionReveal delay={0.1}>
           <div className="mt-20 border-t border-border pt-8 max-w-2xl">
-            <p className="label-text mb-3">Data source</p>
+            <p className="label-text mb-3">{t.dataSource}</p>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Repository data is pulled live from the public GitHub REST API and refreshed
-              hourly. Only public, non-fork, non-archived repositories are shown.
+              {t.dataSourceBody}
             </p>
           </div>
         </SectionReveal>

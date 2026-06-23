@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { ToolShell } from '@/components/projects/ToolShell'
 import { Aglc4Generator } from '@/components/projects/Aglc4Generator'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { getDictionary } from '@/lib/i18n/server'
 
 export const metadata: Metadata = {
   title: 'AGLC4 citation generator',
@@ -23,15 +24,12 @@ const schema = {
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'AUD' },
 }
 
-export default function Aglc4Page() {
+export default async function Aglc4Page() {
+  const t = (await getDictionary()).aglc4
   return (
     <>
       <JsonLd data={schema} />
-      <ToolShell
-        eyebrow="Legal tool"
-        title="AGLC4 citation generator"
-        intro="Build footnote and bibliography citations in the Australian Guide to Legal Citation (4th ed) style. Choose a source type, fill in the fields, and the citation updates as you type — ready to copy into your essay or memo."
-      >
+      <ToolShell eyebrow={t.eyebrow} title={t.heading} intro={t.intro}>
         <Aglc4Generator />
       </ToolShell>
     </>

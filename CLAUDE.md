@@ -35,6 +35,14 @@ layer in `src/services/`.
 `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` are env vars. They are never hardcoded.
 Check `.env.example` for the full list.
 
+### 5. The site is bilingual — every user-facing string must be translated
+The site ships in **English and French**. There is a single source of truth for copy:
+`src/lib/i18n/dictionaries/en.ts` (English) and `fr.ts` (French). **Any time you add or change
+user-facing text, you MUST update BOTH dictionaries.** Never hardcode a user-facing string in a
+component. The `Dictionary` type is derived from `en.ts`, so `fr.ts` will fail to compile if a key
+is missing — `npm run type-check` is your safety net. See "Internationalisation" below for the full
+workflow before touching any copy.
+
 ---
 
 ## Architecture in One Page
@@ -137,6 +145,60 @@ of hardcoding values so motion stays consistent.
 - `MotionCard` (`src/components/ui/MotionCard.tsx`) is the subtle hover-lift wrapper for cards.
 
 Every motion addition checks `useReducedMotion()` and degrades to no animation.
+
+---
+
+## Internationalisation (i18n) — English + French
+
+The site is bilingual. Language is chosen with an **EN / FR toggle in the header**, stored in a
+`locale` cookie, and read on the server — **there are no `/fr` URLs**. English is the canonical URL.
+
+### Where everything lives (`src/lib/i18n/`)
+- `config.ts` — `locales` (`en`, `fr`), `defaultLocale`, the `locale` cookie name/age, `isLocale()`.
+- `dictionaries/en.ts` — **the single source of truth for all copy.** Its shape defines the
+  `Dictionary` type.
+- `dictionaries/fr.ts` — `fr: Dictionary`. Structurally identical to `en.ts` or it won't compile.
+- `server.ts` — `getLocale()` and `getDictionary()` for **server components**. `getLocale()` reads
+  the cookie; on a first visit with no cookie it falls back to the `Accept-Language` header.
+- `client.tsx` — `I18nProvider` + `useI18n()` / `useT()` for **client components**.
+- `src/components/ui/LanguageToggle.tsx` — writes the cookie and `router.refresh()`es.
+
+### How to render copy
+- **Server component:** `const t = await getDictionary()` then `t.section.key`. The component must
+  be `async`. (This is how the layout, footer, sections, and most pages work.)
+- **Client component (`'use client'`):** `const t = useT()` then `t.section.key`. The provider is
+  wired in `src/app/layout.tsx`, which reads the locale and sets `<html lang>`.
+
+### The rule for ALL future changes
+1. Add the string to `en.ts` under a sensible section key.
+2. Add the **French translation** to `fr.ts` at the identical path (formal *vous* for the visitor;
+   first person for Ahmed's bio).
+3. Reference it via `t.…` in the component — never inline a literal.
+4. Run `npm run type-check` — a missing French key is a compile error.
+5. Keep `CONTENT.md` (the human-editable copy inventory) in sync if you add/restructure copy.
+
+Rich prose with inline emphasis (the silicon explainer) is stored as HTML strings containing
+`<strong>` and rendered with `dangerouslySetInnerHTML` inside a `.rich` container; `.rich strong`
+in `globals.css` applies the monochrome emphasis style. Content is trusted (our own dictionary).
+
+### Deliberate boundaries (these stay English on purpose)
+- **SEO metadata and Open Graph / Twitter images** — emitted in the canonical language (English).
+  Because switching is cookie-based (no `/fr` URL), there is no separate page for crawlers to index.
+- **Large editorial datasets** — typing-test phrases (`src/lib/games/phrases.ts`), Clause Game
+  scenarios/clauses (`src/lib/games/contract-data.ts`, `OUTCOME_COPY` in `contract-engine.ts`), and
+  AGLC4 field configs/examples (`src/lib/aglc4/fields.ts`). The **UI chrome around them is
+  translated**; the specialist content is not. If you localise these later, give each its own
+  locale-keyed module rather than bloating the dictionaries.
+
+### Consequences to be aware of
+- Reading the cookie makes content pages **dynamically rendered** (`ƒ` in the build output) rather
+  than static. This is the accepted trade-off for URL-stable switching. OG images, sitemap and
+  robots remain static.
+- A single `locale` cookie now exists. It holds no personal data and is not used for tracking; the
+  privacy policy already discloses it. Keep that disclosure accurate if you change cookie use.
+- Contact-form validation messages are localised: `makeContactSchema(messages)` in
+  `src/lib/validations.ts` builds the schema from dictionary strings on the client; the server API
+  uses the English default (its errors are not surfaced to users).
 
 ---
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { useT } from '@/lib/i18n/client'
 import {
   deriveAll,
   parseToBigInt,
@@ -16,15 +17,15 @@ const inputBase =
 
 const EMPTY: Record<Field, string> = { dec: '', bin: '', oct: '', hex: '', text: '' }
 
-const ROWS: { field: Field; label: string; hint: string }[] = [
-  { field: 'dec', label: 'Decimal', hint: 'Base 10' },
-  { field: 'bin', label: 'Binary', hint: 'Base 2' },
-  { field: 'oct', label: 'Octal', hint: 'Base 8' },
-  { field: 'hex', label: 'Hexadecimal', hint: 'Base 16' },
-  { field: 'text', label: 'Text', hint: 'UTF-8' },
-]
-
 function Converter() {
+  const t = useT().baseConverter
+  const ROWS: { field: Field; label: string; hint: string }[] = [
+    { field: 'dec', label: t.decimal, hint: t.base10 },
+    { field: 'bin', label: t.binary, hint: t.base2 },
+    { field: 'oct', label: t.octal, hint: t.base8 },
+    { field: 'hex', label: t.hexadecimal, hint: t.base16 },
+    { field: 'text', label: t.text, hint: t.utf8 },
+  ]
   const [fields, setFields] = useState<Record<Field, string>>(() => deriveAll(42n))
   const [error, setError] = useState<Field | null>(null)
 
@@ -61,7 +62,7 @@ function Converter() {
               inputMode={field === 'dec' ? 'numeric' : 'text'}
               autoComplete="off"
               spellCheck={false}
-              placeholder={field === 'text' ? 'Type some text…' : '0'}
+              placeholder={field === 'text' ? t.typeText : '0'}
               value={fields[field]}
               onChange={(e) => update(field, e.target.value)}
               className={cn(inputBase, error === field && 'border-red-800')}
@@ -69,7 +70,7 @@ function Converter() {
             />
             {error === field && (
               <p role="alert" className="mt-1 text-xs text-red-500">
-                Not a valid {label.toLowerCase()} value.
+                {t.invalidBefore}{label.toLowerCase()}{t.invalidAfter}
               </p>
             )}
           </div>
@@ -80,6 +81,7 @@ function Converter() {
 }
 
 function Bitwise() {
+  const t = useT().baseConverter
   const [a, setA] = useState('60')
   const [b, setB] = useState('13')
   const [op, setOp] = useState<BitOp>('and')
@@ -95,11 +97,11 @@ function Bitwise() {
 
   return (
     <div className="border border-border rounded-lg bg-surface p-5 sm:p-6">
-      <p className="label-text mb-4">Bitwise playground</p>
+      <p className="label-text mb-4">{t.bitwiseTitle}</p>
       <div className="flex flex-wrap items-end gap-3">
         <div className="grow min-w-[7rem]">
           <label htmlFor="bit-a" className="block text-xs text-muted-foreground mb-1.5 label-text">
-            A (decimal)
+            {t.aDecimal}
           </label>
           <input
             id="bit-a"
@@ -114,7 +116,7 @@ function Bitwise() {
 
         <div>
           <label htmlFor="bit-op" className="block text-xs text-muted-foreground mb-1.5 label-text">
-            Operation
+            {t.operation}
           </label>
           <select
             id="bit-op"
@@ -132,7 +134,7 @@ function Bitwise() {
 
         <div className={cn('grow min-w-[7rem]', meta.unary && 'opacity-40 pointer-events-none')}>
           <label htmlFor="bit-b" className="block text-xs text-muted-foreground mb-1.5 label-text">
-            {op === 'shl' || op === 'shr' ? 'Shift by' : 'B (decimal)'}
+            {op === 'shl' || op === 'shr' ? t.shiftBy : t.bDecimal}
           </label>
           <input
             id="bit-b"
@@ -148,9 +150,9 @@ function Bitwise() {
       </div>
 
       <div className="mt-5 border-t border-border pt-4">
-        <p className="label-text mb-3">Result</p>
+        <p className="label-text mb-3">{t.result}</p>
         {result === null ? (
-          <p className="text-sm text-muted">Enter valid operands to see the result.</p>
+          <p className="text-sm text-muted">{t.enterOperands}</p>
         ) : (
           <dl className="grid grid-cols-[5rem_1fr] gap-y-1.5 text-sm font-mono">
             <dt className="text-muted">DEC</dt>
@@ -167,14 +169,14 @@ function Bitwise() {
 }
 
 export function BaseConverter() {
+  const t = useT().baseConverter
   return (
     <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
       <div>
-        <p className="label-text mb-4">Number bases &amp; text</p>
+        <p className="label-text mb-4">{t.basesTitle}</p>
         <Converter />
         <p className="mt-4 text-xs text-muted leading-relaxed">
-          Edit any field and the rest update live. Values are arbitrary-precision,
-          so very large numbers work. Text maps each character to its UTF-8 bytes.
+          {t.helper}
         </p>
       </div>
       <Bitwise />

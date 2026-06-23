@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { GameShell } from '@/components/games/GameShell'
 import { Breakout } from '@/components/games/Breakout'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { getDictionary } from '@/lib/i18n/server'
 
 export const metadata: Metadata = {
   title: 'Breakout',
@@ -22,15 +23,12 @@ const schema = {
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'AUD' },
 }
 
-export default function BreakoutPage() {
+export default async function BreakoutPage() {
+  const t = (await getDictionary()).breakout
   return (
     <>
       <JsonLd data={schema} />
-      <GameShell
-        eyebrow="Arcade"
-        title="Breakout"
-        intro="Move the paddle to keep the ball alive and clear every brick. Some bricks drop power-ups. Use mouse, touch, or the arrow keys, and press space to launch."
-      >
+      <GameShell eyebrow={t.eyebrow} title={t.heading} intro={t.intro}>
         <Breakout />
       </GameShell>
     </>

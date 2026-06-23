@@ -77,6 +77,13 @@
   .label-text {
     @apply font-sans text-xs tracking-[0.2em] uppercase text-muted-foreground;
   }
+
+  /* Emphasis inside translated rich-text prose (rendered from dictionary HTML).
+     Keeps the monochrome "foreground + medium weight" treatment used for inline
+     <strong> across the silicon explainer. */
+  .rich strong {
+    @apply text-foreground font-medium;
+  }
 }
 
 /* ---- Circuit backdrop (static SVGs, 30% reduced from original) ---- */

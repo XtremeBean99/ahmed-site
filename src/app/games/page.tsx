@@ -3,69 +3,45 @@ import Link from 'next/link'
 import { SectionReveal } from '@/components/ui/SectionReveal'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { MotionCard } from '@/components/ui/MotionCard'
+import { getDictionary } from '@/lib/i18n/server'
 
 export const metadata: Metadata = {
   title: 'Games',
   description:
-    'Two small browser games by Ahmed Hussain: a live WPM typing speed test on law and technology phrases, and a monochrome Breakout with power-ups.',
+    'Browser games by Ahmed Hussain: a live WPM typing speed test on law and technology phrases, a monochrome Breakout with power-ups, and a contract-drafting strategy game.',
   alternates: { canonical: 'https://ahmedyhussain.com/games' },
 }
-
-type GameCard = {
-  label: string
-  title: string
-  description: string
-  href: string
-}
-
-const games: GameCard[] = [
-  {
-    label: 'Live WPM',
-    title: 'Typing speed test',
-    description:
-      'Type curated phrases on law, AI governance and cybersecurity while a live tracker measures your words per minute and accuracy.',
-    href: '/games/typing-test',
-  },
-  {
-    label: 'Arcade',
-    title: 'Breakout',
-    description:
-      'A monochrome take on the Atari classic: clear the wall, catch falling power-ups, and chase a personal best.',
-    href: '/games/breakout',
-  },
-  {
-    label: 'Strategy',
-    title: 'The Clause Game',
-    description:
-      'Sit at the negotiating table and draft the deal: pick clauses across real scenarios and win by landing a balanced, enforceable contract — too greedy or too generous and it falls apart.',
-    href: '/games/contract',
-  },
-]
 
 const collectionSchema = {
   '@context': 'https://schema.org',
   '@type': 'CollectionPage',
   name: 'Games | Ahmed Hussain',
   description:
-    'Two small browser games: a live WPM typing speed test and a monochrome Breakout with power-ups.',
+    'Browser games: a live WPM typing speed test, a monochrome Breakout with power-ups, and a contract-drafting strategy game.',
   url: 'https://ahmedyhussain.com/games',
   isPartOf: { '@type': 'WebSite', name: 'Ahmed Hussain', url: 'https://ahmedyhussain.com' },
   author: { '@type': 'Person', name: 'Ahmed Hussain' },
 }
 
-export default function GamesPage() {
+export default async function GamesPage() {
+  const t = (await getDictionary()).games
+  const games = [
+    { ...t.cards.typing, href: '/games/typing-test' },
+    { ...t.cards.breakout, href: '/games/breakout' },
+    { ...t.cards.contract, href: '/games/contract' },
+  ]
+
   return (
     <div className="pt-32 pb-24">
       <JsonLd data={collectionSchema} />
       <div className="max-w-container mx-auto px-6">
         <SectionReveal>
-          <p className="label-text mb-6">Games</p>
+          <p className="label-text mb-6">{t.eyebrow}</p>
           <h1 className="font-serif text-5xl md:text-6xl font-bold text-foreground leading-tight mb-6 text-balance max-w-3xl">
-            A break from the brief.
+            {t.heading}
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl">
-            Two small things built for fun and to keep the canvas and animation muscles warm.
-            Both run entirely in your browser and keep your best score on your device.
+            {t.intro}
           </p>
         </SectionReveal>
 
@@ -82,10 +58,10 @@ export default function GamesPage() {
                   <h2 className="font-serif text-xl font-semibold text-foreground group-hover:text-muted-foreground transition-colors mb-3">
                     {game.title}
                   </h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{game.description}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{game.desc}</p>
                 </div>
                 <span className="mt-6 inline-flex items-center gap-1.5 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
-                  Play
+                  {t.play}
                   <svg
                     className="transition-transform group-hover:translate-x-0.5"
                     width="12"

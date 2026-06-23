@@ -1,35 +1,28 @@
 import { SectionReveal } from '@/components/ui/SectionReveal'
+import { getDictionary } from '@/lib/i18n/server'
 
-const skillGroups = [
-  {
-    category: 'Programming',
-    skills: ['Python', 'TypeScript', 'JavaScript', 'Java', 'SQL', 'Bash'],
-  },
-  {
-    category: 'Web & Frameworks',
-    skills: ['React', 'Next.js', 'Node.js', 'REST APIs', 'PostgreSQL', 'Prisma'],
-  },
-  {
-    category: 'Security & Infrastructure',
-    skills: ['Linux', 'Git', 'Docker', 'OWASP Top 10', 'Networking basics'],
-  },
-  {
-    category: 'Legal',
-    skills: ['Contract Law', 'Administrative Law', 'Constitutional Law', 'Legal Research', 'Statutory Interpretation'],
-  },
-]
+export async function Skills() {
+  const t = (await getDictionary()).skills
 
-export function Skills() {
+  // Technical items are proper nouns and stay identical across locales; only the
+  // group titles and the Legal items are translated.
+  const skillGroups = [
+    { category: t.programming, skills: ['Python', 'TypeScript', 'JavaScript', 'Java', 'SQL', 'Bash'] },
+    { category: t.web, skills: ['React', 'Next.js', 'Node.js', 'REST APIs', 'PostgreSQL', 'Prisma'] },
+    { category: t.security, skills: ['Linux', 'Git', 'Docker', 'OWASP Top 10', 'Networking basics'] },
+    { category: t.legal, skills: t.legalItems },
+  ]
+
   return (
     <section id="skills" aria-labelledby="skills-heading" className="py-32 border-t border-border">
       <div className="max-w-container mx-auto px-6">
         <SectionReveal>
-          <p className="label-text mb-6">Skills</p>
+          <p className="label-text mb-6">{t.eyebrow}</p>
           <h2
             id="skills-heading"
             className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-16 text-balance max-w-lg"
           >
-            Technical &amp; legal capability.
+            {t.heading}
           </h2>
         </SectionReveal>
 

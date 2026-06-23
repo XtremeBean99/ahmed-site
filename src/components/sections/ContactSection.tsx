@@ -1,7 +1,10 @@
 import { SectionReveal } from '@/components/ui/SectionReveal'
 import { ContactForm } from '@/components/ui/ContactForm'
+import { getDictionary } from '@/lib/i18n/server'
 
-export function ContactSection() {
+export async function ContactSection() {
+  const t = (await getDictionary()).contact
+
   return (
     <section id="contact" aria-labelledby="contact-heading" className="py-32 border-t border-border">
       <div className="max-w-container mx-auto px-6">
@@ -10,42 +13,41 @@ export function ContactSection() {
           {/* Heading column */}
           <div>
             <SectionReveal>
-              <p className="label-text mb-6">Contact</p>
+              <p className="label-text mb-6">{t.eyebrow}</p>
               <h2
                 id="contact-heading"
                 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-6 text-balance"
               >
-                Let&rsquo;s talk.
+                {t.heading}
               </h2>
             </SectionReveal>
             <SectionReveal delay={0.1}>
               <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-                Whether you have a question about tutoring, want to talk about legal technology, or just
-                want to connect, I would be glad to hear from you.
+                {t.intro}
               </p>
               <ul className="space-y-3 text-sm text-muted-foreground" role="list">
                 <li className="flex items-center gap-3">
                   <span className="text-muted">●</span>
-                  Tutoring enquiries (Years 7–12)
+                  {t.bullet1}
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-muted">●</span>
-                  Professional introductions
+                  {t.bullet2}
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-muted">●</span>
-                  Research or academic collaboration
+                  {t.bullet3}
                 </li>
               </ul>
               <p className="text-sm text-muted-foreground mt-8">
-                Prefer email? Reach me directly at{' '}
+                {t.emailPromptBefore}
                 <a
                   href="mailto:ahmedyhussain07@gmail.com"
                   className="text-foreground underline underline-offset-2 hover:no-underline"
                 >
                   ahmedyhussain07@gmail.com
                 </a>
-                .
+                {t.emailPromptAfter}
               </p>
             </SectionReveal>
           </div>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { ToolShell } from '@/components/projects/ToolShell'
 import { BaseConverter } from '@/components/projects/BaseConverter'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { getDictionary } from '@/lib/i18n/server'
 
 export const metadata: Metadata = {
   title: 'Base converter',
@@ -23,15 +24,12 @@ const schema = {
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'AUD' },
 }
 
-export default function BaseConverterPage() {
+export default async function BaseConverterPage() {
+  const t = (await getDictionary()).baseConverter
   return (
     <>
       <JsonLd data={schema} />
-      <ToolShell
-        eyebrow="Computing tool"
-        title="Base converter"
-        intro="Convert between decimal, binary, hexadecimal, octal and UTF-8 text — edit any field and the rest follow live. Then experiment with AND, OR, XOR, NOT and shifts in the bitwise playground. Everything is arbitrary-precision and runs entirely in your browser."
-      >
+      <ToolShell eyebrow={t.eyebrow} title={t.heading} intro={t.intro}>
         <BaseConverter />
       </ToolShell>
     </>

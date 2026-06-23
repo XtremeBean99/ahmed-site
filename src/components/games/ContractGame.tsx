@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useT } from '@/lib/i18n/client'
 import { GameStat } from '@/components/games/GameStat'
 import { BEST_KEYS, getBest, setBestIfHigher } from '@/lib/games/storage'
 import {
@@ -30,6 +31,7 @@ const outcomeTone: Record<Outcome, string> = {
 
 /** Horizontal balance meter: centre is a fair deal; zone shows the win range. */
 function BalanceMeter({ net, max }: { net: number; max: number }) {
+  const t = useT().contractGame
   const reduce = useReducedMotion()
   const pos = clamp(50 + (net / max) * 50, 0, 100)
   const zone = (BALANCED_TOL / max) * 50
@@ -37,8 +39,8 @@ function BalanceMeter({ net, max }: { net: number; max: number }) {
   return (
     <div className="select-none">
       <div className="flex justify-between text-xs text-muted mb-2 label-text">
-        <span>Favours counterparty</span>
-        <span>Favours your client</span>
+        <span>{t.favoursCounterparty}</span>
+        <span>{t.favoursClient}</span>
       </div>
       <div className="relative h-2 rounded-full bg-border">
         {/* balanced (enforceable) zone */}
@@ -63,6 +65,7 @@ function BalanceMeter({ net, max }: { net: number; max: number }) {
 }
 
 export function ContractGame() {
+  const t = useT().contractGame
   const reduce = useReducedMotion()
   const [index, setIndex] = useState(0)
   const [selections, setSelections] = useState<Selections>({})
@@ -117,28 +120,27 @@ export function ContractGame() {
 
   if (phase === 'finished') {
     const verdict =
-      total >= 270 ? 'Master negotiator' : total >= 180 ? 'Sound counsel' : 'Back to the drafting table'
+      total >= 270 ? t.verdictMaster : total >= 180 ? t.verdictSound : t.verdictBack
     return (
       <div className="max-w-2xl">
         <div className="border border-border rounded-lg bg-surface p-8 text-center">
-          <p className="label-text mb-3">Final result</p>
+          <p className="label-text mb-3">{t.finalResult}</p>
           <p className="font-serif text-5xl font-bold text-foreground tabular-nums">{total}</p>
-          <p className="text-muted-foreground mt-1 text-sm">out of {TOTAL_ROUNDS * 100}</p>
+          <p className="text-muted-foreground mt-1 text-sm">{t.outOf} {TOTAL_ROUNDS * 100}</p>
           <p className="font-serif text-xl text-foreground mt-6">{verdict}</p>
           <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-            You closed {TOTAL_ROUNDS} negotiations. The best deals were the balanced ones — fair
-            terms are the terms that actually get signed.
+            {t.closedBefore}{TOTAL_ROUNDS}{t.closedAfter}
           </p>
           <div className="mt-6 flex items-center justify-center gap-8">
-            <GameStat label="This run" value={String(total)} />
-            <GameStat label="Best" value={String(best)} />
+            <GameStat label={t.thisRun} value={String(total)} />
+            <GameStat label={t.best} value={String(best)} />
           </div>
           <button
             type="button"
             onClick={restart}
             className="mt-8 bg-foreground text-background px-7 py-3 rounded-md text-sm font-medium hover:bg-muted-foreground transition-colors"
           >
-            Play again
+            {t.playAgain}
           </button>
         </div>
       </div>
@@ -153,10 +155,10 @@ export function ContractGame() {
         <div className="border border-border rounded-lg bg-surface p-6 mb-8">
           <div className="flex items-center justify-between gap-4 mb-3">
             <p className="label-text">
-              Round {index + 1} of {TOTAL_ROUNDS}
+              {t.roundBefore}{index + 1}{t.roundMid}{TOTAL_ROUNDS}
             </p>
             <p className="text-xs text-muted">
-              You act for <span className="text-muted-foreground">{scenario.you}</span> · v{' '}
+              {t.actFor}<span className="text-muted-foreground">{scenario.you}</span>{t.versus}
               {scenario.counterparty}
             </p>
           </div>
@@ -224,14 +226,10 @@ export function ContractGame() {
       {/* Sidebar: meter + verdict + action */}
       <aside className="lg:sticky lg:top-28 space-y-6">
         <div className="border border-border rounded-lg bg-surface p-5">
-          <p className="label-text mb-4">Balance of the deal</p>
+          <p className="label-text mb-4">{t.balanceTitle}</p>
           <BalanceMeter net={net} max={max} />
           <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
-            {ready
-              ? phase === 'result'
-                ? null
-                : 'Land the marker inside the lit zone for an enforceable, balanced deal.'
-              : 'Choose a clause in every category to lock in the deal.'}
+            {ready ? (phase === 'result' ? null : t.landHint) : t.chooseHint}
           </p>
 
           {phase === 'result' && (
@@ -247,7 +245,7 @@ export function ContractGame() {
                 {OUTCOME_COPY[outcome].note}
               </p>
               <p className="mt-3 text-sm text-foreground">
-                Round score: <span className="font-semibold tabular-nums">{lastScore}</span> / 100
+                {t.roundScoreBefore}<span className="font-semibold tabular-nums">{lastScore}</span>{t.roundScoreAfter}
               </p>
             </motion.div>
           )}
@@ -260,7 +258,7 @@ export function ContractGame() {
                 disabled={!ready}
                 className="w-full bg-foreground text-background px-5 py-3 rounded-md text-sm font-medium hover:bg-muted-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Lock in the deal
+                {t.lockIn}
               </button>
             ) : (
               <button
@@ -268,15 +266,15 @@ export function ContractGame() {
                 onClick={next}
                 className="w-full bg-foreground text-background px-5 py-3 rounded-md text-sm font-medium hover:bg-muted-foreground transition-colors"
               >
-                {isLast ? 'See final result' : 'Next negotiation'}
+                {isLast ? t.seeFinal : t.nextNegotiation}
               </button>
             )}
           </div>
         </div>
 
         <div className="flex items-center justify-around border border-border rounded-lg bg-surface p-4">
-          <GameStat label="Score" value={String(total)} />
-          <GameStat label="Best" value={String(best)} />
+          <GameStat label={t.score} value={String(total)} />
+          <GameStat label={t.best} value={String(best)} />
         </div>
       </aside>
     </div>

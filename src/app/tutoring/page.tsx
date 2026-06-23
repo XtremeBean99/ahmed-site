@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { SectionReveal } from '@/components/ui/SectionReveal'
 import { ContactForm } from '@/components/ui/ContactForm'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { getDictionary } from '@/lib/i18n/server'
 
 export const metadata: Metadata = {
   title: 'Tutoring',
@@ -21,18 +22,9 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://ahmedyhussain.com/tutoring' },
 }
 
-const year1112 = [
-  { subject: 'Physics', note: 'ACT BSSS curriculum' },
-  { subject: 'Mathematics', note: 'Methods & Specialist' },
-  { subject: 'English', note: 'Literature & Language' },
-  { subject: 'Legal Studies', note: 'ACT BSSS curriculum' },
-]
-
-const year710 = [
-  'Mathematics', 'English', 'History', 'Geography',
-  'Legal Studies', 'Commerce', 'Business', 'Economics',
-]
-
+// English copy retained for the structured-data (schema.org) payloads below,
+// which are emitted in the site's canonical language. Visible copy is rendered
+// from the active locale's dictionary.
 const faqs = [
   {
     q: 'Where do sessions take place?',
@@ -92,7 +84,9 @@ const faqSchema = {
   })),
 }
 
-export default function TutoringPage() {
+export default async function TutoringPage() {
+  const dict = await getDictionary()
+  const t = dict.tutoring
   return (
     <div className="pt-32 pb-24">
       <JsonLd data={serviceSchema} />
@@ -101,17 +95,15 @@ export default function TutoringPage() {
 
         {/* Header */}
         <SectionReveal>
-          <p className="label-text mb-6">Tutoring</p>
+          <p className="label-text mb-6">{t.eyebrow}</p>
           <h1 className="font-serif text-5xl md:text-6xl font-bold text-foreground leading-tight mb-6 text-balance max-w-2xl">
-            Private tutoring,<br />Canberra.
+            {t.headingLine1}<br />{t.headingLine2}
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mb-4">
-            I offer one-on-one tutoring for secondary school students in Canberra. My approach
-            puts understanding ahead of memorisation. The aim is to build the kind of structured thinking that
-            holds up in exams and well after them.
+            {t.intro1}
           </p>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mb-16">
-            Sessions are available online and in person at the ANU campus or nearby locations.
+            {t.intro2}
           </p>
         </SectionReveal>
 
@@ -122,11 +114,11 @@ export default function TutoringPage() {
             {/* Years 11–12 */}
             <div className="border border-border rounded-lg overflow-hidden">
               <div className="px-7 py-5 border-b border-border bg-surface">
-                <p className="label-text mb-1">Senior secondary</p>
-                <h2 className="font-serif text-2xl font-bold text-foreground">Years 11–12</h2>
+                <p className="label-text mb-1">{t.seniorSecondary}</p>
+                <h2 className="font-serif text-2xl font-bold text-foreground">{t.years1112}</h2>
               </div>
               <ul className="divide-y divide-border" role="list">
-                {year1112.map(({ subject, note }) => (
+                {t.y1112.map(({ subject, note }) => (
                   <li key={subject} className="px-7 py-4 flex items-center justify-between">
                     <span className="text-foreground font-medium">{subject}</span>
                     <span className="text-xs text-muted-foreground">{note}</span>
@@ -138,15 +130,15 @@ export default function TutoringPage() {
             {/* Years 7–10 */}
             <div className="border border-border rounded-lg overflow-hidden">
               <div className="px-7 py-5 border-b border-border bg-surface">
-                <p className="label-text mb-1">Middle secondary</p>
-                <h2 className="font-serif text-2xl font-bold text-foreground">Years 7–10</h2>
+                <p className="label-text mb-1">{t.middleSecondary}</p>
+                <h2 className="font-serif text-2xl font-bold text-foreground">{t.years710}</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  All non-science subjects available
+                  {t.allNonScience}
                 </p>
               </div>
               <div className="px-7 py-6">
                 <ul className="flex flex-wrap gap-2" role="list">
-                  {year710.map((s) => (
+                  {t.y710.map((s) => (
                     <li
                       key={s}
                       className="text-sm text-muted-foreground border border-border-subtle rounded-md px-3 py-1.5 bg-surface"
@@ -164,26 +156,22 @@ export default function TutoringPage() {
         {/* Pricing */}
         <SectionReveal delay={0.1}>
           <div className="mb-24">
-            <p className="label-text mb-8">Pricing</p>
+            <p className="label-text mb-8">{t.pricing}</p>
             <div className="grid sm:grid-cols-2 gap-6 max-w-2xl">
               <div className="border border-border rounded-lg p-8">
-                <p className="label-text mb-4">Online</p>
-                <p className="font-serif text-5xl font-bold text-foreground mb-2">$60</p>
-                <p className="text-muted-foreground text-sm">per hour</p>
+                <p className="label-text mb-4">{t.online}</p>
+                <p className="font-serif text-5xl font-bold text-foreground mb-2">{t.onlinePrice}</p>
+                <p className="text-muted-foreground text-sm">{t.perHour}</p>
                 <ul className="mt-6 space-y-2 text-sm text-muted-foreground" role="list">
-                  <li>Via video call</li>
-                  <li>Flexible scheduling</li>
-                  <li>Screen sharing for worked examples</li>
+                  {t.onlineFeatures.map((f) => <li key={f}>{f}</li>)}
                 </ul>
               </div>
               <div className="border border-border rounded-lg p-8">
-                <p className="label-text mb-4">In Person</p>
-                <p className="font-serif text-5xl font-bold text-foreground mb-2">$70</p>
-                <p className="text-muted-foreground text-sm">per hour</p>
+                <p className="label-text mb-4">{t.inPerson}</p>
+                <p className="font-serif text-5xl font-bold text-foreground mb-2">{t.inPersonPrice}</p>
+                <p className="text-muted-foreground text-sm">{t.perHour}</p>
                 <ul className="mt-6 space-y-2 text-sm text-muted-foreground" role="list">
-                  <li>ANU campus</li>
-                  <li>Canberra by arrangement</li>
-                  <li>Printed materials available</li>
+                  {t.inPersonFeatures.map((f) => <li key={f}>{f}</li>)}
                 </ul>
               </div>
             </div>
@@ -193,9 +181,9 @@ export default function TutoringPage() {
         {/* FAQ */}
         <SectionReveal delay={0.1}>
           <div className="mb-24">
-            <p className="label-text mb-8">FAQ</p>
+            <p className="label-text mb-8">{t.faq}</p>
             <div className="border border-border rounded-lg divide-y divide-border max-w-2xl">
-              {faqs.map(({ q, a }) => (
+              {t.faqs.map(({ q, a }) => (
                 <details key={q} className="group">
                   <summary className="flex items-center justify-between px-7 py-5 cursor-pointer list-none text-foreground font-medium hover:bg-surface transition-colors">
                     {q}
@@ -223,16 +211,15 @@ export default function TutoringPage() {
         <SectionReveal delay={0.1}>
           <div className="grid md:grid-cols-2 gap-16">
             <div>
-              <p className="label-text mb-6">Enquire</p>
+              <p className="label-text mb-6">{t.enquire}</p>
               <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
-                Book a session.
+                {t.enquireHeading}
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                Use this form to enquire about tutoring. Include your year level and the subjects you
-                need help with, and I will get back to you within one business day.
+                {t.enquireBody}
               </p>
             </div>
-            <ContactForm defaultSubject="Tutoring enquiry" />
+            <ContactForm defaultSubject={dict.contactForm.tutoringSubject} />
           </div>
         </SectionReveal>
 

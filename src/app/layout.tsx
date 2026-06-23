@@ -5,6 +5,8 @@ import { Footer } from '@/components/layout/Footer'
 import { CircuitMesh } from '@/components/ui/CircuitMesh'
 import { CircuitBackdrop } from '@/components/ui/CyberSigils'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { I18nProvider } from '@/lib/i18n/client'
+import { getDictionary, getLocale } from '@/lib/i18n/server'
 import './globals.css'
 
 const inter = Inter({
@@ -66,21 +68,26 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale()
+  const dict = await getDictionary()
+
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang={locale} className={`${inter.variable} ${playfair.variable}`}>
       <body>
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-background focus:text-foreground focus:border focus:border-border focus:px-4 focus:py-2 focus:rounded-md focus:text-sm focus:font-medium"
-        >
-          Skip to main content
-        </a>
-        <CircuitBackdrop />
-        <CircuitMesh />
-        <Header />
-        <main id="main-content" className="relative z-10">{children}</main>
-        <Footer />
+        <I18nProvider locale={locale} dict={dict}>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-background focus:text-foreground focus:border focus:border-border focus:px-4 focus:py-2 focus:rounded-md focus:text-sm focus:font-medium"
+          >
+            {dict.nav.skip}
+          </a>
+          <CircuitBackdrop />
+          <CircuitMesh />
+          <Header />
+          <main id="main-content" className="relative z-10">{children}</main>
+          <Footer />
+        </I18nProvider>
         <SpeedInsights />
       </body>
     </html>

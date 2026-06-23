@@ -1,14 +1,17 @@
 import Link from 'next/link'
 import { CopyrightYear } from '@/components/ui/CopyrightYear'
+import { getDictionary } from '@/lib/i18n/server'
 
-const footerLinks = [
-  { href: '/projects', label: 'Projects' },
-  { href: '/tutoring', label: 'Tutoring' },
-  { href: '/legal/privacy', label: 'Privacy Policy' },
-  { href: '/legal/terms', label: 'Terms of Use' },
-]
+export async function Footer() {
+  const t = await getDictionary()
 
-export function Footer() {
+  const footerLinks = [
+    { href: '/projects', label: t.footer.projects },
+    { href: '/tutoring', label: t.footer.tutoring },
+    { href: '/legal/privacy', label: t.footer.privacy },
+    { href: '/legal/terms', label: t.footer.terms },
+  ]
+
   return (
     <footer className="relative z-10 border-t border-border mt-24">
       <div className="max-w-container mx-auto px-6 py-12">
@@ -17,14 +20,12 @@ export function Footer() {
           <div className="space-y-2">
             <p className="font-serif text-base font-semibold text-foreground">Ahmed Hussain</p>
             <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
-              All content on this website is copyrighted and may not be reproduced, scraped, indexed
-              for AI training, or incorporated into generative AI systems without prior written
-              permission.
+              {t.footer.blurb}
             </p>
           </div>
 
           {/* Nav */}
-          <nav aria-label="Footer navigation">
+          <nav aria-label={t.footer.nav}>
             <ul className="flex flex-wrap gap-x-6 gap-y-2" role="list">
               {footerLinks.map(({ href, label }) => (
                 <li key={href}>
@@ -43,7 +44,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  LinkedIn
+                  {t.footer.linkedin}
                 </a>
               </li>
               <li>
@@ -51,7 +52,7 @@ export function Footer() {
                   href="mailto:ahmedyhussain07@gmail.com"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Email
+                  {t.footer.email}
                 </a>
               </li>
             </ul>
@@ -61,10 +62,10 @@ export function Footer() {
         {/* Copyright */}
         <div className="mt-10 pt-6 border-t border-border-subtle flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <p className="text-xs text-muted-foreground">
-            © <CopyrightYear /> Ahmed Hussain. All rights reserved.
+            © <CopyrightYear /> {t.footer.rights}
           </p>
           <p className="text-xs text-muted-foreground">
-            Canberra, Australia · ahmedyhussain.com
+            {t.footer.location}
           </p>
         </div>
       </div>

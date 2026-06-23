@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { GameShell } from '@/components/games/GameShell'
 import { TypingTest } from '@/components/games/TypingTest'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { getDictionary } from '@/lib/i18n/server'
 
 export const metadata: Metadata = {
   title: 'Typing speed test',
@@ -23,15 +24,12 @@ const schema = {
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'AUD' },
 }
 
-export default function TypingTestPage() {
+export default async function TypingTestPage() {
+  const t = (await getDictionary()).typing
   return (
     <>
       <JsonLd data={schema} />
-      <GameShell
-        eyebrow="Live WPM"
-        title="Typing speed test"
-        intro="Type the phrase as accurately and quickly as you can. The tracker starts on your first keystroke and your best score stays on this device."
-      >
+      <GameShell eyebrow={t.eyebrow} title={t.heading} intro={t.intro}>
         <TypingTest />
       </GameShell>
     </>

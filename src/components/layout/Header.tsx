@@ -6,14 +6,16 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
-
-const navLinks = [
-  { href: '/projects', label: 'Projects' },
-  { href: '/games', label: 'Games' },
-  { href: '/tutoring', label: 'Tutoring' },
-]
+import { useT } from '@/lib/i18n/client'
+import { LanguageToggle } from '@/components/ui/LanguageToggle'
 
 export function Header() {
+  const t = useT()
+  const navLinks = [
+    { href: '/projects', label: t.nav.projects },
+    { href: '/games', label: t.nav.games },
+    { href: '/tutoring', label: t.nav.tutoring },
+  ]
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const pathname = usePathname()
@@ -71,13 +73,13 @@ export function Header() {
     >
       <nav
         className="max-w-container mx-auto px-6 h-16 flex items-center justify-between"
-        aria-label="Primary navigation"
+        aria-label={t.nav.primary}
       >
         {/* Logo */}
         <Link
           href="/"
           className="flex items-center gap-2.5 group"
-          aria-label="Ahmed Hussain, home"
+          aria-label={t.nav.home}
         >
           <Image
             src="/site-logo.jpg"
@@ -122,20 +124,26 @@ export function Header() {
               href="/#contact"
               className="text-sm bg-foreground text-background px-4 py-2 rounded-md font-medium hover:bg-muted-foreground transition-colors"
             >
-              Get in touch
+              {t.nav.cta}
             </Link>
+          </li>
+          <li>
+            <LanguageToggle />
           </li>
         </ul>
 
-        {/* Mobile menu button */}
-        <button
-          ref={triggerRef}
-          onClick={() => setMenuOpen((v) => !v)}
-          className="md:hidden p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors"
-          aria-expanded={menuOpen}
-          aria-controls="mobile-menu"
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-        >
+        {/* Mobile controls */}
+        <div className="flex items-center gap-2 md:hidden">
+          <LanguageToggle />
+          {/* Mobile menu button */}
+          <button
+            ref={triggerRef}
+            onClick={() => setMenuOpen((v) => !v)}
+            className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+            aria-label={menuOpen ? t.nav.closeMenu : t.nav.openMenu}
+          >
           <svg
             width="20"
             height="20"
@@ -158,7 +166,8 @@ export function Header() {
               </>
             )}
           </svg>
-        </button>
+          </button>
+        </div>
       </nav>
 
       {/* Mobile drawer */}
@@ -188,7 +197,7 @@ export function Header() {
                   href="/#contact"
                   className="inline-block text-sm bg-foreground text-background px-4 py-2 rounded-md font-medium mt-2"
                 >
-                  Get in touch
+                  {t.nav.cta}
                 </Link>
               </li>
             </ul>

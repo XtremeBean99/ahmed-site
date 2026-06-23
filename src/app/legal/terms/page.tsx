@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { SectionReveal } from '@/components/ui/SectionReveal'
+import { getDictionary } from '@/lib/i18n/server'
 
 export const metadata: Metadata = {
   title: 'Terms of Use',
@@ -8,18 +9,21 @@ export const metadata: Metadata = {
   robots: { index: false },
 }
 
-const EFFECTIVE = '14 June 2026'
+export default async function TermsPage() {
+  const dict = await getDictionary()
+  const t = dict.legal.terms
 
-export default function TermsPage() {
   return (
     <div className="pt-32 pb-24">
       <div className="max-w-prose mx-auto px-6">
         <SectionReveal>
-          <p className="label-text mb-6">Legal</p>
+          <p className="label-text mb-6">{dict.legal.eyebrow}</p>
           <h1 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Terms of Use
+            {t.title}
           </h1>
-          <p className="text-muted-foreground text-sm mb-16">Effective: {EFFECTIVE}</p>
+          <p className="text-muted-foreground text-sm mb-16">
+            {dict.legal.effectiveDate}: {t.date}
+          </p>
         </SectionReveal>
 
         <div className="prose prose-invert prose-zinc max-w-none space-y-8 text-muted-foreground leading-relaxed">
@@ -27,53 +31,30 @@ export default function TermsPage() {
           <SectionReveal delay={0.06}>
             <section aria-labelledby="terms-acceptance">
               <h2 id="terms-acceptance" className="font-serif text-xl font-semibold text-foreground mb-3">
-                1. Acceptance
+                {t.s1h}
               </h2>
-              <p>
-                By accessing or using ahmedyhussain.com (the &ldquo;Site&rdquo;), you agree to be
-                bound by these Terms of Use. If you do not agree, do not use the Site.
-              </p>
+              <p>{t.s1b}</p>
             </section>
           </SectionReveal>
 
           <SectionReveal delay={0.08}>
             <section aria-labelledby="terms-ip">
               <h2 id="terms-ip" className="font-serif text-xl font-semibold text-foreground mb-3">
-                2. Intellectual Property
+                {t.s2h}
               </h2>
-              <p>
-                All content on this Site, including but not limited to text, design, layout,
-                graphics, and code, is the intellectual property of Ahmed Hussain and is protected
-                by Australian and international copyright law.
-              </p>
-              <p className="mt-4">
-                Copyright &copy; Ahmed Hussain. All rights reserved.
-              </p>
+              <p>{t.s2b1}</p>
+              <p className="mt-4">{t.s2b2}</p>
             </section>
           </SectionReveal>
 
           <SectionReveal delay={0.1}>
             <section aria-labelledby="terms-prohibited">
               <h2 id="terms-prohibited" className="font-serif text-xl font-semibold text-foreground mb-3">
-                3. Prohibited Uses
+                {t.s3h}
               </h2>
-              <p>You expressly agree that you will not, without prior written permission:</p>
+              <p>{t.s3intro}</p>
               <ul className="mt-3 space-y-2 list-disc list-inside">
-                <li>Scrape, crawl, or otherwise automatically extract content from this Site</li>
-                <li>
-                  Use any content from this Site to train, fine-tune, or otherwise develop artificial
-                  intelligence or machine learning models
-                </li>
-                <li>
-                  Ingest any content into vector databases, embedding stores, or similar retrieval
-                  systems for AI purposes
-                </li>
-                <li>Reproduce, redistribute, or republish content without attribution and permission</li>
-                <li>Create derivative works based on content from this Site</li>
-                <li>
-                  Use this Site in any manner that could interfere with its operation or impose an
-                  unreasonable load on its infrastructure
-                </li>
+                {t.s3items.map((item) => <li key={item}>{item}</li>)}
               </ul>
             </section>
           </SectionReveal>
@@ -81,74 +62,46 @@ export default function TermsPage() {
           <SectionReveal delay={0.12}>
             <section aria-labelledby="terms-ai">
               <h2 id="terms-ai" className="font-serif text-xl font-semibold text-foreground mb-3">
-                4. AI and Automated Systems
+                {t.s4h}
               </h2>
-              <p>
-                All content on this Site is copyrighted and may not be reproduced, redistributed,
-                scraped, indexed for AI training, used in machine learning datasets, or incorporated
-                into generative AI systems without prior written permission from Ahmed Hussain.
-              </p>
-              <p className="mt-4">
-                Operators of AI crawlers and large language model training pipelines are on notice
-                that access to this Site for the purpose of data collection is prohibited. This
-                prohibition is reflected in the Site&rsquo;s robots.txt file and HTTP response
-                headers.
-              </p>
+              <p>{t.s4p1}</p>
+              <p className="mt-4">{t.s4p2}</p>
             </section>
           </SectionReveal>
 
           <SectionReveal delay={0.14}>
             <section aria-labelledby="terms-accuracy">
               <h2 id="terms-accuracy" className="font-serif text-xl font-semibold text-foreground mb-3">
-                5. Accuracy of Information
+                {t.s5h}
               </h2>
-              <p>
-                Content on this Site is provided for informational purposes only and does not
-                constitute legal advice. While I make reasonable efforts to ensure accuracy, I make
-                no representations as to the completeness or currency of information provided.
-              </p>
+              <p>{t.s5b}</p>
             </section>
           </SectionReveal>
 
           <SectionReveal delay={0.16}>
             <section aria-labelledby="terms-liability">
               <h2 id="terms-liability" className="font-serif text-xl font-semibold text-foreground mb-3">
-                6. Limitation of Liability
+                {t.s6h}
               </h2>
-              <p>
-                To the extent permitted by law, Ahmed Hussain excludes all liability for loss or
-                damage of any kind arising from your use of this Site or reliance on its content.
-              </p>
+              <p>{t.s6b}</p>
             </section>
           </SectionReveal>
 
           <SectionReveal delay={0.18}>
             <section aria-labelledby="terms-governing">
               <h2 id="terms-governing" className="font-serif text-xl font-semibold text-foreground mb-3">
-                7. Governing Law
+                {t.s7h}
               </h2>
-              <p>
-                These Terms are governed by the laws of the Australian Capital Territory, Australia.
-                Any dispute arising from these Terms will be subject to the jurisdiction of the
-                courts of the ACT.
-              </p>
+              <p>{t.s7b}</p>
             </section>
           </SectionReveal>
 
           <SectionReveal delay={0.2}>
             <section aria-labelledby="terms-contact">
               <h2 id="terms-contact" className="font-serif text-xl font-semibold text-foreground mb-3">
-                8. Contact
+                {t.s8h}
               </h2>
-              <p>
-                For permissions or queries regarding these Terms, contact:{' '}
-                <a
-                  href="mailto:ahmedyhussain07@gmail.com"
-                  className="text-foreground underline underline-offset-2 hover:no-underline"
-                >
-                  ahmedyhussain07@gmail.com
-                </a>
-              </p>
+              <p>{t.s8b}</p>
             </section>
           </SectionReveal>
 

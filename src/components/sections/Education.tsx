@@ -1,6 +1,9 @@
 import { SectionReveal } from '@/components/ui/SectionReveal'
+import { getDictionary } from '@/lib/i18n/server'
 
-export function Education() {
+export async function Education() {
+  const t = (await getDictionary()).education
+
   return (
     <section
       id="education"
@@ -9,12 +12,12 @@ export function Education() {
     >
       <div className="max-w-container mx-auto px-6">
         <SectionReveal>
-          <p className="label-text mb-6">Education</p>
+          <p className="label-text mb-6">{t.eyebrow}</p>
           <h2
             id="education-heading"
             className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-16 text-balance max-w-lg"
           >
-            Academic background.
+            {t.heading}
           </h2>
         </SectionReveal>
 
@@ -24,13 +27,13 @@ export function Education() {
             <div className="px-8 py-6 border-b border-border bg-surface flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <p className="font-serif text-xl font-semibold text-foreground">
-                  Australian National University
+                  {t.university}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">Canberra, ACT, Australia</p>
+                <p className="text-sm text-muted-foreground mt-1">{t.location}</p>
               </div>
               <span className="inline-flex items-center gap-2 text-xs label-text border border-border rounded-full px-3 py-1 w-fit">
                 <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 inline-block" />
-                Expected 2031
+                {t.status}
               </span>
             </div>
 
@@ -38,9 +41,9 @@ export function Education() {
             <div className="divide-y divide-border">
               <div className="px-8 py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
-                  <p className="text-foreground font-medium">Bachelor of Computing</p>
+                  <p className="text-foreground font-medium">{t.degree1}</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Software engineering, algorithms, systems, and security
+                    {t.degree1desc}
                   </p>
                 </div>
                 <p className="text-xs text-muted shrink-0">BCom</p>
@@ -48,10 +51,10 @@ export function Education() {
               <div className="px-8 py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
                   <p className="text-foreground font-medium">
-                    Bachelor of Laws <span className="text-muted-foreground">(Honours)</span>
+                    {t.degree2} <span className="text-muted-foreground">{t.honours}</span>
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Common law, statutory interpretation, and emerging legal frameworks
+                    {t.degree2desc}
                   </p>
                 </div>
                 <p className="text-xs text-muted shrink-0">LLB(Hons)</p>

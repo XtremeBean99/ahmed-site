@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { GameShell } from '@/components/games/GameShell'
 import { ContractGame } from '@/components/games/ContractGame'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { getDictionary } from '@/lib/i18n/server'
 
 export const metadata: Metadata = {
   title: 'The Clause Game',
@@ -23,15 +24,12 @@ const schema = {
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'AUD' },
 }
 
-export default function ContractGamePage() {
+export default async function ContractGamePage() {
+  const t = (await getDictionary()).contractGame
   return (
     <>
       <JsonLd data={schema} />
-      <GameShell
-        eyebrow="Strategy"
-        title="The Clause Game"
-        intro="You are counsel at the negotiating table. Choose a clause in every category, then lock in the deal. Land it in the balanced, enforceable zone to win the round — push too hard for your client and the other side walks; give too much away and you have failed them. Your best run stays on this device."
-      >
+      <GameShell eyebrow={t.eyebrow} title={t.heading} intro={t.intro}>
         <ContractGame />
       </GameShell>
     </>

@@ -16,6 +16,11 @@ HOW TO USE THIS FILE
 This file is documentation only — it is NOT wired into the site. Editing it
 changes nothing until I transfer the edits.
 
+BILINGUAL: the site now renders in English AND French. The live copy lives in
+src/lib/i18n/dictionaries/en.ts (English) and fr.ts (French). This inventory
+lists the English copy; every entry has a French counterpart at the same key.
+If you change a string here, its French translation must be updated too.
+
 Covered here: all page & section copy, navigation, footer, SEO descriptions.
 NOT yet pulled in (data-driven, lives in code — ask if you want these too):
   • Typing-test phrases  → src/lib/games/phrases.ts

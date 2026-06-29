@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { contactSchema } from '@/lib/validations'
 import { submitContact } from '@/services/contact'
+import { checkRateLimit } from '@/lib/ratelimit'
 
 export async function POST(request: NextRequest) {
+  // Rate-limit by IP (Vercel provides x-forwarded-for)
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const { allowed } = checkRateLimit(ip)
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'You have sent too many messages. Please try again later.' },
+      { status: 429 },
+    )
+  }
+
   let body: unknown
   try {
     body = await request.json()

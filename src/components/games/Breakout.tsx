@@ -244,10 +244,16 @@ export function Breakout() {
           className="w-full rounded-lg border border-border bg-transparent touch-none"
           style={{ aspectRatio: `${LOGICAL_W} / ${LOGICAL_H}` }}
         />
+        <noscript>
+          <div className="flex items-center justify-center rounded-lg border border-border bg-surface py-24 text-center text-muted-foreground" style={{ aspectRatio: `${LOGICAL_W} / ${LOGICAL_H}` }}>
+            JavaScript is required to play Breakout.
+          </div>
+        </noscript>
         {overlayText && (
           <button
             type="button"
             onClick={launchOrPause}
+            aria-live="polite"
             className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm rounded-lg text-foreground font-serif text-2xl"
           >
             {overlayText}

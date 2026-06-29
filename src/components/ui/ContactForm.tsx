@@ -64,7 +64,7 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
 
   if (status === 'success') {
     return (
-      <div className="border border-border rounded-lg p-8 text-center">
+      <div className="border border-border rounded-lg p-8 text-center" aria-live="polite">
         <svg
           className="mx-auto mb-4 text-muted-foreground"
           width="32"
@@ -193,7 +193,7 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
       </div>
 
       {status === 'error' && errorMessage && (
-        <p role="alert" className="text-sm text-red-500 border border-red-900 rounded-md px-4 py-3">
+        <p role="alert" aria-live="assertive" className="text-sm text-red-500 border border-red-900 rounded-md px-4 py-3">
           {errorMessage}
         </p>
       )}
@@ -201,6 +201,7 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
       <button
         type="submit"
         disabled={status === 'sending'}
+        aria-busy={status === 'sending'}
         className="w-full sm:w-auto bg-foreground text-background px-7 py-3 rounded-md text-sm font-medium hover:bg-muted-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {status === 'sending' ? t.sending : t.send}

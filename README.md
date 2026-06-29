@@ -134,3 +134,7 @@ npm run build        # Full production build
 ## Deployment
 
 Pushing to `master` triggers an automatic Vercel production deployment. Domain: `ahmedyhussain.com`.
+
+## License
+
+Source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE). Free to use, modify, and share for **noncommercial** purposes. **Commercial use** and **use as AI/ML training data** require prior written permission — contact Ahmed Hussain (Ahmedyhussain07@gmail.com).

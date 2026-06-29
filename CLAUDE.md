@@ -73,6 +73,7 @@ src/
 │   ├── github/            GitHub API client for the code page
 │   ├── motion.ts          Shared Framer Motion tokens (easings, durations, variants)
 │   ├── resend.ts          Lazy Resend client (does NOT init at module load)
+│   ├── ratelimit.ts       In-memory rate limiter (5 req/hr per IP)
 │   ├── utils.ts           cn()
 │   └── validations.ts     Zod schemas - single source of truth for form shapes
 │
@@ -123,7 +124,8 @@ No database, no API routes, no server state. Best scores live in the browser onl
   `src/lib/games/contract-engine.ts` + dataset in `contract-data.ts` (`contract-types.ts` for
   shared types). Middle option in each category is always `balance: 0`. UI: `ContractGame.tsx`.
 - **Persistence:** `src/lib/games/storage.ts` - SSR-safe `localStorage` helpers
-  (`getBest`, `setBestIfHigher`, `BEST_KEYS`). Namespaced under `ahmed-site:games:*`.
+  (`getBest`, `setBestIfHigher`, `BEST_KEYS`). Namespaced under `ahmed-site:games:v1:*`
+  with versioned key prefixing for schema migration safety.
 - **Monochrome:** everything is white-on-zinc; brick depth uses per-row alpha, never colour.
 - **Reduced motion:** decorative animation (caret blink, power-up flourishes) is gated; the
   games themselves remain fully playable.
@@ -206,15 +208,17 @@ in `globals.css` applies the monochrome emphasis style. Content is trusted (our 
 
 ```
 POST /api/contact
-  1. Parse JSON body
-  2. contactSchema.safeParse() - Zod, server side
-  3. Honeypot check (website field must be empty)
-  4. submitContact() in src/services/contact.ts
+  1. CSRF check: Origin/Referer must match production domain
+  2. Rate-limit by IP (5 req/hr, in-memory — see src/lib/ratelimit.ts)
+  3. Parse JSON body
+  4. contactSchema.safeParse() - Zod, server side
+  5. Honeypot check (website field must be empty)
+  6. submitContact() in src/services/contact.ts
      a. sendContactEmail() via Resend (throws on failure → 500)
-  5. Return 200 / 400 / 500
+  7. Return 200 / 400 / 429 / 500
 ```
 
-No database. No rate limiting. No IP logging. The privacy policy (`/legal/privacy`) was
+No database. Rate limiting via `src/lib/ratelimit.ts` (5 req/hr per IP, in-memory). No IP logging. The privacy policy (`/legal/privacy`) was
 corrected on 2026-06-16 to match this reality (email-only via Resend, no stored IP, no
 database) and to disclose Vercel Speed Insights and the games' `localStorage` use. Keep it
 accurate if you change data handling.
@@ -228,6 +232,11 @@ This is intentional - `new Resend(undefined)` throws immediately at module load,
 `next build` when `RESEND_API_KEY` is not set in the build environment.
 
 Do not change this to an eager initialisation.
+
+The module also exports a centralised `CONTACT_EMAIL` constant used by the Footer and other
+components — update it in one place if the email address changes. The `sendContactEmail`
+function sanitises the email subject (strips control characters and limits length) before
+sending.
 
 ---
 
@@ -343,5 +352,6 @@ npm run build        # full production build
   service layer and use environment variables for the connection string.
 - **Newsletter** - needs a signup form and Resend audience integration.
 - **Blog/Articles** - needs a Markdown renderer (consider `next-mdx-remote` or `@next/mdx`).
-- **Rate limiting** - not currently implemented. If abuse of the contact endpoint is observed,
-  add it via Vercel KV, Upstash, or a database-backed approach.
+- **Rate limiting** — in-memory rate limiter exists (`src/lib/ratelimit.ts`, 5 req/hr/IP
+  for the contact form). NOTE: does not survive serverless cold starts on Vercel.
+  For production resilience, migrate to Upstash Redis or Vercel KV.

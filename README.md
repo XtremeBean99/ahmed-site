@@ -86,10 +86,12 @@ src/
 
 ```
 POST /api/contact
+  → CSRF check (Origin/Referer validation against production domain)
+  → Rate limiting (5 req/hr per IP, in-memory)
   → Zod validation (server-side)
   → Honeypot check (hidden `website` field)
   → submitContact() → sendContactEmail() via Resend
-  → 200 / 400 / 500
+  → 200 / 400 / 429 / 500
 ```
 
 The site uses no database. Contact submissions are emailed via Resend and not persisted.
@@ -116,18 +118,22 @@ Game logic lives in `src/lib/games/` as side-effect-free modules (`wpm.ts`, `bre
 ## Security
 
 - Security headers set in `next.config.ts` (HSTS, CSP, X-Frame-Options, etc.)
+- CSRF protection on contact API via Origin/Referer header validation
+- Rate limiting on contact form (5 req/hr per IP, in-memory)
 - `robots.txt` disallows all major AI training crawlers
 - `X-Robots-Tag: noai, noimageai` on all responses
 - Terms of Use explicitly prohibit scraping and AI training
 - All form data validated server-side with Zod + honeypot anti-spam
+- Email subject sanitised before transmission
 - No database = no stored personal data, no SQL injection surface
 - Secrets via environment variables only - never hardcoded
+- Centralised contact email constant in `src/lib/resend.ts`
 
 ## Pre-Deploy Checks
 
 ```bash
 npm run type-check   # tsc --noEmit
-npm run lint         # ESLint
+npm run lint         # ESLint (flat config: eslint.config.mjs)
 npm run build        # Full production build
 ```
 

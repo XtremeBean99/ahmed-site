@@ -45,7 +45,7 @@ NOT yet pulled in (data-driven, lives in code - ask if you want these too):
 
 ### Footer  ·  src/components/layout/Footer.tsx
 - brand: Ahmed Hussain
-- brand_blurb: All content on this website is copyrighted and may not be reproduced, scraped, indexed for AI training, or incorporated into generative AI systems without prior written permission.
+- brand_blurb: © Ahmed Hussain. Content may not be reproduced, scraped, indexed for AI training, or incorporated into generative AI systems without prior written permission. See Terms of Use for details.
 - link_1: Projects
 - link_2: Tutoring
 - link_3: Privacy Policy
@@ -148,7 +148,7 @@ Outside of study I tutor senior secondary students in mathematics, physics, Engl
 ### Contact (homepage section)  ·  src/components/sections/ContactSection.tsx
 - eyebrow: Contact
 - heading: Let's talk.
-- intro: Whether you have a question about tutoring, want to talk about legal technology, or just want to connect, I would be glad to hear from you.
+- intro: Whether you have a question about tutoring, want to talk about legal technology, or just want to connect, I'd love to hear from you.
 - bullet_1: Tutoring enquiries (Years 7–12)
 - bullet_2: Professional introductions
 - bullet_3: Research or academic collaboration
@@ -272,10 +272,10 @@ Every question of AI governance, every cybersecurity regulation, every dispute o
 
 ### Games hub  ·  src/app/games/page.tsx
 - meta_title: Games
-- meta_description: Two small browser games by Ahmed Hussain: a live WPM typing speed test on law and technology phrases, and a monochrome Breakout with power-ups.   (NOTE: now three games - update if you like)
+- meta_description: Browser games by Ahmed Hussain: a live WPM typing speed test on law and technology phrases, a monochrome Breakout with power-ups, and the Clause Game — a contract negotiation strategy game.
 - eyebrow: Games
 - heading: A break from the brief.
-- intro: Two small things built for fun and to keep the canvas and animation muscles warm. Both run entirely in your browser and keep your best score on your device.   (NOTE: now three games - update if you like)
+- intro: A few small things built for fun and to keep the canvas and animation muscles warm. They run entirely in your browser and keep your best score on your device.
 - card_typing_label: Live WPM
 - card_typing_title: Typing speed test
 - card_typing_desc: Type curated phrases on law, AI governance and cybersecurity while a live tracker measures your words per minute and accuracy.
@@ -430,7 +430,7 @@ Operators of AI crawlers and large language model training pipelines are on noti
 
 - s5_heading: 5. Accuracy of Information
 s5_body:
-Content on this Site is provided for informational purposes only and does not constitute legal advice. While I make reasonable efforts to ensure accuracy, I make no representations as to the completeness or currency of information provided.
+Content on this Site is provided for informational purposes only and does not constitute legal advice. While I make reasonable efforts to ensure accuracy, I make no representations as to the completeness or timeliness of information provided.
 
 - s6_heading: 6. Limitation of Liability
 s6_body:
@@ -476,7 +476,7 @@ The contact form is protected from automated spam by a hidden honeypot field rat
 s4_p1:
 This Site has no database. Contact form submissions are delivered to me by email through Resend (resend.com) and are not stored on the Site itself. Email is transmitted using TLS encryption.
 s4_p2:
-Reasonable technical and organisational security measures are in place to protect your data from unauthorised access or disclosure.
+I use industry-standard encryption (TLS) for email transmission and follow best practices to keep your data secure.
 
 - s5_heading: 5. Retention
 s5_body:

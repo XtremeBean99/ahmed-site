@@ -231,7 +231,7 @@ export function Breakout() {
           onPointerDown={onPointerDown}
           role="img"
           aria-label={t.playfield}
-          className="w-full rounded-lg border border-border bg-background touch-none"
+          className="w-full rounded-lg border border-border bg-transparent touch-none"
           style={{ aspectRatio: `${LOGICAL_W} / ${LOGICAL_H}` }}
         />
         {overlayText && (

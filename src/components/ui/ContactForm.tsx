@@ -83,7 +83,7 @@ export function ContactForm({ defaultSubject }: ContactFormProps) {
         </p>
         <button
           onClick={() => setStatus('idle')}
-          className="mt-6 text-xs text-muted underline hover:text-muted-foreground transition-colors"
+          className="mt-6 inline-flex items-center gap-2 border border-border text-muted-foreground px-4 py-2 rounded-md text-sm hover:text-foreground hover:border-muted-foreground transition-colors"
         >
           {t.sendAnother}
         </button>

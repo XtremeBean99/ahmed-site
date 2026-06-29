@@ -63,16 +63,6 @@
     text-wrap: balance;
   }
 
-  /* Subtle dot-grid hero background */
-  .hero-grid {
-    background-image: radial-gradient(
-      circle,
-      rgba(255, 255, 255, 0.06) 1px,
-      transparent 1px
-    );
-    background-size: 36px 36px;
-  }
-
   /* Label/eyebrow text style */
   .label-text {
     @apply font-sans text-xs tracking-[0.2em] uppercase text-muted-foreground;

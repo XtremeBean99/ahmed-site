@@ -173,14 +173,29 @@ export function Header() {
       {/* Mobile drawer */}
       <AnimatePresence>
         {menuOpen && (
-          <motion.div
-            id="mobile-menu"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="md:hidden overflow-hidden bg-background border-b border-border"
-          >
+          <>
+            {/* Backdrop overlay */}
+            <motion.div
+              key="mobile-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="md:hidden fixed inset-0 top-16 bg-black/40 z-40"
+              onClick={() => setMenuOpen(false)}
+              aria-hidden="true"
+            />
+            <motion.div
+              id="mobile-menu"
+              key="mobile-drawer"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="md:hidden overflow-hidden bg-background border-b border-border relative z-50"
+              role="navigation"
+              aria-label="Mobile navigation"
+            >
             <ul ref={menuRef} className="flex flex-col px-6 py-4 gap-4" role="list">
               {navLinks.map(({ href, label }) => (
                 <li key={href}>
@@ -202,6 +217,7 @@ export function Header() {
               </li>
             </ul>
           </motion.div>
+          </>
         )}
       </AnimatePresence>
     </header>

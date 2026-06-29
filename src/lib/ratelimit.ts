@@ -1,6 +1,10 @@
 /**
  * In-memory rate limiter for the contact API route.
- * Production would use @upstash/ratelimit or similar; this keeps the zero-dependency profile.
+ *
+ * LIMITATION: On Vercel serverless deployments, cold starts create a new
+ * process with an empty store, effectively resetting all rate limits. For
+ * production, use an external store (Upstash Redis, Vercel KV, etc.) so
+ * rate limits survive function invocations across cold starts.
  */
 const WINDOW_MS = 60 * 60 * 1000 // 1 hour
 const MAX_REQUESTS = 5

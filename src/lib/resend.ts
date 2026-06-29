@@ -1,5 +1,9 @@
 import { Resend } from 'resend'
 
+// Centralised contact email — used across the site (footer, legal, contact form).
+// Change this once to update all references.
+export const CONTACT_EMAIL = 'ahmedyhussain07@gmail.com'
+
 // Lazily created so the module can load without a RESEND_API_KEY at build time
 let _resend: Resend | null = null
 function getResend(): Resend {
@@ -11,11 +15,12 @@ function getResend(): Resend {
   return _resend
 }
 
-// TO: recipient address. Set CONTACT_TO_EMAIL in Vercel env vars.
+// TO: recipient address. CONTACT_TO_EMAIL is recommended in production.
+// Falls back to the CONTACT_EMAIL constant if not set.
 // FROM: must match a domain verified in your Resend dashboard (resend.com/domains).
 //       Set CONTACT_FROM_EMAIL or verify ahmedyhussain.com in Resend.
-const TO = process.env.CONTACT_TO_EMAIL || 'ahmedyhussain07@gmail.com'
-const FROM = process.env.CONTACT_FROM_EMAIL || 'Ahmed Hussain <noreply@ahmedyhussain.com>'
+const TO = process.env.CONTACT_TO_EMAIL || CONTACT_EMAIL
+const FROM = process.env.CONTACT_FROM_EMAIL || `Ahmed Hussain <noreply@ahmedyhussain.com>`
 
 interface ContactEmailPayload {
   name: string
@@ -28,11 +33,14 @@ export async function sendContactEmail(payload: ContactEmailPayload) {
   const { name, email, subject, message } = payload
   const resend = getResend()
 
+  // Sanitise email subject — strip control characters and newlines.
+  const safeSubject = subject.replace(/[\x00-\x1f\x7f]/g, '').slice(0, 200)
+
   const { error } = await resend.emails.send({
     from: FROM,
     to: TO,
     replyTo: email,
-    subject: `[ahmedyhussain.com] ${subject}`,
+    subject: `[ahmedyhussain.com] ${safeSubject}`,
     text: [
       `Name: ${name}`,
       `Email: ${email}`,

@@ -15,12 +15,26 @@ export default async function NotFound() {
       <p className="text-muted-foreground text-lg mb-10 max-w-sm">
         {t.body}
       </p>
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 text-sm text-foreground border border-border px-5 py-2.5 rounded-md hover:bg-surface-hover transition-colors"
-      >
-        {t.home}
-      </Link>
+      <div className="flex flex-wrap items-center justify-center gap-4">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-sm text-foreground border border-border px-5 py-2.5 rounded-md hover:bg-surface-hover transition-colors"
+        >
+          {t.home}
+        </Link>
+        <Link
+          href="/projects"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Projects
+        </Link>
+        <Link
+          href="/games"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Games
+        </Link>
+      </div>
     </div>
   )
 }

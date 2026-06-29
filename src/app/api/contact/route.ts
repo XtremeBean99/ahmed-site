@@ -4,6 +4,23 @@ import { submitContact } from '@/services/contact'
 import { checkRateLimit } from '@/lib/ratelimit'
 
 export async function POST(request: NextRequest) {
+  // CSRF check — verify the request originates from our domain.
+  // Allows direct browser form submissions and same-origin fetch requests.
+  const origin = request.headers.get('origin')
+  const referer = request.headers.get('referer')
+  const host = request.headers.get('host') || 'ahmedyhussain.com'
+  const allowedOrigins = [`https://${host}`, `https://www.${host}`]
+  if (
+    process.env.NODE_ENV === 'production' &&
+    origin &&
+    !allowedOrigins.includes(origin)
+  ) {
+    if (!referer || !allowedOrigins.some((o) => referer.startsWith(o))) {
+      // Silently reject cross-origin requests (don't leak info to attackers)
+      return NextResponse.json({ success: true })
+    }
+  }
+
   // Rate-limit by IP (Vercel provides x-forwarded-for)
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const { allowed } = checkRateLimit(ip)

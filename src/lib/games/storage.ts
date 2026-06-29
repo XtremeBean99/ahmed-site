@@ -1,4 +1,8 @@
 const NS = 'ahmed-site:games'
+const STORAGE_VERSION = 1
+
+/** Returns a versioned key prefix: 'ahmed-site:games:v1:' */
+const vk = (key: string) => `${NS}:v${STORAGE_VERSION}:${key}`
 
 export const BEST_KEYS = {
   typing: 'typing-best',
@@ -10,7 +14,7 @@ export const BEST_KEYS = {
 export function getBest(key: string): number {
   if (typeof window === 'undefined') return 0
   try {
-    const raw = window.localStorage.getItem(`${NS}:${key}`)
+    const raw = window.localStorage.getItem(vk(key))
     const n = raw ? Number(raw) : 0
     return Number.isFinite(n) ? n : 0
   } catch {
@@ -23,7 +27,7 @@ export function setBestIfHigher(key: string, value: number): boolean {
   if (typeof window === 'undefined') return false
   try {
     if (value > getBest(key)) {
-      window.localStorage.setItem(`${NS}:${key}`, String(value))
+      window.localStorage.setItem(vk(key), String(value))
       return true
     }
     return false
@@ -39,7 +43,7 @@ export const SCORES_KEYS = {
 export function getTopScores(key: string, n = 5): number[] {
   if (typeof window === 'undefined') return []
   try {
-    const raw = window.localStorage.getItem(`${NS}:${key}`)
+    const raw = window.localStorage.getItem(vk(key))
     if (!raw) return []
     const parsed = JSON.parse(raw) as unknown
     if (!Array.isArray(parsed)) return []
@@ -57,6 +61,6 @@ export function addScore(key: string, value: number, n = 5): void {
   try {
     const current = getTopScores(key, n)
     const updated = [...current, value].sort((a, b) => b - a).slice(0, n)
-    window.localStorage.setItem(`${NS}:${key}`, JSON.stringify(updated))
+    window.localStorage.setItem(vk(key), JSON.stringify(updated))
   } catch {}
 }

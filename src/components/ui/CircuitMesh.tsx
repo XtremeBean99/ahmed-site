@@ -199,12 +199,15 @@ export function CircuitMesh({ className }: { className?: string }) {
       aria-hidden="true"
       className={`pointer-events-none fixed inset-0 -z-10 ${className ?? ''}`}
       style={{
-        // fade the mesh toward the edges so it never competes with content
+        // Fade the mesh toward the edges so it never competes with content
         maskImage:
           'radial-gradient(ellipse 80% 70% at 50% 42%, #000 35%, transparent 100%)',
         WebkitMaskImage:
           'radial-gradient(ellipse 80% 70% at 50% 42%, #000 35%, transparent 100%)',
         opacity: 0.7,
+        // CSS fallback background if WebGL fails
+        background:
+          'radial-gradient(ellipse 60% 50% at 50% 42%, rgba(255,255,255,0.03) 0%, transparent 70%)',
       }}
     >
       <canvas ref={canvasRef} className="h-full w-full" />

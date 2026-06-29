@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { CopyrightYear } from '@/components/ui/CopyrightYear'
 import { getDictionary } from '@/lib/i18n/server'
+import { CONTACT_EMAIL } from '@/lib/resend'
 
 export async function Footer() {
   const t = await getDictionary()
@@ -49,7 +50,7 @@ export async function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:ahmedyhussain07@gmail.com"
+                  href={`mailto:${CONTACT_EMAIL}`}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {t.footer.email}

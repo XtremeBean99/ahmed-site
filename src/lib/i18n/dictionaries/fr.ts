@@ -28,7 +28,7 @@ export const fr: Dictionary = {
 
   footer: {
     blurb:
-      'L’ensemble du contenu de ce site est protégé par le droit d’auteur et ne peut être reproduit, extrait, indexé pour l’entraînement d’IA ni intégré à des systèmes d’IA générative sans autorisation écrite préalable.',
+      '© Ahmed Hussain. Le contenu ne peut être reproduit, extrait, indexé pour l’entraînement d’IA ni intégré à des systèmes d’IA générative sans autorisation écrite préalable. Voir les Conditions d’utilisation pour plus de détails.',
     projects: 'Projets',
     tutoring: 'Cours particuliers',
     privacy: 'Politique de confidentialité',
@@ -427,7 +427,7 @@ export const fr: Dictionary = {
       s3after: 'Le formulaire de contact est protégé du pourriel automatisé par un champ-piège (honeypot) caché plutôt que par la collecte de données vous concernant. Vos données ne sont jamais vendues, partagées avec des tiers à des fins de marketing, ni utilisées à toute fin autre que la réponse à votre prise de contact.',
       s4h: '4. Stockage et sécurité des données',
       s4p1: 'Ce Site ne possède aucune base de données. Les soumissions du formulaire de contact me sont transmises par courriel via Resend (resend.com) et ne sont pas stockées sur le Site lui-même. Le courriel est transmis avec un chiffrement TLS.',
-      s4p2: 'Des mesures de sécurité techniques et organisationnelles raisonnables sont en place pour protéger vos données contre tout accès ou divulgation non autorisés.',
+      s4p2: 'J’utilise le chiffrement standard de l’industrie (TLS) pour la transmission des courriels et je suis les bonnes pratiques pour assurer la sécurité de vos données.',
       s5h: '5. Conservation',
       s5b: 'Comme les soumissions sont envoyées par courriel et non stockées sur le Site, la conservation se limite à mes archives de courriels, conservées uniquement le temps nécessaire pour répondre à votre demande et à des fins raisonnables de tenue de registres. Vous pouvez demander la suppression de vos données à tout moment.',
       s6h: '6. Cookies, analytique et stockage local',

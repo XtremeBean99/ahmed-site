@@ -12,7 +12,7 @@ import {
   SCORE_BASE,
 } from '@/lib/games/breakout-engine'
 import type { GameState } from '@/lib/games/types'
-import { getBest, setBestIfHigher, BEST_KEYS } from '@/lib/games/storage'
+import { getBest, setBestIfHigher, addScore, getTopScores, BEST_KEYS, SCORES_KEYS } from '@/lib/games/storage'
 import { useT } from '@/lib/i18n/client'
 
 const LOGICAL_W = 800
@@ -44,6 +44,7 @@ export function Breakout() {
     elapsedMs: number
   }>({ seconds: 0, lives: CONFIG.lives, status: 'ready', score: SCORE_BASE, elapsedMs: 0 })
   const [best, setBest] = useState(0)
+  const [topScores, setTopScores] = useState<number[]>([])
 
   const resetGame = useCallback(() => {
     stateRef.current = createInitialState(CONFIG)
@@ -102,6 +103,7 @@ export function Breakout() {
   useEffect(() => {
     reduceRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     setBest(getBest(BEST_KEYS.breakout))
+    setTopScores(getTopScores(SCORES_KEYS.breakout))
 
     const canvas = canvasRef.current
     const ctx = canvas?.getContext('2d')
@@ -137,6 +139,8 @@ export function Breakout() {
       )
       if (s.status === 'won') {
         if (setBestIfHigher(BEST_KEYS.breakout, s.score)) setBest(s.score)
+        addScore(SCORES_KEYS.breakout, s.score)
+        setTopScores(getTopScores(SCORES_KEYS.breakout))
       }
       rafRef.current = requestAnimationFrame(tick)
     }
@@ -218,8 +222,9 @@ export function Breakout() {
 
   return (
     <div className="max-w-3xl">
-      <div className="grid grid-cols-3 gap-6 border-y border-border py-6">
+      <div className="grid grid-cols-4 gap-4 border-y border-border py-6">
         <GameStat label={t.time} value={formatClock(hud.seconds)} />
+        <GameStat label={t.score} value={hud.score} />
         <GameStat label={t.lives} value={hud.lives} />
         <GameStat label={t.best} value={best} />
       </div>
@@ -265,6 +270,20 @@ export function Breakout() {
           </button>
         )}
       </div>
+
+      {topScores.length > 0 && (
+        <div className="mt-6 border-t border-border pt-4">
+          <p className="text-xs font-medium text-muted-foreground mb-3">{t.topScores}</p>
+          <ol className="space-y-1">
+            {topScores.map((s, i) => (
+              <li key={i} className="flex items-center gap-3 text-sm">
+                <span className="w-4 text-muted-foreground text-right">{i + 1}.</span>
+                <span className="tabular-nums text-foreground">{s.toLocaleString()}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       <p className="mt-4 text-xs text-muted">
         {t.instructions}

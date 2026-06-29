@@ -31,3 +31,32 @@ export function setBestIfHigher(key: string, value: number): boolean {
     return false
   }
 }
+
+export const SCORES_KEYS = {
+  breakout: 'breakout-scores',
+} as const
+
+export function getTopScores(key: string, n = 5): number[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(`${NS}:${key}`)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return []
+    return (parsed as unknown[])
+      .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+      .slice(0, n)
+  } catch {
+    return []
+  }
+}
+
+export function addScore(key: string, value: number, n = 5): void {
+  if (typeof window === 'undefined') return
+  if (!Number.isFinite(value) || value <= 0) return
+  try {
+    const current = getTopScores(key, n)
+    const updated = [...current, value].sort((a, b) => b - a).slice(0, n)
+    window.localStorage.setItem(`${NS}:${key}`, JSON.stringify(updated))
+  } catch {}
+}

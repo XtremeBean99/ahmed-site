@@ -293,6 +293,8 @@ export const fr: Dictionary = {
     clearedAfter: ' s. Score ',
     playfield: 'Aire de jeu Breakout',
     instructions: 'Souris ou tactile pour déplacer. Les flèches ou A et D fonctionnent aussi. Espace lance et met en pause, P met en pause, R recommence. Sur écran tactile, faites glisser pour déplacer et utilisez les boutons ci-dessous pour lancer, mettre en pause ou recommencer. Cassez le mur vite : plus vous tardez, plus votre score baisse. E élargit la raquette, M divise la balle, S la ralentit, et le plus ajoute une vie.',
+    score: 'Score',
+    topScores: 'Meilleurs scores',
   },
 
   contractGame: {

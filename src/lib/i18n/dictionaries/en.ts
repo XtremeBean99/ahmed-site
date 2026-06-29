@@ -296,6 +296,8 @@ export const en = {
     clearedAfter: 's. Score ',
     playfield: 'Breakout game playfield',
     instructions: 'Mouse or touch to move. Arrow keys or A and D also work. Space launches and pauses, P pauses, R restarts. On a touchscreen, drag to move and use the buttons below to launch, pause, or restart. Clear the wall fast: the longer you take, the lower your score. E widens the paddle, M splits the ball, S slows it down, plus adds a life.',
+    score: 'Score',
+    topScores: 'Top scores',
   },
 
   contractGame: {

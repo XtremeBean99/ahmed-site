@@ -33,6 +33,7 @@ export function Breakout() {
   const rafRef = useRef<number>(0)
   const lastRef = useRef<number>(0)
   const reduceRef = useRef(false)
+  const scoredRef = useRef(false)
 
   // HUD mirror. Updates at most once per second (plus on lives/status change)
   // to avoid a React re-render on every animation frame.
@@ -48,6 +49,7 @@ export function Breakout() {
 
   const resetGame = useCallback(() => {
     stateRef.current = createInitialState(CONFIG)
+    scoredRef.current = false
     setHud({ seconds: 0, lives: CONFIG.lives, status: 'ready', score: SCORE_BASE, elapsedMs: 0 })
   }, [])
 
@@ -138,9 +140,12 @@ export function Breakout() {
           : { seconds, lives: s.lives, status: s.status, score: s.score, elapsedMs: s.elapsedMs },
       )
       if (s.status === 'won') {
-        if (setBestIfHigher(BEST_KEYS.breakout, s.score)) setBest(s.score)
-        addScore(SCORES_KEYS.breakout, s.score)
-        setTopScores(getTopScores(SCORES_KEYS.breakout))
+        if (!scoredRef.current) {
+          scoredRef.current = true
+          if (setBestIfHigher(BEST_KEYS.breakout, s.score)) setBest(s.score)
+          addScore(SCORES_KEYS.breakout, s.score)
+          setTopScores(getTopScores(SCORES_KEYS.breakout))
+        }
       }
       rafRef.current = requestAnimationFrame(tick)
     }

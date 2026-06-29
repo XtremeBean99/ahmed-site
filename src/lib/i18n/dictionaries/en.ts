@@ -154,8 +154,14 @@ export const en = {
     heading: 'Selected work.',
     intro: 'A curated selection of my most recent professional & personal projects.',
     view: 'View project',
+    viewExternal: 'Visit site',
     comingSoon: 'Coming soon',
     cards: {
+      armoire: {
+        label: 'Web app',
+        title: 'Armoire — wardrobe builder',
+        desc: 'A local-first, offline wardrobe builder for men\'s clothing: it reads a garment\'s exact colour in the browser and builds colour-coherent outfits from what you own. No AI, no accounts, free.',
+      },
       code: {
         label: 'Open source',
         title: 'My Github Projects',

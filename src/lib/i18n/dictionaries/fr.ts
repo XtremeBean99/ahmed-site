@@ -151,8 +151,14 @@ export const fr: Dictionary = {
     heading: 'Travaux choisis.',
     intro: 'Une sélection de mes projets professionnels et personnels les plus récents.',
     view: 'Voir le projet',
+    viewExternal: 'Visiter le site',
     comingSoon: 'À venir',
     cards: {
+      armoire: {
+        label: 'Application web',
+        title: 'Armoire — gestionnaire de garde-robe',
+        desc: 'Un gestionnaire de garde-robe local et hors ligne pour les vêtements masculins : il lit la couleur exacte d’un vêtement dans le navigateur et compose des tenues harmonieuses à partir de ce que vous possédez. Sans IA, sans compte, gratuit.',
+      },
       code: {
         label: 'Open source',
         title: 'Mes projets GitHub',

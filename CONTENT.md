@@ -1,19 +1,19 @@
 <!--
 ================================================================================
- EDITABLE SITE CONTENT  —  ahmedyhussain.com
+ EDITABLE SITE CONTENT   -   ahmedyhussain.com
 ================================================================================
 HOW TO USE THIS FILE
   1. Edit only the text to the RIGHT of each "key:" or inside each prose block.
-  2. Do NOT change the **key names**, the ### headings, or the file paths —
+  2. Do NOT change the **key names**, the ### headings, or the file paths  - 
      they are how I map your edits back into the real site.
-  3. Punctuation is shown as normal characters (' " — …). Write naturally;
+  3. Punctuation is shown as normal characters (' "  -  …). Write naturally;
      I'll re-encode anything the code needs (e.g. &rsquo;) when I transfer it.
   4. A line break inside a paragraph is shown as " / " or noted; keep big
      structural breaks (separate paragraphs) on separate lines.
   5. When you're done, tell me and I'll review the diff and apply the changes
      to the actual components, then verify the build.
 
-This file is documentation only — it is NOT wired into the site. Editing it
+This file is documentation only  -  it is NOT wired into the site. Editing it
 changes nothing until I transfer the edits.
 
 BILINGUAL: the site now renders in English AND French. The live copy lives in
@@ -22,7 +22,7 @@ lists the English copy; every entry has a French counterpart at the same key.
 If you change a string here, its French translation must be updated too.
 
 Covered here: all page & section copy, navigation, footer, SEO descriptions.
-NOT yet pulled in (data-driven, lives in code — ask if you want these too):
+NOT yet pulled in (data-driven, lives in code  -  ask if you want these too):
   • Typing-test phrases  → src/lib/games/phrases.ts
   • Contract game scenarios & clauses → src/lib/games/contract-data.ts
   • AGLC4 field labels / examples → src/lib/aglc4/fields.ts
@@ -166,7 +166,7 @@ Outside of study I tutor senior secondary students in mathematics, physics, Engl
 - heading: Selected work.
 - intro: A curated selection of my most recent professional & personal projects.
 
-(Cards — label / title / description)
+(Cards  -  label / title / description)
 - card_code_label: Open source
 - card_code_title: My Github Projects
 - card_code_desc: Public repositories pulled live from GitHub: the software side of my law-and-computing work.
@@ -175,7 +175,7 @@ Outside of study I tutor senior secondary students in mathematics, physics, Engl
 - card_silicon_desc: An interactive 3D model of a silicon atom, with an explainer on how its four valence electrons end up running every computer.
 - card_aglc4_label: Legal tool
 - card_aglc4_title: AGLC4 citation generator
-- card_aglc4_desc: Build footnote and bibliography citations in the Australian Guide to Legal Citation (4th ed) style — cases, legislation, articles, books, web pages and Hansard — and copy them straight into your work.
+- card_aglc4_desc: Build footnote and bibliography citations in the Australian Guide to Legal Citation (4th ed) style  -  cases, legislation, articles, books, web pages and Hansard  -  and copy them straight into your work.
 - card_converter_label: Computing tool
 - card_converter_title: Base converter
 - card_converter_desc: Convert live between decimal, binary, hex, octal and UTF-8 text, with a bitwise playground for AND, OR, XOR, NOT and shifts. Arbitrary-precision, all in the browser.
@@ -209,14 +209,14 @@ An interactive 3D Bohr model of a silicon atom, atomic number 14, with 2 electro
 
 - canvas_caption: Drag to rotate · Scroll to zoom · Reduced-motion users see a static render
 
-#### Explainer — section 1
+#### Explainer  -  section 1
 - s1_heading: Why silicon
 s1_p1:
 Silicon sits in group 14 of the periodic table, right below carbon. It has four electrons in its outermost shell, exactly the number needed to form four covalent bonds and lock into a stable, repeating crystal lattice. Unlike a metal (which conducts electricity freely) or an insulator (which blocks it entirely), pure silicon is a semiconductor: it conducts electricity only when given a nudge.
 s1_p2:
 That in-between behaviour is what makes it controllable. Apply a voltage, and it switches from off to on. Remove the voltage, and it switches back. That switch, the binary state, is the physical basis for every logical 1 and 0 in digital computing.
 
-#### Explainer — section 2
+#### Explainer  -  section 2
 - s2_heading: Doping: tuning the conductivity
 s2_p1:
 Pure silicon is not very conductive on its own. The trick is doping: introducing a tiny number of impurity atoms into the crystal.
@@ -225,14 +225,14 @@ Add phosphorus (five valence electrons) and you get n-type silicon, which has sp
 s2_p3:
 Place a piece of n-type silicon next to a piece of p-type silicon and you have a p-n junction, the building block of the diode. Current flows in one direction and is blocked in the other. Stack three layers, p-n-p or n-p-n, and you have the basis of the transistor.
 
-#### Explainer — section 3
+#### Explainer  -  section 3
 - s3_heading: The transistor
 s3_p1:
 The modern transistor, the MOSFET (Metal-Oxide-Semiconductor Field-Effect Transistor), is a voltage-controlled switch. A small voltage applied to the "gate" terminal creates an electric field that opens or closes a conductive channel between the "source" and "drain." No mechanical parts, no moving pieces, just a field and a semiconductor channel.
 s3_p2:
 A single modern CPU contains billions of these switches, fabricated at a scale measured in nanometres. Each one flips on and off billions of times per second. Those on/off states, aggregated across billions of transistors, are the 1s and 0s of digital logic. Every line of code you write eventually resolves to voltages across MOSFET gates.
 
-#### Explainer — section 4
+#### Explainer  -  section 4
 - s4_heading: From sand to CPU
 s4_intro:
 Silicon does not come out of the ground ready for a logic gate. The journey from raw material to integrated circuit is one of the most precise manufacturing processes ever devised.
@@ -242,7 +242,7 @@ Silicon does not come out of the ground ready for a logic gate. The journey from
 - s4_bullet_4 (Photolithography): A light-sensitive resist is applied, exposed through a mask that carries the circuit pattern, and developed. Unprotected silicon is etched away. The process is repeated dozens of times, layer upon layer, to build up the transistors, interconnects, and isolation structures.
 - s4_bullet_5 (Packaging): The finished die is cut from the wafer, bonded to a substrate, and sealed in a package with electrical contacts, the black rectangle we recognise as a chip.
 
-#### Explainer — tie-back
+#### Explainer  -  tie-back
 - s5_label: Why this matters here
 s5_body:
 Every question of AI governance, every cybersecurity regulation, every dispute over data sovereignty: they all ultimately run on this physical substrate. A silicon atom, doped and patterned, switches on and off a few billion times a second.
@@ -253,7 +253,7 @@ Every question of AI governance, every cybersecurity regulation, every dispute o
 - meta_description: Generate footnote and bibliography citations in the Australian Guide to Legal Citation (4th ed) style: cases, legislation, journal articles, books, web pages and Hansard.
 - eyebrow: Legal tool
 - heading: AGLC4 citation generator
-- intro: Build footnote and bibliography citations in the Australian Guide to Legal Citation (4th ed) style. Choose a source type, fill in the fields, and the citation updates as you type — ready to copy into your essay or memo.
+- intro: Build footnote and bibliography citations in the Australian Guide to Legal Citation (4th ed) style. Choose a source type, fill in the fields, and the citation updates as you type  -  ready to copy into your essay or memo.
 - disclaimer (in component, src/components/projects/Aglc4Generator.tsx): A study aid based on AGLC4. It covers common cases, and you should always check the output against the guide before relying on it. Italics are shown as you would type them in a document.
 
 
@@ -262,7 +262,7 @@ Every question of AI governance, every cybersecurity regulation, every dispute o
 - meta_description: Live converter between decimal, binary, hexadecimal, octal and UTF-8 text, with a bitwise playground (AND, OR, XOR, NOT, shifts). Arbitrary-precision, runs in your browser.
 - eyebrow: Computing tool
 - heading: Base converter
-- intro: Convert between decimal, binary, hexadecimal, octal and UTF-8 text — edit any field and the rest follow live. Then experiment with AND, OR, XOR, NOT and shifts in the bitwise playground. Everything is arbitrary-precision and runs entirely in your browser.
+- intro: Convert between decimal, binary, hexadecimal, octal and UTF-8 text  -  edit any field and the rest follow live. Then experiment with AND, OR, XOR, NOT and shifts in the bitwise playground. Everything is arbitrary-precision and runs entirely in your browser.
 - helper_note (in component): Edit any field and the rest update live. Values are arbitrary-precision, so very large numbers work. Text maps each character to its UTF-8 bytes.
 
 
@@ -272,10 +272,10 @@ Every question of AI governance, every cybersecurity regulation, every dispute o
 
 ### Games hub  ·  src/app/games/page.tsx
 - meta_title: Games
-- meta_description: Two small browser games by Ahmed Hussain: a live WPM typing speed test on law and technology phrases, and a monochrome Breakout with power-ups.   (NOTE: now three games — update if you like)
+- meta_description: Two small browser games by Ahmed Hussain: a live WPM typing speed test on law and technology phrases, and a monochrome Breakout with power-ups.   (NOTE: now three games  -  update if you like)
 - eyebrow: Games
 - heading: A break from the brief.
-- intro: Two small things built for fun and to keep the canvas and animation muscles warm. Both run entirely in your browser and keep your best score on your device.   (NOTE: now three games — update if you like)
+- intro: Two small things built for fun and to keep the canvas and animation muscles warm. Both run entirely in your browser and keep your best score on your device.   (NOTE: now three games  -  update if you like)
 - card_typing_label: Live WPM
 - card_typing_title: Typing speed test
 - card_typing_desc: Type curated phrases on law, AI governance and cybersecurity while a live tracker measures your words per minute and accuracy.
@@ -284,7 +284,7 @@ Every question of AI governance, every cybersecurity regulation, every dispute o
 - card_breakout_desc: A monochrome take on the Atari classic: clear the wall, catch falling power-ups, and chase a personal best.
 - card_contract_label: Strategy
 - card_contract_title: The Clause Game
-- card_contract_desc: Sit at the negotiating table and draft the deal: pick clauses across real scenarios and win by landing a balanced, enforceable contract — too greedy or too generous and it falls apart.
+- card_contract_desc: Sit at the negotiating table and draft the deal: pick clauses across real scenarios and win by landing a balanced, enforceable contract  -  too greedy or too generous and it falls apart.
 
 
 ### Typing test page  ·  src/app/games/typing-test/page.tsx
@@ -305,13 +305,13 @@ Every question of AI governance, every cybersecurity regulation, every dispute o
 
 ### The Clause Game page  ·  src/app/games/contract/page.tsx
 - meta_title: The Clause Game
-- meta_description: A contract-drafting game: pick clauses across real negotiation scenarios and win by landing a balanced, enforceable deal — too greedy or too generous and it falls apart.
+- meta_description: A contract-drafting game: pick clauses across real negotiation scenarios and win by landing a balanced, enforceable deal  -  too greedy or too generous and it falls apart.
 - eyebrow: Strategy
 - heading: The Clause Game
-- intro: You are counsel at the negotiating table. Choose a clause in every category, then lock in the deal. Land it in the balanced, enforceable zone to win the round — push too hard for your client and the other side walks; give too much away and you have failed them. Your best run stays on this device.
+- intro: You are counsel at the negotiating table. Choose a clause in every category, then lock in the deal. Land it in the balanced, enforceable zone to win the round  -  push too hard for your client and the other side walks; give too much away and you have failed them. Your best run stays on this device.
 
 (NOTE: the scenario briefs, clause wording and explanations live in
- src/lib/games/contract-data.ts — ask if you want those pulled in here too.)
+ src/lib/games/contract-data.ts  -  ask if you want those pulled in here too.)
 
 
 ================================================================================
@@ -328,10 +328,10 @@ Every question of AI governance, every cybersecurity regulation, every dispute o
 #### Years 11–12 card
 - y1112_eyebrow: Senior secondary
 - y1112_heading: Years 11–12
-- y1112_subject_1: Physics — ACT BSSS curriculum
-- y1112_subject_2: Mathematics — Methods & Specialist
-- y1112_subject_3: English — Literature & Language
-- y1112_subject_4: Legal Studies — ACT BSSS curriculum
+- y1112_subject_1: Physics  -  ACT BSSS curriculum
+- y1112_subject_2: Mathematics  -  Methods & Specialist
+- y1112_subject_3: English  -  Literature & Language
+- y1112_subject_4: Legal Studies  -  ACT BSSS curriculum
 
 #### Years 7–10 card
 - y710_eyebrow: Middle secondary
@@ -396,7 +396,7 @@ Every question of AI governance, every cybersecurity regulation, every dispute o
 
 
 ================================================================================
-# LEGAL — TERMS OF USE  ·  /legal/terms  ·  src/app/legal/terms/page.tsx
+# LEGAL  -  TERMS OF USE  ·  /legal/terms  ·  src/app/legal/terms/page.tsx
 ================================================================================
 
 - meta_title: Terms of Use
@@ -446,7 +446,7 @@ For permissions or queries regarding these Terms, contact: ahmedyhussain07@gmail
 
 
 ================================================================================
-# LEGAL — PRIVACY POLICY  ·  /legal/privacy  ·  src/app/legal/privacy/page.tsx
+# LEGAL  -  PRIVACY POLICY  ·  /legal/privacy  ·  src/app/legal/privacy/page.tsx
 ================================================================================
 
 - meta_title: Privacy Policy
@@ -505,7 +505,7 @@ Privacy enquiries: ahmedyhussain07@gmail.com
 Each route renders a preview card image from these three lines.
 Files: src/app/**/opengraph-image.tsx (twitter-image.tsx re-exports them).
 
-- home (src/app/opengraph-image.tsx — custom layout):
+- home (src/app/opengraph-image.tsx  -  custom layout):
     eyebrow: Canberra, Australia
     title: Ahmed Hussain
     subtitle: Law, computing, and the governance of artificial intelligence.
@@ -513,7 +513,7 @@ Files: src/app/**/opengraph-image.tsx (twitter-image.tsx re-exports them).
     footer_right: ahmedyhussain.com
 - projects: Projects / Selected work / Open-source code, an interactive look at silicon, and law-and-computing tools.
 - aglc4: Legal tool / AGLC4 citation generator / Footnote and bibliography citations in the Australian Guide to Legal Citation style.
-- base-converter: Computing tool / Base converter / Decimal, binary, hex, octal and text — plus a bitwise playground, all in the browser.
-- contract: Strategy / The Clause Game / Pick clauses and win by landing a balanced, enforceable deal — too greedy and it falls apart.
+- base-converter: Computing tool / Base converter / Decimal, binary, hex, octal and text  -  plus a bitwise playground, all in the browser.
+- contract: Strategy / The Clause Game / Pick clauses and win by landing a balanced, enforceable deal  -  too greedy and it falls apart.
 - breakout: Arcade / Breakout / Clear the wall, catch falling power-ups, and chase a personal best.
 - typing-test / tutoring: see their opengraph-image.tsx files.

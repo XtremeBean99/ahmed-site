@@ -1,6 +1,6 @@
 # ahmedyhussain.com
 
-Personal website of **Ahmed Hussain** — BCom/LLB(Hons) candidate at the Australian National University, working at the intersection of law, computing, and AI governance.
+Personal website of **Ahmed Hussain** - BCom/LLB(Hons) candidate at the Australian National University, working at the intersection of law, computing, and AI governance.
 
 **[ahmedyhussain.com](https://ahmedyhussain.com)**
 
@@ -78,7 +78,7 @@ src/
 
 - **Monochrome only**: zinc-950 (`#09090b`) background, white text, zinc-800 borders. No colour accents.
 - **Fonts**: Inter (body) + Playfair Display (headings), loaded via `next/font/google`
-- **Defaults to Server Components** — `'use client'` only for interactivity (Header, animations, forms)
+- **Defaults to Server Components** - `'use client'` only for interactivity (Header, animations, forms)
 - **CircuitMesh**: Animated 3D canvas backdrop rendered site-wide behind all content
 - **Respects `prefers-reduced-motion`**: animations honour the user's OS preference
 
@@ -98,18 +98,18 @@ The site uses no database. Contact submissions are emailed via Resend and not pe
 
 Two browser-side utilities under `/projects`, each pure logic behind a thin client shell:
 
-- **AGLC4 citation generator** (`/projects/aglc4`) — footnote + bibliography citations in
+- **AGLC4 citation generator** (`/projects/aglc4`) - footnote + bibliography citations in
   Australian Guide to Legal Citation (4th ed) style. Logic in `src/lib/aglc4/`.
-- **Base converter** (`/projects/base-converter`) — live decimal/binary/hex/octal/text
+- **Base converter** (`/projects/base-converter`) - live decimal/binary/hex/octal/text
   conversion plus a bitwise playground. Logic in `src/lib/convert/`.
 
 ## Games
 
 The Games section at `/games` has three self-contained browser games:
 
-- **Typing speed test** (`/games/typing-test`) — live WPM and accuracy over curated law, AI governance, and cybersecurity phrases (`src/lib/games/phrases.ts`).
-- **Breakout** (`/games/breakout`) — a monochrome canvas game with falling power-ups (wider paddle, multi-ball, slow ball, extra life).
-- **The Clause Game** (`/games/contract`) — pick contract clauses and win by landing a balanced, enforceable deal (`src/lib/games/contract-engine.ts`).
+- **Typing speed test** (`/games/typing-test`) - live WPM and accuracy over curated law, AI governance, and cybersecurity phrases (`src/lib/games/phrases.ts`).
+- **Breakout** (`/games/breakout`) - a monochrome canvas game with falling power-ups (wider paddle, multi-ball, slow ball, extra life).
+- **The Clause Game** (`/games/contract`) - pick contract clauses and win by landing a balanced, enforceable deal (`src/lib/games/contract-engine.ts`).
 
 Game logic lives in `src/lib/games/` as side-effect-free modules (`wpm.ts`, `breakout-engine.ts`, `contract-engine.ts`) with thin `'use client'` render and input components in `src/components/games/`. Best scores are saved in the browser via `localStorage` (`storage.ts`); there is no server-side score storage.
 
@@ -121,7 +121,7 @@ Game logic lives in `src/lib/games/` as side-effect-free modules (`wpm.ts`, `bre
 - Terms of Use explicitly prohibit scraping and AI training
 - All form data validated server-side with Zod + honeypot anti-spam
 - No database = no stored personal data, no SQL injection surface
-- Secrets via environment variables only — never hardcoded
+- Secrets via environment variables only - never hardcoded
 
 ## Pre-Deploy Checks
 
@@ -137,4 +137,4 @@ Pushing to `master` triggers an automatic Vercel production deployment. Domain: 
 
 ## License
 
-Source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE). Free to use, modify, and share for **noncommercial** purposes. **Commercial use** and **use as AI/ML training data** require prior written permission — contact Ahmed Hussain (Ahmedyhussain07@gmail.com).
+Source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE). Free to use, modify, and share for **noncommercial** purposes. **Commercial use** and **use as AI/ML training data** require prior written permission - contact Ahmed Hussain (Ahmedyhussain07@gmail.com).

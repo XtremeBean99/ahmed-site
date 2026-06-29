@@ -1,4 +1,4 @@
-# CLAUDE.md — AI Agent Context for ahmedyhussain.com
+# CLAUDE.md - AI Agent Context for ahmedyhussain.com
 
 This document contains non-obvious context for an AI agent picking up this project in a new session.
 Read this before touching any code.
@@ -7,7 +7,7 @@ Read this before touching any code.
 
 ## What This Project Is
 
-A production personal website for **Ahmed Hussain** — BCom/LLB(Hons) candidate at ANU, Canberra.
+A production personal website for **Ahmed Hussain** - BCom/LLB(Hons) candidate at ANU, Canberra.
 Domain: `ahmedyhussain.com`
 Repo: `https://github.com/XtremeBean99/ahmed-site`
 Vercel project: `ahmed-site` (ID: `prj_lF32Zp1qlFEKH7XzEW3yUdddQm61`)
@@ -26,7 +26,7 @@ The contact form has server-side Zod validation and a honeypot field. If you add
 API route, apply the same pattern from `src/services/contact.ts`. Never skip server-side validation
 even if client validation exists.
 
-### 3. No database — site is email-only
+### 3. No database - site is email-only
 There is **no database** in this project. Contact form submissions are emailed via Resend and are
 not persisted. If you add persistent storage in the future, introduce it behind the existing service
 layer in `src/services/`.
@@ -35,12 +35,12 @@ layer in `src/services/`.
 `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` are env vars. They are never hardcoded.
 Check `.env.example` for the full list.
 
-### 5. The site is bilingual — every user-facing string must be translated
+### 5. The site is bilingual - every user-facing string must be translated
 The site ships in **English and French**. There is a single source of truth for copy:
 `src/lib/i18n/dictionaries/en.ts` (English) and `fr.ts` (French). **Any time you add or change
 user-facing text, you MUST update BOTH dictionaries.** Never hardcode a user-facing string in a
 component. The `Dictionary` type is derived from `en.ts`, so `fr.ts` will fail to compile if a key
-is missing — `npm run type-check` is your safety net. See "Internationalisation" below for the full
+is missing - `npm run type-check` is your safety net. See "Internationalisation" below for the full
 workflow before touching any copy.
 
 ---
@@ -50,7 +50,7 @@ workflow before touching any copy.
 ```
 src/
 ├── app/                   Next.js App Router pages + API routes
-│   ├── api/contact/       POST handler — validate, honeypot, email
+│   ├── api/contact/       POST handler - validate, honeypot, email
 │   ├── games/             Games hub + typing-test + breakout + contract
 │   ├── legal/             Terms + Privacy pages
 │   ├── projects/          Projects hub + code + silicon + aglc4 + base-converter
@@ -60,7 +60,7 @@ src/
 │
 ├── components/
 │   ├── games/             TypingTest, Breakout, ContractGame (client), GameShell, GameStat
-│   ├── layout/            Header (client — scroll state), Footer (server)
+│   ├── layout/            Header (client - scroll state), Footer (server)
 │   ├── projects/          ToolShell, Aglc4Generator, BaseConverter, SiliconCanvas
 │   ├── sections/          One file per homepage section (server components)
 │   └── ui/                Button, SectionReveal, ParallaxImage, ContactForm,
@@ -74,10 +74,10 @@ src/
 │   ├── motion.ts          Shared Framer Motion tokens (easings, durations, variants)
 │   ├── resend.ts          Lazy Resend client (does NOT init at module load)
 │   ├── utils.ts           cn()
-│   └── validations.ts     Zod schemas — single source of truth for form shapes
+│   └── validations.ts     Zod schemas - single source of truth for form shapes
 │
 └── services/
-    └── contact.ts         Business logic — send contact email via Resend
+    └── contact.ts         Business logic - send contact email via Resend
 ```
 
 **Default to Server Components.** Only add `'use client'` when you need browser APIs,
@@ -87,7 +87,7 @@ ContractGame, Aglc4Generator, BaseConverter.
 
 ---
 
-## CircuitMesh — Site-Wide Animated Background
+## CircuitMesh - Site-Wide Animated Background
 
 `src/components/ui/CircuitMesh.tsx` is a `'use client'` canvas-based animated circuit mesh with 3D
 perspective projection. It is included in the **root layout** and renders behind all page content as
@@ -117,12 +117,12 @@ No database, no API routes, no server state. Best scores live in the browser onl
   tab-hidden / off-screen (same pattern as CircuitMesh). All physics, multi-ball, and the
   power-up system live in `src/lib/games/breakout-engine.ts` (pure functions over a mutable
   `GameState`); `Breakout.tsx` is a thin render + input shell. Power-ups: `expand`, `multi`,
-  `slow`, `life` — tune them via the `POWERUP_META` / drop-chance constants in the engine.
+  `slow`, `life` - tune them via the `POWERUP_META` / drop-chance constants in the engine.
 - **The Clause Game** (`/games/contract`): pick clauses across negotiation scenarios; win by
   landing the deal in the balanced/enforceable zone. Pure scoring in
   `src/lib/games/contract-engine.ts` + dataset in `contract-data.ts` (`contract-types.ts` for
   shared types). Middle option in each category is always `balance: 0`. UI: `ContractGame.tsx`.
-- **Persistence:** `src/lib/games/storage.ts` — SSR-safe `localStorage` helpers
+- **Persistence:** `src/lib/games/storage.ts` - SSR-safe `localStorage` helpers
   (`getBest`, `setBestIfHigher`, `BEST_KEYS`). Namespaced under `ahmed-site:games:*`.
 - **Monochrome:** everything is white-on-zinc; brick depth uses per-row alpha, never colour.
 - **Reduced motion:** decorative animation (caret blink, power-up flourishes) is gated; the
@@ -136,7 +136,7 @@ To add a game: add a card to `src/app/games/page.tsx`, create the route + shell 
 ## Site-Wide Motion
 
 All animation is **Framer Motion only (no GSAP)**. Shared tokens live in `src/lib/motion.ts`
-(`EASE_OUT_EXPO`, `DURATION`, `fadeInUp`, `cardHover`, `springSubtle`) — reuse these instead
+(`EASE_OUT_EXPO`, `DURATION`, `fadeInUp`, `cardHover`, `springSubtle`) - reuse these instead
 of hardcoding values so motion stays consistent.
 
 - `src/app/template.tsx` gives a subtle per-route fade/rise (remounts on navigation). Fixed
@@ -148,20 +148,20 @@ Every motion addition checks `useReducedMotion()` and degrades to no animation.
 
 ---
 
-## Internationalisation (i18n) — English + French
+## Internationalisation (i18n) - English + French
 
 The site is bilingual. Language is chosen with an **EN / FR toggle in the header**, stored in a
-`locale` cookie, and read on the server — **there are no `/fr` URLs**. English is the canonical URL.
+`locale` cookie, and read on the server - **there are no `/fr` URLs**. English is the canonical URL.
 
 ### Where everything lives (`src/lib/i18n/`)
-- `config.ts` — `locales` (`en`, `fr`), `defaultLocale`, the `locale` cookie name/age, `isLocale()`.
-- `dictionaries/en.ts` — **the single source of truth for all copy.** Its shape defines the
+- `config.ts` - `locales` (`en`, `fr`), `defaultLocale`, the `locale` cookie name/age, `isLocale()`.
+- `dictionaries/en.ts` - **the single source of truth for all copy.** Its shape defines the
   `Dictionary` type.
-- `dictionaries/fr.ts` — `fr: Dictionary`. Structurally identical to `en.ts` or it won't compile.
-- `server.ts` — `getLocale()` and `getDictionary()` for **server components**. `getLocale()` reads
+- `dictionaries/fr.ts` - `fr: Dictionary`. Structurally identical to `en.ts` or it won't compile.
+- `server.ts` - `getLocale()` and `getDictionary()` for **server components**. `getLocale()` reads
   the cookie; on a first visit with no cookie it falls back to the `Accept-Language` header.
-- `client.tsx` — `I18nProvider` + `useI18n()` / `useT()` for **client components**.
-- `src/components/ui/LanguageToggle.tsx` — writes the cookie and `router.refresh()`es.
+- `client.tsx` - `I18nProvider` + `useI18n()` / `useT()` for **client components**.
+- `src/components/ui/LanguageToggle.tsx` - writes the cookie and `router.refresh()`es.
 
 ### How to render copy
 - **Server component:** `const t = await getDictionary()` then `t.section.key`. The component must
@@ -173,8 +173,8 @@ The site is bilingual. Language is chosen with an **EN / FR toggle in the header
 1. Add the string to `en.ts` under a sensible section key.
 2. Add the **French translation** to `fr.ts` at the identical path (formal *vous* for the visitor;
    first person for Ahmed's bio).
-3. Reference it via `t.…` in the component — never inline a literal.
-4. Run `npm run type-check` — a missing French key is a compile error.
+3. Reference it via `t.…` in the component - never inline a literal.
+4. Run `npm run type-check` - a missing French key is a compile error.
 5. Keep `CONTENT.md` (the human-editable copy inventory) in sync if you add/restructure copy.
 
 Rich prose with inline emphasis (the silicon explainer) is stored as HTML strings containing
@@ -182,9 +182,9 @@ Rich prose with inline emphasis (the silicon explainer) is stored as HTML string
 in `globals.css` applies the monochrome emphasis style. Content is trusted (our own dictionary).
 
 ### Deliberate boundaries (these stay English on purpose)
-- **SEO metadata and Open Graph / Twitter images** — emitted in the canonical language (English).
+- **SEO metadata and Open Graph / Twitter images** - emitted in the canonical language (English).
   Because switching is cookie-based (no `/fr` URL), there is no separate page for crawlers to index.
-- **Large editorial datasets** — typing-test phrases (`src/lib/games/phrases.ts`), Clause Game
+- **Large editorial datasets** - typing-test phrases (`src/lib/games/phrases.ts`), Clause Game
   scenarios/clauses (`src/lib/games/contract-data.ts`, `OUTCOME_COPY` in `contract-engine.ts`), and
   AGLC4 field configs/examples (`src/lib/aglc4/fields.ts`). The **UI chrome around them is
   translated**; the specialist content is not. If you localise these later, give each its own
@@ -202,12 +202,12 @@ in `globals.css` applies the monochrome emphasis style. Content is trusted (our 
 
 ---
 
-## Contact System — How It Works
+## Contact System - How It Works
 
 ```
 POST /api/contact
   1. Parse JSON body
-  2. contactSchema.safeParse() — Zod, server side
+  2. contactSchema.safeParse() - Zod, server side
   3. Honeypot check (website field must be empty)
   4. submitContact() in src/services/contact.ts
      a. sendContactEmail() via Resend (throws on failure → 500)
@@ -221,10 +221,10 @@ accurate if you change data handling.
 
 ---
 
-## Resend — Important Lazy Init Pattern
+## Resend - Important Lazy Init Pattern
 
 `src/lib/resend.ts` creates the Resend client **lazily** (only when `sendContactEmail` is called).
-This is intentional — `new Resend(undefined)` throws immediately at module load, which breaks
+This is intentional - `new Resend(undefined)` throws immediately at module load, which breaks
 `next build` when `RESEND_API_KEY` is not set in the build environment.
 
 Do not change this to an eager initialisation.
@@ -247,7 +247,7 @@ Set in `next.config.ts` `headers()` function. Applied to all routes (`source: '/
 Includes: HSTS, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy,
 CSP, and `X-Robots-Tag: noai, noimageai`.
 
-The CSP uses `unsafe-inline` for scripts — this is a known trade-off with Next.js.
+The CSP uses `unsafe-inline` for scripts - this is a known trade-off with Next.js.
 
 ---
 
@@ -264,7 +264,7 @@ Do not remove these protections.
 
 ## Lawyer Image
 
-`public/lawyer.jpg` — used in `src/components/sections/About.tsx` as a parallax element via
+`public/lawyer.jpg` - used in `src/components/sections/About.tsx` as a parallax element via
 `ParallaxImage`. Rendered with `grayscale` CSS filter to stay monochrome.
 
 ---
@@ -282,12 +282,12 @@ page chrome (back-to-projects link + header), the projects analogue of `GameShel
   text). To add a source type: extend the `SourceType` union, add a `SOURCES` entry + a
   `FORMATTERS` entry. UI: `src/components/projects/Aglc4Generator.tsx`.
 - **Base converter** (`/projects/base-converter`): live decimal/binary/hex/octal/UTF-8
-  conversion plus a bitwise playground. Pure logic in `src/lib/convert/` — `bases.ts`
+  conversion plus a bitwise playground. Pure logic in `src/lib/convert/` - `bases.ts`
   (BigInt-backed parse/format + text↔value) and `bitwise.ts` (AND/OR/XOR/NOT/shifts; NOT is
   width-masked). Everything funnels through one canonical non-negative `BigInt`. UI:
   `src/components/projects/BaseConverter.tsx`.
 
-Note: BigInt literals (`0n`) require `tsconfig` `target` ES2020+ — do not lower it.
+Note: BigInt literals (`0n`) require `tsconfig` `target` ES2020+ - do not lower it.
 
 ---
 
@@ -336,12 +336,12 @@ npm run build        # full production build
 
 ## What Does Not Exist Yet (and Why)
 
-- **Admin dashboard** — intentionally deferred. Service layer is ready for it. When building,
+- **Admin dashboard** - intentionally deferred. Service layer is ready for it. When building,
   add under `/app/admin/` with middleware-based auth guard.
-- **Database** — currently no database in the project. Contact form emails directly via Resend.
+- **Database** - currently no database in the project. Contact form emails directly via Resend.
   If you add persistent storage (newsletter, stored enquiries, admin), introduce it behind the
   service layer and use environment variables for the connection string.
-- **Newsletter** — needs a signup form and Resend audience integration.
-- **Blog/Articles** — needs a Markdown renderer (consider `next-mdx-remote` or `@next/mdx`).
-- **Rate limiting** — not currently implemented. If abuse of the contact endpoint is observed,
+- **Newsletter** - needs a signup form and Resend audience integration.
+- **Blog/Articles** - needs a Markdown renderer (consider `next-mdx-remote` or `@next/mdx`).
+- **Rate limiting** - not currently implemented. If abuse of the contact endpoint is observed,
   add it via Vercel KV, Upstash, or a database-backed approach.

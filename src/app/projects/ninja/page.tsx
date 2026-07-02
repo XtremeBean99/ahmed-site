@@ -6,7 +6,7 @@ import { getDictionary } from '@/lib/i18n/server'
 export const metadata: Metadata = {
   title: 'Super Ninja Monk Fighter IV',
   description:
-    'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Six hand-crafted levels, fluid wall-jumping and sliding, and a ghost-runner replay system.',
+    'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Ten hand-crafted levels, fluid wall-jumping and sliding, checkpoints, gamepad support, and a ghost-runner replay system.',
   alternates: { canonical: 'https://ahmedyhussain.com/projects/ninja' },
 }
 
@@ -15,7 +15,7 @@ const webpageSchema = {
   '@type': 'WebPage',
   name: 'Super Ninja Monk Fighter IV',
   description:
-    'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Six hand-crafted levels, fluid wall-jumping and sliding, and a ghost-runner replay system.',
+    'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Ten hand-crafted levels, fluid wall-jumping and sliding, checkpoints, gamepad support, and a ghost-runner replay system.',
   url: 'https://ahmedyhussain.com/projects/ninja',
   isPartOf: { '@type': 'WebSite', name: 'Ahmed Hussain', url: 'https://ahmedyhussain.com' },
   author: { '@type': 'Person', name: 'Ahmed Hussain' },
@@ -50,7 +50,28 @@ export default async function NinjaPage() {
           </div>
         </SectionReveal>
 
-        {/* Video showcase placeholder */}
+        {/* Play the game */}
+        <SectionReveal delay={0.1}>
+          <div className="mt-16">
+            <h2 className="font-serif text-2xl font-semibold text-foreground mb-4">
+              {t.playHeading}
+            </h2>
+            <p className="text-muted-foreground leading-relaxed max-w-2xl mb-6">
+              {t.playBody}
+            </p>
+            <div className="border border-border rounded-lg bg-surface overflow-hidden" style={{ aspectRatio: '16/9', maxHeight: '720px' }}>
+              <iframe
+                src="/games/ninja/index.html"
+                title="Super Ninja Monk Fighter IV"
+                className="w-full h-full"
+                allow="autoplay; fullscreen"
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </SectionReveal>
+
+        {/* Video showcase */}
         <SectionReveal delay={0.12}>
           <div className="mt-16">
             <h2 className="font-serif text-2xl font-semibold text-foreground mb-4">

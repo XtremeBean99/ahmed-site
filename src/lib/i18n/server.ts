@@ -20,7 +20,7 @@ function localeFromAcceptLanguage(header: string | null): Locale | null {
  * Resolve the active locale for the current request. An explicit choice (the
  * locale cookie, set by the language toggle) always wins; on a first visit with
  * no cookie we fall back to the browser's Accept-Language. Reading the cookie
- * opts pages into dynamic rendering — an accepted trade-off for cookie-based
+ * opts pages into dynamic rendering - an accepted trade-off for cookie-based
  * (URL-stable) language switching.
  */
 export async function getLocale(): Promise<Locale> {

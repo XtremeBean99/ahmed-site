@@ -167,7 +167,7 @@ export function Breakout() {
     setPaddleX(stateRef.current, x)
   }, [])
 
-  // Touch/click on the canvas moves the paddle and may launch or restart — but
+  // Touch/click on the canvas moves the paddle and may launch or restart - but
   // it must NOT toggle pause, otherwise every drag-to-move on a touchscreen
   // pauses the game. Pausing is done with the dedicated control button.
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -178,7 +178,7 @@ export function Breakout() {
     else if (s.status === 'paused') togglePause(s)
   }, [movePaddleToEvent, resetGame])
 
-  // Explicit launch/pause/resume/restart — for the keyboard, the overlay, and
+  // Explicit launch/pause/resume/restart - for the keyboard, the overlay, and
   // the on-screen control button.
   const launchOrPause = useCallback(() => {
     const s = stateRef.current
@@ -261,7 +261,7 @@ export function Breakout() {
         )}
       </div>
 
-      {/* On-screen controls — essential on touch devices, where there is no
+      {/* On-screen controls - essential on touch devices, where there is no
           keyboard to launch/pause/restart. */}
       <div className="mt-4 flex items-center gap-3">
         <button

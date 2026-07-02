@@ -350,7 +350,7 @@ export const en = {
   ninjaGame: {
     eyebrow: 'Platformer',
     heading: 'Super Ninja Monk Fighter IV',
-    intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Run, jump, wall-jump, and slide through seven hand-crafted levels. Your previous attempt replays as a translucent ghost — every retry is a race against yourself.',
+    intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Run, jump, wall-jump, and slide through seven hand-crafted levels. Your previous attempt replays as a translucent ghost - every retry is a race against yourself.',
     playHeading: 'Play',
     playBody: 'The game runs in your browser. Use the keyboard (WASD / arrows + Space) or a gamepad. Press Escape to pause, R to restart a level.',
     playButton: 'Launch game',
@@ -402,7 +402,7 @@ export const en = {
     bugsDescriptionPlaceholder: 'Describe the bug and which level you were on…',
     bugsSend: 'Send bug report',
     bugsSending: 'Sending…',
-    bugsSuccess: 'Thank you. Bug report sent — I will look into it.',
+    bugsSuccess: 'Thank you. Bug report sent - I will look into it.',
     bugsError: 'Something went wrong. Please try again or email me directly.',
   },
 
@@ -445,7 +445,7 @@ export const en = {
     bugsDescriptionPlaceholder: 'Describe the bug and which level you were on…',
     bugsSend: 'Send bug report',
     bugsSending: 'Sending…',
-    bugsSuccess: 'Thank you. Bug report sent — I will look into it.',
+    bugsSuccess: 'Thank you. Bug report sent - I will look into it.',
     bugsError: 'Something went wrong. Please try again or email me directly.',
   },
 

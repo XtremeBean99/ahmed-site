@@ -7,7 +7,7 @@ import type { SourceType, SourceConfig } from './types'
  */
 export const SOURCES: Record<SourceType, SourceConfig> = {
   'reported-case': {
-    label: 'Case — reported',
+    label: 'Case - reported',
     example: 'Mabo v Queensland [No 2] (1992) 175 CLR 1, 42.',
     fields: [
       { key: 'caseName', label: 'Case name', placeholder: 'Mabo v Queensland [No 2]' },
@@ -19,7 +19,7 @@ export const SOURCES: Record<SourceType, SourceConfig> = {
     ],
   },
   'unreported-case': {
-    label: 'Case — unreported (medium neutral)',
+    label: 'Case - unreported (medium neutral)',
     example: 'Smith v Jones [2010] HCA 5, [15].',
     fields: [
       { key: 'caseName', label: 'Case name', placeholder: 'Smith v Jones' },

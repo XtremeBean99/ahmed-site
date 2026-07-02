@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 
-// Centralised contact email — used across the site (footer, legal, contact form).
+// Centralised contact email - used across the site (footer, legal, contact form).
 // Change this once to update all references.
 export const CONTACT_EMAIL = 'ahmedyhussain07@gmail.com'
 
@@ -33,7 +33,7 @@ export async function sendContactEmail(payload: ContactEmailPayload) {
   const { name, email, subject, message } = payload
   const resend = getResend()
 
-  // Sanitise email subject — strip control characters and newlines.
+  // Sanitise email subject - strip control characters and newlines.
   const safeSubject = subject.replace(/[\x00-\x1f\x7f]/g, '').slice(0, 200)
 
   const { error } = await resend.emails.send({

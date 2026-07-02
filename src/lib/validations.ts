@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-/** Validation messages — overridable per locale on the client form. */
+/** Validation messages - overridable per locale on the client form. */
 export interface ContactMessages {
   nameRequired: string
   nameMax: string
@@ -44,7 +44,7 @@ export function makeContactSchema(messages: ContactMessages = DEFAULT_MESSAGES) 
   })
 }
 
-/** Default (English) schema — single source of truth for the server. */
+/** Default (English) schema - single source of truth for the server. */
 export const contactSchema = makeContactSchema()
 
 export type ContactFormData = z.infer<typeof contactSchema>

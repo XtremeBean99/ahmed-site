@@ -4,7 +4,7 @@ import { submitContact } from '@/services/contact'
 import { checkRateLimit } from '@/lib/ratelimit'
 
 export async function POST(request: NextRequest) {
-  // CSRF check — verify the request originates from our domain.
+  // CSRF check - verify the request originates from our domain.
   // Allows direct browser form submissions and same-origin fetch requests.
   const origin = request.headers.get('origin')
   const referer = request.headers.get('referer')

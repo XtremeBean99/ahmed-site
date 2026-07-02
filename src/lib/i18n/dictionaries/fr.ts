@@ -347,7 +347,7 @@ export const fr: Dictionary = {
   ninjaGame: {
     eyebrow: 'Plateforme',
     heading: 'Super Ninja Monk Fighter IV',
-    intro: 'Un jeu de plateforme 2D rapide construit avec Godot 4.7, dans une esthétique encre et vide dessinée à la main. Courez, sautez, sautez sur les murs et glissez à travers sept niveaux faits main. Votre tentative précédente est rejouée comme un fantôme translucide — chaque essai est une course contre vous-même.',
+    intro: 'Un jeu de plateforme 2D rapide construit avec Godot 4.7, dans une esthétique encre et vide dessinée à la main. Courez, sautez, sautez sur les murs et glissez à travers sept niveaux faits main. Votre tentative précédente est rejouée comme un fantôme translucide - chaque essai est une course contre vous-même.',
     playHeading: 'Jouer',
     playBody: 'Le jeu fonctionne dans votre navigateur. Utilisez le clavier (WASD / flèches + Espace) ou une manette. Appuyez sur Échap pour mettre en pause, R pour recommencer un niveau.',
     playButton: 'Lancer le jeu',
@@ -399,7 +399,7 @@ export const fr: Dictionary = {
     bugsDescriptionPlaceholder: 'Décrivez le bug et le niveau où vous étiez…',
     bugsSend: 'Envoyer le rapport',
     bugsSending: 'Envoi…',
-    bugsSuccess: 'Merci. Rapport de bug envoyé — je vais examiner cela.',
+    bugsSuccess: 'Merci. Rapport de bug envoyé - je vais examiner cela.',
     bugsError: 'Une erreur est survenue. Veuillez réessayer ou m\'envoyer un courriel directement.',
   },
 
@@ -442,7 +442,7 @@ export const fr: Dictionary = {
     bugsDescriptionPlaceholder: 'Décrivez le bug et le niveau où vous étiez…',
     bugsSend: 'Envoyer le rapport',
     bugsSending: 'Envoi…',
-    bugsSuccess: 'Merci. Rapport de bug envoyé — je vais examiner cela.',
+    bugsSuccess: 'Merci. Rapport de bug envoyé - je vais examiner cela.',
     bugsError: 'Une erreur est survenue. Veuillez réessayer ou m\'envoyer un courriel directement.',
   },
 

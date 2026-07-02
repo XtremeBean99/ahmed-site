@@ -5,7 +5,7 @@ import type { Segment, SourceType, Values } from './types'
  * builder; both return `Segment[]` so italics survive into the UI and into the
  * clipboard (as plain text).
  *
- * These intentionally do not enforce required fields — they format whatever is
+ * These intentionally do not enforce required fields - they format whatever is
  * present, so the citation updates live as the user types.
  */
 

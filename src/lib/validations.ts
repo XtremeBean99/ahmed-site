@@ -48,3 +48,20 @@ export function makeContactSchema(messages: ContactMessages = DEFAULT_MESSAGES) 
 export const contactSchema = makeContactSchema()
 
 export type ContactFormData = z.infer<typeof contactSchema>
+
+/** Ninja leaderboard submission - mirrors the game client's constraints. */
+export const ninjaScoreSchema = z.object({
+  name: z
+    .string()
+    .min(1)
+    .max(16)
+    .regex(/^[A-Za-z0-9 _-]+$/),
+  timeCs: z
+    .number()
+    .int()
+    .min(1000) // < 10 s cannot be a real full run
+    .max(720_000), // > 2 h is noise
+  tokensPercent: z.number().int().min(0).max(100),
+})
+
+export type NinjaScoreInput = z.infer<typeof ninjaScoreSchema>

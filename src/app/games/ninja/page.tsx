@@ -111,8 +111,8 @@ export default async function NinjaGamePage() {
             </p>
             <div className="grid gap-8 md:grid-cols-2 max-w-3xl">
               {[
-                { title: t.leaderboardHundred, entries: hundredBoard },
-                { title: t.leaderboardAny, entries: anyBoard },
+                { title: t.leaderboardHundred, entries: hundredBoard, showTokens: false },
+                { title: t.leaderboardAny, entries: anyBoard, showTokens: true },
               ].map((board) => (
                 <div key={board.title} className="border border-border rounded-lg p-5">
                   <h3 className="text-sm font-medium text-foreground mb-4 label-text">
@@ -124,8 +124,9 @@ export default async function NinjaGamePage() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="text-muted-foreground text-left">
-                          <th className="pb-2 font-normal w-10">{t.leaderboardRank}</th>
+                          <th className="pb-2 font-normal w-8">{t.leaderboardRank}</th>
                           <th className="pb-2 font-normal">{t.leaderboardName}</th>
+                          {board.showTokens && <th className="pb-2 font-normal text-right w-14">{t.leaderboardTokens}</th>}
                           <th className="pb-2 font-normal text-right">{t.leaderboardTime}</th>
                         </tr>
                       </thead>
@@ -134,6 +135,7 @@ export default async function NinjaGamePage() {
                           <tr key={`${entry.name}-${entry.at}`} className="border-t border-border">
                             <td className="py-2 text-muted-foreground">{i + 1}</td>
                             <td className="py-2 text-foreground">{entry.name}</td>
+                            {board.showTokens && <td className="py-2 text-right text-muted-foreground">{entry.tokensPercent}%</td>}
                             <td className="py-2 text-right font-mono text-foreground">
                               {formatTimeCs(entry.timeCs)}
                             </td>

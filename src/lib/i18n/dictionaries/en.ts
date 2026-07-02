@@ -392,6 +392,7 @@ export const en = {
     leaderboardRank: 'Rank',
     leaderboardName: 'Player',
     leaderboardTime: 'Time',
+    leaderboardTokens: 'Tokens',
     leaderboardEmpty: 'No runs yet - be the first.',
     monkAlt: 'Hand-drawn monk artwork from the game title screen',
     bugsHeading: 'Report a bug',

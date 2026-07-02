@@ -389,6 +389,7 @@ export const fr: Dictionary = {
     leaderboardRank: 'Rang',
     leaderboardName: 'Joueur',
     leaderboardTime: 'Temps',
+    leaderboardTokens: 'Jetons',
     leaderboardEmpty: 'Aucun temps pour le moment - soyez le premier.',
     monkAlt: "Illustration du moine dessinée à la main, tirée de l'écran titre du jeu",
     bugsHeading: 'Signaler un bug',

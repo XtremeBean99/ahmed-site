@@ -1,6 +1,6 @@
 import { getRedis } from '@/lib/redis'
 
-export type LeaderboardEntry = { name: string; timeCs: number; at: number }
+export type LeaderboardEntry = { name: string; timeCs: number; at: number; tokensPercent: number }
 export type Board = 'any' | 'hundred'
 
 const KEYS: Record<Board, string> = {

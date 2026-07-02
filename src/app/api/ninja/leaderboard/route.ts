@@ -50,6 +50,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     name: parsed.data.name.trim(),
     timeCs: parsed.data.timeCs,
     at: Date.now(),
+    tokensPercent: parsed.data.tokensPercent,
   }
 
   try {

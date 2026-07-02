@@ -222,7 +222,7 @@ in `globals.css` applies the monochrome emphasis style. Content is trusted (our 
 ```
 POST /api/contact
   1. CSRF check: Origin/Referer must match production domain
-  2. Rate-limit by IP (5 req/hr, in-memory — see src/lib/ratelimit.ts)
+  2. Rate-limit by IP (5 req/hr, in-memory - see src/lib/ratelimit.ts)
   3. Parse JSON body
   4. contactSchema.safeParse() - Zod, server side
   5. Honeypot check (website field must be empty)
@@ -247,7 +247,7 @@ This is intentional - `new Resend(undefined)` throws immediately at module load,
 Do not change this to an eager initialisation.
 
 The module also exports a centralised `CONTACT_EMAIL` constant used by the Footer and other
-components — update it in one place if the email address changes. The `sendContactEmail`
+components - update it in one place if the email address changes. The `sendContactEmail`
 function sanitises the email subject (strips control characters and limits length) before
 sending.
 
@@ -368,6 +368,6 @@ npm run build        # full production build
   and use environment variables for the connection string.
 - **Newsletter** - needs a signup form and Resend audience integration.
 - **Blog/Articles** - needs a Markdown renderer (consider `next-mdx-remote` or `@next/mdx`).
-- **Rate limiting** — in-memory rate limiter exists (`src/lib/ratelimit.ts`, 5 req/hr/IP
+- **Rate limiting** - in-memory rate limiter exists (`src/lib/ratelimit.ts`, 5 req/hr/IP
   for the contact form). NOTE: does not survive serverless cold starts on Vercel.
   For production resilience, migrate to Upstash Redis or Vercel KV.

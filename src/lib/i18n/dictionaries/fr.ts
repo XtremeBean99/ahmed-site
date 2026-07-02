@@ -157,7 +157,7 @@ export const fr: Dictionary = {
       ninja: {
         label: 'Jeu',
         title: 'Super Ninja Monk Fighter IV',
-        desc: 'Un jeu de plateforme 2D rapide et axé sur le mouvement, avec une esthétique encre et vide dessinée à la main. Sautez sur les murs, glissez et transformez votre élan en arme principale à travers six niveaux faits main.',
+        desc: 'Un jeu de plateforme 2D rapide et axé sur le mouvement, avec une esthétique encre et vide dessinée à la main. Sautez sur les murs, glissez et transformez votre élan en arme principale à travers sept niveaux faits main.',
       },
       code: {
         label: 'Open source',
@@ -241,7 +241,7 @@ export const fr: Dictionary = {
       ninja: {
         label: 'Plateforme',
         title: 'Super Ninja Monk Fighter IV',
-        desc: 'Un jeu de plateforme 2D rapide avec une esthétique encre et vide dessinée à la main. Sautez sur les murs, glissez et transformez votre élan en arme principale à travers six niveaux faits main.',
+        desc: 'Un jeu de plateforme 2D rapide avec une esthétique encre et vide dessinée à la main. Sautez sur les murs, glissez et transformez votre élan en arme principale à travers sept niveaux faits main.',
       },
       typing: {
         label: 'MPM en direct',
@@ -380,7 +380,7 @@ export const fr: Dictionary = {
   ninjaGame: {
     eyebrow: 'Plateforme',
     heading: 'Super Ninja Monk Fighter IV',
-    intro: 'Un jeu de plateforme 2D rapide construit avec Godot 4.7, dans une esthétique encre et vide dessinée à la main. Courez, sautez, sautez sur les murs et glissez à travers six niveaux faits main. Votre tentative précédente est rejouée comme un fantôme translucide — chaque essai est une course contre vous-même.',
+    intro: 'Un jeu de plateforme 2D rapide construit avec Godot 4.7, dans une esthétique encre et vide dessinée à la main. Courez, sautez, sautez sur les murs et glissez à travers sept niveaux faits main. Votre tentative précédente est rejouée comme un fantôme translucide — chaque essai est une course contre vous-même.',
     playHeading: 'Jouer',
     playBody: 'Le jeu fonctionne dans votre navigateur. Utilisez le clavier (WASD / flèches + Espace) ou une manette. Appuyez sur Échap pour mettre en pause, R pour recommencer un niveau.',
     playButton: 'Lancer le jeu',
@@ -398,7 +398,7 @@ export const fr: Dictionary = {
     features: [
       'Mouvement fluide avec coyote time et tampon de saut',
       'Combat par l\'élan : glissade, écrasement et boule de feu',
-      'Six niveaux avec terrain dessiné à l\'encre généré à partir de traits SVG',
+      'Sept niveaux avec terrain dessiné à l\'encre généré à partir de traits SVG',
       'Un fantôme rejoue votre tentative précédente sur chaque niveau',
       'Plateformes mobiles, plateformes friables, ressorts et pointes',
       'Trois types d\'ennemis : escargots, volants et un boss',
@@ -429,9 +429,9 @@ export const fr: Dictionary = {
   ninja: {
     eyebrow: 'Projets · Super Ninja Monk Fighter IV',
     heading: 'Super Ninja Monk Fighter IV',
-    intro: 'Un jeu de plateforme 2D rapide construit avec Godot 4.7, dans une esthétique encre et vide dessinée à la main. Dix niveaux sont tracés comme des traits d\'encre et transformés en terrain à l\'exécution ; vous terminez chaque niveau en le traversant avec fluidité.',
+    intro: 'Un jeu de plateforme 2D rapide construit avec Godot 4.7, dans une esthétique encre et vide dessinée à la main. Sept niveaux sont tracés comme des traits d\'encre et transformés en terrain à l\'exécution ; vous terminez chaque niveau en le traversant avec fluidité.',
     gameplayHeading: 'Gameplay',
-    gameplayBody: 'Courez, sautez, double-sautez, sautez sur les murs et glissez à travers dix niveaux faits main. Vainquez les ennemis en glissant dedans ou en les écrasant depuis les airs. Gagnez des charges de boule de feu par ennemi abattu. Ramassez chaque jeton ou éliminez tous les ennemis du panneau de la salle du boss et une porte de sortie apparaît. Votre tentative précédente est rejouée comme un fantôme translucide, chaque essai est donc une course contre vous-même.',
+    gameplayBody: 'Courez, sautez, double-sautez, sautez sur les murs et glissez à travers sept niveaux faits main. Vainquez les ennemis en glissant dedans ou en les écrasant depuis les airs. Gagnez des charges de boule de feu par ennemi abattu. Ramassez chaque jeton ou éliminez tous les ennemis du panneau de la salle du boss et une porte de sortie apparaît. Votre tentative précédente est rejouée comme un fantôme translucide, chaque essai est donc une course contre vous-même.',
     playHeading: 'Jouer',
     playBody: 'Le jeu fonctionne dans votre navigateur. Utilisez le clavier (WASD / flèches + Espace) ou une manette. Appuyez sur Échap pour mettre en pause, R pour recommencer un niveau.',
     playButton: 'Lancer le jeu',
@@ -441,7 +441,7 @@ export const fr: Dictionary = {
     features: [
       'Mouvement fluide avec coyote time et tampon de saut',
       'Combat par l\'élan : glissade, écrasement et boule de feu',
-      'Dix niveaux : terrain dessiné à l\'encre, généré à partir de traits SVG à l\'exécution',
+      'Sept niveaux : terrain dessiné à l\'encre, généré à partir de traits SVG à l\'exécution',
       'Un fantôme rejoue votre tentative précédente sur chaque niveau',
       'Plateformes mobiles, plateformes friables, ressorts et pointes',
       'Trois types d\'ennemis : escargots, volants et un boss',

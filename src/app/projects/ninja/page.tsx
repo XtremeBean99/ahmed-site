@@ -7,7 +7,7 @@ import { getDictionary } from '@/lib/i18n/server'
 export const metadata: Metadata = {
   title: 'Super Ninja Monk Fighter IV',
   description:
-    'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Ten hand-crafted levels, fluid wall-jumping and sliding, checkpoints, gamepad support, and a ghost-runner replay system.',
+    'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Seven hand-crafted levels, fluid wall-jumping and sliding, checkpoints, gamepad support, and a ghost-runner replay system.',
   alternates: { canonical: 'https://ahmedyhussain.com/projects/ninja' },
 }
 
@@ -16,7 +16,7 @@ const webpageSchema = {
   '@type': 'WebPage',
   name: 'Super Ninja Monk Fighter IV',
   description:
-    'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Ten hand-crafted levels, fluid wall-jumping and sliding, checkpoints, gamepad support, and a ghost-runner replay system.',
+    'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Seven hand-crafted levels, fluid wall-jumping and sliding, checkpoints, gamepad support, and a ghost-runner replay system.',
   url: 'https://ahmedyhussain.com/projects/ninja',
   isPartOf: { '@type': 'WebSite', name: 'Ahmed Hussain', url: 'https://ahmedyhussain.com' },
   author: { '@type': 'Person', name: 'Ahmed Hussain' },

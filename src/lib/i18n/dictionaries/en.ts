@@ -160,7 +160,7 @@ export const en = {
       ninja: {
         label: 'Game',
         title: 'Super Ninja Monk Fighter IV',
-        desc: 'A fast, movement-focused 2D platformer with a hand-drawn ink-and-void aesthetic. Wall-jump, slide, and turn your momentum into your main weapon across six hand-crafted levels.',
+        desc: 'A fast, movement-focused 2D platformer with a hand-drawn ink-and-void aesthetic. Wall-jump, slide, and turn your momentum into your main weapon across seven hand-crafted levels.',
       },
       code: {
         label: 'Open source',
@@ -244,7 +244,7 @@ export const en = {
       ninja: {
         label: 'Platformer',
         title: 'Super Ninja Monk Fighter IV',
-        desc: 'A fast, movement-focused 2D platformer with a hand-drawn ink-and-void aesthetic. Wall-jump, slide, and turn your momentum into your main weapon across six hand-crafted levels.',
+        desc: 'A fast, movement-focused 2D platformer with a hand-drawn ink-and-void aesthetic. Wall-jump, slide, and turn your momentum into your main weapon across seven hand-crafted levels.',
       },
       typing: {
         label: 'Live WPM',
@@ -383,7 +383,7 @@ export const en = {
   ninjaGame: {
     eyebrow: 'Platformer',
     heading: 'Super Ninja Monk Fighter IV',
-    intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Run, jump, wall-jump, and slide through six hand-crafted levels. Your previous attempt replays as a translucent ghost — every retry is a race against yourself.',
+    intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Run, jump, wall-jump, and slide through seven hand-crafted levels. Your previous attempt replays as a translucent ghost — every retry is a race against yourself.',
     playHeading: 'Play',
     playBody: 'The game runs in your browser. Use the keyboard (WASD / arrows + Space) or a gamepad. Press Escape to pause, R to restart a level.',
     playButton: 'Launch game',
@@ -401,7 +401,7 @@ export const en = {
     features: [
       'Fluid movement with coyote time and jump buffering',
       'Combat through momentum: slide, stomp, and fireball',
-      'Six levels with ink-drawn terrain built at runtime from SVG strokes',
+      'Seven levels with ink-drawn terrain built at runtime from SVG strokes',
       'Ghost runner replays your previous attempt on each level',
       'Moving platforms, crumbling platforms, springs, and spikes',
       'Three enemy types: snails, flyers, and a boss',
@@ -432,9 +432,9 @@ export const en = {
   ninja: {
     eyebrow: 'Projects · Super Ninja Monk Fighter IV',
     heading: 'Super Ninja Monk Fighter IV',
-    intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Ten hand-crafted levels are traced as ink strokes and built into terrain at runtime; you clear each one by flowing through it.',
+    intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Seven hand-crafted levels are traced as ink strokes and built into terrain at runtime; you clear each one by flowing through it.',
     gameplayHeading: 'Gameplay',
-    gameplayBody: 'Run, jump, double-jump, wall-jump, and slide through ten hand-crafted levels. Defeat enemies by sliding into them or stomping from above. Earn fireball charges per kill. Clear every token or defeat every enemy in the boss-room panel and an exit door appears. Your previous attempt replays as a translucent ghost, so every retry is a race against yourself.',
+    gameplayBody: 'Run, jump, double-jump, wall-jump, and slide through seven hand-crafted levels. Defeat enemies by sliding into them or stomping from above. Earn fireball charges per kill. Clear every token or defeat every enemy in the boss-room panel and an exit door appears. Your previous attempt replays as a translucent ghost, so every retry is a race against yourself.',
     playHeading: 'Play',
     playBody: 'The game runs in your browser. Use the keyboard (WASD / arrows + Space) or a gamepad. Press Escape to pause, R to restart a level.',
     playButton: 'Launch game',
@@ -444,7 +444,7 @@ export const en = {
     features: [
       'Fluid movement with coyote time and jump buffering',
       'Combat through momentum: slide, stomp, and fireball',
-      'Ten levels: ink-drawn terrain built at runtime from SVG strokes',
+      'Seven levels: ink-drawn terrain built at runtime from SVG strokes',
       'Ghost runner replays your previous attempt on each level',
       'Moving platforms, crumbling platforms, springs, and spikes',
       'Three enemy types: snails, flyers, and a boss',

@@ -8,7 +8,7 @@ import { getDictionary } from '@/lib/i18n/server'
 export const metadata: Metadata = {
   title: 'Super Ninja Monk Fighter IV',
   description:
-    'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Play in your browser — run, jump, wall-jump, and slide through six hand-crafted levels.',
+    'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Play in your browser — run, jump, wall-jump, and slide through seven hand-crafted levels.',
   alternates: { canonical: 'https://ahmedyhussain.com/games/ninja' },
 }
 

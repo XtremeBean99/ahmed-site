@@ -1,6 +1,6 @@
 /**
  * French dictionary. Must satisfy the `Dictionary` type defined by en.ts, so it
- * stays structurally in lockstep with English — a missing or extra key is a
+ * stays structurally in lockstep with English; a missing or extra key is a
  * compile error. See CLAUDE.md → "Internationalisation".
  */
 
@@ -172,7 +172,7 @@ export const fr: Dictionary = {
       aglc4: {
         label: 'Outil juridique',
         title: 'Générateur de citations AGLC4',
-        desc: 'Composez des citations en note de bas de page et en bibliographie selon le style de l’Australian Guide to Legal Citation (4e éd.) — décisions, lois, articles, ouvrages, pages web et Hansard — et copiez-les directement dans vos travaux.',
+        desc: 'Composez des citations en note de bas de page et en bibliographie selon le style de l’Australian Guide to Legal Citation (4e éd.) pour les décisions, lois, articles, ouvrages, pages web et Hansard, puis copiez-les directement dans vos travaux.',
       },
       converter: {
         label: 'Outil informatique',
@@ -251,7 +251,7 @@ export const fr: Dictionary = {
       contract: {
         label: 'Stratégie',
         title: 'Le Jeu des clauses',
-        desc: 'Installez-vous à la table des négociations et rédigez l’accord : choisissez des clauses dans des scénarios réalistes et gagnez en concluant un contrat équilibré et exécutoire — trop gourmand ou trop généreux, et tout s’effondre.',
+        desc: 'Installez-vous à la table des négociations et rédigez l’accord : choisissez des clauses dans des scénarios réalistes et gagnez en concluant un contrat équilibré et exécutoire. Trop gourmand ou trop généreux, et tout s’effondre.',
       },
     },
   },
@@ -300,14 +300,14 @@ export const fr: Dictionary = {
   contractGame: {
     eyebrow: 'Stratégie',
     heading: 'Le Jeu des clauses',
-    intro: 'Vous êtes l’avocat à la table des négociations. Choisissez une clause dans chaque catégorie, puis concluez l’accord. Placez-le dans la zone équilibrée et exécutoire pour remporter la manche — poussez trop loin pour votre client et l’autre partie s’en va ; cédez trop et vous l’aurez trahi. Votre meilleure partie reste sur cet appareil.',
+    intro: 'Vous êtes l’avocat à la table des négociations. Choisissez une clause dans chaque catégorie, puis concluez l’accord. Placez-le dans la zone équilibrée et exécutoire pour remporter la manche. Poussez trop loin pour votre client et l’autre partie s’en va ; cédez trop et vous l’aurez trahi. Votre meilleure partie reste sur cet appareil.',
     finalResult: 'Résultat final',
     outOf: 'sur',
     verdictMaster: 'Négociateur hors pair',
     verdictSound: 'Conseil avisé',
     verdictBack: 'Retour à la table de rédaction',
     closedBefore: 'Vous avez conclu ',
-    closedAfter: ' négociations. Les meilleurs accords étaient les plus équilibrés — des conditions justes sont celles que l’on signe réellement.',
+    closedAfter: ' négociations. Les meilleurs accords étaient les plus équilibrés : des conditions justes sont celles que l’on signe réellement.',
     thisRun: 'Cette partie',
     best: 'Record',
     score: 'Score',
@@ -331,7 +331,7 @@ export const fr: Dictionary = {
   aglc4: {
     eyebrow: 'Outil juridique',
     heading: 'Générateur de citations AGLC4',
-    intro: 'Composez des citations en note de bas de page et en bibliographie selon le style de l’Australian Guide to Legal Citation (4e éd.). Choisissez un type de source, remplissez les champs, et la citation se met à jour à mesure que vous tapez — prête à être copiée dans votre dissertation ou votre note.',
+    intro: 'Composez des citations en note de bas de page et en bibliographie selon le style de l’Australian Guide to Legal Citation (4e éd.). Choisissez un type de source, remplissez les champs, et la citation se met à jour à mesure que vous tapez, prête à être copiée dans votre dissertation ou votre note.',
     sourceType: 'Type de source',
     example: 'Exemple :',
     clearFields: 'Effacer les champs',
@@ -347,7 +347,7 @@ export const fr: Dictionary = {
   baseConverter: {
     eyebrow: 'Outil informatique',
     heading: 'Convertisseur de bases',
-    intro: 'Convertissez entre décimal, binaire, hexadécimal, octal et texte UTF-8 — modifiez un champ et les autres suivent en direct. Expérimentez ensuite avec AND, OR, XOR, NOT et les décalages dans l’espace de jeu binaire. Tout est en précision arbitraire et s’exécute entièrement dans votre navigateur.',
+    intro: 'Convertissez entre décimal, binaire, hexadécimal, octal et texte UTF-8. Modifiez un champ et les autres suivent en direct ; expérimentez ensuite avec AND, OR, XOR, NOT et les décalages dans l’espace de jeu binaire. Tout est en précision arbitraire et s’exécute entièrement dans votre navigateur.',
     basesTitle: 'Bases numériques et texte',
     helper: 'Modifiez un champ et les autres se mettent à jour en direct. Les valeurs sont en précision arbitraire, donc les très grands nombres fonctionnent. Le texte associe chaque caractère à ses octets UTF-8.',
     decimal: 'Décimal',
@@ -375,7 +375,7 @@ export const fr: Dictionary = {
   ninja: {
     eyebrow: 'Projets · Super Ninja Monk Fighter IV',
     heading: 'Super Ninja Monk Fighter IV',
-    intro: 'Un jeu de plateforme 2D rapide construit avec Godot 4.7, dans une esthétique encre et vide dessinée à la main. Les niveaux sont tracés comme des traits d\'encre et transformés en terrain à l\'exécution — vous terminez chaque niveau en le traversant avec fluidité.',
+    intro: 'Un jeu de plateforme 2D rapide construit avec Godot 4.7, dans une esthétique encre et vide dessinée à la main. Les niveaux sont tracés comme des traits d\'encre et transformés en terrain à l\'exécution ; vous terminez chaque niveau en le traversant avec fluidité.',
     gameplayHeading: 'Gameplay',
     gameplayBody: 'Courez, sautez, double-sautez, sautez sur les murs et glissez à travers six niveaux faits main. Vainquez les ennemis en glissant dedans ou en les écrasant depuis les airs. Gagnez des charges de boule de feu par ennemi abattu. Ramassez chaque jeton ou éliminez tous les ennemis du panneau de la salle du boss et une porte de sortie apparaît. Votre tentative précédente est rejouée comme un fantôme translucide, chaque essai est donc une course contre vous-même.',
     videoHeading: 'Séquences de jeu',
@@ -388,7 +388,6 @@ export const fr: Dictionary = {
       'Un fantôme rejoue votre tentative précédente sur chaque niveau',
       'Plateformes mobiles, plateformes friables, ressorts et pointes',
       'Trois types d\'ennemis : escargots, volants et un boss',
-      'Les niveaux 5 et 6 sont des épreuves de mouvement pur — pas d\'ennemis, pas de jetons',
       'Arrière-plan parallaxe ambiant avec des particules d\'encre flottantes',
       'Chronomètre de speedrun en direct, HUD avec santé et progression des jetons',
       'Écran de fin de parcours avec temps total et suivi du meilleur temps',

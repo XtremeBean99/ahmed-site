@@ -9,6 +9,6 @@ export default function OpengraphImage() {
     eyebrow: 'Strategy',
     title: 'The Clause Game',
     subtitle:
-      'Pick clauses and win by landing a balanced, enforceable deal — too greedy and it falls apart.',
+      'Pick clauses and win by landing a balanced, enforceable deal. Too greedy or too generous and it falls apart.',
   })
 }

@@ -9,6 +9,6 @@ export default function OpengraphImage() {
     eyebrow: 'Computing tool',
     title: 'Base converter',
     subtitle:
-      'Decimal, binary, hex, octal and text — plus a bitwise playground, all in the browser.',
+      'Decimal, binary, hex, octal and text, plus a bitwise playground, all in the browser.',
   })
 }

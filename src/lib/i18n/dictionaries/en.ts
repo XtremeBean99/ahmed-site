@@ -1,5 +1,5 @@
 /**
- * English dictionary — the canonical source of truth for all translatable UI
+ * English dictionary, the canonical source of truth for all translatable UI
  * copy. Its shape defines the `Dictionary` type that every other locale must
  * satisfy, so adding a key here forces a matching key in fr.ts (type error
  * otherwise). See CLAUDE.md → "Internationalisation" for the workflow.
@@ -175,7 +175,7 @@ export const en = {
       aglc4: {
         label: 'Legal tool',
         title: 'AGLC4 citation generator',
-        desc: 'Build footnote and bibliography citations in the Australian Guide to Legal Citation (4th ed) style — cases, legislation, articles, books, web pages and Hansard — and copy them straight into your work.',
+        desc: 'Build footnote and bibliography citations in the Australian Guide to Legal Citation (4th ed) style for cases, legislation, articles, books, web pages, and Hansard, then copy them straight into your work.',
       },
       converter: {
         label: 'Computing tool',
@@ -254,7 +254,7 @@ export const en = {
       contract: {
         label: 'Strategy',
         title: 'The Clause Game',
-        desc: 'Sit at the negotiating table and draft the deal: pick clauses across real scenarios and win by landing a balanced, enforceable contract — too greedy or too generous and it falls apart.',
+        desc: 'Sit at the negotiating table and draft the deal: pick clauses across real scenarios and win by landing a balanced, enforceable contract. Too greedy or too generous and it falls apart.',
       },
     },
   },
@@ -303,14 +303,14 @@ export const en = {
   contractGame: {
     eyebrow: 'Strategy',
     heading: 'The Clause Game',
-    intro: 'You are counsel at the negotiating table. Choose a clause in every category, then lock in the deal. Land it in the balanced, enforceable zone to win the round — push too hard for your client and the other side walks; give too much away and you have failed them. Your best run stays on this device.',
+    intro: 'You are counsel at the negotiating table. Choose a clause in every category, then lock in the deal. Land it in the balanced, enforceable zone to win the round. Push too hard for your client and the other side walks; give too much away and you have failed them. Your best run stays on this device.',
     finalResult: 'Final result',
     outOf: 'out of',
     verdictMaster: 'Master negotiator',
     verdictSound: 'Sound counsel',
     verdictBack: 'Back to the drafting table',
     closedBefore: 'You closed ',
-    closedAfter: ' negotiations. The best deals were the balanced ones — fair terms are the terms that actually get signed.',
+    closedAfter: ' negotiations. The best deals were the balanced ones: fair terms are the terms that actually get signed.',
     thisRun: 'This run',
     best: 'Best',
     score: 'Score',
@@ -334,7 +334,7 @@ export const en = {
   aglc4: {
     eyebrow: 'Legal tool',
     heading: 'AGLC4 citation generator',
-    intro: 'Build footnote and bibliography citations in the Australian Guide to Legal Citation (4th ed) style. Choose a source type, fill in the fields, and the citation updates as you type — ready to copy into your essay or memo.',
+    intro: 'Build footnote and bibliography citations in the Australian Guide to Legal Citation (4th ed) style. Choose a source type, fill in the fields, and the citation updates as you type, ready to copy into your essay or memo.',
     sourceType: 'Source type',
     example: 'Example:',
     clearFields: 'Clear fields',
@@ -350,7 +350,7 @@ export const en = {
   baseConverter: {
     eyebrow: 'Computing tool',
     heading: 'Base converter',
-    intro: 'Convert between decimal, binary, hexadecimal, octal and UTF-8 text — edit any field and the rest follow live. Then experiment with AND, OR, XOR, NOT and shifts in the bitwise playground. Everything is arbitrary-precision and runs entirely in your browser.',
+    intro: 'Convert between decimal, binary, hexadecimal, octal and UTF-8 text. Edit any field and the rest follow live; then experiment with AND, OR, XOR, NOT and shifts in the bitwise playground. Everything is arbitrary-precision and runs entirely in your browser.',
     basesTitle: 'Number bases & text',
     helper: 'Edit any field and the rest update live. Values are arbitrary-precision, so very large numbers work. Text maps each character to its UTF-8 bytes.',
     decimal: 'Decimal',
@@ -378,7 +378,7 @@ export const en = {
   ninja: {
     eyebrow: 'Projects · Super Ninja Monk Fighter IV',
     heading: 'Super Ninja Monk Fighter IV',
-    intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Levels are traced as ink strokes and built into terrain at runtime — you clear each one by flowing through it.',
+    intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Levels are traced as ink strokes and built into terrain at runtime; you clear each one by flowing through it.',
     gameplayHeading: 'Gameplay',
     gameplayBody: 'Run, jump, double-jump, wall-jump, and slide through six hand-crafted levels. Defeat enemies by sliding into them or stomping from above. Earn fireball charges per kill. Clear every token or defeat every enemy in the boss-room panel and an exit door appears. Your previous attempt replays as a translucent ghost, so every retry is a race against yourself.',
     videoHeading: 'Gameplay footage',
@@ -391,7 +391,6 @@ export const en = {
       'Ghost runner replays your previous attempt on each level',
       'Moving platforms, crumbling platforms, springs, and spikes',
       'Three enemy types: snails, flyers, and a boss',
-      'Levels 5 and 6 are pure movement gauntlets — no enemies, no tokens',
       'Ambient parallax void background with drifting ink motes',
       'Live speedrun clock, HUD with health and token progress',
       'End-of-run screen with total time and fastest-run tracking',

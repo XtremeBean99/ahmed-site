@@ -58,7 +58,7 @@ export function roundScore(net: number): number {
 export const OUTCOME_COPY: Record<Outcome, { verdict: string; note: string }> = {
   balanced: {
     verdict: 'Deal signed',
-    note: 'Even-handed and enforceable — both sides can live with it. This is the deal that gets done.',
+    note: 'Even-handed and enforceable; both sides can live with it. This is the deal that gets done.',
   },
   tilted: {
     verdict: 'Pushed too hard',
@@ -66,7 +66,7 @@ export const OUTCOME_COPY: Record<Outcome, { verdict: string; note: string }> = 
   },
   failed: {
     verdict: 'No deal',
-    note: 'So one-sided it falls over — the counterparty walks, or the term is unlikely to be enforceable.',
+    note: 'So one-sided it falls over: the counterparty walks, or the term is unlikely to be enforceable.',
   },
 }
 

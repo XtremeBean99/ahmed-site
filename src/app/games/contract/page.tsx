@@ -7,7 +7,7 @@ import { getDictionary } from '@/lib/i18n/server'
 export const metadata: Metadata = {
   title: 'The Clause Game',
   description:
-    'A contract-drafting game: pick clauses across real negotiation scenarios and win by landing a balanced, enforceable deal — too greedy or too generous and it falls apart.',
+    'A contract-drafting game: pick clauses across real negotiation scenarios and win by landing a balanced, enforceable deal. Too greedy or too generous and it falls apart.',
   alternates: { canonical: 'https://ahmedyhussain.com/games/contract' },
 }
 

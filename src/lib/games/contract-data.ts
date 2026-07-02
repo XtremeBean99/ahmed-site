@@ -13,7 +13,7 @@ export const SCENARIOS: Scenario[] = [
     you: 'the developer',
     counterparty: 'the client',
     brief:
-      'You act for a freelance web developer about to take on a build for a small business. Pick the clauses that get the deal signed without giving away the farm — or over-reaching so far the client walks.',
+      'You act for a freelance web developer about to take on a build for a small business. Pick the clauses that get the deal signed without giving away the farm, or over-reaching so far the client walks.',
     categories: [
       {
         id: 'payment',
@@ -22,7 +22,7 @@ export const SCENARIOS: Scenario[] = [
         options: [
           { id: 'p-bad', text: 'Paid only once the client is “fully satisfied”, with no deadline', balance: -3, explainer: 'A purely subjective satisfaction trigger with no longstop date lets the client withhold payment indefinitely.' },
           { id: 'p-fair', text: '50% deposit, 50% on delivery, payable within 14 days', balance: 0, explainer: 'A deposit plus a clear payment window is the market-standard, even-handed position.' },
-          { id: 'p-greedy', text: '100% upfront, strictly non-refundable', balance: 3, explainer: 'Full non-refundable prepayment loads all the risk onto the client — few will sign it.' },
+          { id: 'p-greedy', text: '100% upfront, strictly non-refundable', balance: 3, explainer: 'Full non-refundable prepayment loads all the risk onto the client; few will sign it.' },
         ],
       },
       {
@@ -31,7 +31,7 @@ export const SCENARIOS: Scenario[] = [
         prompt: 'Who owns what is created?',
         options: [
           { id: 'ip-bad', text: 'Developer assigns all IP, including their own pre-existing tools, for free', balance: -3, explainer: 'Assigning pre-existing tools strips the developer of reusable assets they built before this job.' },
-          { id: 'ip-fair', text: 'Client owns the deliverables; developer keeps pre-existing tools and licenses them', balance: 0, explainer: 'The client gets what they paid for while the developer retains their general toolkit — the usual compromise.' },
+          { id: 'ip-fair', text: 'Client owns the deliverables; developer keeps pre-existing tools and licenses them', balance: 0, explainer: 'The client gets what they paid for while the developer retains their general toolkit, the usual compromise.' },
           { id: 'ip-greedy', text: 'Developer retains all IP; client receives only a limited licence', balance: 3, explainer: 'Withholding ownership of bespoke deliverables the client paid for is hard to justify.' },
         ],
       },
@@ -63,7 +63,7 @@ export const SCENARIOS: Scenario[] = [
     you: 'the tenant',
     counterparty: 'the landlord',
     brief:
-      'You act for a tenant negotiating a residential lease. Land a fair, lawful tenancy — push too hard for the tenant and the landlord won’t agree; accept a one-sided lease and you’ve failed your client.',
+      'You act for a tenant negotiating a residential lease. Land a fair, lawful tenancy. Push too hard for the tenant and the landlord won’t agree; accept a one-sided lease and you’ve failed your client.',
     categories: [
       {
         id: 'rent',
@@ -113,7 +113,7 @@ export const SCENARIOS: Scenario[] = [
     you: 'the customer',
     counterparty: 'the vendor',
     brief:
-      'You act for a small business subscribing to a software platform. Get terms your client can live with — over-reach and the vendor won’t deal; roll over and your client is locked into a bad bargain.',
+      'You act for a small business subscribing to a software platform. Get terms your client can live with. Over-reach and the vendor won’t deal; roll over and your client is locked into a bad bargain.',
     categories: [
       {
         id: 'sla',

@@ -31,6 +31,8 @@ const securityHeaders = [
 // frame-ancestors 'none' above would block that iframe from rendering even
 // though the frame and the framed page share an origin, so this path gets a
 // same-origin-only override instead of the blanket deny.
+// Godot's Emscripten output also spawns blob: URL Web Workers for audio worklets,
+// so worker-src and script-src must include blob: here.
 const gameEmbedHeaders = securityHeaders.map((header) => {
   if (header.key === 'X-Frame-Options') {
     return { key: 'X-Frame-Options', value: 'SAMEORIGIN' }
@@ -38,7 +40,11 @@ const gameEmbedHeaders = securityHeaders.map((header) => {
   if (header.key === 'Content-Security-Policy') {
     return {
       key: 'Content-Security-Policy',
-      value: header.value.replace("frame-ancestors 'none'", "frame-ancestors 'self'"),
+      value: header.value
+        .replace("frame-ancestors 'none'", "frame-ancestors 'self'")
+        .replace("script-src 'self' 'unsafe-inline'", "script-src 'self' 'unsafe-inline' blob:")
+        .replace("connect-src 'self'", "connect-src 'self' blob:")
+        + "; worker-src 'self' blob:",
     }
   }
   return header

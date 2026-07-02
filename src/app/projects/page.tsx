@@ -8,7 +8,7 @@ import { getDictionary } from '@/lib/i18n/server'
 export const metadata: Metadata = {
   title: 'Projects',
   description:
-    'Selected work by Ahmed Hussain: open-source code, an interactive 3D look at silicon, an AGLC4 citation generator, and a base converter.',
+    'Selected work by Ahmed Hussain: a hand-drawn 2D platformer, open-source code, an interactive 3D look at silicon, an AGLC4 citation generator, and a base converter.',
   alternates: { canonical: 'https://ahmedyhussain.com/projects' },
 }
 
@@ -17,7 +17,7 @@ const collectionSchema = {
   '@type': 'CollectionPage',
   name: 'Projects | Ahmed Hussain',
   description:
-    'Selected work: open-source code, an interactive 3D look at silicon, an AGLC4 citation generator, and a base converter.',
+    'Selected work: a hand-drawn 2D platformer, open-source code, an interactive 3D look at silicon, an AGLC4 citation generator, and a base converter.',
   url: 'https://ahmedyhussain.com/projects',
   isPartOf: { '@type': 'WebSite', name: 'Ahmed Hussain', url: 'https://ahmedyhussain.com' },
   author: { '@type': 'Person', name: 'Ahmed Hussain' },
@@ -32,7 +32,7 @@ export default async function ProjectsPage() {
     href?: string
     external?: boolean
   }[] = [
-    { ...t.cards.armoire, href: 'https://armoire.ahmedyhussain.com', external: true },
+    { ...t.cards.ninja, href: '/projects/ninja' },
     { ...t.cards.code, href: '/projects/code' },
     { ...t.cards.silicon, href: '/projects/silicon' },
     { ...t.cards.aglc4, href: '/projects/aglc4' },

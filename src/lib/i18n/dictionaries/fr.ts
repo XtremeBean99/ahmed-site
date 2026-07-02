@@ -154,10 +154,10 @@ export const fr: Dictionary = {
     viewExternal: 'Visiter le site',
     comingSoon: 'À venir',
     cards: {
-      armoire: {
-        label: 'Application web',
-        title: 'Armoire — gestionnaire de garde-robe',
-        desc: 'Un gestionnaire de garde-robe local et hors ligne pour les vêtements masculins : il lit la couleur exacte d’un vêtement dans le navigateur et compose des tenues harmonieuses à partir de ce que vous possédez. Sans IA, sans compte, gratuit.',
+      ninja: {
+        label: 'Jeu',
+        title: 'Super Ninja Monk Fighter IV',
+        desc: 'Un jeu de plateforme 2D rapide et axé sur le mouvement, avec une esthétique encre et vide dessinée à la main. Sautez sur les murs, glissez et transformez votre élan en arme principale à travers six niveaux faits main.',
       },
       code: {
         label: 'Open source',
@@ -370,6 +370,31 @@ export const fr: Dictionary = {
     shiftBy: 'Décaler de',
     result: 'Résultat',
     enterOperands: 'Saisissez des opérandes valides pour voir le résultat.',
+  },
+
+  ninja: {
+    eyebrow: 'Projets · Super Ninja Monk Fighter IV',
+    heading: 'Super Ninja Monk Fighter IV',
+    intro: 'Un jeu de plateforme 2D rapide construit avec Godot 4.7, dans une esthétique encre et vide dessinée à la main. Les niveaux sont tracés comme des traits d\'encre et transformés en terrain à l\'exécution — vous terminez chaque niveau en le traversant avec fluidité.',
+    gameplayHeading: 'Gameplay',
+    gameplayBody: 'Courez, sautez, double-sautez, sautez sur les murs et glissez à travers six niveaux faits main. Vainquez les ennemis en glissant dedans ou en les écrasant depuis les airs. Gagnez des charges de boule de feu par ennemi abattu. Ramassez chaque jeton ou éliminez tous les ennemis du panneau de la salle du boss et une porte de sortie apparaît. Votre tentative précédente est rejouée comme un fantôme translucide, chaque essai est donc une course contre vous-même.',
+    videoHeading: 'Séquences de jeu',
+    videoPlaceholder: 'Les vidéos de gameplay apparaîtront ici une fois le jeu exporté. Revenez bientôt.',
+    featuresHeading: 'Fonctionnalités',
+    features: [
+      'Mouvement fluide avec coyote time et tampon de saut',
+      'Combat par l\'élan : glissade, écrasement et boule de feu',
+      'Six niveaux : terrain dessiné à l\'encre, généré à partir de traits SVG à l\'exécution',
+      'Un fantôme rejoue votre tentative précédente sur chaque niveau',
+      'Plateformes mobiles, plateformes friables, ressorts et pointes',
+      'Trois types d\'ennemis : escargots, volants et un boss',
+      'Les niveaux 5 et 6 sont des épreuves de mouvement pur — pas d\'ennemis, pas de jetons',
+      'Arrière-plan parallaxe ambiant avec des particules d\'encre flottantes',
+      'Chronomètre de speedrun en direct, HUD avec santé et progression des jetons',
+      'Écran de fin de parcours avec temps total et suivi du meilleur temps',
+    ],
+    techHeading: 'Construit avec',
+    techBody: 'Godot 4.7, GDScript, pipeline SVG-vers-terrain personnalisé et sprites dessinés à la main. Toute la géométrie du terrain est analysée à partir de données de traits d\'encre à l\'exécution.',
   },
 
   notFound: {

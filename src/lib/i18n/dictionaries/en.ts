@@ -157,10 +157,10 @@ export const en = {
     viewExternal: 'Visit site',
     comingSoon: 'Coming soon',
     cards: {
-      armoire: {
-        label: 'Web app',
-        title: 'Armoire — wardrobe builder',
-        desc: 'A local-first, offline wardrobe builder for men\'s clothing: it reads a garment\'s exact colour in the browser and builds colour-coherent outfits from what you own. No AI, no accounts, free.',
+      ninja: {
+        label: 'Game',
+        title: 'Super Ninja Monk Fighter IV',
+        desc: 'A fast, movement-focused 2D platformer with a hand-drawn ink-and-void aesthetic. Wall-jump, slide, and turn your momentum into your main weapon across six hand-crafted levels.',
       },
       code: {
         label: 'Open source',
@@ -373,6 +373,31 @@ export const en = {
     shiftBy: 'Shift by',
     result: 'Result',
     enterOperands: 'Enter valid operands to see the result.',
+  },
+
+  ninja: {
+    eyebrow: 'Projects · Super Ninja Monk Fighter IV',
+    heading: 'Super Ninja Monk Fighter IV',
+    intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Levels are traced as ink strokes and built into terrain at runtime — you clear each one by flowing through it.',
+    gameplayHeading: 'Gameplay',
+    gameplayBody: 'Run, jump, double-jump, wall-jump, and slide through six hand-crafted levels. Defeat enemies by sliding into them or stomping from above. Earn fireball charges per kill. Clear every token or defeat every enemy in the boss-room panel and an exit door appears. Your previous attempt replays as a translucent ghost, so every retry is a race against yourself.',
+    videoHeading: 'Gameplay footage',
+    videoPlaceholder: 'Gameplay videos will appear here once the game is exported. Check back soon.',
+    featuresHeading: 'Features',
+    features: [
+      'Fluid movement with coyote time and jump buffering',
+      'Combat through momentum: slide, stomp, and fireball',
+      'Six levels: ink-drawn terrain built at runtime from SVG strokes',
+      'Ghost runner replays your previous attempt on each level',
+      'Moving platforms, crumbling platforms, springs, and spikes',
+      'Three enemy types: snails, flyers, and a boss',
+      'Levels 5 and 6 are pure movement gauntlets — no enemies, no tokens',
+      'Ambient parallax void background with drifting ink motes',
+      'Live speedrun clock, HUD with health and token progress',
+      'End-of-run screen with total time and fastest-run tracking',
+    ],
+    techHeading: 'Built with',
+    techBody: 'Godot 4.7, GDScript, custom SVG-to-terrain pipeline, and hand-drawn sprite art. All terrain geometry is parsed from ink-stroke data at runtime.',
   },
 
   notFound: {

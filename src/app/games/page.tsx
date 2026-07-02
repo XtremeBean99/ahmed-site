@@ -8,7 +8,7 @@ import { getDictionary } from '@/lib/i18n/server'
 export const metadata: Metadata = {
   title: 'Games',
   description:
-    'Browser games by Ahmed Hussain: a live WPM typing speed test on law and technology phrases, a monochrome Breakout with power-ups, and a contract-drafting strategy game.',
+    'Browser games by Ahmed Hussain: a fast 2D ink-drawn platformer, a live WPM typing speed test on law and technology phrases, and a monochrome Breakout with power-ups.',
   alternates: { canonical: 'https://ahmedyhussain.com/games' },
 }
 
@@ -17,7 +17,7 @@ const collectionSchema = {
   '@type': 'CollectionPage',
   name: 'Games | Ahmed Hussain',
   description:
-    'Browser games: a live WPM typing speed test, a monochrome Breakout with power-ups, and a contract-drafting strategy game.',
+    'Browser games: a fast 2D ink-drawn platformer, a live WPM typing speed test, and a monochrome Breakout with power-ups.',
   url: 'https://ahmedyhussain.com/games',
   isPartOf: { '@type': 'WebSite', name: 'Ahmed Hussain', url: 'https://ahmedyhussain.com' },
   author: { '@type': 'Person', name: 'Ahmed Hussain' },
@@ -29,7 +29,6 @@ export default async function GamesPage() {
     { ...t.cards.ninja, href: '/games/ninja' },
     { ...t.cards.typing, href: '/games/typing-test' },
     { ...t.cards.breakout, href: '/games/breakout' },
-    { ...t.cards.contract, href: '/games/contract' },
   ]
 
   return (

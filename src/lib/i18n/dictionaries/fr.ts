@@ -253,11 +253,7 @@ export const fr: Dictionary = {
         title: 'Breakout',
         desc: 'Une relecture monochrome du classique d’Atari : cassez le mur, attrapez les bonus qui tombent et visez un record personnel.',
       },
-      contract: {
-        label: 'Stratégie',
-        title: 'Le Jeu des clauses',
-        desc: 'Installez-vous à la table des négociations et rédigez l’accord : choisissez des clauses dans des scénarios réalistes et gagnez en concluant un contrat équilibré et exécutoire. Trop gourmand ou trop généreux, et tout s’effondre.',
-      },
+
     },
   },
 
@@ -302,36 +298,7 @@ export const fr: Dictionary = {
     topScores: 'Meilleurs scores',
   },
 
-  contractGame: {
-    eyebrow: 'Stratégie',
-    heading: 'Le Jeu des clauses',
-    intro: 'Vous êtes l’avocat à la table des négociations. Choisissez une clause dans chaque catégorie, puis concluez l’accord. Placez-le dans la zone équilibrée et exécutoire pour remporter la manche. Poussez trop loin pour votre client et l’autre partie s’en va ; cédez trop et vous l’aurez trahi. Votre meilleure partie reste sur cet appareil.',
-    finalResult: 'Résultat final',
-    outOf: 'sur',
-    verdictMaster: 'Négociateur hors pair',
-    verdictSound: 'Conseil avisé',
-    verdictBack: 'Retour à la table de rédaction',
-    closedBefore: 'Vous avez conclu ',
-    closedAfter: ' négociations. Les meilleurs accords étaient les plus équilibrés : des conditions justes sont celles que l’on signe réellement.',
-    thisRun: 'Cette partie',
-    best: 'Record',
-    score: 'Score',
-    playAgain: 'Rejouer',
-    roundBefore: 'Manche ',
-    roundMid: ' sur ',
-    actFor: 'Vous représentez ',
-    versus: ' · c. ',
-    favoursCounterparty: 'Favorise la partie adverse',
-    favoursClient: 'Favorise votre client',
-    balanceTitle: 'Équilibre de l’accord',
-    landHint: 'Placez le curseur dans la zone éclairée pour un accord équilibré et exécutoire.',
-    chooseHint: 'Choisissez une clause dans chaque catégorie pour conclure l’accord.',
-    roundScoreBefore: 'Score de la manche : ',
-    roundScoreAfter: ' / 100',
-    lockIn: 'Conclure l’accord',
-    seeFinal: 'Voir le résultat final',
-    nextNegotiation: 'Négociation suivante',
-  },
+
 
   aglc4: {
     eyebrow: 'Outil juridique',

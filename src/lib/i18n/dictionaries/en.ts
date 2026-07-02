@@ -5,8 +5,8 @@
  * otherwise). See CLAUDE.md → "Internationalisation" for the workflow.
  *
  * Large data-driven editorial datasets are intentionally NOT here (they stay in
- * their own modules and remain English): typing-test phrases, Clause Game
- * scenarios/clauses, and AGLC4 field configs/examples.
+ * their own modules and remain English): typing-test phrases
+ * and AGLC4 field configs/examples.
  */
 
 export const en = {
@@ -256,11 +256,7 @@ export const en = {
         title: 'Breakout',
         desc: 'A monochrome take on the Atari classic: clear the wall, catch falling power-ups, and chase a personal best.',
       },
-      contract: {
-        label: 'Strategy',
-        title: 'The Clause Game',
-        desc: 'Sit at the negotiating table and draft the deal: pick clauses across real scenarios and win by landing a balanced, enforceable contract. Too greedy or too generous and it falls apart.',
-      },
+
     },
   },
 
@@ -305,36 +301,7 @@ export const en = {
     topScores: 'Top scores',
   },
 
-  contractGame: {
-    eyebrow: 'Strategy',
-    heading: 'The Clause Game',
-    intro: 'You are counsel at the negotiating table. Choose a clause in every category, then lock in the deal. Land it in the balanced, enforceable zone to win the round. Push too hard for your client and the other side walks; give too much away and you have failed them. Your best run stays on this device.',
-    finalResult: 'Final result',
-    outOf: 'out of',
-    verdictMaster: 'Master negotiator',
-    verdictSound: 'Sound counsel',
-    verdictBack: 'Back to the drafting table',
-    closedBefore: 'You closed ',
-    closedAfter: ' negotiations. The best deals were the balanced ones: fair terms are the terms that actually get signed.',
-    thisRun: 'This run',
-    best: 'Best',
-    score: 'Score',
-    playAgain: 'Play again',
-    roundBefore: 'Round ',
-    roundMid: ' of ',
-    actFor: 'You act for ',
-    versus: ' · v ',
-    favoursCounterparty: 'Favours counterparty',
-    favoursClient: 'Favours your client',
-    balanceTitle: 'Balance of the deal',
-    landHint: 'Land the marker inside the lit zone for an enforceable, balanced deal.',
-    chooseHint: 'Choose a clause in every category to lock in the deal.',
-    roundScoreBefore: 'Round score: ',
-    roundScoreAfter: ' / 100',
-    lockIn: 'Lock in the deal',
-    seeFinal: 'See final result',
-    nextNegotiation: 'Next negotiation',
-  },
+
 
   aglc4: {
     eyebrow: 'Legal tool',

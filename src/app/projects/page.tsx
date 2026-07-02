@@ -32,7 +32,7 @@ export default async function ProjectsPage() {
     href?: string
     external?: boolean
   }[] = [
-    { ...t.cards.ninja, href: '/projects/ninja' },
+    { ...t.cards.ninja, href: '/games/ninja' },
     { ...t.cards.code, href: '/projects/code' },
     { ...t.cards.silicon, href: '/projects/silicon' },
     { ...t.cards.aglc4, href: '/projects/aglc4' },

@@ -1,9 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { SectionReveal } from '@/components/ui/SectionReveal'
 import { BugReportForm } from '@/components/games/BugReportForm'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { getDictionary } from '@/lib/i18n/server'
+import { topScores, type LeaderboardEntry } from '@/services/leaderboard'
+import { formatTimeCs } from '@/lib/ninja/format'
 
 export const metadata: Metadata = {
   title: 'Super Ninja Monk Fighter IV',
@@ -27,6 +30,15 @@ const schema = {
 
 export default async function NinjaGamePage() {
   const t = (await getDictionary()).ninjaGame
+
+  let hundredBoard: LeaderboardEntry[] = []
+  let anyBoard: LeaderboardEntry[] = []
+  try {
+    ;[hundredBoard, anyBoard] = await Promise.all([topScores('hundred'), topScores('any')])
+  } catch {
+    // leaderboards are decorative - the page must render without them
+  }
+
   return (
     <div className="pt-32 pb-24">
       <JsonLd data={schema} />
@@ -51,6 +63,20 @@ export default async function NinjaGamePage() {
           </p>
         </SectionReveal>
 
+        {/* Title art */}
+        <SectionReveal delay={0.04}>
+          <div className="mt-12 max-w-3xl overflow-hidden rounded-lg border border-border">
+            <Image
+              src="/games/ninja-monk.png"
+              alt={t.monkAlt}
+              width={1408}
+              height={768}
+              className="w-full grayscale"
+              priority={false}
+            />
+          </div>
+        </SectionReveal>
+
         {/* Play the game */}
         <SectionReveal delay={0.08}>
           <div className="mt-16">
@@ -71,6 +97,54 @@ export default async function NinjaGamePage() {
                 <path d="M2 2h8v8M10 2 2 10" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </a>
+          </div>
+        </SectionReveal>
+
+        {/* Leaderboards */}
+        <SectionReveal delay={0.1}>
+          <div className="mt-16">
+            <h2 className="font-serif text-2xl font-semibold text-foreground mb-4">
+              {t.leaderboardHeading}
+            </h2>
+            <p className="text-muted-foreground leading-relaxed max-w-2xl mb-6">
+              {t.leaderboardIntro}
+            </p>
+            <div className="grid gap-8 md:grid-cols-2 max-w-3xl">
+              {[
+                { title: t.leaderboardHundred, entries: hundredBoard },
+                { title: t.leaderboardAny, entries: anyBoard },
+              ].map((board) => (
+                <div key={board.title} className="border border-border rounded-lg p-5">
+                  <h3 className="text-sm font-medium text-foreground mb-4 label-text">
+                    {board.title}
+                  </h3>
+                  {board.entries.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{t.leaderboardEmpty}</p>
+                  ) : (
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-muted-foreground text-left">
+                          <th className="pb-2 font-normal w-10">{t.leaderboardRank}</th>
+                          <th className="pb-2 font-normal">{t.leaderboardName}</th>
+                          <th className="pb-2 font-normal text-right">{t.leaderboardTime}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {board.entries.map((entry, i) => (
+                          <tr key={`${entry.name}-${entry.at}`} className="border-t border-border">
+                            <td className="py-2 text-muted-foreground">{i + 1}</td>
+                            <td className="py-2 text-foreground">{entry.name}</td>
+                            <td className="py-2 text-right font-mono text-foreground">
+                              {formatTimeCs(entry.timeCs)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </SectionReveal>
 

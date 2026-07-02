@@ -26,10 +26,12 @@ The contact form has server-side Zod validation and a honeypot field. If you add
 API route, apply the same pattern from `src/services/contact.ts`. Never skip server-side validation
 even if client validation exists.
 
-### 3. No database - site is email-only
-There is **no database** in this project. Contact form submissions are emailed via Resend and are
-not persisted. If you add persistent storage in the future, introduce it behind the existing service
-layer in `src/services/`.
+### 3. Minimal persistence - email-only except the ninja leaderboard
+There is no general-purpose database. Contact form submissions are emailed via Resend and are not
+persisted. The single exception is the ninja game leaderboard: run times persist to Upstash Redis
+behind the service layer (`src/services/leaderboard.ts`, lazy client in `src/lib/redis.ts`,
+env-var credentials). No user accounts, no personal data beyond a self-chosen player name.
+Any future persistent storage must follow the same pattern: behind `src/services/`, env vars only.
 
 ### 4. Secrets via environment variables only
 `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` are env vars. They are never hardcoded.
@@ -107,7 +109,8 @@ If you add any other fixed-position backgrounds, ensure they do not conflict wit
 ## Games
 
 `/games` is a hub (same card pattern as `/projects`) linking self-contained games.
-No database, no API routes, no server state. Best scores live in the browser only.
+Browser games keep best scores in `localStorage` only. The one server-backed feature is the
+ninja leaderboard (`/api/ninja/leaderboard`, Upstash Redis) - see the ninja entry below.
 
 - **Typing test** (`/games/typing-test`): live WPM + accuracy. Server shell renders the
   `'use client'` `TypingTest`. Phrases are a curated, editable dataset in
@@ -119,19 +122,20 @@ No database, no API routes, no server state. Best scores live in the browser onl
   power-up system live in `src/lib/games/breakout-engine.ts` (pure functions over a mutable
   `GameState`); `Breakout.tsx` is a thin render + input shell. Power-ups: `expand`, `multi`,
   `slow`, `life` - tune them via the `POWERUP_META` / drop-chance constants in the engine.
-- **Super Ninja Monk Fighter IV** (`/games/ninja`): Godot 4.7 WebAssembly build served as a
-  standalone page. A "Launch game" link opens `/games/ninja/index.html` in a new tab (no iframe —
+- **Super Ninja Monk Fighter IV** (`/games/ninja`, v1.0): Godot 4.7 WebAssembly build served as a
+  standalone page. A "Launch game" link opens `/games/ninja/index.html` in a new tab (no iframe -
   COOP/COEP headers and `wasm-unsafe-eval` CSP are set via `vercel.json` for the static files).
-  Seven hand-crafted levels; terrain is parsed from SVG strokes at runtime. The game files live in
-  `public/games/ninja/` (index.html + .js + .wasm + .pck). The pck file (~20 MB) is committed
-  directly. To update the build, copy all files (excluding `.import` sidecars) from
-  `beam/build/web/` into `public/games/ninja/`. `beam/export_presets.cfg` sets
-  `include_filter="*.svg"` so SVG level files are included in the pck. A bug report form
-  (using the shared `/api/contact` endpoint) appears on both `/games/ninja` and `/projects/ninja`.
-- **The Clause Game** (`/games/contract`): pick clauses across negotiation scenarios; win by
-  landing the deal in the balanced/enforceable zone. Pure scoring in
-  `src/lib/games/contract-engine.ts` + dataset in `contract-data.ts` (`contract-types.ts` for
-  shared types). Middle option in each category is always `balance: 0`. UI: `ContractGame.tsx`.
+  Seven hand-crafted levels; terrain is baked into the level scenes at build time (no runtime file
+  loading). The game files live in `public/games/ninja/` (index.html + .js + .wasm + .pck). The pck
+  file (~30 MB) is committed directly. To update the build, copy all files (excluding `.import`
+  sidecars) from `beam/build/web/` into `public/games/ninja/`. The page shows the game's monk title
+  art (grayscale), a bug report form (shared `/api/contact` endpoint), and two leaderboards.
+  **Leaderboards:** the game asks for a player name on the title screen and POSTs finished runs to
+  `/api/ninja/leaderboard` (`{name, timeCs, tokensPercent}`; Zod-validated, rate-limited, foreign
+  Origin rejected but a missing Origin is allowed for desktop builds). Entries land on the any%
+  board, and on the 100% board when all tokens were collected. Storage is Upstash Redis sorted sets
+  (`ninja:lb:any`, `ninja:lb:100`) via `src/services/leaderboard.ts`; the page reads the top 20
+  server-side and fails soft to empty boards if Redis is unavailable.
 - **Persistence:** `src/lib/games/storage.ts` - SSR-safe `localStorage` helpers
   (`getBest`, `setBestIfHigher`, `BEST_KEYS`). Namespaced under `ahmed-site:games:v1:*`
   with versioned key prefixing for schema migration safety.
@@ -318,6 +322,8 @@ Note: BigInt literals (`0n`) require `tsconfig` `target` ES2020+ - do not lower 
 | `CONTACT_FROM_EMAIL` | No | Vercel (optional) | Defaults to `Ahmed Hussain <noreply@ahmedyhussain.com>` |
 | `NEXT_PUBLIC_BASE_URL` | No | Vercel (optional) | Defaults to `https://ahmedyhussain.com` |
 | `GITHUB_TOKEN` | No | Vercel (optional) | Raises unauthenticated API rate limit for code page |
+| `UPSTASH_REDIS_REST_URL` | For leaderboard | Vercel (Upstash Marketplace integration) | Ninja leaderboard storage; `KV_REST_API_URL` also read |
+| `UPSTASH_REDIS_REST_TOKEN` | For leaderboard | Vercel (Upstash Marketplace integration) | Ninja leaderboard storage; `KV_REST_API_TOKEN` also read |
 
 See `.env.example` for exact format. **Never commit `.env.local` or `.env`.**
 
@@ -356,9 +362,10 @@ npm run build        # full production build
 
 - **Admin dashboard** - intentionally deferred. Service layer is ready for it. When building,
   add under `/app/admin/` with middleware-based auth guard.
-- **Database** - currently no database in the project. Contact form emails directly via Resend.
-  If you add persistent storage (newsletter, stored enquiries, admin), introduce it behind the
-  service layer and use environment variables for the connection string.
+- **General-purpose database** - the only persistence is the ninja leaderboard (Upstash Redis
+  behind `src/services/leaderboard.ts`). Contact form emails directly via Resend. If you add more
+  persistent storage (newsletter, stored enquiries, admin), introduce it behind the service layer
+  and use environment variables for the connection string.
 - **Newsletter** - needs a signup form and Resend audience integration.
 - **Blog/Articles** - needs a Markdown renderer (consider `next-mdx-remote` or `@next/mdx`).
 - **Rate limiting** — in-memory rate limiter exists (`src/lib/ratelimit.ts`, 5 req/hr/IP

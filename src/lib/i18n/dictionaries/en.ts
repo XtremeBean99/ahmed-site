@@ -405,6 +405,8 @@ export const en = {
       'Player and enemy sprites by ansimuz, via opengameart.org',
       'All other art, code, and level design by Ahmed Hussain',
     ],
+    bugsHeading: 'Report a bug',
+    bugsBody: 'Found something wrong? Send a description of what happened (and which level you were on) to',
   },
 
   notFound: {

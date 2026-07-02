@@ -402,6 +402,8 @@ export const fr: Dictionary = {
       'Sprites du joueur et des ennemis par ansimuz, via opengameart.org',
       'Tous les autres éléments graphiques, le code et la conception des niveaux par Ahmed Hussain',
     ],
+    bugsHeading: 'Signaler un bug',
+    bugsBody: 'Vous avez trouvé un problème ? Envoyez une description de ce qui s\'est passé (et le niveau où vous étiez) à',
   },
 
   notFound: {

@@ -122,6 +122,25 @@ export default async function NinjaPage() {
             </ul>
           </div>
         </SectionReveal>
+
+        {/* Bug report */}
+        <SectionReveal delay={0.28}>
+          <div className="mt-16 border-t border-border pt-8">
+            <h2 className="font-serif text-2xl font-semibold text-foreground mb-4">
+              {t.bugsHeading}
+            </h2>
+            <p className="text-muted-foreground leading-relaxed max-w-2xl">
+              {t.bugsBody}{" "}
+              <a
+                href="mailto:ahmedyhussain07@gmail.com?subject=Super%20Ninja%20Monk%20Fighter%20IV%20bug%20report"
+                className="text-foreground underline hover:text-muted-foreground transition-colors"
+              >
+                ahmedyhussain07@gmail.com
+              </a>
+              .
+            </p>
+          </div>
+        </SectionReveal>
       </div>
     </div>
   )

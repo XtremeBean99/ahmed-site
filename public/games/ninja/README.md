@@ -1,22 +1,34 @@
 # Super Ninja Monk Fighter IV — Web Build
 
-After exporting from Godot (Project → Export → HTML5), copy the following files
-into this directory:
+The game files in this directory are the live web build of Super Ninja Monk
+Fighter IV. To update them to the latest version from the beam repository:
 
-- index.html
-- index.js (or the generated .js bundle)
-- index.audio.worklet.js (if audio worklet is enabled)
-- index.pck
-- index.wasm
-- index.side.wasm (if threads are enabled)
-- coi-serviceworker.js (if using SharedArrayBuffer)
-- Any .icon.png favicon file
+```bash
+bash scripts/pull-game.sh
+```
 
-The game will then be playable at https://ahmedyhussain.com/games/ninja/
-and embedded on the project page at /projects/ninja.
+## Manual update
 
-## Export settings used:
-- Canvas resize: Project (Adaptive)
-- Head include: dark background CSS
-- Threads: disabled (simpler deployment)
-- VRAM texture compression: enabled for desktop
+After exporting from Godot (Project → Export → HTML5), copy all files from
+`beam/build/web/` into this directory. Due to GitHub's file size limits, the
+large `index.pck` file (which contains the game assets and music) must be
+downloaded separately from the GitHub Releases page or copied manually.
+
+## Files
+
+| File | Purpose |
+|---|---|
+| index.html | Entry point |
+| index.js | Godot engine + game logic |
+| index.wasm | WebAssembly runtime |
+| index.pck | Game assets and resources (large — downloaded from releases) |
+| index.audio.worklet.js | Audio thread |
+| index.icon.png | Favicon |
+| index.apple-touch-icon.png | iOS home screen icon |
+
+## Bug reports
+
+Found a bug? Email ahmedyhussain07@gmail.com with:
+- What happened
+- Which level you were on
+- What you were doing when it happened

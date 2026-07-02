@@ -276,6 +276,9 @@ Every question of AI governance, every cybersecurity regulation, every dispute o
 - eyebrow: Games
 - heading: A break from the brief.
 - intro: A few small things built for fun and to keep the canvas and animation muscles warm. They run entirely in your browser and keep your best score on your device.
+- card_ninja_label: Platformer
+- card_ninja_title: Super Ninja Monk Fighter IV
+- card_ninja_desc: A fast, movement-focused 2D platformer with a hand-drawn ink-and-void aesthetic. Wall-jump, slide, and turn your momentum into your main weapon across six hand-crafted levels.
 - card_typing_label: Live WPM
 - card_typing_title: Typing speed test
 - card_typing_desc: Type curated phrases on law, AI governance and cybersecurity while a live tracker measures your words per minute and accuracy.
@@ -302,6 +305,42 @@ Every question of AI governance, every cybersecurity regulation, every dispute o
 - heading: Breakout
 - intro: Move the paddle to keep the ball alive and clear every brick. Some bricks drop power-ups. Use mouse, touch, or the arrow keys, and press space to launch.
 
+
+### Super Ninja Monk Fighter IV page  ·  src/app/games/ninja/page.tsx
+- meta_title: Super Ninja Monk Fighter IV
+- meta_description: A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Play in your browser — run, jump, wall-jump, and slide through six hand-crafted levels.
+- eyebrow: Platformer
+- heading: Super Ninja Monk Fighter IV
+- intro: A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Run, jump, wall-jump, and slide through six hand-crafted levels. Your previous attempt replays as a translucent ghost — every retry is a race against yourself.
+- play_heading: Play
+- play_body: The game runs in your browser. Use the keyboard (WASD / arrows + Space) or a gamepad. Press Escape to pause, R to restart a level.
+- controls_heading: Controls
+- control_1: Move: A/D or arrow keys
+- control_2: Jump / double-jump: W, Space, or Up arrow
+- control_3: Wall jump: Jump while against a wall
+- control_4: Slide: S or Down while running
+- control_5: Fireball: L (needs a charge)
+- control_6: Quick restart: R
+- control_7: Pause: Escape
+- features_heading: Features
+- feature_1: Fluid movement with coyote time and jump buffering
+- feature_2: Combat through momentum: slide, stomp, and fireball
+- feature_3: Six levels with ink-drawn terrain built at runtime from SVG strokes
+- feature_4: Ghost runner replays your previous attempt on each level
+- feature_5: Moving platforms, crumbling platforms, springs, and spikes
+- feature_6: Three enemy types: snails, flyers, and a boss
+- feature_7: Ambient parallax void background with drifting ink motes
+- feature_8: Live speedrun clock, HUD with health and token progress
+- feature_9: End-of-run screen with total time and fastest-run tracking
+- tech_heading: Built with
+- tech_body: Godot 4.7, GDScript, custom SVG-to-terrain pipeline, and hand-drawn sprite art. All terrain geometry is parsed from ink-stroke data at runtime.
+- credits_heading: Credits
+- credit_1: Background music from YouTube (Ambient / Cinematic track)
+- credit_2: Player and enemy sprites by ansimuz, via opengameart.org
+- credit_3: All other art, code, and level design by Ahmed Hussain
+- bugs_heading: Report a bug
+- bugs_intro: Found something wrong? Send a description of what happened (and which level you were on) and I will fix it.
+  (Bug report form uses the same /api/contact endpoint with a pre-filled subject.)
 
 ### The Clause Game page  ·  src/app/games/contract/page.tsx
 - meta_title: The Clause Game

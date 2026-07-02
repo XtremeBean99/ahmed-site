@@ -119,6 +119,13 @@ No database, no API routes, no server state. Best scores live in the browser onl
   power-up system live in `src/lib/games/breakout-engine.ts` (pure functions over a mutable
   `GameState`); `Breakout.tsx` is a thin render + input shell. Power-ups: `expand`, `multi`,
   `slow`, `life` - tune them via the `POWERUP_META` / drop-chance constants in the engine.
+- **Super Ninja Monk Fighter IV** (`/games/ninja`): Godot 4.7 WebAssembly build embedded via iframe.
+  A fast 2D platformer with a hand-drawn ink-and-void aesthetic. The game files live in
+  `public/games/ninja/` (index.html + .js + .wasm + .pck). The pck file (~20 MB) is committed
+  directly — it was previously gitignored but is required for the game to run. To update the
+  build, copy all files from `beam/build/web/` into `public/games/ninja/`. A bug report form
+  (using the shared `/api/contact` endpoint) appears on both `/games/ninja` and
+  `/projects/ninja`.
 - **The Clause Game** (`/games/contract`): pick clauses across negotiation scenarios; win by
   landing the deal in the balanced/enforceable zone. Pure scoring in
   `src/lib/games/contract-engine.ts` + dataset in `contract-data.ts` (`contract-types.ts` for

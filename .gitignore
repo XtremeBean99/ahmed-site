@@ -36,4 +36,3 @@ prisma/migrations/dev.db
 .claude/
 
 .env*
-public/games/ninja/index.pck

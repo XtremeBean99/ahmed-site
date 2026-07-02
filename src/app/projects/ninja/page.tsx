@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { SectionReveal } from '@/components/ui/SectionReveal'
+import { BugReportForm } from '@/components/games/BugReportForm'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { getDictionary } from '@/lib/i18n/server'
 
@@ -129,16 +130,21 @@ export default async function NinjaPage() {
             <h2 className="font-serif text-2xl font-semibold text-foreground mb-4">
               {t.bugsHeading}
             </h2>
-            <p className="text-muted-foreground leading-relaxed max-w-2xl">
-              {t.bugsBody}{" "}
-              <a
-                href="mailto:ahmedyhussain07@gmail.com?subject=Super%20Ninja%20Monk%20Fighter%20IV%20bug%20report"
-                className="text-foreground underline hover:text-muted-foreground transition-colors"
-              >
-                ahmedyhussain07@gmail.com
-              </a>
-              .
+            <p className="text-muted-foreground leading-relaxed max-w-2xl mb-6">
+              {t.bugsBody}
             </p>
+            <div className="max-w-xl">
+              <BugReportForm
+                bugsName={t.bugsName}
+                bugsEmail={t.bugsEmail}
+                bugsDescription={t.bugsDescription}
+                bugsDescriptionPlaceholder={t.bugsDescriptionPlaceholder}
+                bugsSend={t.bugsSend}
+                bugsSending={t.bugsSending}
+                bugsSuccess={t.bugsSuccess}
+                bugsError={t.bugsError}
+              />
+            </div>
           </div>
         </SectionReveal>
       </div>

@@ -26,6 +26,7 @@ const collectionSchema = {
 export default async function GamesPage() {
   const t = (await getDictionary()).games
   const games = [
+    { ...t.cards.ninja, href: '/games/ninja' },
     { ...t.cards.typing, href: '/games/typing-test' },
     { ...t.cards.breakout, href: '/games/breakout' },
     { ...t.cards.contract, href: '/games/contract' },

@@ -28,7 +28,9 @@ downloaded separately from the GitHub Releases page or copied manually.
 
 ## Bug reports
 
-Found a bug? Email ahmedyhussain07@gmail.com with:
+Found a bug? Use the in-site bug report form on the game page
+(`/games/ninja` or `/projects/ninja`), or email
+ahmedyhussain07@gmail.com with:
 - What happened
 - Which level you were on
 - What you were doing when it happened

@@ -87,6 +87,20 @@ export default async function NinjaPage() {
             </p>
           </div>
         </SectionReveal>
+
+        {/* Credits */}
+        <SectionReveal delay={0.24}>
+          <div className="mt-16 border-t border-border pt-8">
+            <h2 className="font-serif text-2xl font-semibold text-foreground mb-4">
+              {t.creditsHeading}
+            </h2>
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground leading-relaxed text-sm max-w-2xl">
+              {t.credits.map((credit: string, i: number) => (
+                <li key={i}>{credit}</li>
+              ))}
+            </ul>
+          </div>
+        </SectionReveal>
       </div>
     </div>
   )

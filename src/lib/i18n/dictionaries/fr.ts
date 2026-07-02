@@ -395,6 +395,12 @@ export const fr: Dictionary = {
     ],
     techHeading: 'Construit avec',
     techBody: 'Godot 4.7, GDScript, pipeline SVG-vers-terrain personnalisé et sprites dessinés à la main. Toute la géométrie du terrain est analysée à partir de données de traits d\'encre à l\'exécution.',
+    creditsHeading: 'Crédits',
+    credits: [
+      'Musique de fond depuis YouTube (piste Ambiance / Cinématique)',
+      'Sprites du joueur et des ennemis par ansimuz, via opengameart.org',
+      'Tous les autres éléments graphiques, le code et la conception des niveaux par Ahmed Hussain',
+    ],
   },
 
   notFound: {

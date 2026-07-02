@@ -398,6 +398,12 @@ export const en = {
     ],
     techHeading: 'Built with',
     techBody: 'Godot 4.7, GDScript, custom SVG-to-terrain pipeline, and hand-drawn sprite art. All terrain geometry is parsed from ink-stroke data at runtime.',
+    creditsHeading: 'Credits',
+    credits: [
+      'Background music from YouTube (Ambient / Cinematic track)',
+      'Player and enemy sprites by ansimuz, via opengameart.org',
+      'All other art, code, and level design by Ahmed Hussain',
+    ],
   },
 
   notFound: {

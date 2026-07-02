@@ -26,6 +26,24 @@ const securityHeaders = [
   },
 ]
 
+// The Ninja game's index.html is embedded in an <iframe> on /games/ninja and
+// /projects/ninja (same origin). The site-wide X-Frame-Options: DENY and
+// frame-ancestors 'none' above would block that iframe from rendering even
+// though the frame and the framed page share an origin, so this path gets a
+// same-origin-only override instead of the blanket deny.
+const gameEmbedHeaders = securityHeaders.map((header) => {
+  if (header.key === 'X-Frame-Options') {
+    return { key: 'X-Frame-Options', value: 'SAMEORIGIN' }
+  }
+  if (header.key === 'Content-Security-Policy') {
+    return {
+      key: 'Content-Security-Policy',
+      value: header.value.replace("frame-ancestors 'none'", "frame-ancestors 'self'"),
+    }
+  }
+  return header
+})
+
 const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -36,6 +54,10 @@ const nextConfig: NextConfig = {
       {
         source: '/(.*)',
         headers: securityHeaders,
+      },
+      {
+        source: '/games/ninja/:path*',
+        headers: gameEmbedHeaders,
       },
     ]
   },

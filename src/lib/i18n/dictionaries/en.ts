@@ -11,6 +11,7 @@
 
 export const en = {
   nav: {
+    homeLink: 'Home',
     projects: 'Projects',
     games: 'Games',
     tutoring: 'Tutoring',
@@ -237,7 +238,7 @@ export const en = {
 
   games: {
     eyebrow: 'Games',
-    heading: 'A break from the brief.',
+    heading: 'My Games',
     intro: 'A few small things built for fun and to keep the canvas and animation muscles warm. They run entirely in your browser and keep your best score on your device.',
     play: 'Play',
     cards: {
@@ -350,7 +351,7 @@ export const en = {
   ninjaGame: {
     eyebrow: 'Platformer',
     heading: 'Super Space Monk Ninja Fighter Simulator IV',
-    intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Run, jump, wall-jump, and slide through seven hand-crafted levels. Your previous attempt replays as a translucent ghost - every retry is a race against yourself.',
+    intro: 'A fast 2D platformer with a hand-drawn ink-and-void aesthetic. Run, jump, wall-jump, and slide through seven levels.',
     playHeading: 'Play',
     playBody: 'The game runs in your browser. Use the keyboard (WASD / arrows + Space) or a gamepad. Press Escape to pause, R to restart a level.',
     playButton: 'Launch game',

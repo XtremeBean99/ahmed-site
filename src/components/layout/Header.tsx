@@ -12,6 +12,7 @@ import { LanguageToggle } from '@/components/ui/LanguageToggle'
 export function Header() {
   const t = useT()
   const navLinks = [
+    { href: '/', label: t.nav.homeLink },
     { href: '/projects', label: t.nav.projects },
     { href: '/games', label: t.nav.games },
     { href: '/tutoring', label: t.nav.tutoring },

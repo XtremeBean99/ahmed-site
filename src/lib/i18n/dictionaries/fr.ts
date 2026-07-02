@@ -8,6 +8,7 @@ import type { Dictionary } from './en'
 
 export const fr: Dictionary = {
   nav: {
+    homeLink: 'Accueil',
     projects: 'Projets',
     games: 'Jeux',
     tutoring: 'Cours particuliers',
@@ -234,7 +235,7 @@ export const fr: Dictionary = {
 
   games: {
     eyebrow: 'Jeux',
-    heading: 'Une pause loin des dossiers.',
+    heading: 'Mes Jeux',
     intro: 'Quelques petites choses conçues pour le plaisir et pour entretenir mes réflexes en canvas et en animation. Elles fonctionnent entièrement dans votre navigateur et conservent votre meilleur score sur votre appareil.',
     play: 'Jouer',
     cards: {
@@ -347,7 +348,7 @@ export const fr: Dictionary = {
   ninjaGame: {
     eyebrow: 'Plateforme',
     heading: 'Super Space Monk Ninja Fighter Simulator IV',
-    intro: 'Un jeu de plateforme 2D rapide construit avec Godot 4.7, dans une esthétique encre et vide dessinée à la main. Courez, sautez, sautez sur les murs et glissez à travers sept niveaux faits main. Votre tentative précédente est rejouée comme un fantôme translucide - chaque essai est une course contre vous-même.',
+    intro: 'Un jeu de plateforme 2D rapide avec une esthétique encre et vide dessinée à la main. Courez, sautez et glissez à travers sept niveaux.',
     playHeading: 'Jouer',
     playBody: 'Le jeu fonctionne dans votre navigateur. Utilisez le clavier (WASD / flèches + Espace) ou une manette. Appuyez sur Échap pour mettre en pause, R pour recommencer un niveau.',
     playButton: 'Lancer le jeu',

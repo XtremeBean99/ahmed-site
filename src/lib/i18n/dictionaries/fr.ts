@@ -383,6 +383,7 @@ export const fr: Dictionary = {
     intro: 'Un jeu de plateforme 2D rapide construit avec Godot 4.7, dans une esthétique encre et vide dessinée à la main. Courez, sautez, sautez sur les murs et glissez à travers six niveaux faits main. Votre tentative précédente est rejouée comme un fantôme translucide — chaque essai est une course contre vous-même.',
     playHeading: 'Jouer',
     playBody: 'Le jeu fonctionne dans votre navigateur. Utilisez le clavier (WASD / flèches + Espace) ou une manette. Appuyez sur Échap pour mettre en pause, R pour recommencer un niveau.',
+    playButton: 'Lancer le jeu',
     controlsHeading: 'Contrôles',
     controls: [
       'Déplacement : A/D ou flèches',
@@ -433,6 +434,7 @@ export const fr: Dictionary = {
     gameplayBody: 'Courez, sautez, double-sautez, sautez sur les murs et glissez à travers dix niveaux faits main. Vainquez les ennemis en glissant dedans ou en les écrasant depuis les airs. Gagnez des charges de boule de feu par ennemi abattu. Ramassez chaque jeton ou éliminez tous les ennemis du panneau de la salle du boss et une porte de sortie apparaît. Votre tentative précédente est rejouée comme un fantôme translucide, chaque essai est donc une course contre vous-même.',
     playHeading: 'Jouer',
     playBody: 'Le jeu fonctionne dans votre navigateur. Utilisez le clavier (WASD / flèches + Espace) ou une manette. Appuyez sur Échap pour mettre en pause, R pour recommencer un niveau.',
+    playButton: 'Lancer le jeu',
     videoHeading: 'Séquences de jeu',
     videoPlaceholder: 'Les vidéos de gameplay apparaîtront ici une fois le jeu exporté. Revenez bientôt.',
     featuresHeading: 'Fonctionnalités',

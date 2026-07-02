@@ -386,6 +386,7 @@ export const en = {
     intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Run, jump, wall-jump, and slide through six hand-crafted levels. Your previous attempt replays as a translucent ghost — every retry is a race against yourself.',
     playHeading: 'Play',
     playBody: 'The game runs in your browser. Use the keyboard (WASD / arrows + Space) or a gamepad. Press Escape to pause, R to restart a level.',
+    playButton: 'Launch game',
     controlsHeading: 'Controls',
     controls: [
       'Move: A/D or arrow keys',
@@ -436,6 +437,7 @@ export const en = {
     gameplayBody: 'Run, jump, double-jump, wall-jump, and slide through ten hand-crafted levels. Defeat enemies by sliding into them or stomping from above. Earn fireball charges per kill. Clear every token or defeat every enemy in the boss-room panel and an exit door appears. Your previous attempt replays as a translucent ghost, so every retry is a race against yourself.',
     playHeading: 'Play',
     playBody: 'The game runs in your browser. Use the keyboard (WASD / arrows + Space) or a gamepad. Press Escape to pause, R to restart a level.',
+    playButton: 'Launch game',
     videoHeading: 'Gameplay footage',
     videoPlaceholder: 'Gameplay videos will appear here once the game is exported. Check back soon.',
     featuresHeading: 'Features',

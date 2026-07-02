@@ -60,15 +60,17 @@ export default async function NinjaGamePage() {
             <p className="text-muted-foreground leading-relaxed max-w-2xl mb-6">
               {t.playBody}
             </p>
-            <div className="border border-border rounded-lg bg-surface overflow-hidden" style={{ aspectRatio: '16/9', maxHeight: '720px' }}>
-              <iframe
-                src="/games/ninja/index.html"
-                title="Super Ninja Monk Fighter IV"
-                className="w-full h-full"
-                allow="autoplay; fullscreen"
-                loading="lazy"
-              />
-            </div>
+            <a
+              href="/games/ninja/index.html"
+              target="_blank"
+              rel="noopener"
+              className="inline-flex items-center gap-2 border border-border rounded-lg px-6 py-3 text-sm font-medium text-foreground hover:bg-surface transition-colors"
+            >
+              {t.playButton}
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                <path d="M2 2h8v8M10 2 2 10" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </a>
           </div>
         </SectionReveal>
 

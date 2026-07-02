@@ -9,7 +9,7 @@ import { topScores, type LeaderboardEntry } from '@/services/leaderboard'
 import { formatTimeCs } from '@/lib/ninja/format'
 
 export const metadata: Metadata = {
-  title: 'Super Ninja Monk Fighter IV',
+  title: 'Super Space Monk Ninja Fighter Simulator IV',
   description:
     'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Play in your browser - run, jump, wall-jump, and slide through seven hand-crafted levels.',
   alternates: { canonical: 'https://ahmedyhussain.com/games/ninja' },
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 const schema = {
   '@context': 'https://schema.org',
   '@type': 'VideoGame',
-  name: 'Super Ninja Monk Fighter IV',
+  name: 'Super Space Monk Ninja Fighter Simulator IV',
   applicationCategory: 'GameApplication',
   operatingSystem: 'Web',
   description:

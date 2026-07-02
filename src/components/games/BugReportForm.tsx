@@ -45,7 +45,7 @@ export function BugReportForm({
         body: JSON.stringify({
           name,
           email,
-          subject: 'Super Ninja Monk Fighter IV bug report',
+          subject: 'Super Space Monk Ninja Fighter Simulator IV bug report',
           message: description,
           website: '', // honeypot stays empty
         }),

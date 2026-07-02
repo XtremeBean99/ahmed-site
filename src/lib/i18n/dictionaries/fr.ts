@@ -156,7 +156,7 @@ export const fr: Dictionary = {
     cards: {
       ninja: {
         label: 'Jeu',
-        title: 'Super Ninja Monk Fighter IV',
+        title: 'Super Space Monk Ninja Fighter Simulator IV',
         desc: 'Un jeu de plateforme 2D rapide et axé sur le mouvement, avec une esthétique encre et vide dessinée à la main. Sautez sur les murs, glissez et transformez votre élan en arme principale à travers sept niveaux faits main.',
       },
       code: {
@@ -240,7 +240,7 @@ export const fr: Dictionary = {
     cards: {
       ninja: {
         label: 'Plateforme',
-        title: 'Super Ninja Monk Fighter IV',
+        title: 'Super Space Monk Ninja Fighter Simulator IV',
         desc: 'Un jeu de plateforme 2D rapide avec une esthétique encre et vide dessinée à la main. Sautez sur les murs, glissez et transformez votre élan en arme principale à travers sept niveaux faits main.',
       },
       typing: {
@@ -346,7 +346,7 @@ export const fr: Dictionary = {
 
   ninjaGame: {
     eyebrow: 'Plateforme',
-    heading: 'Super Ninja Monk Fighter IV',
+    heading: 'Super Space Monk Ninja Fighter Simulator IV',
     intro: 'Un jeu de plateforme 2D rapide construit avec Godot 4.7, dans une esthétique encre et vide dessinée à la main. Courez, sautez, sautez sur les murs et glissez à travers sept niveaux faits main. Votre tentative précédente est rejouée comme un fantôme translucide - chaque essai est une course contre vous-même.',
     playHeading: 'Jouer',
     playBody: 'Le jeu fonctionne dans votre navigateur. Utilisez le clavier (WASD / flèches + Espace) ou une manette. Appuyez sur Échap pour mettre en pause, R pour recommencer un niveau.',
@@ -405,8 +405,8 @@ export const fr: Dictionary = {
   },
 
   ninja: {
-    eyebrow: 'Projets · Super Ninja Monk Fighter IV',
-    heading: 'Super Ninja Monk Fighter IV',
+    eyebrow: 'Projets · Super Space Monk Ninja Fighter Simulator IV',
+    heading: 'Super Space Monk Ninja Fighter Simulator IV',
     intro: 'Un jeu de plateforme 2D rapide construit avec Godot 4.7, dans une esthétique encre et vide dessinée à la main. Sept niveaux sont tracés comme des traits d\'encre et transformés en terrain à l\'exécution ; vous terminez chaque niveau en le traversant avec fluidité.',
     gameplayHeading: 'Gameplay',
     gameplayBody: 'Courez, sautez, double-sautez, sautez sur les murs et glissez à travers sept niveaux faits main. Vainquez les ennemis en glissant dedans ou en les écrasant depuis les airs. Gagnez des charges de boule de feu par ennemi abattu. Ramassez chaque jeton ou éliminez tous les ennemis du panneau de la salle du boss et une porte de sortie apparaît. Votre tentative précédente est rejouée comme un fantôme translucide, chaque essai est donc une course contre vous-même.',

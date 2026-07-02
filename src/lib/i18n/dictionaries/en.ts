@@ -159,7 +159,7 @@ export const en = {
     cards: {
       ninja: {
         label: 'Game',
-        title: 'Super Ninja Monk Fighter IV',
+        title: 'Super Space Monk Ninja Fighter Simulator IV',
         desc: 'A fast, movement-focused 2D platformer with a hand-drawn ink-and-void aesthetic. Wall-jump, slide, and turn your momentum into your main weapon across seven hand-crafted levels.',
       },
       code: {
@@ -243,7 +243,7 @@ export const en = {
     cards: {
       ninja: {
         label: 'Platformer',
-        title: 'Super Ninja Monk Fighter IV',
+        title: 'Super Space Monk Ninja Fighter Simulator IV',
         desc: 'A fast, movement-focused 2D platformer with a hand-drawn ink-and-void aesthetic. Wall-jump, slide, and turn your momentum into your main weapon across seven hand-crafted levels.',
       },
       typing: {
@@ -349,7 +349,7 @@ export const en = {
 
   ninjaGame: {
     eyebrow: 'Platformer',
-    heading: 'Super Ninja Monk Fighter IV',
+    heading: 'Super Space Monk Ninja Fighter Simulator IV',
     intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Run, jump, wall-jump, and slide through seven hand-crafted levels. Your previous attempt replays as a translucent ghost - every retry is a race against yourself.',
     playHeading: 'Play',
     playBody: 'The game runs in your browser. Use the keyboard (WASD / arrows + Space) or a gamepad. Press Escape to pause, R to restart a level.',
@@ -408,8 +408,8 @@ export const en = {
   },
 
   ninja: {
-    eyebrow: 'Projects · Super Ninja Monk Fighter IV',
-    heading: 'Super Ninja Monk Fighter IV',
+    eyebrow: 'Projects · Super Space Monk Ninja Fighter Simulator IV',
+    heading: 'Super Space Monk Ninja Fighter Simulator IV',
     intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Seven hand-crafted levels are traced as ink strokes and built into terrain at runtime; you clear each one by flowing through it.',
     gameplayHeading: 'Gameplay',
     gameplayBody: 'Run, jump, double-jump, wall-jump, and slide through seven hand-crafted levels. Defeat enemies by sliding into them or stomping from above. Earn fireball charges per kill. Clear every token or defeat every enemy in the boss-room panel and an exit door appears. Your previous attempt replays as a translucent ghost, so every retry is a race against yourself.',

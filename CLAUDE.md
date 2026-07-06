@@ -1,16 +1,43 @@
-# CLAUDE.md - AI Agent Context for ahmedyhussain.com
+# CLAUDE.md — AI Agent Context for ahmedyhussain.com
 
-This document contains non-obvious context for an AI agent picking up this project in a new session.
-Read this before touching any code.
+The single consolidated context document for this project. Read this before touching any code.
+It absorbs the former `docs/PLAN.md` (spec history), `docs/taskt.txt` (original room brief),
+`docs/audio-licences.md`, `docs/suggestions.txt` (June audit), and `assets/pixel-art/STYLE.md`,
+all of which have been retired. Last consolidated: 6 July 2026.
 
 ---
 
 ## What This Project Is
 
-A production personal website for **Ahmed Hussain** - BCom/LLB(Hons) candidate at ANU, Canberra.
+A production personal website for **Ahmed Hussain** — BCom/LLB(Hons) candidate at ANU, Canberra.
 Domain: `ahmedyhussain.com`
 Repo: `https://github.com/XtremeBean99/ahmed-site`
 Vercel project: `ahmed-site` (ID: `prj_lF32Zp1qlFEKH7XzEW3yUdddQm61`)
+
+The homepage `/` is the **digital bedroom**: an interactive pixel-art room that acts as the
+front door to the rest of the site (the original creative brief called for "a digital place,
+not another developer portfolio" — warm, nostalgic, rewarding to explore, Y2K/Neocities spirit
+with modern quality). The conventional site lives under `/home`, `/games`, `/projects`,
+`/tutoring`, `/legal`.
+
+## Current State (6 July 2026)
+
+Implemented across five spec iterations (v1 `b70857e` … v5, see Session History below):
+room scene with monitor/poster/bonsai/lamp/coffee hotspots, zoom transition into a desk
+close-up, in-monitor browsing of the real site via same-origin iframe, six-track music player
+with now-playing widget and speaker mute, pointer-following desk mouse, music notes from the
+speaker drivers, coffee steam, lamp-off art, time-of-day window tint, dust motes, idle
+screensaver, EN/FR throughout.
+
+### ⚠ Pending owner actions (as of last session)
+1. **Saffron case rename** (production 404; dev works). In repo root:
+   `git mv public/audio/Saffron.mp3 public/audio/saffron-tmp.mp3 && git mv public/audio/saffron-tmp.mp3 public/audio/saffron.mp3 && git commit -m "fix: lowercase saffron.mp3"`
+2. **Build + deploy verification** of the v5 session edits (headers fix requires a deployed
+   preview to test; `next dev` does not send production headers). Checklist: in-monitor
+   browsing renders in Firefox and Chrome; saffron plays; notes emit from all four speaker
+   drivers at a constant rhythm and stop on mute; coffee hover highlight + three steam wisps;
+   bonsai tooltip on-screen; FR clock bubble; reduced-motion sweep.
+3. Optional cleanup: `git rm public/room/coffee-cup.png` (superseded by `coffee-1..6.png`).
 
 ---
 
@@ -19,35 +46,43 @@ Vercel project: `ahmed-site` (ID: `prj_lF32Zp1qlFEKH7XzEW3yUdddQm61`)
 ### 1. Design must remain strictly monochrome (except the room page)
 The design uses zinc-950 (`#09090b`) background, white text, zinc-800 borders. No colour accents.
 No gradients except the subtle hero vignette. If you add new UI, match this palette exactly.
-References: Vercel, Linear, Stripe aesthetic. Do not introduce any colour.
-
-**Exception:** The homepage `/` is the "digital bedroom" — a pixel-art room scene with a warm
-brown/mauve palette. This exemption is scoped to `/` only. Every other `(site)` route remains
-monochrome. Do NOT add colour to any `(site)` page.
+References: Vercel, Linear, Stripe aesthetic.
+**Exception:** `/` (the room) uses a warm brown/mauve pixel-art palette. This exemption is
+scoped to `/` only. Do NOT add colour to any `(site)` page.
 
 ### 2. All user input is hostile
-The contact form has server-side Zod validation and a honeypot field. If you add any new form or
-API route, apply the same pattern from `src/services/contact.ts`. Never skip server-side validation
-even if client validation exists.
+The contact form has server-side Zod validation and a honeypot field. Any new form or API route
+applies the same pattern from `src/services/contact.ts`. Never skip server-side validation.
 
-### 3. Minimal persistence - email-only except the ninja leaderboard
-There is no general-purpose database. Contact form submissions are emailed via Resend and are not
-persisted. The single exception is the ninja game leaderboard: run times persist to Upstash Redis
-behind the service layer (`src/services/leaderboard.ts`, lazy client in `src/lib/redis.ts`,
-env-var credentials). No user accounts, no personal data beyond a self-chosen player name.
-Any future persistent storage must follow the same pattern: behind `src/services/`, env vars only.
+### 3. Minimal persistence — email-only except the ninja leaderboard
+No general-purpose database. Contact submissions are emailed via Resend, not persisted. The one
+exception: ninja leaderboard run times in Upstash Redis behind `src/services/leaderboard.ts`
+(lazy client `src/lib/redis.ts`, env-var credentials). Future persistent storage must follow
+the same pattern: behind `src/services/`, env vars only. (Room preferences use `localStorage`
+client-side only: `room-save-v1` key, currently `{ audio, lampOn }`.)
 
 ### 4. Secrets via environment variables only
-`RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` are env vars. They are never hardcoded.
-Check `.env.example` for the full list.
+`RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` etc. Never hardcoded. See
+`.env.example` and the Environment Variables table below.
 
-### 5. The site is bilingual - every user-facing string must be translated
-The site ships in **English and French**. There is a single source of truth for copy:
-`src/lib/i18n/dictionaries/en.ts` (English) and `fr.ts` (French). **Any time you add or change
-user-facing text, you MUST update BOTH dictionaries.** Never hardcode a user-facing string in a
-component. The `Dictionary` type is derived from `en.ts`, so `fr.ts` will fail to compile if a key
-is missing - `npm run type-check` is your safety net. See "Internationalisation" below for the full
-workflow before touching any copy.
+### 5. The site is bilingual — every user-facing string must be translated
+English and French. Single source of truth: `src/lib/i18n/dictionaries/en.ts` and `fr.ts`.
+**Any new or changed user-facing text goes in BOTH dictionaries in the same commit.** The
+`Dictionary` type derives from `en.ts`, so a missing French key fails `npm run type-check`.
+This rule has been violated four separate times in room components ("MUSIC ON/OFF", "Toggle
+speakers", "Pause"/"Skip", the clock tooltip) — grep room components for quoted capitalised
+strings during any review.
+
+### 6. Framing headers must stay SAMEORIGIN / 'self'
+`next.config.ts` sends `X-Frame-Options: SAMEORIGIN` and CSP `frame-ancestors 'self'`
+(vercel.json mirrors this for `/games/ninja/*`). In-monitor browsing depends on it. Do NOT
+"harden" these back to DENY/'none' — that silently kills the desk browser while adding
+nothing (third-party embedding is already blocked by same-origin-only).
+
+### 7. Audio filenames are case-sensitive in production
+Vercel serves case-sensitively; Windows dev machines do not. A track that plays locally but
+404s deployed is a case mismatch between git and `playlist.ts` (the Saffron incident). Keep
+`public/audio/` kebab-case lowercase; verify with `git ls-files public/audio`.
 
 ---
 
@@ -55,459 +90,309 @@ workflow before touching any copy.
 
 ```
 src/
-├── app/                   Next.js App Router pages + API routes
-│   ├── (site)/            Route group — chrome (Header/Footer) for all content pages
-│   │   ├── layout.tsx     Site chrome: skip-link, CircuitBackdrop, CircuitMesh,
-│   │   │                  Header, <main>, Footer
-│   │   ├── template.tsx   Per-route fade transition (client, reduced-motion safe)
-│   │   ├── home/          Old homepage (now at /home, moved from /)
-│   │   ├── games/         Games hub + typing-test + breakout + ninja
-│   │   ├── projects/      Projects hub + code + silicon + aglc4 + base-converter
-│   │   ├── tutoring/      Full tutoring page
-│   │   └── legal/         Terms + Privacy pages
-│   ├── layout.tsx         Root layout: fonts, metadata, I18nProvider only (no chrome)
-│   ├── page.tsx           Room page at / — pixel-art bedroom with monitor + poster
-│   └── api/               API routes (untouched by route group)
+├── app/
+│   ├── (site)/            Route group — chrome for all content pages (URLs unchanged)
+│   │   ├── layout.tsx     Site chrome: skip-link, CircuitBackdrop/Mesh, Header, main, Footer
+│   │   ├── template.tsx   Per-route fade (client, reduced-motion safe)
+│   │   ├── home/          The former homepage (Hero…Contact sections), now at /home
+│   │   ├── games/         Hub + typing-test + breakout + ninja
+│   │   ├── projects/      Hub + code + silicon + aglc4 + base-converter + ninja(redirect)
+│   │   ├── tutoring/      Services, pricing, FAQ, enquiry form
+│   │   └── legal/         Terms + Privacy
+│   ├── layout.tsx         Root: fonts, metadata, I18nProvider only. No chrome.
+│   ├── page.tsx           The room (server shell → <Room/>), chrome-free
+│   └── api/               contact + ninja/leaderboard routes
 │
 ├── components/
-│   ├── room/              Room page components
-│   │   ├── Room.tsx       Client root: scale compute, stage, HUD, transition
-│   │   ├── RoomStage.tsx  1408×768 stage wrapper with CSS scale()
-│   │   ├── RoomObject.tsx Generic hotspot with tooltip + focus ring
-│   │   ├── Monitor.tsx    LED monitor sprite, off/on states, link to /home
-│   │   ├── Poster.tsx     Kitagawa poster, frame cycling on click
-│   │   └── RoomHud.tsx    Corner UI — "Enter website →" link + hint
-│   ├── games/             TypingTest, Breakout, ContractGame (client), GameShell, GameStat
-│   ├── layout/            Header (client - scroll state), Footer (server)
-│   ├── projects/          ToolShell, Aglc4Generator, BaseConverter, SiliconCanvas
-│   ├── sections/          One file per homepage section (server components)
-│   └── ui/                Button, SectionReveal, ParallaxImage, ContactForm,
-│                          CircuitMesh, CyberSigils, MotionCard
+│   ├── room/              Room.tsx (state machine: room→zooming→desk), RoomStage,
+│   │                      RoomObject (hotspot + tooltip), AnimatedSprite, Monitor,
+│   │                      DeskView (close-up + iframe browser), DeskIcon, MusicNotes,
+│   │                      NowPlaying, RoomAudioProvider, RoomHud
+│   ├── games/ layout/ projects/ sections/ ui/   (unchanged monochrome site components)
 │
 ├── lib/
-│   ├── room/              Room object registry (objects.ts — typed position/sprite defs)
-│   ├── aglc4/             AGLC4 citation formatters + field config (pure, no DB)
-│   ├── convert/           Base + bitwise conversion (pure, BigInt)
-│   ├── games/             phrases, wpm, breakout-engine, contract-*, storage (no DB)
-│   ├── github/            GitHub API client for the code page
-│   ├── motion.ts          Shared Framer Motion tokens (easings, durations, variants)
-│   ├── resend.ts          Lazy Resend client (does NOT init at module load)
-│   ├── ratelimit.ts       In-memory rate limiter (5 req/hr per IP)
-│   ├── utils.ts           cn()
-│   └── validations.ts     Zod schemas - single source of truth for form shapes
-│
-└── services/
-    └── contact.ts         Business logic - send contact email via Resend
+│   ├── room/              objects.ts (hotspot registry), playlist.ts (Track[]),
+│   │                      storage.ts (localStorage prefs), useStageScale.ts
+│   ├── aglc4/ convert/ games/ github/ i18n/ ninja/
+│   ├── motion.ts redis.ts resend.ts ratelimit.ts utils.ts validations.ts
+└── services/              contact.ts, leaderboard.ts
 ```
 
-**Default to Server Components.** Only add `'use client'` when you need browser APIs,
-React state, or Framer Motion hooks. Current client components: Header, SectionReveal,
-Room, RoomStage, RoomObject, Monitor, Poster, RoomHud,
-ParallaxImage, ContactForm, CircuitMesh, Template, MotionCard, TypingTest, Breakout,
-ContractGame, Aglc4Generator, BaseConverter.
+Default to Server Components; `'use client'` only for browser APIs, state, or Framer Motion.
 
 ---
 
-## CircuitMesh - Site-Wide Animated Background
+## The Room (`/`) — Everything an Agent Must Know
 
-`src/components/ui/CircuitMesh.tsx` is a `'use client'` canvas-based animated circuit mesh with 3D
-perspective projection. It is included in the **root layout** and renders behind all page content as
-a fixed backdrop (`pointer-events-none fixed inset-0 -z-10`).
+### Stage and transforms (do NOT reintroduce the origin bug)
+Fixed 1408×768 stage, fit-scaled with letterboxing. Two-element transform:
+the **outer** wrapper centres and fit-scales about `center center`; the **inner** element
+zooms about the monitor screen point *in stage coordinates*. Applying the fit scale on an
+element whose transform-origin is the monitor point shifts the whole room off-centre — this
+shipped once and was the v3 "site is off-centre" bug.
 
-- Strictly monochrome: white strokes/dots at low alpha over zinc-950
-- Self-contained: no external dependencies, no global CSS
-- Respects `prefers-reduced-motion`: renders one static frame, no RAF loop
-- Pauses when the tab is hidden or scrolled out of view (IntersectionObserver)
-- Fades toward edges via a CSS `mask-image` radial gradient
+### View state machine (`Room.tsx`)
+`room → zooming (800 ms, Escape-cancellable, 1.5 s safety) → desk`. Desk state is
+`history.pushState('#desk')`; `/#desk` deep-links; popstate/Escape return. Recursion guard:
+if `window.self !== window.top`, `location.replace('/home')`.
 
-If you add any other fixed-position backgrounds, ensure they do not conflict with CircuitMesh.
+### Desk view (`DeskView.tsx`)
+Close-up art (`desk-closeup.png`) with: screen rect (436,152,536×308) hosting a pixel desktop
+(clock strip + 6 shortcut icons) or the **in-monitor browser** — a same-origin `<iframe>` of
+real site pages. Iframe navigation between desk opens uses `contentWindow.location.replace()`
+(keeps joint browser history clean); current path tracked by 500 ms same-origin polling;
+strip gains Desktop/Expand buttons in browser mode; Escape ladder browser→desktop→room;
+below 700 px viewport, icons navigate full-page instead. Speakers (left 190,265 175×300;
+right 1005,270 215×300) are mute-toggle buttons with press-dip and muted glyph. Music notes
+emit from the driver holes (left: 284,349 r34 / 284,478 r50; right: 1118,352 r38 /
+1115,472 r52) at a constant 1100 ms rate, 2000 ms float, pooled `<img>`s + CSS keyframes.
+The desk mouse (110×80 sprite) follows the pointer proportionally within x 975–1140,
+y 572–635 via rAF + lerp writing transforms directly (never React state per pointer event);
+rest point (1007,608); static on touch/reduced-motion. Idle screensaver after 90 s.
+
+### Audio (`RoomAudioProvider` + `playlist.ts` + `NowPlaying`)
+One context provider mounted above both views owning a single `Audio` element.
+**It must ALWAYS provide context** — gating it behind reduced motion crashed every
+reduced-motion visitor once (`useRoomAudio()` throws outside the provider). Reduced motion
+never disables sound, only animation. Track index lives in a ref (URL string-matching against
+`audio.src` broke `ended` advancement once). Autoplay attempts on mount when the stored pref
+allows, falling back to first-gesture. Volume 0.3. `NowPlaying` (bottom-left, both views):
+28×28 cover with cassette-SVG fallback on missing/erroring cover, title/artist, play/pause,
+skip. All labels from dictionaries.
+
+### Room-view objects (`objects.ts` registry + `AnimatedSprite`)
+monitor (240,261 393×343 → zoom to desk) · poster (997,78 134×247, 5 frames, play-once-hold,
+click toast) · bonsai (1241,291 99×131, 5 frames, loop, `tooltipAlign="right"` because the
+centred bubble overflowed the right edge) · lamp (60,300 110×220, toggles lamp-off art
+crossfade + flicker, persisted) · coffee (160,475 83×83, 6 frames: rest + 5-frame hover
+highlight, play-once-hold) with three staggered CSS steam wisps (`steam-rise` keyframes,
+per-wisp `--sway`/`--dur`, negative delays, rendered behind the mug). Window tint follows
+local hour; clock bubble uses `room.clockTip` dictionary key. Adding an object: entry in
+`ROOM_OBJECTS` → sprites in `public/room/` → both dictionaries → render in `Room.tsx`.
+
+### Accessibility invariants
+Every hotspot is a real `<a>`/`<button>` inside `<nav aria-label>`; visible focus-visible
+rings (2 px warm outline, offset); tooltips on focus as well as hover; skip link first in tab
+order targeting `/home`; decorative layers (`MusicNotes`, steam, dust, pad mouse) are
+`aria-hidden` + `pointer-events: none`; `prefers-reduced-motion` disables all decorative
+animation but never functionality.
+
+### Sprite pipeline and style guide (former STYLE.md)
+Source art in `assets/pixel-art/` (repo-internal, not deployed); web sprites in `public/room/`
+as raw PNG served via `<img>` with `image-rendering: pixelated` — **never `next/image`**
+(resampling destroys pixel art). Multi-frame sprites are cropped to a **shared union bbox
++2 px pad** across all frames so playback never jitters (`scripts/extract-*.mjs`).
+Palette: warm dusk bedroom — wall #4a3e3a, wood #6b4d3a/#5a3d2a/#4a3020, floor #3a2820,
+bezel #2a2220; lamp amber from the left, dusk-blue window light from the right; clean 1 px
+outlines, no anti-aliasing. UI palette for bubbles/toasts: #3d2e1e fill, #5a4430 border,
+#e8d5b0 text. Pixel font: `src/fonts/Minecraft.ttf` (fan recreation, free for personal use)
+via `next/font/local` → `--font-pixel`, fallback `"Courier New", monospace`.
+Extracted sprite ledger: poster-1..5 (997,78 134×247) · monitor-desk (240,261 393×343) ·
+bonsai-1..5 (1241,291 99×131) · desk-closeup (full canvas) · background / background-lamp-off
+(full canvas) · mouse (1007,608 110×80) · speaker-left/right (speaker rects) · note-1..3
+(~16–21×22) · coffee-1..6 (160,475 83×83) · coffee-steam (187,460 25×45).
+Background (`background.png`, ~55 KB) loads `fetchpriority="high"` as the LCP element.
+
+### Audio licences (former audio-licences.md)
+Owner direction 6 July 2026: deployment treated as private/testing; commercial recordings ship
+at the owner's informed risk; revisit before public promotion. The domain is publicly
+reachable. (General information, not legal advice.) Tracks in `public/audio/`:
+lo-fi-beat (TBC) · saffron (TBC; see pending rename) · cant-look-in-my-eyes ⚠ commercial ·
+big-poppa-habaytak-remix ⚠ commercial remix · remember-summer-days ⚠ commercial ·
+sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-days.jpg.
+
+### Session history (condensed from the retired PLAN.md specs)
+- **v1** `b70857e`–`a109482`: `(site)` restructure, room v1 (monitor→/home, poster, bonsai).
+- **v2** `5643ee2`–`e7a40e4`+: defect fixes, Minecraft font, desk view + shortcuts.
+- **v3** `0127b8d` era: centring fix, audio provider + playlist, now-playing, speakers, pad
+  mouse, lamp art. Notable bugs fixed: off-centre transform origin; dead toggle when audio
+  pref false.
+- **v4** `aa9db95`–`ca70b5b`: reduced-motion crash fix, in-monitor browsing, music notes,
+  coffee mug + owner extras (clock, flicker, dust, jitter, screensaver).
+- **v5** (session of 6 July, uncommitted at write time): frame-headers fix (the "embed fails"
+  bug was the site's own XFO DENY), constant-rate notes from driver holes, coffee highlight
+  frames + 3-wisp steam, bonsai `tooltipAlign`, clock i18n, docs consolidation into this file.
+  Saffron rename left to the owner (git case rename).
+- Recurring session hazard: the agent sandbox's mount of this repo went stale repeatedly
+  (phantom deletions, NUL-padded reads, unremovable `.git/index.lock`). Builds and `git
+  status` from a sandbox are unreliable; trust direct file reads and run builds locally.
 
 ---
 
-## Route Groups
+## Roadmap — Suggestions From Basic to Ambitious
 
-The site uses one Next.js route group `(site)/` that wraps all content pages (home, games,
-projects, tutoring, legal) in shared chrome: `Header`, `Footer`, `CircuitBackdrop`,
-`CircuitMesh`, and the template fade transition. The root `/` page lives outside this group
-so it can render chrome-free (the room page).
+Owner-curated backlog. Tiers are effort/scope, not priority order.
 
-- `src/app/layout.tsx` — root layout: fonts, metadata, `I18nProvider` only. No chrome.
-- `src/app/(site)/layout.tsx` — site chrome for all `/home`, `/games/*`, etc.
-- `src/app/(site)/template.tsx` — per-route fade transition (applies to site pages only,
-  so navigating from /home to /games gets a fade, but the room page is unaffected).
-- Routes moved into `(site)/` do NOT change URLs. The group is invisible to routing.
+**Immediate (pending actions)** — saffron rename; deploy + verification sweep; delete
+superseded `coffee-cup.png`.
 
----
+**Basic (hours)**
+1. Skip-no-repeat: `nextTrack` avoids repeating the last-played track.
+2. Desk session persistence: remember `screenMode`/`browserPath` in `sessionStorage`.
+3. Room OG image: replace the text-card `opengraph-image.tsx` on `/` with a 1200×630 room crop.
+4. `/room` alias redirect to `/`.
+5. Visit odometer: pixel counter on the desk (localStorage), pure nostalgia.
+6. Bonsai growth: resting frame advances with a `visits` counter in prefs (5 stages drawn).
+7. Volume control: small 3-step volume on the NowPlaying widget (prefs-persisted).
 
-## Room Page (`/`)
+**Intermediate (a day or two each)**
+8. Interaction SFX behind a separate `sfx` pref: icon clicks, poster flip, lamp switch, purr.
+9. Monitor wallpaper unlocks: settings icon on the desk screen; stored in prefs.
+10. Window weather: Open-Meteo API route (no key) with hourly cache; rain/snow overlays over
+    the window; time-of-day tint already scaffolds this.
+11. Cat on the bed: sleeping loop, wake/stretch on click, position varies by visit counter —
+    needs new art through the union-bbox pipeline.
+12. Achievements/discoveries: localStorage set + pixel toast + `aria-live=polite`; the poster
+    toast is the seed of this system.
+13. Konami code → `terminal` screenMode on the desk (state machine already supports modes):
+    `help`, `whoami`, `cat todo.txt`, `exit`.
+14. Mobile polish: drag-to-pan the room stage on phones, larger hit areas, tap hints.
+15. Hardening (June audit carry-overs): move the rate limiter to Upstash so cold starts don't
+    reset it; confirm the stray `VERCEL_OIDC_TOKEN` in `.env.local` was never committed and
+    delete it; consider CSP nonces to drop `unsafe-inline`.
 
-The homepage is a pixel-art bedroom scene, the only non-monochrome page on the site.
-It is a client-rendered React component (`Room.tsx`) with no SSR interactivity requirement.
-The root page.tsx is a server component that reads the dictionary and passes it to Room.
-
-### Audio architecture
-- `RoomAudioProvider` — React context mounted in `Room.tsx` above both room and desk views.
-  Owns the single `Audio` element. Exposes `{ playing, trackIndex, toggle, nextTrack }`.
-  Tracks defined in `src/lib/room/playlist.ts` (Track[], id/title/artist/src/cover).
-  On `ended`: advances to next track, plays if `playing`. Persists `audio` pref.
-- `NowPlaying` — Bottom-left widget: cover (28×28, cassette SVG fallback), title, artist,
-  play/pause SVG icon, skip SVG icon. Present in both views. Uses `useRoomAudio()`.
-- Speaker hotspots in `DeskView` — two transparent buttons over speaker rects call `toggle()`.
-  Press-dip (active:scale-[0.98], 120ms), muted glyph when paused.
-- `MusicNotes` — per-speaker CSS keyframe note animations (pooled, 3 slots). No React re-renders.
-
-### In-monitor browsing (Task 2)
-Desk icons open the real site inside the monitor screen via a same-origin `<iframe>`.
-- State: `screenMode: 'desktop' | 'browser'`, path tracked by polling `contentWindow.location`.
-- In-iframe navigation uses `location.replace()` to avoid polluting joint browser history.
-- Top strip: Desktop / Expand / ←Room buttons in browser mode.
-- Escape ladder: browser → desktop → room.
-- Below 700 px viewport width: icons navigate full-page (mobile fallback).
-- Recursion guard in `Room.tsx`: if `window.self !== window.top`, `location.replace('/home')`.
-
-### Critical: framing headers must stay SAMEORIGIN / 'self'
-In-monitor browsing only works because `next.config.ts` sends
-`X-Frame-Options: SAMEORIGIN` and CSP `frame-ancestors 'self'` (and vercel.json
-does the same for `/games/ninja/*`). Do NOT "harden" these back to DENY /
-'none' — that silently breaks the desk browser in every browser while keeping
-third-party embedding blocked exactly as before.
-
-### Critical: audio filenames are case-sensitive in production
-Vercel serves from a case-sensitive filesystem; Windows dev machines are
-case-insensitive. A track that plays locally but 404s in production almost
-certainly has a filename-case mismatch between git and `playlist.ts`
-(e.g. the `Saffron.mp3` vs `saffron.mp3` incident). Keep all `public/audio/`
-filenames kebab-case lowercase and verify with `git ls-files public/audio`.
-
-### Critical: RoomAudioProvider MUST always provide context
-Do NOT gate the context provider behind reduced motion or any condition.
-`useRoomAudio()` throws if called outside the provider. Every component using it
-(NowPlaying, DeskView speakers, MusicNotes) must be wrapped.
-
-### Stage transform structure (do NOT reintroduce the A1 origin bug)
-The RoomStage uses a two-element transform to keep the room centred at all viewport sizes
-while zooming toward the monitor:
-```
-outer wrapper: centres + fit-scales about centre centre (no offset)
-  inner motion.div: zooms about the monitor screen point in stage coords
-```
-The fit scale is applied to the outer wrapper with `transform-origin: center center`.
-The zoom scale is animated on the inner element whose `transformOrigin` is the monitor
-screen centre in stage pixels. This keeps stage coords valid for the zoom origin.
-`DeskView` uses the simpler `translate(-50%,-50%) scale(fit)` pattern — correct for a
-single-element view with no zoom offset.
-
-### Component structure
-- `Room.tsx` — Client root. State machine: room → zooming → desk. Fetches dict from server.
-  Handles monitor-click zoom transition (800 ms, Escape-cancelable, 1.5 s safety timeout).
-- `RoomStage.tsx` — Fixed 1408×768 stage element scaled via `transform: scale()`.
-  Desktop: cover (`max(vw/1408, vh/768)`). Mobile (<700 px): fit width with letterboxing.
-- `RoomObject.tsx` — Generic hotspot with tooltip (150 ms delay), visible focus ring,
-  renders `<a>` or `<button>` depending on whether `href` is set.
-- `Monitor.tsx` — LED monitor sprite (off/on states), hover lift (2 px), `router.prefetch`
-  on mount, fires `onEnter` callback for the transition.
-- `Poster.tsx` — Kitagawa poster, click cycles 5 frames with 120 ms crossfade (Framer
-  Motion `AnimatePresence`).
-- `RoomHud.tsx` — Skip link (sr-only, first in tab order), "Enter website →" persistent
-  link (bottom-right), one-time hint that fades on first interaction.
-
-### Object registry
-`src/lib/room/objects.ts` — typed array of `RoomObjectDef` with `id`, stage `x/y/w/h`,
-`labelKey` (dictionary key), `frames` (sprite URLs), and `href` (or null for buttons).
-This is the single source of truth for hotspot positions. Adding a new object means:
-1. Add entry to `ROOM_OBJECTS`
-2. Create the sprite(s) in `public/room/`
-3. Add dictionary keys to `en.ts` and `fr.ts`
-4. Render it in `Room.tsx`
-
-### Sprite pipeline
-- Source art lives in `assets/pixel-art/` (inside the repo, not deployed).
-- Trimmed, web-ready sprites live in `public/room/` as raw PNGs.
-- Scripts in `scripts/` handle extraction/generation:
-  - `extract-posters.mjs` — Crops the 5 Kitagawa frames to a shared bounding box.
-  - `generate-monitor.mjs` — Generates the LED monitor on/off sprites (Sharp pixel buffer).
-- Sprites are served as `<img>` with `image-rendering: pixelated`. **Never route room
-  sprites through `next/image`** — resampling destroys pixel art.
-- Background: `public/room/background.png` (1408×768, ~55 KB), loaded with
-  `fetchpriority="high"` as the LCP element.
-
-### i18n
-Room strings live in `en.ts` → `room.*` and must have matching keys in `fr.ts`.
-Keys: `navLabel`, `monitorLabel`, `posterLabel`, `enterSite`, `hint`, `skip`,
-`metaTitle`, `metaDescription`.
-
-### Reduced motion
-All room animations (lamp glow pulse, monitor hover lift, poster crossfade, zoom transition)
-are disabled when `prefers-reduced-motion` is active. The monitor becomes an instant link.
-
-### Keyboard navigation
-Tab order: skip link (sr-only, target `/home`) → monitor → poster → HUD "Enter website" link.
-All interactive objects have visible focus rings (2 px warm outline with offset).
+**Ambitious (multi-day, design-heavy)**
+16. Desktop OS expansion: draggable pixel windows on the monitor — file-explorer window
+    mapping site content, the terminal, a music-player window; keep it same-origin DOM.
+17. Playable arcade: Breakout as an "app" running inside the monitor screen (engine is
+    already pure in `src/lib/games/breakout-engine.ts`).
+18. Guestbook: pixel notebook on the desk writing short messages to Redis behind
+    `src/services/` (validation + rate limiting per the contact pattern).
+19. Seasonal/diurnal art variants: full day/night/season background sets via the generation
+    pipeline; the lamp-off crossfade pattern generalises.
+20. Ambient presence: anonymous "N people are in the room" via Redis presence counter.
+21. Blog in the room: notebook object opens an MDX-backed `/blog` (needs `@next/mdx`,
+    monochrome outside the room, dictionaries for chrome).
+22. Full French SEO: `/fr` routes with localised metadata (today FR is cookie-based with
+    English-only SEO by design — this is a deliberate boundary, revisit only with intent).
+23. Regression net: Playwright E2E of the room flows (zoom, desk, iframe, audio, reduced
+    motion) + Lighthouse CI on previews.
+24. Admin dashboard under `/app/admin/` with middleware auth (service layer is ready).
 
 ---
 
 ## Games
 
-`/games` is a hub (same card pattern as `/projects`) linking self-contained games.
-Browser games keep best scores in `localStorage` only. The one server-backed feature is the
-ninja leaderboard (`/api/ninja/leaderboard`, Upstash Redis) - see the ninja entry below.
+`/games` hub links self-contained games; best scores in `localStorage`
+(`src/lib/games/storage.ts`, namespaced `ahmed-site:games:v1:*`). The one server-backed
+feature is the ninja leaderboard.
 
-- **Typing test** (`/games/typing-test`): live WPM + accuracy. Server shell renders the
-  `'use client'` `TypingTest`. Phrases are a curated, editable dataset in
-  `src/lib/games/phrases.ts` covering law, AI governance, and cybersecurity (NO
-  silicon/computing-hardware copy by design). WPM/accuracy math is pure and isolated in
-  `src/lib/games/wpm.ts`.
-- **Breakout** (`/games/breakout`): canvas + `requestAnimationFrame`, DPR-aware, pauses on
-  tab-hidden / off-screen (same pattern as CircuitMesh). All physics, multi-ball, and the
-  power-up system live in `src/lib/games/breakout-engine.ts` (pure functions over a mutable
-  `GameState`); `Breakout.tsx` is a thin render + input shell. Power-ups: `expand`, `multi`,
-  `slow`, `life` - tune them via the `POWERUP_META` / drop-chance constants in the engine.
-- **Super Ninja Monk Fighter IV** (`/games/ninja`, v1.0): Godot 4.7 WebAssembly build served as a
-  standalone page. A "Launch game" link opens `/games/ninja/index.html` in a new tab (no iframe -
-  COOP/COEP headers and `wasm-unsafe-eval` CSP are set via `vercel.json` for the static files).
-  Seven hand-crafted levels; terrain is baked into the level scenes at build time (no runtime file
-  loading). The game files live in `public/games/ninja/` (index.html + .js + .wasm + .pck). The pck
-  file (~30 MB) is committed directly. To update the build, copy all files (excluding `.import`
-  sidecars) from `beam/build/web/` into `public/games/ninja/`. The page shows the game's monk title
-  art (grayscale), a bug report form (shared `/api/contact` endpoint), and two leaderboards.
-  **Leaderboards:** the game asks for a player name on the title screen and POSTs finished runs to
-  `/api/ninja/leaderboard` (`{name, timeCs, tokensPercent}`; Zod-validated, rate-limited, foreign
-  Origin rejected but a missing Origin is allowed for desktop builds). Entries land on the any%
-  board, and on the 100% board when all tokens were collected. Storage is Upstash Redis sorted sets
-  (`ninja:lb:any`, `ninja:lb:100`) via `src/services/leaderboard.ts`; the page reads the top 20
-  server-side and fails soft to empty boards if Redis is unavailable.
-- **Persistence:** `src/lib/games/storage.ts` - SSR-safe `localStorage` helpers
-  (`getBest`, `setBestIfHigher`, `BEST_KEYS`). Namespaced under `ahmed-site:games:v1:*`
-  with versioned key prefixing for schema migration safety.
-- **Monochrome:** everything is white-on-zinc; brick depth uses per-row alpha, never colour.
-- **Reduced motion:** decorative animation (caret blink, power-up flourishes) is gated; the
-  games themselves remain fully playable.
+- **Typing test** (`/games/typing-test`): live WPM + accuracy; phrases dataset in
+  `src/lib/games/phrases.ts` (law/AI governance/cyber; no silicon copy by design); pure math
+  in `wpm.ts`.
+- **Breakout** (`/games/breakout`): canvas + rAF, DPR-aware, pauses when hidden; physics and
+  power-ups (`expand`/`multi`/`slow`/`life`) pure in `breakout-engine.ts`; `Breakout.tsx` is a
+  thin shell.
+- **Super Ninja Monk Fighter IV** (`/games/ninja`, v1.0): Godot 4.7 WASM export served as a
+  standalone page (launch link opens `public/games/ninja/index.html` in a new tab; COOP/COEP +
+  `wasm-unsafe-eval` CSP via `vercel.json`). Build updates: copy from `beam/build/web/`.
+  Leaderboards: game POSTs `{name, timeCs, tokensPercent}` to `/api/ninja/leaderboard`
+  (Zod, rate-limited, foreign Origin rejected, absent Origin allowed for desktop builds);
+  Upstash sorted sets `ninja:lb:any` / `ninja:lb:100` via `services/leaderboard.ts`; page
+  reads top 20 server-side, fails soft.
 
-To add a game: add a card to `src/app/games/page.tsx`, create the route + shell under
-`src/app/games/<slug>/`, put logic in `src/lib/games/`, and add the URL to `sitemap.ts`.
+To add a game: card on the hub, route + shell under `(site)/games/<slug>/`, logic in
+`src/lib/games/`, URL in `sitemap.ts`, strings in both dictionaries.
 
 ---
 
 ## Site-Wide Motion
 
-All animation is **Framer Motion only (no GSAP)**. Shared tokens live in `src/lib/motion.ts`
-(`EASE_OUT_EXPO`, `DURATION`, `fadeInUp`, `cardHover`, `springSubtle`) - reuse these instead
-of hardcoding values so motion stays consistent.
+Framer Motion only (no GSAP). Shared tokens in `src/lib/motion.ts` (`EASE_OUT_EXPO`,
+`DURATION`, `fadeInUp`, `cardHover`, `springSubtle`). `(site)/template.tsx` provides the
+per-route fade; `Header.tsx` has a shared-`layoutId` nav underline; `MotionCard` is the card
+hover-lift. Every motion addition checks `useReducedMotion()`.
 
-- `src/app/template.tsx` gives a subtle per-route fade/rise (remounts on navigation). Fixed
-  backgrounds stay in `layout.tsx`, outside the transition wrapper.
-- `Header.tsx` has a shared-`layoutId` underline that slides to the active nav item.
-- `MotionCard` (`src/components/ui/MotionCard.tsx`) is the subtle hover-lift wrapper for cards.
-
-Every motion addition checks `useReducedMotion()` and degrades to no animation.
+`CircuitMesh` (`src/components/ui/CircuitMesh.tsx`): canvas circuit-mesh backdrop for `(site)`
+pages — monochrome, self-contained, reduced-motion renders one static frame, pauses when
+hidden/off-screen, edge fade via CSS mask.
 
 ---
 
-## Internationalisation (i18n) - English + French
+## Internationalisation (EN + FR)
 
-The site is bilingual. Language is chosen with an **EN / FR toggle in the header**, stored in a
-`locale` cookie, and read on the server - **there are no `/fr` URLs**. English is the canonical URL.
+Language via an EN/FR header toggle stored in a `locale` cookie, read server-side; **no `/fr`
+URLs** (English canonical). `src/lib/i18n/`: `config.ts`, `dictionaries/en.ts` (canonical,
+defines `Dictionary`), `fr.ts`, `server.ts` (`getLocale`/`getDictionary` for server
+components), `client.tsx` (`I18nProvider`, `useT()`).
 
-### Where everything lives (`src/lib/i18n/`)
-- `config.ts` - `locales` (`en`, `fr`), `defaultLocale`, the `locale` cookie name/age, `isLocale()`.
-- `dictionaries/en.ts` - **the single source of truth for all copy.** Its shape defines the
-  `Dictionary` type.
-- `dictionaries/fr.ts` - `fr: Dictionary`. Structurally identical to `en.ts` or it won't compile.
-- `server.ts` - `getLocale()` and `getDictionary()` for **server components**. `getLocale()` reads
-  the cookie; on a first visit with no cookie it falls back to the `Accept-Language` header.
-- `client.tsx` - `I18nProvider` + `useI18n()` / `useT()` for **client components**.
-- `src/components/ui/LanguageToggle.tsx` - writes the cookie and `router.refresh()`es.
+Workflow for any copy change: add to `en.ts` → add French at the identical path (formal
+*vous*; first person for Ahmed's bio) → reference via `t.…` → `npm run type-check` →
+keep `CONTENT.md` in sync.
 
-### How to render copy
-- **Server component:** `const t = await getDictionary()` then `t.section.key`. The component must
-  be `async`. (This is how the layout, footer, sections, and most pages work.)
-- **Client component (`'use client'`):** `const t = useT()` then `t.section.key`. The provider is
-  wired in `src/app/layout.tsx`, which reads the locale and sets `<html lang>`.
-
-### The rule for ALL future changes
-1. Add the string to `en.ts` under a sensible section key.
-2. Add the **French translation** to `fr.ts` at the identical path (formal *vous* for the visitor;
-   first person for Ahmed's bio).
-3. Reference it via `t.…` in the component - never inline a literal.
-4. Run `npm run type-check` - a missing French key is a compile error.
-5. Keep `CONTENT.md` (the human-editable copy inventory) in sync if you add/restructure copy.
-
-Rich prose with inline emphasis (the silicon explainer) is stored as HTML strings containing
-`<strong>` and rendered with `dangerouslySetInnerHTML` inside a `.rich` container; `.rich strong`
-in `globals.css` applies the monochrome emphasis style. Content is trusted (our own dictionary).
-
-### Deliberate boundaries (these stay English on purpose)
-- **SEO metadata and Open Graph / Twitter images** - emitted in the canonical language (English).
-  Because switching is cookie-based (no `/fr` URL), there is no separate page for crawlers to index.
-- **Large editorial datasets** - typing-test phrases (`src/lib/games/phrases.ts`), Clause Game
-  scenarios/clauses (`src/lib/games/contract-data.ts`, `OUTCOME_COPY` in `contract-engine.ts`), and
-  AGLC4 field configs/examples (`src/lib/aglc4/fields.ts`). The **UI chrome around them is
-  translated**; the specialist content is not. If you localise these later, give each its own
-  locale-keyed module rather than bloating the dictionaries.
-
-### Consequences to be aware of
-- Reading the cookie makes content pages **dynamically rendered** (`ƒ` in the build output) rather
-  than static. This is the accepted trade-off for URL-stable switching. OG images, sitemap and
-  robots remain static.
-- A single `locale` cookie now exists. It holds no personal data and is not used for tracking; the
-  privacy policy already discloses it. Keep that disclosure accurate if you change cookie use.
-- Contact-form validation messages are localised: `makeContactSchema(messages)` in
-  `src/lib/validations.ts` builds the schema from dictionary strings on the client; the server API
-  uses the English default (its errors are not surfaced to users).
+Deliberate English-only boundaries: SEO metadata/OG images; large editorial datasets
+(typing phrases, AGLC4 configs). Cookie-read makes content pages dynamically rendered —
+accepted trade-off. Contact-form client validation messages are localised via
+`makeContactSchema(messages)`; the server uses English defaults.
 
 ---
 
-## Contact System - How It Works
+## Contact System
 
 ```
 POST /api/contact
-  1. CSRF check: Origin/Referer must match production domain
-  2. Rate-limit by IP (5 req/hr, in-memory - see src/lib/ratelimit.ts)
-  3. Parse JSON body
-  4. contactSchema.safeParse() - Zod, server side
-  5. Honeypot check (website field must be empty)
-  6. submitContact() in src/services/contact.ts
-     a. sendContactEmail() via Resend (throws on failure → 500)
-  7. Return 200 / 400 / 429 / 500
+  1. CSRF: Origin/Referer must match production domain
+  2. Rate-limit by IP (5 req/hr, in-memory — src/lib/ratelimit.ts; resets on cold start)
+  3. contactSchema.safeParse() server-side + honeypot ("website" must be empty)
+  4. services/contact.ts → lazy Resend client → email
+  5. 200 / 400 / 429 / 500
 ```
+No database, no IP logging. The privacy policy (2026-06-16) matches this reality — keep it
+accurate if data handling changes.
 
-No database. Rate limiting via `src/lib/ratelimit.ts` (5 req/hr per IP, in-memory). No IP logging. The privacy policy (`/legal/privacy`) was
-corrected on 2026-06-16 to match this reality (email-only via Resend, no stored IP, no
-database) and to disclose Vercel Speed Insights and the games' `localStorage` use. Keep it
-accurate if you change data handling.
-
----
-
-## Resend - Important Lazy Init Pattern
-
-`src/lib/resend.ts` creates the Resend client **lazily** (only when `sendContactEmail` is called).
-This is intentional - `new Resend(undefined)` throws immediately at module load, which breaks
-`next build` when `RESEND_API_KEY` is not set in the build environment.
-
-Do not change this to an eager initialisation.
-
-The module also exports a centralised `CONTACT_EMAIL` constant used by the Footer and other
-components - update it in one place if the email address changes. The `sendContactEmail`
-function sanitises the email subject (strips control characters and limits length) before
-sending.
+**Resend lazy init** (`src/lib/resend.ts`): the client is created only when sending —
+`new Resend(undefined)` at module load breaks `next build` without the env var. Do not make
+it eager. `CONTACT_EMAIL` constant lives here too. Subjects are sanitised.
 
 ---
 
 ## Fonts
 
-Loaded via `next/font/google` in `src/app/layout.tsx`:
-- `Inter` → CSS var `--font-sans` → Tailwind class `font-sans`
-- `Playfair Display` → CSS var `--font-serif` → Tailwind class `font-serif`
-
-All `h1`–`h5` elements default to `font-serif` via `globals.css`. Body text is `font-sans`.
+`next/font/google` in root layout: Inter → `--font-sans`; Playfair Display → `--font-serif`
+(headings via `globals.css`). Room-only: local Minecraft.ttf → `--font-pixel` (see room
+section). Do not apply the pixel font to `(site)` pages.
 
 ---
 
-## Security Headers
+## Security
 
-Set in `next.config.ts` `headers()` function. Applied to all routes (`source: '/(.*)'`).
-Includes: HSTS, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy,
-CSP, and `X-Robots-Tag: noai, noimageai`.
+Headers in `next.config.ts` `headers()` for all routes: HSTS, **X-Frame-Options SAMEORIGIN**,
+X-Content-Type-Options, Referrer-Policy, Permissions-Policy, CSP with
+**`frame-ancestors 'self'`** (see Critical Constraint 6 — required by in-monitor browsing),
+`X-Robots-Tag: noai, noimageai`. CSP retains `unsafe-inline` for scripts (Next.js trade-off).
+`vercel.json` sets COOP/COEP + game CSP for `/games/ninja/*` static files.
 
-The CSP uses `unsafe-inline` for scripts - this is a known trade-off with Next.js.
-
----
-
-## AI Crawler Blocking
-
-`src/app/robots.ts` disallows all major AI training crawlers by name (GPTBot, ClaudeBot,
-Google-Extended, PerplexityBot, CCBot, Bytespider, etc.).
-
-The Terms of Use (`/legal/terms`) explicitly prohibits scraping and AI training use.
-
-Do not remove these protections.
+AI crawler blocking: `robots.ts` disallows GPTBot, ClaudeBot, Google-Extended, PerplexityBot,
+CCBot, Bytespider, etc.; Terms prohibit scraping/AI training. Do not remove.
 
 ---
 
-## Lawyer Image
+## Environment Variables
 
-`public/lawyer.jpg` - used in `src/components/sections/About.tsx` as a parallax element via
-`ParallaxImage`. Rendered with `grayscale` CSS filter to stay monochrome.
+| Variable | Required | Notes |
+|---|---|---|
+| `RESEND_API_KEY` | Yes | Resend API key |
+| `CONTACT_TO_EMAIL` | No | Defaults to `ahmedyhussain07@gmail.com` |
+| `CONTACT_FROM_EMAIL` | No | Defaults to `Ahmed Hussain <noreply@ahmedyhussain.com>` |
+| `NEXT_PUBLIC_BASE_URL` | No | Defaults to `https://ahmedyhussain.com` |
+| `GITHUB_TOKEN` | No | Raises API rate limit for the code page |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | For leaderboard | `KV_REST_API_*` also read |
 
----
-
-## Project Tools (AGLC4 generator, base converter)
-
-Two interactive utilities live under `/projects`, each a server route + thin `'use client'`
-shell over pure logic. Both share `ToolShell` (`src/components/projects/ToolShell.tsx`) for
-page chrome (back-to-projects link + header), the projects analogue of `GameShell`.
-
-- **AGLC4 citation generator** (`/projects/aglc4`): builds footnote + bibliography citations
-  in AGLC4 (4th ed) style for 9 source types. All rules are pure functions in
-  `src/lib/aglc4/`: `types.ts`, `fields.ts` (declarative field config per source type), and
-  `format.ts` (formatters returning `Segment[]` so italics render as `<em>` and copy as plain
-  text). To add a source type: extend the `SourceType` union, add a `SOURCES` entry + a
-  `FORMATTERS` entry. UI: `src/components/projects/Aglc4Generator.tsx`.
-- **Base converter** (`/projects/base-converter`): live decimal/binary/hex/octal/UTF-8
-  conversion plus a bitwise playground. Pure logic in `src/lib/convert/` - `bases.ts`
-  (BigInt-backed parse/format + text↔value) and `bitwise.ts` (AND/OR/XOR/NOT/shifts; NOT is
-  width-masked). Everything funnels through one canonical non-negative `BigInt`. UI:
-  `src/components/projects/BaseConverter.tsx`.
-
-Note: BigInt literals (`0n`) require `tsconfig` `target` ES2020+ - do not lower it.
-
----
-
-## Environment Variables Reference
-
-| Variable | Required | Where set | Notes |
-|---|---|---|---|
-| `RESEND_API_KEY` | Yes | Vercel + local `.env.local` | Resend API key |
-| `CONTACT_TO_EMAIL` | No | Vercel (optional) | Defaults to `ahmedyhussain07@gmail.com` |
-| `CONTACT_FROM_EMAIL` | No | Vercel (optional) | Defaults to `Ahmed Hussain <noreply@ahmedyhussain.com>` |
-| `NEXT_PUBLIC_BASE_URL` | No | Vercel (optional) | Defaults to `https://ahmedyhussain.com` |
-| `GITHUB_TOKEN` | No | Vercel (optional) | Raises unauthenticated API rate limit for code page |
-| `UPSTASH_REDIS_REST_URL` | For leaderboard | Vercel (Upstash Marketplace integration) | Ninja leaderboard storage; `KV_REST_API_URL` also read |
-| `UPSTASH_REDIS_REST_TOKEN` | For leaderboard | Vercel (Upstash Marketplace integration) | Ninja leaderboard storage; `KV_REST_API_TOKEN` also read |
-
-See `.env.example` for exact format. **Never commit `.env.local` or `.env`.**
+Never commit `.env.local` / `.env`. (June audit flagged a stray `VERCEL_OIDC_TOKEN` in
+`.env.local` — confirm never committed, then delete; see Roadmap item 15.)
 
 ---
 
 ## Common Tasks
 
-### Add a new page
-Create `src/app/[route]/page.tsx`. Export `metadata` for SEO. Add to `src/app/sitemap.ts`.
-Add nav link in `src/components/layout/Header.tsx` if it should appear in navigation.
+- **New page:** `src/app/(site)/[route]/page.tsx`, export `metadata`, add to `sitemap.ts`,
+  Header nav if appropriate, strings in both dictionaries.
+- **New room object:** see the room Object registry section.
+- **Run locally:** `cp .env.example .env.local` then `npm run dev`.
+- **Pre-deploy:** `npm run type-check && npm run lint && npm run build`.
 
-### Add a new section to the homepage
-Create `src/components/sections/NewSection.tsx` (server component by default).
-Import and add to `src/app/page.tsx`.
+## What Does Not Exist Yet (deliberately)
 
-### Change pricing or content
-Most copy is hardcoded in the section components. Search for the string you want to change.
-Tutoring pricing is in `src/app/tutoring/page.tsx`.
-
-### Run locally
-```bash
-cp .env.example .env.local   # add real values
-npm run dev
-```
-
-### Pre-deploy checks
-```bash
-npm run type-check   # tsc --noEmit
-npm run lint         # ESLint
-npm run build        # full production build
-```
-
----
-
-## What Does Not Exist Yet (and Why)
-
-- **Admin dashboard** - intentionally deferred. Service layer is ready for it. When building,
-  add under `/app/admin/` with middleware-based auth guard.
-- **General-purpose database** - the only persistence is the ninja leaderboard (Upstash Redis
-  behind `src/services/leaderboard.ts`). Contact form emails directly via Resend. If you add more
-  persistent storage (newsletter, stored enquiries, admin), introduce it behind the service layer
-  and use environment variables for the connection string.
-- **Newsletter** - needs a signup form and Resend audience integration.
-- **Blog/Articles** - needs a Markdown renderer (consider `next-mdx-remote` or `@next/mdx`).
-- **Rate limiting** - in-memory rate limiter exists (`src/lib/ratelimit.ts`, 5 req/hr/IP
-  for the contact form). NOTE: does not survive serverless cold starts on Vercel.
-  For production resilience, migrate to Upstash Redis or Vercel KV.
+Admin dashboard (service layer ready; `/app/admin/` + middleware auth when built), newsletter
+(Resend audiences), blog (needs MDX; see Roadmap 21), durable rate limiting (Roadmap 15),
+general-purpose database (constraint 3).

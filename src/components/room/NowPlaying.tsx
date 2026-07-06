@@ -31,7 +31,7 @@ export function NowPlaying({ labels }: NowPlayingProps) {
         <img
           src={track.cover}
           alt=""
-          className="w-7 h-7 border-2 flex-shrink-0"
+          className="w-9 h-9 border-2 flex-shrink-0"
           style={{
             borderColor: '#5a4430',
             imageRendering: 'pixelated',
@@ -41,7 +41,7 @@ export function NowPlaying({ labels }: NowPlayingProps) {
         />
       ) : (
         <svg
-          width="28" height="28" viewBox="0 0 16 16"
+          width="36" height="36" viewBox="0 0 16 16"
           shapeRendering="crispEdges" aria-hidden="true"
           className="flex-shrink-0 border-2"
           style={{ borderColor: '#5a4430', borderRadius: '1px' }}
@@ -55,13 +55,13 @@ export function NowPlaying({ labels }: NowPlayingProps) {
       )}
 
       {/* Track info */}
-      <div className="flex flex-col min-w-0 max-w-[160px]">
-        <span className="text-[10px] text-[#e8d5b0] leading-tight truncate"
+      <div className="flex flex-col min-w-0 max-w-[200px]">
+        <span className="text-[12px] text-[#e8d5b0] leading-tight truncate"
           style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
           {track.title}
         </span>
         {track.artist && (
-          <span className="text-[8px] text-[#a09080] leading-tight truncate"
+          <span className="text-[10px] text-[#a09080] leading-tight truncate"
             style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
             {track.artist}
           </span>
@@ -71,7 +71,7 @@ export function NowPlaying({ labels }: NowPlayingProps) {
       {/* Play/pause */}
       <button onClick={toggle} aria-label={playing ? labels.pause : labels.play}
         className="flex-shrink-0 p-0.5 text-[#c8b89a] hover:text-[#e0d0b0] transition-colors outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#c8b89a]">
-        <svg width="14" height="14" viewBox="0 0 16 16" shapeRendering="crispEdges">
+        <svg width="18" height="18" viewBox="0 0 16 16" shapeRendering="crispEdges">
           {playing ? (
             <><rect x="3" y="3" width="4" height="10" fill="currentColor" /><rect x="9" y="3" width="4" height="10" fill="currentColor" /></>
           ) : (
@@ -83,7 +83,7 @@ export function NowPlaying({ labels }: NowPlayingProps) {
       {/* Skip */}
       <button onClick={nextTrack} aria-label={labels.skip}
         className="flex-shrink-0 p-0.5 text-[#c8b89a] hover:text-[#e0d0b0] transition-colors outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#c8b89a]">
-        <svg width="14" height="14" viewBox="0 0 16 16" shapeRendering="crispEdges">
+        <svg width="18" height="18" viewBox="0 0 16 16" shapeRendering="crispEdges">
           <polygon points="3,2 11,8 3,14" fill="currentColor" />
           <rect x="12" y="2" width="2" height="12" fill="currentColor" />
         </svg>

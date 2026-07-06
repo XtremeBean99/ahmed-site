@@ -281,7 +281,7 @@ export function Room({ dict }: RoomProps) {
             w={posterObj.w}
             h={posterObj.h}
             frames={posterObj.frames}
-            frameDuration={200}
+            frameDuration={130}
             mode="play-once-hold"
             onClick={() => {
               setToast(t.room.posterClickHint)
@@ -296,7 +296,7 @@ export function Room({ dict }: RoomProps) {
             w={bonsaiObj.w}
             h={bonsaiObj.h}
             frames={bonsaiObj.frames}
-            frameDuration={250}
+            frameDuration={165}
             mode="loop"
             tooltipAlign="right"
           />
@@ -333,7 +333,7 @@ export function Room({ dict }: RoomProps) {
                 borderColor: '#5a4430',
                 borderRadius: '3px',
                 fontFamily: 'var(--font-pixel), "Courier New", monospace',
-                fontSize: '10px',
+                fontSize: '13px',
                 color: '#e8d5b0',
                 whiteSpace: 'nowrap',
                 textShadow: '1px 1px 0 #1a0e04',

@@ -138,10 +138,10 @@ export function DeskView(props: DeskViewProps) {
     activeIconRef.current?.focus()
   }, [])
 
-  // Expand to full page
+  // Expand to full page in new tab
   const goExpand = useCallback(() => {
-    router.push(browserPath || '/home')
-  }, [router, browserPath])
+    window.open(browserPath || '/home', '_blank')
+  }, [browserPath])
 
   // Focus iframe on enter browser mode
   useEffect(() => {

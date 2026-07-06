@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
+import localFont from 'next/font/local'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { I18nProvider } from '@/lib/i18n/client'
 import { getDictionary, getLocale } from '@/lib/i18n/server'
@@ -17,6 +18,13 @@ const playfair = Playfair_Display({
   style: ['normal', 'italic'],
   variable: '--font-serif',
   display: 'swap',
+})
+
+const minecraft = localFont({
+  src: '../fonts/Minecraft.ttf',
+  variable: '--font-pixel',
+  display: 'swap',
+  preload: false,
 })
 
 const baseUrl = 'https://ahmedyhussain.com'
@@ -69,7 +77,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const dict = await getDictionary()
 
   return (
-    <html lang={locale} className={`${inter.variable} ${playfair.variable}`}>
+    <html lang={locale} className={`${inter.variable} ${playfair.variable} ${minecraft.variable}`}>
       <body>
         <I18nProvider locale={locale} dict={dict}>
           {children}

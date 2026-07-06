@@ -81,10 +81,13 @@ export function RoomAudio({
       <button
         onClick={toggle}
         aria-label={playing ? muteLabel : unmuteLabel}
-        className="fixed bottom-4 left-4 z-30 font-sans text-[11px] text-[#a09080] hover:text-[#c8b89a] transition-colors"
-        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
+        className="fixed bottom-4 left-4 z-30 text-[11px] text-[#a09080] hover:text-[#c8b89a] transition-colors"
+        style={{
+          fontFamily: 'var(--font-pixel), "Courier New", monospace',
+          textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+        }}
       >
-        {playing ? '♪' : '♫'}
+        MUSIC {playing ? 'ON' : 'OFF'}
       </button>
     </>
   )

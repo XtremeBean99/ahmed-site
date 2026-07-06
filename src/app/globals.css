@@ -102,6 +102,13 @@
   0%, 100% { opacity: 0.025; }
   50%      { opacity: 0.042; }
 }
+
+/* ---- Room page ambient animations ---- */
+@keyframes lamp-glow {
+  0%, 100% { opacity: 0.9; }
+  50%      { opacity: 1; }
+}
+
 /* Reduced motion is handled globally above. */
 
 

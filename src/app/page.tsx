@@ -1,16 +1,12 @@
 import type { Metadata } from 'next'
-import { Hero } from '@/components/sections/Hero'
-import { About } from '@/components/sections/About'
-import { Interests } from '@/components/sections/Interests'
-import { Education } from '@/components/sections/Education'
-import { Skills } from '@/components/sections/Skills'
-import { ContactSection } from '@/components/sections/ContactSection'
+import { getDictionary } from '@/lib/i18n/server'
+import { Room } from '@/components/room/Room'
 import { JsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
-  title: 'Ahmed Hussain · Law, Computing & Technology',
+  title: "Ahmed's Room",
   description:
-    'Personal website of Ahmed Hussain, a BCom / LLB(Hons) candidate at ANU in Canberra, working where law meets computing and the governance of artificial intelligence.',
+    'Step into my digital room — a cosy pixel-art space and the front door to my personal website.',
   alternates: { canonical: 'https://ahmedyhussain.com' },
 }
 
@@ -44,16 +40,17 @@ const personSchema = {
   ],
 }
 
-export default function HomePage() {
+export default async function RoomPage() {
+  const dict = await getDictionary()
+
   return (
     <>
       <JsonLd data={personSchema} />
-      <Hero />
-      <About />
-      <Interests />
-      <Education />
-      <Skills />
-      <ContactSection />
+      <Room
+        dict={{
+          room: dict.room,
+        }}
+      />
     </>
   )
 }

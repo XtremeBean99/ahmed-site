@@ -12,7 +12,7 @@ import { LanguageToggle } from '@/components/ui/LanguageToggle'
 export function Header() {
   const t = useT()
   const navLinks = [
-    { href: '/', label: t.nav.homeLink },
+    { href: '/home', label: t.nav.homeLink },
     { href: '/projects', label: t.nav.projects },
     { href: '/games', label: t.nav.games },
     { href: '/tutoring', label: t.nav.tutoring },
@@ -78,7 +78,7 @@ export function Header() {
       >
         {/* Logo */}
         <Link
-          href="/"
+          href="/home"
           className="flex items-center gap-2.5 group"
           aria-label={t.nav.home}
         >
@@ -122,7 +122,7 @@ export function Header() {
           })}
           <li>
             <Link
-              href="/#contact"
+              href="/home#contact"
               className="text-sm bg-foreground text-background px-4 py-2 rounded-md font-medium hover:bg-muted-foreground transition-colors"
             >
               {t.nav.cta}
@@ -210,7 +210,7 @@ export function Header() {
               ))}
               <li>
                 <Link
-                  href="/#contact"
+                  href="/home#contact"
                   className="inline-block text-sm bg-foreground text-background px-4 py-2 rounded-md font-medium mt-2"
                 >
                   {t.nav.cta}

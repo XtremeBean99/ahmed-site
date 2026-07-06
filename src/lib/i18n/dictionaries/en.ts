@@ -451,6 +451,17 @@ export const en = {
     bugsError: 'Something went wrong. Please try again or email me directly.',
   },
 
+  room: {
+    navLabel: 'Room navigation',
+    monitorLabel: 'Enter the website',
+    posterLabel: 'Cycle poster frame',
+    enterSite: 'Enter website',
+    hint: 'Click around to explore',
+    skip: 'Skip to the website',
+    metaTitle: "Ahmed's Room",
+    metaDescription: 'Step into my digital room — a cosy pixel-art space and the front door to my personal website.',
+  },
+
   notFound: {
     label: '404',
     heading: 'Page not found.',

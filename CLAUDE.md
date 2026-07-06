@@ -16,10 +16,14 @@ Vercel project: `ahmed-site` (ID: `prj_lF32Zp1qlFEKH7XzEW3yUdddQm61`)
 
 ## Critical Constraints
 
-### 1. Design must remain strictly monochrome
+### 1. Design must remain strictly monochrome (except the room page)
 The design uses zinc-950 (`#09090b`) background, white text, zinc-800 borders. No colour accents.
 No gradients except the subtle hero vignette. If you add new UI, match this palette exactly.
 References: Vercel, Linear, Stripe aesthetic. Do not introduce any colour.
+
+**Exception:** The homepage `/` is the "digital bedroom" — a pixel-art room scene with a warm
+brown/mauve palette. This exemption is scoped to `/` only. Every other `(site)` route remains
+monochrome. Do NOT add colour to any `(site)` page.
 
 ### 2. All user input is hostile
 The contact form has server-side Zod validation and a honeypot field. If you add any new form or
@@ -52,15 +56,27 @@ workflow before touching any copy.
 ```
 src/
 ├── app/                   Next.js App Router pages + API routes
-│   ├── api/contact/       POST handler - validate, honeypot, email
-│   ├── games/             Games hub + typing-test + breakout + contract
-│   ├── legal/             Terms + Privacy pages
-│   ├── projects/          Projects hub + code + silicon + aglc4 + base-converter
-│   ├── tutoring/          Full tutoring page (services, pricing, FAQ, form)
-│   ├── template.tsx       Per-route transition wrapper (client, reduced-motion safe)
-│   └── page.tsx           Homepage (7 sections, all static)
+│   ├── (site)/            Route group — chrome (Header/Footer) for all content pages
+│   │   ├── layout.tsx     Site chrome: skip-link, CircuitBackdrop, CircuitMesh,
+│   │   │                  Header, <main>, Footer
+│   │   ├── template.tsx   Per-route fade transition (client, reduced-motion safe)
+│   │   ├── home/          Old homepage (now at /home, moved from /)
+│   │   ├── games/         Games hub + typing-test + breakout + ninja
+│   │   ├── projects/      Projects hub + code + silicon + aglc4 + base-converter
+│   │   ├── tutoring/      Full tutoring page
+│   │   └── legal/         Terms + Privacy pages
+│   ├── layout.tsx         Root layout: fonts, metadata, I18nProvider only (no chrome)
+│   ├── page.tsx           Room page at / — pixel-art bedroom with monitor + poster
+│   └── api/               API routes (untouched by route group)
 │
 ├── components/
+│   ├── room/              Room page components
+│   │   ├── Room.tsx       Client root: scale compute, stage, HUD, transition
+│   │   ├── RoomStage.tsx  1408×768 stage wrapper with CSS scale()
+│   │   ├── RoomObject.tsx Generic hotspot with tooltip + focus ring
+│   │   ├── Monitor.tsx    LED monitor sprite, off/on states, link to /home
+│   │   ├── Poster.tsx     Kitagawa poster, frame cycling on click
+│   │   └── RoomHud.tsx    Corner UI — "Enter website →" link + hint
 │   ├── games/             TypingTest, Breakout, ContractGame (client), GameShell, GameStat
 │   ├── layout/            Header (client - scroll state), Footer (server)
 │   ├── projects/          ToolShell, Aglc4Generator, BaseConverter, SiliconCanvas
@@ -69,6 +85,7 @@ src/
 │                          CircuitMesh, CyberSigils, MotionCard
 │
 ├── lib/
+│   ├── room/              Room object registry (objects.ts — typed position/sprite defs)
 │   ├── aglc4/             AGLC4 citation formatters + field config (pure, no DB)
 │   ├── convert/           Base + bitwise conversion (pure, BigInt)
 │   ├── games/             phrases, wpm, breakout-engine, contract-*, storage (no DB)
@@ -85,6 +102,7 @@ src/
 
 **Default to Server Components.** Only add `'use client'` when you need browser APIs,
 React state, or Framer Motion hooks. Current client components: Header, SectionReveal,
+Room, RoomStage, RoomObject, Monitor, Poster, RoomHud,
 ParallaxImage, ContactForm, CircuitMesh, Template, MotionCard, TypingTest, Breakout,
 ContractGame, Aglc4Generator, BaseConverter.
 
@@ -103,6 +121,76 @@ a fixed backdrop (`pointer-events-none fixed inset-0 -z-10`).
 - Fades toward edges via a CSS `mask-image` radial gradient
 
 If you add any other fixed-position backgrounds, ensure they do not conflict with CircuitMesh.
+
+---
+
+## Route Groups
+
+The site uses one Next.js route group `(site)/` that wraps all content pages (home, games,
+projects, tutoring, legal) in shared chrome: `Header`, `Footer`, `CircuitBackdrop`,
+`CircuitMesh`, and the template fade transition. The root `/` page lives outside this group
+so it can render chrome-free (the room page).
+
+- `src/app/layout.tsx` — root layout: fonts, metadata, `I18nProvider` only. No chrome.
+- `src/app/(site)/layout.tsx` — site chrome for all `/home`, `/games/*`, etc.
+- `src/app/(site)/template.tsx` — per-route fade transition (applies to site pages only,
+  so navigating from /home to /games gets a fade, but the room page is unaffected).
+- Routes moved into `(site)/` do NOT change URLs. The group is invisible to routing.
+
+---
+
+## Room Page (`/`)
+
+The homepage is a pixel-art bedroom scene, the only non-monochrome page on the site.
+It is a client-rendered React component (`Room.tsx`) with no SSR interactivity requirement.
+
+### Component structure
+- `Room.tsx` — Client root. Computes `scale` via `ResizeObserver`, renders stage + HUD.
+  Handles the monitor-click zoom transition (Framer Motion, 800 ms, Escape-cancelable,
+  1.5 s safety timeout).
+- `RoomStage.tsx` — Fixed 1408×768 stage element scaled via `transform: scale()`.
+  Desktop: cover (`max(vw/1408, vh/768)`). Mobile (<700 px): fit width with letterboxing.
+- `RoomObject.tsx` — Generic hotspot with tooltip (150 ms delay), visible focus ring,
+  renders `<a>` or `<button>` depending on whether `href` is set.
+- `Monitor.tsx` — LED monitor sprite (off/on states), hover lift (2 px), `router.prefetch`
+  on mount, fires `onEnter` callback for the transition.
+- `Poster.tsx` — Kitagawa poster, click cycles 5 frames with 120 ms crossfade (Framer
+  Motion `AnimatePresence`).
+- `RoomHud.tsx` — Skip link (sr-only, first in tab order), "Enter website →" persistent
+  link (bottom-right), one-time hint that fades on first interaction.
+
+### Object registry
+`src/lib/room/objects.ts` — typed array of `RoomObjectDef` with `id`, stage `x/y/w/h`,
+`labelKey` (dictionary key), `frames` (sprite URLs), and `href` (or null for buttons).
+This is the single source of truth for hotspot positions. Adding a new object means:
+1. Add entry to `ROOM_OBJECTS`
+2. Create the sprite(s) in `public/room/`
+3. Add dictionary keys to `en.ts` and `fr.ts`
+4. Render it in `Room.tsx`
+
+### Sprite pipeline
+- Source art lives in `website/pixel-art/` (outside the Next.js project).
+- Trimmed, web-ready sprites live in `public/room/` as raw PNGs.
+- Scripts in `scripts/` handle extraction/generation:
+  - `extract-posters.mjs` — Crops the 5 Kitagawa frames to a shared bounding box.
+  - `generate-monitor.mjs` — Generates the LED monitor on/off sprites (Sharp pixel buffer).
+- Sprites are served as `<img>` with `image-rendering: pixelated`. **Never route room
+  sprites through `next/image`** — resampling destroys pixel art.
+- Background: `public/room/background.png` (1408×768, ~55 KB), loaded with
+  `fetchpriority="high"` as the LCP element.
+
+### i18n
+Room strings live in `en.ts` → `room.*` and must have matching keys in `fr.ts`.
+Keys: `navLabel`, `monitorLabel`, `posterLabel`, `enterSite`, `hint`, `skip`,
+`metaTitle`, `metaDescription`.
+
+### Reduced motion
+All room animations (lamp glow pulse, monitor hover lift, poster crossfade, zoom transition)
+are disabled when `prefers-reduced-motion` is active. The monitor becomes an instant link.
+
+### Keyboard navigation
+Tab order: skip link (sr-only, target `/home`) → monitor → poster → HUD "Enter website" link.
+All interactive objects have visible focus rings (2 px warm outline with offset).
 
 ---
 

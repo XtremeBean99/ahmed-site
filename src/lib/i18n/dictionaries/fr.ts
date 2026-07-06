@@ -448,6 +448,17 @@ export const fr: Dictionary = {
     bugsError: 'Une erreur est survenue. Veuillez réessayer ou m\'envoyer un courriel directement.',
   },
 
+  room: {
+    navLabel: 'Navigation de la chambre',
+    monitorLabel: 'Entrer dans le site',
+    posterLabel: 'Changer l’image de l’affiche',
+    enterSite: 'Entrer dans le site',
+    hint: 'Cliquez pour explorer',
+    skip: 'Aller au site',
+    metaTitle: 'La chambre d’Ahmed',
+    metaDescription: 'Entrez dans ma chambre numérique — un espace pixel art cosy et la porte d’entrée de mon site personnel.',
+  },
+
   notFound: {
     label: '404',
     heading: 'Page introuvable.',

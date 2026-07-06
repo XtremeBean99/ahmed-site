@@ -74,4 +74,15 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
     frames: [],
     href: null,
   },
+  {
+    id: 'coffee',
+    // Coffee mug on desk, extracted from coffecup-bedroom.png
+    x: 169,
+    y: 495,
+    w: 56,
+    h: 60,
+    labelKey: 'room.coffeeLabel',
+    frames: ['/room/coffee-cup.png'],
+    href: null,
+  },
 ]

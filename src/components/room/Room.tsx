@@ -31,6 +31,7 @@ interface RoomProps {
       posterLabel: string
       bonsaiLabel: string
       lampLabel: string
+      coffeeLabel: string
       posterClickHint: string
       enterSite: string
       hint: string
@@ -174,6 +175,7 @@ export function Room({ dict }: RoomProps) {
   const monitorObj = ROOM_OBJECTS.find((o) => o.id === 'monitor')!
   const posterObj = ROOM_OBJECTS.find((o) => o.id === 'poster')!
   const bonsaiObj = ROOM_OBJECTS.find((o) => o.id === 'bonsai')!
+  const coffeeObj = ROOM_OBJECTS.find((o) => o.id === 'coffee')!
 
   const screenCenterX = monitorObj.x + 22 + 98
   const screenCenterY = monitorObj.y + 12 + 58
@@ -319,6 +321,46 @@ export function Room({ dict }: RoomProps) {
             className="absolute cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2"
             style={{ left: 60, top: 300, width: 110, height: 220 }}
           />
+
+          {/* Coffee mug */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={coffeeObj.frames[0]}
+            alt={t.room.coffeeLabel}
+            draggable={false}
+            className="absolute"
+            style={{
+              left: coffeeObj.x,
+              top: coffeeObj.y,
+              width: coffeeObj.w,
+              height: coffeeObj.h,
+              imageRendering: 'pixelated',
+            }}
+          />
+
+          {/* Coffee steam animation */}
+          {!reduce && (
+            <div
+              aria-hidden
+              className="absolute pointer-events-none"
+              style={{
+                left: 187,
+                top: 460,
+                width: 24,
+                height: 44,
+                animation: 'coffee-steam 3s ease-in-out infinite',
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/room/coffee-steam.png"
+                alt=""
+                draggable={false}
+                className="w-full h-full"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            </div>
+          )}
 
         </RoomStage>
       </nav>

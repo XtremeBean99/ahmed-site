@@ -120,6 +120,11 @@
   animation: note-float var(--dur) ease-out var(--delay) forwards;
 }
 
+@keyframes coffee-steam {
+  0%, 100% { opacity: 0.4; transform: translateY(0); }
+  50%      { opacity: 0.9; transform: translateY(-6px); }
+}
+
 /* Reduced motion is handled globally above. */
 
 

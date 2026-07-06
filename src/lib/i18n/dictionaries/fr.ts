@@ -454,6 +454,7 @@ export const fr: Dictionary = {
     posterLabel: 'Affiche My Dress Up Darling',
     bonsaiLabel: 'Bonsaï sur le rebord de la fenêtre',
     lampLabel: 'Lampe de bureau',
+    coffeeLabel: 'Tasse de café',
     posterClickHint: 'Jolie affiche !',
     enterSite: 'Entrer dans le site',
     audio: {

@@ -457,6 +457,7 @@ export const en = {
     posterLabel: 'My Dress Up Darling Poster',
     bonsaiLabel: 'Windowsill bonsai tree',
     lampLabel: 'Desk lamp',
+    coffeeLabel: 'Coffee mug',
     posterClickHint: 'Nice poster!',
     enterSite: 'Enter website',
     hint: 'Click around to explore',

@@ -463,6 +463,17 @@ export const en = {
     metaDescription: 'Step into my digital room — a cosy pixel-art space and the front door to my personal website.',
   },
 
+  desk: {
+    home: 'Home',
+    games: 'Games',
+    projects: 'Projects',
+    tutoring: 'Tutoring',
+    contact: 'Contact',
+    legal: 'Legal',
+    back: 'Room',
+    screenLabel: 'Desktop shortcuts',
+  },
+
   notFound: {
     label: '404',
     heading: 'Page not found.',

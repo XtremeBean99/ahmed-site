@@ -460,6 +460,17 @@ export const fr: Dictionary = {
     metaDescription: 'Entrez dans ma chambre numérique — un espace pixel art cosy et la porte d’entrée de mon site personnel.',
   },
 
+  desk: {
+    home: 'Accueil',
+    games: 'Jeux',
+    projects: 'Projets',
+    tutoring: 'Cours',
+    contact: 'Contact',
+    legal: 'Légal',
+    back: 'Chambre',
+    screenLabel: 'Raccourcis du bureau',
+  },
+
   notFound: {
     label: '404',
     heading: 'Page introuvable.',

@@ -49,6 +49,7 @@ export default async function RoomPage() {
       <Room
         dict={{
           room: dict.room,
+          desk: dict.desk,
         }}
       />
     </>

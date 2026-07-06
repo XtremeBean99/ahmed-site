@@ -3,9 +3,7 @@
 import { type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { EASE_OUT_EXPO } from '@/lib/motion'
-
-const STAGE_W = 1408
-const STAGE_H = 768
+import { STAGE_W, STAGE_H } from '@/lib/room/useStageScale'
 
 interface RoomStageProps {
   children: ReactNode

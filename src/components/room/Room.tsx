@@ -1,17 +1,25 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
 import { ROOM_OBJECTS } from '@/lib/room/objects'
+import { useStageScale } from '@/lib/room/useStageScale'
 import { RoomStage } from './RoomStage'
 import { RoomHud } from './RoomHud'
 import { RoomAudio } from './RoomAudio'
 import { Monitor } from './Monitor'
 import { AnimatedSprite } from './AnimatedSprite'
+import { DeskView } from './DeskView'
+import {
+  ICON_HOME,
+  ICON_GAMES,
+  ICON_PROJECTS,
+  ICON_TUTORING,
+  ICON_CONTACT,
+  ICON_LEGAL,
+} from './DeskIcon'
 
-const STAGE_W = 1408
-const STAGE_H = 768
+type View = 'room' | 'zooming' | 'desk' | 'leaving'
 
 interface RoomProps {
   dict: {
@@ -24,110 +32,163 @@ interface RoomProps {
       hint: string
       skip: string
     }
+    desk: {
+      home: string
+      games: string
+      projects: string
+      tutoring: string
+      contact: string
+      legal: string
+      back: string
+      screenLabel: string
+    }
   }
 }
 
 export function Room({ dict }: RoomProps) {
   const t = dict
-  const router = useRouter()
   const reduce = useReducedMotion()
-  const [scale, setScale] = useState(1)
-  const [transitioning, setTransitioning] = useState(false)
-  const navigatingRef = useRef(false)
-  // Store timeout ids in refs so Escape/unmount can clear them
+  const scale = useStageScale()
+  const [view, setView] = useState<View>('room')
+
+  // Timeout refs
   const safetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const navRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const navigatingRef = useRef(false)
 
-  // Compute scale — always fit (letterbox with black bars)
-  const updateScale = useCallback(() => {
-    const vw = window.innerWidth
-    const vh = window.innerHeight
-    setScale(Math.min(vw / STAGE_W, vh / STAGE_H))
+  // Deep-link: check for #desk on mount
+  useEffect(() => {
+    if (window.location.hash === '#desk') {
+      setView('desk')
+    }
   }, [])
 
+  // History: popstate → back to room
   useEffect(() => {
-    updateScale()
-    const onResize = () => updateScale()
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [updateScale])
-
-  // Monitor click → transition animation
-  const handleEnter = useCallback(() => {
-    if (reduce || navigatingRef.current) {
-      router.push('/home')
-      return
+    const onPop = () => {
+      if (view === 'desk') {
+        setView('room')
+        // If we pushed state, pop it; otherwise just update hash
+        if (window.location.hash === '#desk') {
+          window.location.hash = ''
+        }
+      }
     }
-    navigatingRef.current = true
-    setTransitioning(true)
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [view])
 
-    // Safety timeout: force navigation after 1.5s
-    safetyRef.current = setTimeout(() => {
-      router.push('/home')
-    }, 1500)
-
-    // Navigate after zoom + overlay completes (~800 ms)
-    navRef.current = setTimeout(() => {
-      router.push('/home')
-    }, 800)
-  }, [reduce, router])
-
-  // Cancel transition on Escape
-  const cancelTransition = useCallback(() => {
-    setTransitioning(false)
-    navigatingRef.current = false
+  // Clear timeouts on unmount or view change
+  const clearTimeouts = useCallback(() => {
     if (safetyRef.current) { clearTimeout(safetyRef.current); safetyRef.current = null }
     if (navRef.current) { clearTimeout(navRef.current); navRef.current = null }
   }, [])
 
   useEffect(() => {
-    if (!transitioning) return
+    return () => clearTimeouts()
+  }, [clearTimeouts])
+
+  // Monitor click → zoom into desk
+  const handleEnter = useCallback(() => {
+    if (reduce || navigatingRef.current) {
+      setView('desk')
+      window.location.hash = 'desk'
+      return
+    }
+    navigatingRef.current = true
+    setView('zooming')
+
+    // Safety timeout
+    safetyRef.current = setTimeout(() => {
+      setView('desk')
+      window.location.hash = 'desk'
+      navigatingRef.current = false
+    }, 1500)
+
+    // After zoom completes
+    navRef.current = setTimeout(() => {
+      setView('desk')
+      window.history.pushState({ view: 'desk' }, '', '#desk')
+      navigatingRef.current = false
+    }, 800)
+  }, [reduce])
+
+  // Escape cancels zoom
+  const cancelTransition = useCallback(() => {
+    setView('room')
+    navigatingRef.current = false
+    clearTimeouts()
+  }, [clearTimeouts])
+
+  useEffect(() => {
+    if (view !== 'zooming') return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') cancelTransition()
     }
     window.addEventListener('keydown', onKey)
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      // Cleanup timeouts on unmount
-      if (safetyRef.current) clearTimeout(safetyRef.current)
-      if (navRef.current) clearTimeout(navRef.current)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [view, cancelTransition])
+
+  // Desk → back to room
+  const handleDeskBack = useCallback(() => {
+    // popstate handler will catch this
+    if (window.location.hash === '#desk') {
+      window.history.back()
+    } else {
+      setView('room')
     }
-  }, [transitioning, cancelTransition])
+  }, [])
 
   const monitorObj = ROOM_OBJECTS.find((o) => o.id === 'monitor')!
   const posterObj = ROOM_OBJECTS.find((o) => o.id === 'poster')!
   const bonsaiObj = ROOM_OBJECTS.find((o) => o.id === 'bonsai')!
 
-  // Monitor screen centre in stage coords (for zoom origin on inner stage div)
-  // Screen area within monitor-desk.png: sprite-local x 22-218, y 12-128
-  const screenCenterX = monitorObj.x + 22 + 98 // (218-22)/2 ≈ 98, screen centre in stage coords
-  const screenCenterY = monitorObj.y + 12 + 58 // (128-12)/2 ≈ 58
+  const screenCenterX = monitorObj.x + 22 + 98
+  const screenCenterY = monitorObj.y + 12 + 58
 
-  // Screen glow position (in viewport percentage)
+  const STAGE_W = 1408
+  const STAGE_H = 768
   const glowX = ((monitorObj.x + 22 + 98) / STAGE_W) * 100
   const glowY = ((monitorObj.y + 12 + 58) / STAGE_H) * 100
 
+  const deskShortcuts = [
+    { id: 'home', label: t.desk.home, href: '/home', icon: ICON_HOME },
+    { id: 'games', label: t.desk.games, href: '/games', icon: ICON_GAMES },
+    { id: 'projects', label: t.desk.projects, href: '/projects', icon: ICON_PROJECTS },
+    { id: 'tutoring', label: t.desk.tutoring, href: '/tutoring', icon: ICON_TUTORING },
+    { id: 'contact', label: t.desk.contact, href: '/home#contact', icon: ICON_CONTACT },
+    { id: 'legal', label: t.desk.legal, href: '/legal/terms', icon: ICON_LEGAL },
+  ]
+
+  // Desk view
+  if (view === 'desk') {
+    return (
+      <DeskView
+        shortcuts={deskShortcuts}
+        backLabel={t.desk.back}
+        screenLabel={t.desk.screenLabel}
+        onBack={handleDeskBack}
+      />
+    )
+  }
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#1a1210]">
-      {/* Skip link + HUD */}
       <RoomHud
         enterLabel={t.room.enterSite}
         hintLabel={t.room.hint}
         skipLabel={t.room.skip}
       />
 
-      {/* Background music toggle */}
       <RoomAudio />
 
-      {/* Room nav landmark */}
       <nav aria-label={t.room.navLabel}>
         <RoomStage
           scale={scale}
-          zoomScale={transitioning && !reduce ? 3.2 : 1}
+          zoomScale={view === 'zooming' && !reduce ? 3.2 : 1}
           zoomOriginX={screenCenterX}
           zoomOriginY={screenCenterY}
         >
-          {/* Background image (LCP) — raw <img> required for pixel-art rendering */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/room/background.png"
@@ -138,7 +199,6 @@ export function Room({ dict }: RoomProps) {
             style={{ imageRendering: 'pixelated' }}
           />
 
-          {/* Monitor */}
           <Monitor
             label={t.room.monitorLabel}
             x={monitorObj.x}
@@ -150,7 +210,6 @@ export function Room({ dict }: RoomProps) {
             onEnter={handleEnter}
           />
 
-          {/* Poster */}
           <AnimatedSprite
             label={t.room.posterLabel}
             x={posterObj.x}
@@ -162,7 +221,6 @@ export function Room({ dict }: RoomProps) {
             mode="play-once-hold"
           />
 
-          {/* Bonsai */}
           <AnimatedSprite
             label={t.room.bonsaiLabel}
             x={bonsaiObj.x}
@@ -176,9 +234,9 @@ export function Room({ dict }: RoomProps) {
         </RoomStage>
       </nav>
 
-      {/* Screen-coloured glow bloom */}
+      {/* Glow bloom */}
       <AnimatePresence>
-        {transitioning && !reduce && (
+        {view === 'zooming' && !reduce && (
           <motion.div
             className="fixed inset-0 z-40 pointer-events-none"
             initial={{ opacity: 0 }}
@@ -192,9 +250,9 @@ export function Room({ dict }: RoomProps) {
         )}
       </AnimatePresence>
 
-      {/* White overlay fade-in (final 250ms of zoom) */}
+      {/* White overlay */}
       <AnimatePresence>
-        {transitioning && !reduce && (
+        {view === 'zooming' && !reduce && (
           <motion.div
             className="fixed inset-0 z-50 pointer-events-none"
             initial={{ opacity: 0 }}
@@ -206,8 +264,8 @@ export function Room({ dict }: RoomProps) {
         )}
       </AnimatePresence>
 
-      {/* Ambient lamp glow pulse */}
-      {!reduce && !transitioning && (
+      {/* Lamp glow */}
+      {!reduce && view === 'room' && (
         <div
           className="fixed pointer-events-none z-0"
           style={{

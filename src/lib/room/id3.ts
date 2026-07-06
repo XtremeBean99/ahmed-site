@@ -132,7 +132,6 @@ function parseID3v2(buf: Uint8Array): ID3Cover | null {
       let pos = offset
 
       // Skip text encoding byte
-      const encoding = buf[pos]
       pos++
 
       let mime = ''
@@ -161,7 +160,7 @@ function parseID3v2(buf: Uint8Array): ID3Cover | null {
       // Remaining bytes are the image data
       const imgLen = offset + frameSize - pos
       if (imgLen > 0) {
-        const imgData = buf.slice(pos, pos + imgLen)
+        const imgData = new Uint8Array(buf.slice(pos, pos + imgLen))
         return { mime: mime || 'image/jpeg', data: imgData }
       }
       return null

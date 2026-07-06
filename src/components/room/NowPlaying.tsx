@@ -29,7 +29,7 @@ export function NowPlaying({ labels }: NowPlayingProps) {
 
     extractCoverFromMp3(track.src).then((cover) => {
       if (cover) {
-        const blob = new Blob([cover.data], { type: cover.mime })
+        const blob = new Blob([new Uint8Array(cover.data)], { type: cover.mime })
         setEmbeddedCover(URL.createObjectURL(blob))
       }
     }).catch(() => {})

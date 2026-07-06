@@ -42,7 +42,7 @@ export function DeskView({ shortcuts, backLabel, screenLabel, onBack }: DeskView
   const scale = useStageScale()
   const router = useRouter()
   const reduce = useReducedMotion()
-  const { playing, toggle } = useRoomAudio()
+  const { toggle } = useRoomAudio()
   const [showDesktop, setShowDesktop] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [time, setTime] = useState('')

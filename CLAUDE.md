@@ -143,11 +143,33 @@ so it can render chrome-free (the room page).
 
 The homepage is a pixel-art bedroom scene, the only non-monochrome page on the site.
 It is a client-rendered React component (`Room.tsx`) with no SSR interactivity requirement.
+The root page.tsx is a server component that reads the dictionary and passes it to Room.
+
+### Audio architecture
+- `RoomAudioProvider` — React context mounted in `Room.tsx` above both room and desk views.
+  Owns the single `Audio` element. Exposes `{ playing, trackIndex, toggle, nextTrack }`.
+  Tracks defined in `src/lib/room/playlist.ts` (Track[], id/title/artist/src/cover).
+  On `ended`: advances to next track, plays if `playing`. Persists `audio` pref.
+- `NowPlaying` — Bottom-left widget: cover (28×28, cassette SVG fallback), title, artist,
+  play/pause SVG icon, skip SVG icon. Present in both views. Uses `useRoomAudio()`.
+- Speaker hotspots in `DeskView` — two transparent buttons over speaker rects call `toggle()`.
+
+### Stage transform structure (do NOT reintroduce the A1 origin bug)
+The RoomStage uses a two-element transform to keep the room centred at all viewport sizes
+while zooming toward the monitor:
+```
+outer wrapper: centres + fit-scales about centre centre (no offset)
+  inner motion.div: zooms about the monitor screen point in stage coords
+```
+The fit scale is applied to the outer wrapper with `transform-origin: center center`.
+The zoom scale is animated on the inner element whose `transformOrigin` is the monitor
+screen centre in stage pixels. This keeps stage coords valid for the zoom origin.
+`DeskView` uses the simpler `translate(-50%,-50%) scale(fit)` pattern — correct for a
+single-element view with no zoom offset.
 
 ### Component structure
-- `Room.tsx` — Client root. Computes `scale` via `ResizeObserver`, renders stage + HUD.
-  Handles the monitor-click zoom transition (Framer Motion, 800 ms, Escape-cancelable,
-  1.5 s safety timeout).
+- `Room.tsx` — Client root. State machine: room → zooming → desk. Fetches dict from server.
+  Handles monitor-click zoom transition (800 ms, Escape-cancelable, 1.5 s safety timeout).
 - `RoomStage.tsx` — Fixed 1408×768 stage element scaled via `transform: scale()`.
   Desktop: cover (`max(vw/1408, vh/768)`). Mobile (<700 px): fit width with letterboxing.
 - `RoomObject.tsx` — Generic hotspot with tooltip (150 ms delay), visible focus ring,

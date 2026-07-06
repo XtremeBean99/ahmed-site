@@ -25,3 +25,14 @@
 - Located in ahmed-site/src/fonts/
 - Loaded via next/font/local with variable --font-pixel
 - Fallback: "Courier New", monospace
+
+## Extracted sprites
+every sprite below is a trim of a source in sources/ at the listed stage rect.
+- poster-1..5: kitagawa/kitagawa1..5.png → union box (997,78) 134×247
+- monitor-desk: sources/monitor-keyboard-mouse.png → (240,261) 393×343
+- bonsai-1..5: bonsai/tree1..5.png → union box (1241,291) 99×131
+- desk-closeup: sources/desk-closeup.png → full 1408×768 (no crop)
+- background-lamp-off: background_lamp_off.png → full 1408×768 (no crop)
+- mouse: sources/mouse-only-closeup.png → trim (1007,608) 110×80
+- speaker-left: desk-closeup crop → (190,265) 175×300
+- speaker-right: desk-closeup crop → (1005,270) 215×300

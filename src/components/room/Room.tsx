@@ -14,7 +14,6 @@ import { EASE_OUT_EXPO } from '@/lib/motion'
 
 const STAGE_W = 1408
 const STAGE_H = 768
-const MOBILE_BREAKPOINT = 700
 
 interface RoomProps {
   dict: {
@@ -35,23 +34,15 @@ export function Room({ dict }: RoomProps) {
   const router = useRouter()
   const reduce = useReducedMotion()
   const [scale, setScale] = useState(1)
-  const [fitWidth, setFitWidth] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   // Guard to prevent re-triggering navigation
   const navigatingRef = useRef(false)
 
-  // Compute scale on resize
+  // Compute scale — always fit (letterbox with black bars)
   const updateScale = useCallback(() => {
     const vw = window.innerWidth
     const vh = window.innerHeight
-
-    if (vw < MOBILE_BREAKPOINT) {
-      setFitWidth(true)
-      setScale(vw / STAGE_W)
-    } else {
-      setFitWidth(false)
-      setScale(Math.max(vw / STAGE_W, vh / STAGE_H))
-    }
+    setScale(Math.min(vw / STAGE_W, vh / STAGE_H))
   }, [])
 
   useEffect(() => {
@@ -147,7 +138,7 @@ export function Room({ dict }: RoomProps) {
             ease: EASE_OUT_EXPO,
           }}
         >
-          <RoomStage scale={scale} fitWidth={fitWidth}>
+          <RoomStage scale={scale}>
             {/* Background image (LCP) — raw <img> required for pixel-art rendering */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

@@ -15,12 +15,11 @@ interface MonitorProps {
   h: number
   frames: string[]
   href: string
-  /** Called when user clicks the monitor (for transition animation) */
   onEnter?: () => void
 }
 
 export function Monitor({ label, x, y, w, h, frames, href, onEnter }: MonitorProps) {
-  const [active, setActive] = useState(false)
+  const [hovered, setHovered] = useState(false)
   const router = useRouter()
   const reduce = useReducedMotion()
 
@@ -41,9 +40,9 @@ export function Monitor({ label, x, y, w, h, frames, href, onEnter }: MonitorPro
   return (
     <RoomObject
       label={label}
-      active={active}
-      onActivate={() => setActive(true)}
-      onDeactivate={() => setActive(false)}
+      showTooltip={hovered}
+      onActivate={() => setHovered(true)}
+      onDeactivate={() => setHovered(false)}
       onClick={handleClick}
       href={reduce ? href : undefined}
       tabIndex={0}
@@ -62,7 +61,7 @@ export function Monitor({ label, x, y, w, h, frames, href, onEnter }: MonitorPro
         className="block w-full h-full"
         style={{ imageRendering: 'pixelated' }}
         animate={
-          active && !reduce
+          hovered && !reduce
             ? { y: -2 }
             : { y: 0 }
         }

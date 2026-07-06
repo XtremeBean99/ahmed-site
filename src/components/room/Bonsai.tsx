@@ -13,47 +13,49 @@ interface BonsaiProps {
   frames: string[]
 }
 
-const FRAME_DURATION = 120 // ms between each frame
+const FRAME_DURATION = 120
 
 export function Bonsai({ label, x, y, w, h, frames }: BonsaiProps) {
-  const [active, setActive] = useState(false)
+  const [hovered, setHovered] = useState(false)
   const [frameIndex, setFrameIndex] = useState(0)
   const reduce = useReducedMotion()
-  const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const idxRef = useRef(0)
 
-  const startAnimation = useCallback(() => {
-    setActive(true)
+  const clearAnimation = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+  }, [])
+
+  const handleMouseEnter = useCallback(() => {
+    setHovered(true)
     if (reduce || frames.length <= 1) return
 
-    let idx = 0
-    timerRef.current = setInterval(() => {
-      idx = (idx + 1) % frames.length
-      setFrameIndex(idx)
+    idxRef.current = 0
+    setFrameIndex(0)
+
+    intervalRef.current = setInterval(() => {
+      idxRef.current = (idxRef.current + 1) % frames.length
+      setFrameIndex(idxRef.current)
     }, FRAME_DURATION)
   }, [reduce, frames.length])
 
-  const stopAnimation = useCallback(() => {
-    setActive(false)
+  const handleMouseLeave = useCallback(() => {
+    setHovered(false)
     setFrameIndex(0)
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
-      timerRef.current = undefined
-    }
-  }, [])
+    idxRef.current = 0
+    clearAnimation()
+  }, [clearAnimation])
 
+  // Ensure cleanup on unmount
   useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [])
+    return () => clearAnimation()
+  }, [clearAnimation])
 
   return (
-    <RoomObject
-      label={label}
-      active={active}
-      onActivate={startAnimation}
-      onDeactivate={stopAnimation}
-      tabIndex={0}
+    <div
       style={{
         position: 'absolute',
         left: x,
@@ -61,15 +63,25 @@ export function Bonsai({ label, x, y, w, h, frames }: BonsaiProps) {
         width: w,
         height: h,
       }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={frames[frameIndex]}
-        alt=""
-        draggable={false}
-        className="block w-full h-full"
-        style={{ imageRendering: 'pixelated' }}
-      />
-    </RoomObject>
+      <RoomObject
+        label={label}
+        showTooltip={hovered}
+        onActivate={() => {}}
+        onDeactivate={() => {}}
+        tabIndex={0}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={frames[frameIndex]}
+          alt=""
+          draggable={false}
+          className="block w-full h-full"
+          style={{ imageRendering: 'pixelated' }}
+        />
+      </RoomObject>
+    </div>
   )
 }

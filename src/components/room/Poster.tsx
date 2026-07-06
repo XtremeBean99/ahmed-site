@@ -13,56 +13,55 @@ interface PosterProps {
   frames: string[]
 }
 
-const FRAME_DURATION = 100 // ms between each frame advance
+const FRAME_DURATION = 100
 
 export function Poster({ label, x, y, w, h, frames }: PosterProps) {
-  const [active, setActive] = useState(false)
+  const [hovered, setHovered] = useState(false)
   const [frameIndex, setFrameIndex] = useState(0)
   const reduce = useReducedMotion()
-  const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const idxRef = useRef(1) // start from frame 2 for step-through
 
-  const startAnimation = useCallback(() => {
-    setActive(true)
+  const clearAnimation = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+  }, [])
+
+  const handleMouseEnter = useCallback(() => {
+    setHovered(true)
     if (reduce || frames.length <= 1) return
 
-    // Animate from frame 1 through to last frame, then hold
-    let idx = 1 // start from frame 2 (index 1)
-    setFrameIndex(0) // reset to frame 1 immediately
-    timerRef.current = setInterval(() => {
-      idx++
-      if (idx >= frames.length) {
-        // Reached last frame, hold
+    // Start at frame 1, then step through to last frame and hold
+    idxRef.current = 1 // frame 2 (index 1)
+    setFrameIndex(0) // start at frame 1
+
+    intervalRef.current = setInterval(() => {
+      if (idxRef.current >= frames.length) {
+        // Reached last frame — hold
         setFrameIndex(frames.length - 1)
-        if (timerRef.current) clearInterval(timerRef.current)
+        clearAnimation()
         return
       }
-      setFrameIndex(idx)
+      setFrameIndex(idxRef.current)
+      idxRef.current++
     }, FRAME_DURATION)
-  }, [reduce, frames.length])
+  }, [reduce, frames.length, clearAnimation])
 
-  const stopAnimation = useCallback(() => {
-    setActive(false)
-    setFrameIndex(0) // revert to frame 1
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
-      timerRef.current = undefined
-    }
-  }, [])
+  const handleMouseLeave = useCallback(() => {
+    setHovered(false)
+    setFrameIndex(0)
+    idxRef.current = 1
+    clearAnimation()
+  }, [clearAnimation])
 
-  // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [])
+    return () => clearAnimation()
+  }, [clearAnimation])
 
   return (
-    <RoomObject
-      label={label}
-      active={active}
-      onActivate={startAnimation}
-      onDeactivate={stopAnimation}
-      tabIndex={0}
+    <div
       style={{
         position: 'absolute',
         left: x,
@@ -70,15 +69,25 @@ export function Poster({ label, x, y, w, h, frames }: PosterProps) {
         width: w,
         height: h,
       }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={frames[frameIndex]}
-        alt=""
-        draggable={false}
-        className="block w-full h-full"
-        style={{ imageRendering: 'pixelated' }}
-      />
-    </RoomObject>
+      <RoomObject
+        label={label}
+        showTooltip={hovered}
+        onActivate={() => {}}
+        onDeactivate={() => {}}
+        tabIndex={0}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={frames[frameIndex]}
+          alt=""
+          draggable={false}
+          className="block w-full h-full"
+          style={{ imageRendering: 'pixelated' }}
+        />
+      </RoomObject>
+    </div>
   )
 }

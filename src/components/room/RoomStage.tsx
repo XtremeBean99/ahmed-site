@@ -7,37 +7,23 @@ const STAGE_H = 768
 
 interface RoomStageProps {
   children: ReactNode
-  /** ResizeObserver-based scale factor */
+  /** Scale factor (always fit — letterbox with black bars) */
   scale: number
-  /** Whether to use fit-width (mobile) vs cover (desktop) */
-  fitWidth: boolean
 }
 
-export function RoomStage({ children, scale, fitWidth }: RoomStageProps) {
-  // For mobile (<700px): fit width with vertical letterboxing
-  // For desktop: cover with overflow hidden
-  const containerStyle: React.CSSProperties = fitWidth
-    ? {
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        backgroundColor: '#1a1210', // matches room floor colour
-      }
-    : {
+export function RoomStage({ children, scale }: RoomStageProps) {
+  return (
+    <div
+      style={{
         width: '100vw',
         height: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
-        backgroundColor: '#1a1210',
-      }
-
-  return (
-    <div style={containerStyle}>
+        backgroundColor: '#000000',
+      }}
+    >
       <div
         style={{
           width: STAGE_W,

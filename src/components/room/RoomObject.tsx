@@ -8,34 +8,29 @@ import { DURATION } from '@/lib/motion'
 interface RoomObjectProps {
   children: ReactNode
   label: string
-  /** Whether this is currently in a focused/hovered state (for tooltip display) */
-  active: boolean
-  /** Called on pointer enter / focus */
+  /** Whether to show the tooltip (controlled by parent hover state) */
+  showTooltip: boolean
+  /** Called on pointer enter */
   onActivate: () => void
-  /** Called on pointer leave / blur */
+  /** Called on pointer leave */
   onDeactivate: () => void
-  /** Click handler (for buttons) */
+  /** Click handler */
   onClick?: () => void
-  /** If provided, renders as an anchor with this href */
+  /** If provided, renders as an anchor */
   href?: string
-  /** Tab index */
   tabIndex?: number
-  /** CSS class for positioning */
-  className?: string
-  /** Inline styles */
   style?: React.CSSProperties
 }
 
 export function RoomObject({
   children,
   label,
-  active,
+  showTooltip,
   onActivate,
   onDeactivate,
   onClick,
   href,
   tabIndex = 0,
-  className = '',
   style,
 }: RoomObjectProps) {
   const reduce = useReducedMotion()
@@ -53,8 +48,6 @@ export function RoomObject({
     setTooltipReady(false)
   }, [onDeactivate])
 
-  const sharedClass = `block cursor-pointer outline-none ${className}`
-
   const sharedHandlers = {
     onMouseEnter: handleActivate,
     onMouseLeave: handleDeactivate,
@@ -67,7 +60,7 @@ export function RoomObject({
       {href ? (
         <a
           href={href}
-          className={sharedClass}
+          className="block cursor-pointer outline-none"
           aria-label={label}
           tabIndex={tabIndex}
           {...sharedHandlers}
@@ -76,7 +69,7 @@ export function RoomObject({
         </a>
       ) : (
         <button
-          className={sharedClass}
+          className="block cursor-pointer outline-none"
           aria-label={label}
           tabIndex={tabIndex}
           onClick={onClick}
@@ -86,44 +79,68 @@ export function RoomObject({
         </button>
       )}
 
-      {/* Tooltip */}
+      {/* Speech bubble tooltip */}
       <AnimatePresence>
-        {active && tooltipReady && (
+        {showTooltip && tooltipReady && (
           <motion.div
-            initial={{ opacity: 0, y: 2 }}
+            initial={{ opacity: 0, y: 3 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 2 }}
+            exit={{ opacity: 0, y: 3 }}
             transition={{ duration: reduce ? 0 : DURATION.fast }}
             className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-20"
-            style={{ bottom: 'calc(100% + 8px)' }}
+            style={{ bottom: 'calc(100% + 12px)' }}
           >
-            <span
-              className="block whitespace-nowrap px-2 py-1 text-[10px] bg-[#1a1512] border border-[#3a3228] text-[#c8b89a] leading-none"
+            {/* Speech bubble body */}
+            <div
+              className="relative px-3 py-2 border-2"
               style={{
+                backgroundColor: '#3d2e1e',
+                borderColor: '#5a4430',
+                borderRadius: '3px',
                 fontFamily: '"Courier New", "Lucida Console", monospace',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: '#e8d5b0',
                 letterSpacing: '0.5px',
+                whiteSpace: 'nowrap',
+                textShadow: '1px 1px 0 #1a0e04',
                 imageRendering: 'pixelated',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.5), inset 0 0 8px rgba(0,0,0,0.2)',
               }}
             >
               {label}
-            </span>
+              {/* Triangle pointer */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '-7px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 0,
+                  height: 0,
+                  borderLeft: '6px solid transparent',
+                  borderRight: '6px solid transparent',
+                  borderTop: '7px solid #5a4430',
+                }}
+              />
+              {/* Inner triangle for border effect */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '-4px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 0,
+                  height: 0,
+                  borderLeft: '4px solid transparent',
+                  borderRight: '4px solid transparent',
+                  borderTop: '5px solid #3d2e1e',
+                }}
+              />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Focus ring */}
-      {active && (
-        <div
-          aria-hidden
-          className="absolute pointer-events-none z-10"
-          style={{
-            inset: '-2px',
-            outline: '2px solid rgba(200, 184, 154, 0.7)',
-            outlineOffset: '1px',
-            borderRadius: '1px',
-          }}
-        />
-      )}
     </div>
   )
 }

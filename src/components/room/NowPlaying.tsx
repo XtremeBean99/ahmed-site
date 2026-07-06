@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRoomAudio } from './RoomAudioProvider'
 import { PLAYLIST } from '@/lib/room/playlist'
+import { extractCoverFromMp3 } from '@/lib/room/id3'
 
 interface NowPlayingProps {
   labels: {
@@ -16,7 +17,29 @@ interface NowPlayingProps {
 export function NowPlaying({ labels }: NowPlayingProps) {
   const { playing, trackIndex, toggle, nextTrack } = useRoomAudio()
   const [coverError, setCoverError] = useState(false)
+  const [embeddedCover, setEmbeddedCover] = useState<string | null>(null)
+  const prevTrackRef = useRef('')
   const track = PLAYLIST[trackIndex]
+
+  // When track changes and has no external cover, try extracting embedded art
+  useEffect(() => {
+    if (track.cover || prevTrackRef.current === track.src) return
+    prevTrackRef.current = track.src
+    setEmbeddedCover(null)
+
+    extractCoverFromMp3(track.src).then((cover) => {
+      if (cover) {
+        const blob = new Blob([cover.data], { type: cover.mime })
+        setEmbeddedCover(URL.createObjectURL(blob))
+      }
+    }).catch(() => {})
+
+    return () => {
+      // Clean up old blob URL on next run
+    }
+  }, [track.src, track.cover])
+
+  const coverSrc = track.cover || embeddedCover
 
   return (
     <div
@@ -26,10 +49,10 @@ export function NowPlaying({ labels }: NowPlayingProps) {
       style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace' }}
     >
       {/* Album cover or placeholder */}
-      {track.cover && !coverError ? (
+      {coverSrc && !coverError ? (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
-          src={track.cover}
+          src={coverSrc}
           alt=""
           className="w-9 h-9 border-2 flex-shrink-0"
           style={{

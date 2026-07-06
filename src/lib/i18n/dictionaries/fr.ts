@@ -453,6 +453,8 @@ export const fr: Dictionary = {
     monitorLabel: 'Entrer dans le site',
     posterLabel: 'Affiche My Dress Up Darling',
     bonsaiLabel: 'Bonsaï sur le rebord de la fenêtre',
+    lampLabel: 'Lampe de bureau',
+    posterClickHint: 'Jolie affiche !',
     enterSite: 'Entrer dans le site',
     hint: 'Cliquez pour explorer',
     skip: 'Aller au site',

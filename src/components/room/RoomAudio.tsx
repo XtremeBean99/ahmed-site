@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useReducedMotion } from 'framer-motion'
+import { loadPrefs, savePrefs } from '@/lib/room/storage'
 
 const TRACKS = ['/audio/lo-fi-beat.mp3', '/audio/saffron.mp3']
 
@@ -34,6 +35,9 @@ export function RoomAudio({
     if (!mounted || reduce || triedAutoplay.current) return
     triedAutoplay.current = true
 
+    const prefs = loadPrefs()
+    if (!prefs.audio) return // user previously muted
+
     const audio = audioRef.current
     if (!audio) return
 
@@ -60,9 +64,11 @@ export function RoomAudio({
     if (playing) {
       audio.pause()
       setPlaying(false)
+      savePrefs({ audio: false })
     } else {
       audio.play().then(() => {
         setPlaying(true)
+        savePrefs({ audio: true })
       }).catch(() => {})
     }
   }, [playing])

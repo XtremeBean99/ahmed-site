@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
 import { ROOM_OBJECTS } from '@/lib/room/objects'
 import { useStageScale } from '@/lib/room/useStageScale'
+import { loadPrefs, savePrefs } from '@/lib/room/storage'
 import { RoomStage } from './RoomStage'
 import { RoomHud } from './RoomHud'
 import { RoomAudio } from './RoomAudio'
@@ -28,6 +29,8 @@ interface RoomProps {
       monitorLabel: string
       posterLabel: string
       bonsaiLabel: string
+      lampLabel: string
+      posterClickHint: string
       enterSite: string
       hint: string
       skip: string
@@ -50,6 +53,20 @@ export function Room({ dict }: RoomProps) {
   const reduce = useReducedMotion()
   const scale = useStageScale()
   const [view, setView] = useState<View>('room')
+  const [lampOn, setLampOn] = useState(true)
+  const [toast, setToast] = useState<string | null>(null)
+  const [windowHour, setWindowHour] = useState(new Date().getHours())
+
+  // Load lamp pref on mount
+  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn) }, [])
+
+  // Window time-of-day — update on hour change
+  useEffect(() => {
+    const update = () => setWindowHour(new Date().getHours())
+    const msToNextHour = (60 - new Date().getMinutes()) * 60000 - new Date().getSeconds() * 1000
+    const id = setTimeout(() => { update(); setInterval(update, 3600000) }, msToNextHour)
+    return () => clearTimeout(id)
+  }, [])
 
   // Timeout refs
   const safetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -219,6 +236,10 @@ export function Room({ dict }: RoomProps) {
             frames={posterObj.frames}
             frameDuration={100}
             mode="play-once-hold"
+            onClick={() => {
+              setToast(t.room.posterClickHint)
+              setTimeout(() => setToast(null), 2000)
+            }}
           />
 
           <AnimatedSprite
@@ -231,6 +252,46 @@ export function Room({ dict }: RoomProps) {
             frameDuration={120}
             mode="loop"
           />
+
+          {/* Window time-of-day tint overlay */}
+          {!reduce && (
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: 1140,
+                top: 20,
+                width: 240,
+                height: 260,
+                opacity: windowHour >= 20 || windowHour < 5 ? 0.4 : windowHour < 8 ? 0.18 : 0.05,
+                background:
+                  windowHour >= 20 || windowHour < 5
+                    ? 'rgba(10,10,30,0.7)'
+                    : windowHour < 8
+                      ? 'rgba(40,35,50,0.3)'
+                      : 'rgba(255,240,220,0.1)',
+                transition: 'opacity 2s ease, background 2s ease',
+              }}
+            />
+          )}
+
+          {/* Lamp toggle hotspot */}
+          <button
+            onClick={() => { setLampOn((v) => { const n = !v; savePrefs({ lampOn: n }); return n }) }}
+            aria-label={t.room.lampLabel}
+            className="absolute cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2"
+            style={{ left: 60, top: 300, width: 110, height: 220 }}
+          />
+
+          {/* Lamp dim overlay when off */}
+          {!lampOn && (
+            <div
+              className="absolute inset-0 pointer-events-none transition-opacity duration-700"
+              style={{
+                background:
+                  'radial-gradient(ellipse at 15% 45%, transparent 20%, rgba(5,3,2,0.55) 100%)',
+              }}
+            />
+          )}
         </RoomStage>
       </nav>
 
@@ -261,6 +322,29 @@ export function Room({ dict }: RoomProps) {
             transition={{ duration: 0.25, delay: 0.35, ease: 'easeOut' }}
             style={{ background: '#faf8f5' }}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Poster click toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none px-3 py-1.5 border-2"
+            style={{
+              backgroundColor: '#3d2e1e',
+              borderColor: '#5a4430',
+              borderRadius: '3px',
+              fontFamily: 'var(--font-pixel), "Courier New", monospace',
+              fontSize: '12px',
+              color: '#e8d5b0',
+            }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            {toast}
+          </motion.div>
         )}
       </AnimatePresence>
 

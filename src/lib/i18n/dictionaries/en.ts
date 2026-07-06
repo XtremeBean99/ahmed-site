@@ -456,6 +456,8 @@ export const en = {
     monitorLabel: 'Enter the website',
     posterLabel: 'My Dress Up Darling Poster',
     bonsaiLabel: 'Windowsill bonsai tree',
+    lampLabel: 'Desk lamp',
+    posterClickHint: 'Nice poster!',
     enterSite: 'Enter website',
     hint: 'Click around to explore',
     skip: 'Skip to the website',

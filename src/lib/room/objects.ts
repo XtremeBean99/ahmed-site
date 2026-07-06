@@ -63,4 +63,15 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
     ],
     href: null,
   },
+  {
+    id: 'lamp',
+    // Desk lamp hotspot (baked into background, no separate sprite)
+    x: 60,
+    y: 300,
+    w: 110,
+    h: 220,
+    labelKey: 'room.lampLabel',
+    frames: [],
+    href: null,
+  },
 ]

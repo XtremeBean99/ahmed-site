@@ -320,21 +320,25 @@ export function Room({ dict }: RoomProps) {
             />
           )}
 
-          {/* Window clock tooltip */}
+          {/* Clock — left of the poster */}
           {clockTooltip && (
             <div
-              className="absolute pointer-events-none"
+              className="absolute pointer-events-none px-2 py-1 border-2"
               style={{
-                left: 1140,
-                top: 240,
+                left: 860,
+                top: 100,
+                backgroundColor: '#3d2e1e',
+                borderColor: '#5a4430',
+                borderRadius: '3px',
                 fontFamily: 'var(--font-pixel), "Courier New", monospace',
                 fontSize: '10px',
-                color: '#c8b89a',
-                textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                color: '#e8d5b0',
                 whiteSpace: 'nowrap',
+                textShadow: '1px 1px 0 #1a0e04',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
               }}
             >
-              It&apos;s {clockTooltip} in your world
+              It&apos;s {clockTooltip}
             </div>
           )}
 

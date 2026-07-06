@@ -16,6 +16,8 @@ interface AnimatedSpriteProps {
   frameDuration: number
   mode: SpriteMode
   onClick?: () => void
+  /** Tooltip alignment, forwarded to RoomObject (use 'right' near the stage edge) */
+  tooltipAlign?: 'center' | 'right'
 }
 
 export function AnimatedSprite({
@@ -28,6 +30,7 @@ export function AnimatedSprite({
   frameDuration,
   mode,
   onClick,
+  tooltipAlign,
 }: AnimatedSpriteProps) {
   const [hovered, setHovered] = useState(false)
   const [frameIndex, setFrameIndex] = useState(0)
@@ -111,6 +114,7 @@ export function AnimatedSprite({
         onDeactivate={handleDeactivate}
         onClick={onClick}
         tabIndex={0}
+        tooltipAlign={tooltipAlign}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

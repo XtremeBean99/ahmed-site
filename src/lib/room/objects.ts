@@ -76,13 +76,22 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
   },
   {
     id: 'coffee',
-    // Coffee mug on desk, extracted from coffecup-bedroom.png
-    x: 169,
-    y: 495,
-    w: 56,
-    h: 60,
+    // Coffee mug on desk. Frame 1 = rest (coffecup-bedroom.png), frames 2–6 =
+    // hover highlight (coffecup-bedroom1–5.png). All cropped to the union
+    // bbox (160, 475, 83×83) so the animation does not jitter.
+    x: 160,
+    y: 475,
+    w: 83,
+    h: 83,
     labelKey: 'room.coffeeLabel',
-    frames: ['/room/coffee-cup.png'],
+    frames: [
+      '/room/coffee-1.png',
+      '/room/coffee-2.png',
+      '/room/coffee-3.png',
+      '/room/coffee-4.png',
+      '/room/coffee-5.png',
+      '/room/coffee-6.png',
+    ],
     href: null,
   },
 ]

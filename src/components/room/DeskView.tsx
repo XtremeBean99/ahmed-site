@@ -11,6 +11,16 @@ import { MusicNotes } from './MusicNotes'
 const SCREEN_X = 436; const SCREEN_Y = 152; const SCREEN_W = 536; const SCREEN_H = 308
 const SPEAKER_LEFT = { x: 190, y: 265, w: 175, h: 300 }
 const SPEAKER_RIGHT = { x: 1005, y: 270, w: 215, h: 300 }
+// Driver holes (tweeter + woofer) per speaker, stage coords, measured from the art.
+// Module-level constants so the MusicNotes effect dependency stays referentially stable.
+const HOLES_LEFT = [
+  { cx: 284, cy: 349, r: 34 },
+  { cx: 284, cy: 478, r: 50 },
+]
+const HOLES_RIGHT = [
+  { cx: 1118, cy: 352, r: 38 },
+  { cx: 1115, cy: 472, r: 52 },
+]
 const MOUSE_X_MIN = 975; const MOUSE_X_MAX = 1140
 const MOUSE_Y_MIN = 572; const MOUSE_Y_MAX = 635
 const MOUSE_REST_X = 1007; const MOUSE_REST_Y = 608
@@ -46,7 +56,7 @@ export function DeskView(props: DeskViewProps) {
   const [screensaver, setScreensaver] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const activeIconRef = useRef<HTMLAnchorElement>(null)
-  const mouseRef = useRef<HTMLButtonElement>(null)
+  const mouseRef = useRef<HTMLDivElement>(null)
   const mouseTarget = useRef({ x: MOUSE_REST_X, y: MOUSE_REST_Y })
   const mouseCurrent = useRef({ x: MOUSE_REST_X, y: MOUSE_REST_Y })
   const rafRef = useRef(0)
@@ -145,7 +155,7 @@ export function DeskView(props: DeskViewProps) {
     const reset = () => {
       setScreensaver(false)
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
-      idleTimerRef.current = setTimeout(() => setScreensaver(true), 90000)
+      idleTimerRef.current = setTimeout(() => setScreensaver(true), 15000)
     }
     const events = ['mousemove', 'keydown', 'pointerdown', 'wheel']
     for (const e of events) window.addEventListener(e, reset)
@@ -192,7 +202,11 @@ export function DeskView(props: DeskViewProps) {
 
   return (
     <div className="relative" style={{ width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: '#000', cursor: 'default' }}
-      onClick={(e) => { if (!(e.target as HTMLElement).closest('[data-screen-area]')) onBack() }}>
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest('[data-screen-area]')) return
+        setMouseJitter(true); setTimeout(() => setMouseJitter(false), 300)
+        onBack()
+      }}>
       <motion.div style={{
         width: STAGE_W, height: STAGE_H, position: 'absolute', top: '50%', left: '50%',
         transform: `translate(-50%, -50%) scale(${scale})`, transformOrigin: 'center center',
@@ -214,23 +228,22 @@ export function DeskView(props: DeskViewProps) {
             style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace', fontSize: '10px' }}>✕♪</span>}
         </button>
 
-        {/* Music notes from speakers */}
-        <MusicNotes cx={277} cy={258} />
-        <MusicNotes cx={1112} cy={262} />
+        {/* Music notes emanating from the speaker driver holes */}
+        <MusicNotes holes={HOLES_LEFT} startDelay={0} />
+        <MusicNotes holes={HOLES_RIGHT} startDelay={550} />
 
-        {/* Decorative mouse (clickable for jitter) */}
-        <button
+        {/* Decorative mouse */}
+        <div
           ref={mouseRef}
-          onClick={() => { setMouseJitter(true); setTimeout(() => setMouseJitter(false), 300) }}
-          aria-label="Click the mouse"
-          className="absolute cursor-pointer outline-none"
-          style={{ left: 0, top: 0, width: 110, height: 80, border: 0, background: 'transparent', transform: `translate(${MOUSE_REST_X}px, ${MOUSE_REST_Y}px)`, willChange: 'transform' }}
+          aria-hidden
+          className="absolute pointer-events-none"
+          style={{ left: 0, top: 0, width: 110, height: 80, transform: `translate(${MOUSE_REST_X}px, ${MOUSE_REST_Y}px)`, willChange: 'transform' }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/room/mouse.png" alt="" draggable={false}
-            className={`block pointer-events-none ${mouseJitter && !reduce ? 'animate-[mouse-jitter_0.3s_ease-out]' : ''}`}
+            className={`block ${mouseJitter && !reduce ? 'animate-[mouse-jitter_0.3s_ease-out]' : ''}`}
             style={{ imageRendering: 'pixelated' }} />
-        </button>
+        </div>
 
         {/* Screen area */}
         <div data-screen-area style={screenStyle}>

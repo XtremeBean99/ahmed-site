@@ -20,6 +20,12 @@ interface RoomObjectProps {
   href?: string
   tabIndex?: number
   style?: React.CSSProperties
+  /**
+   * Horizontal alignment of the tooltip bubble relative to the object.
+   * Use 'right' for objects near the stage's right edge (e.g. bonsai) so the
+   * bubble stays inside the stage instead of overflowing the viewport.
+   */
+  tooltipAlign?: 'center' | 'right'
 }
 
 export function RoomObject({
@@ -32,6 +38,7 @@ export function RoomObject({
   href,
   tabIndex = 0,
   style,
+  tooltipAlign = 'center',
 }: RoomObjectProps) {
   const reduce = useReducedMotion()
   const [tooltipReady, setTooltipReady] = useState(false)
@@ -92,7 +99,9 @@ export function RoomObject({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 3 }}
             transition={{ duration: reduce ? 0 : DURATION.fast }}
-            className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-20"
+            className={`absolute pointer-events-none z-20 ${
+              tooltipAlign === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2'
+            }`}
             style={{ bottom: 'calc(100% + 12px)' }}
           >
             <div
@@ -116,8 +125,9 @@ export function RoomObject({
                 style={{
                   position: 'absolute',
                   bottom: '-7px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
+                  ...(tooltipAlign === 'right'
+                    ? { right: '22px' }
+                    : { left: '50%', transform: 'translateX(-50%)' }),
                   width: 0,
                   height: 0,
                   borderLeft: '6px solid transparent',
@@ -129,8 +139,9 @@ export function RoomObject({
                 style={{
                   position: 'absolute',
                   bottom: '-4px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
+                  ...(tooltipAlign === 'right'
+                    ? { right: '24px' }
+                    : { left: '50%', transform: 'translateX(-50%)' }),
                   width: 0,
                   height: 0,
                   borderLeft: '4px solid transparent',

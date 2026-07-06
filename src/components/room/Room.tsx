@@ -7,7 +7,8 @@ import { useStageScale } from '@/lib/room/useStageScale'
 import { loadPrefs, savePrefs } from '@/lib/room/storage'
 import { RoomStage } from './RoomStage'
 import { RoomHud } from './RoomHud'
-import { RoomAudio } from './RoomAudio'
+import { RoomAudioProvider } from './RoomAudioProvider'
+import { NowPlaying } from './NowPlaying'
 import { Monitor } from './Monitor'
 import { AnimatedSprite } from './AnimatedSprite'
 import { DeskView } from './DeskView'
@@ -179,16 +180,20 @@ export function Room({ dict }: RoomProps) {
   // Desk view
   if (view === 'desk') {
     return (
-      <DeskView
-        shortcuts={deskShortcuts}
-        backLabel={t.desk.back}
-        screenLabel={t.desk.screenLabel}
-        onBack={handleDeskBack}
-      />
+      <RoomAudioProvider>
+        <DeskView
+          shortcuts={deskShortcuts}
+          backLabel={t.desk.back}
+          screenLabel={t.desk.screenLabel}
+          onBack={handleDeskBack}
+        />
+        <NowPlaying />
+      </RoomAudioProvider>
     )
   }
 
   return (
+    <RoomAudioProvider>
     <div className="relative w-full h-screen overflow-hidden bg-[#1a1210]">
       <RoomHud
         enterLabel={t.room.enterSite}
@@ -196,7 +201,7 @@ export function Room({ dict }: RoomProps) {
         skipLabel={t.room.skip}
       />
 
-      <RoomAudio />
+      <NowPlaying />
 
       <nav aria-label={t.room.navLabel}>
         <RoomStage
@@ -205,6 +210,17 @@ export function Room({ dict }: RoomProps) {
           zoomOriginX={screenCenterX}
           zoomOriginY={screenCenterY}
         >
+          {/* Lamp-off background (always present, behind lamp-on) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/room/background-lamp-off.png"
+            alt=""
+            draggable={false}
+            className="absolute inset-0 w-full h-full"
+            style={{ imageRendering: 'pixelated' }}
+          />
+
+          {/* Lamp-on background (LCP, fades out when lamp off) */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/room/background.png"
@@ -212,7 +228,11 @@ export function Room({ dict }: RoomProps) {
             fetchPriority="high"
             draggable={false}
             className="absolute inset-0 w-full h-full"
-            style={{ imageRendering: 'pixelated' }}
+            style={{
+              imageRendering: 'pixelated',
+              opacity: lampOn ? 1 : 0,
+              transition: reduce ? 'none' : 'opacity 0.4s ease',
+            }}
           />
 
           <Monitor
@@ -281,16 +301,6 @@ export function Room({ dict }: RoomProps) {
             style={{ left: 60, top: 300, width: 110, height: 220 }}
           />
 
-          {/* Lamp dim overlay when off */}
-          {!lampOn && (
-            <div
-              className="absolute inset-0 pointer-events-none transition-opacity duration-700"
-              style={{
-                background:
-                  'radial-gradient(ellipse at 15% 45%, transparent 20%, rgba(5,3,2,0.55) 100%)',
-              }}
-            />
-          )}
         </RoomStage>
       </nav>
 
@@ -362,5 +372,6 @@ export function Room({ dict }: RoomProps) {
         />
       )}
     </div>
+    </RoomAudioProvider>
   )
 }

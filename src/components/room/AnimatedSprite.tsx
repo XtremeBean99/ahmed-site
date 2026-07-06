@@ -35,8 +35,8 @@ export function AnimatedSprite({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const idxRef = useRef(0)
 
-  const clearAnimation = useCallback(() => {
-    if (intervalRef.current) {
+  const clearTimer = useCallback(() => {
+    if (intervalRef.current !== null) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
@@ -46,44 +46,42 @@ export function AnimatedSprite({
     setHovered(true)
     if (reduce || frames.length <= 1) return
 
-    if (mode === 'play-once-hold') {
-      // Start at frame 0, step through to last, hold
-      idxRef.current = 1
-      setFrameIndex(0)
+    // Always kill any running timer first
+    clearTimer()
+    setFrameIndex(0)
+    idxRef.current = 0
 
+    if (mode === 'play-once-hold') {
+      // Step through frames 0→1→2→...→last, then hold
       intervalRef.current = setInterval(() => {
+        idxRef.current++
         if (idxRef.current >= frames.length) {
           setFrameIndex(frames.length - 1)
-          clearAnimation()
+          clearTimer()
           return
         }
         setFrameIndex(idxRef.current)
-        idxRef.current++
       }, frameDuration)
     } else {
-      // Loop
-      idxRef.current = 0
-      setFrameIndex(0)
-
+      // Loop continuously
       intervalRef.current = setInterval(() => {
         idxRef.current = (idxRef.current + 1) % frames.length
         setFrameIndex(idxRef.current)
       }, frameDuration)
     }
-  }, [reduce, frames.length, mode, frameDuration, clearAnimation])
+  }, [reduce, frames.length, mode, frameDuration, clearTimer])
 
   const stopAnimation = useCallback(() => {
     setHovered(false)
+    clearTimer()
     setFrameIndex(0)
-    idxRef.current = 0
-    clearAnimation()
-  }, [clearAnimation])
+  }, [clearTimer])
 
+  // Cleanup on unmount
   useEffect(() => {
-    return () => clearAnimation()
-  }, [clearAnimation])
+    return () => clearTimer()
+  }, [clearTimer])
 
-  // Shared handler used by both mouse and focus
   const handleActivate = useCallback(() => {
     startAnimation()
   }, [startAnimation])

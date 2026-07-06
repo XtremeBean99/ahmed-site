@@ -253,7 +253,7 @@ export function Room({ dict }: RoomProps) {
             w={posterObj.w}
             h={posterObj.h}
             frames={posterObj.frames}
-            frameDuration={100}
+            frameDuration={200}
             mode="play-once-hold"
             onClick={() => {
               setToast(t.room.posterClickHint)
@@ -268,7 +268,7 @@ export function Room({ dict }: RoomProps) {
             w={bonsaiObj.w}
             h={bonsaiObj.h}
             frames={bonsaiObj.frames}
-            frameDuration={120}
+            frameDuration={250}
             mode="loop"
           />
 

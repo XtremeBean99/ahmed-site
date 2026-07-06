@@ -43,7 +43,7 @@ interface DeskViewProps {
 
 export function DeskView(props: DeskViewProps) {
   const { shortcuts, backLabel, screenLabel, desktopLabel, expandLabel, browserTitle, speakersLabel, onBack } = props
-  const scale = useStageScale() * 0.75
+  const scale = useStageScale()
   const router = useRouter()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
@@ -317,8 +317,8 @@ export function DeskView(props: DeskViewProps) {
                       style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace' }} aria-label={backLabel}>← {backLabel}</button>
                   </div>
                 </div>
-                {/* Iframe area */}
-                <div className="flex-1 relative">
+                {/* Iframe area — zoomed out 25% so site content appears smaller */}
+                <div className="flex-1 relative overflow-hidden">
                   {!iframeLoaded && (
                     <div className="absolute inset-0 flex items-center justify-center"
                       style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace', fontSize: '10px', color: '#3a3028', backgroundColor: '#faf8f5' }}>
@@ -329,8 +329,14 @@ export function DeskView(props: DeskViewProps) {
                     ref={iframeRef}
                     src={browserPath}
                     title={browserTitle}
-                    className="w-full h-full border-0"
-                    style={{ backgroundColor: '#faf8f5' }}
+                    className="border-0 absolute top-0 left-0"
+                    style={{
+                      backgroundColor: '#faf8f5',
+                      width: `${SCREEN_W / 0.75}px`,
+                      height: `${(SCREEN_H - 28) / 0.75}px`,
+                      transform: 'scale(0.75)',
+                      transformOrigin: 'top left',
+                    }}
                     onLoad={() => setIframeLoaded(true)}
                     sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
                   />

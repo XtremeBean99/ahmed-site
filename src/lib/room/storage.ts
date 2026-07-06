@@ -3,9 +3,10 @@ const KEY = 'room-save-v1'
 interface RoomSave {
   audio: boolean
   lampOn: boolean
+  visitCount: number
 }
 
-const DEFAULTS: RoomSave = { audio: true, lampOn: true }
+const DEFAULTS: RoomSave = { audio: true, lampOn: true, visitCount: 0 }
 
 export function loadPrefs(): RoomSave {
   try {
@@ -15,6 +16,7 @@ export function loadPrefs(): RoomSave {
     return {
       audio: typeof parsed.audio === 'boolean' ? parsed.audio : DEFAULTS.audio,
       lampOn: typeof parsed.lampOn === 'boolean' ? parsed.lampOn : DEFAULTS.lampOn,
+      visitCount: typeof parsed.visitCount === 'number' ? parsed.visitCount : DEFAULTS.visitCount,
     }
   } catch {
     return { ...DEFAULTS }

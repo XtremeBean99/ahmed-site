@@ -70,9 +70,10 @@ export function Room({ dict }: RoomProps) {
   const [lampFlicker, setLampFlicker] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [clockTooltip, setClockTooltip] = useState('')
+  const [visitCount, setVisitCount] = useState(0)
 
   // Load lamp pref on mount
-  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn) }, [])
+  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setVisitCount(p.visitCount + 1); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
 
   // Clock tooltip — update every 30s
   useEffect(() => {
@@ -312,7 +313,7 @@ export function Room({ dict }: RoomProps) {
                 boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
               }}
             >
-              {t.room.clockTip.replace('{time}', clockTooltip)}
+              {t.room.clockTip.replace('{time}', clockTooltip)}  ·  👁 {visitCount}
             </div>
           )}
 

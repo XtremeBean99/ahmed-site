@@ -69,7 +69,6 @@ export function Room({ dict }: RoomProps) {
   const [lampOn, setLampOn] = useState(true)
   const [lampFlicker, setLampFlicker] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
-  const [windowHour, setWindowHour] = useState(new Date().getHours())
   const [clockTooltip, setClockTooltip] = useState('')
 
   // Recursion guard: redirect if rendered inside own monitor iframe
@@ -80,11 +79,10 @@ export function Room({ dict }: RoomProps) {
   // Load lamp pref on mount
   useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn) }, [])
 
-  // Window time-of-day — update on hour change, and clock tooltip every minute
+  // Clock tooltip — update every 30s
   useEffect(() => {
     const tick = () => {
       const now = new Date()
-      setWindowHour(now.getHours())
       setClockTooltip(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }))
     }
     tick()
@@ -300,27 +298,6 @@ export function Room({ dict }: RoomProps) {
             mode="loop"
             tooltipAlign="right"
           />
-
-          {/* Window time-of-day tint overlay */}
-          {!reduce && (
-            <div
-              className="absolute pointer-events-none"
-              style={{
-                left: 1140,
-                top: 20,
-                width: 240,
-                height: 260,
-                opacity: windowHour >= 20 || windowHour < 5 ? 0.4 : windowHour < 8 ? 0.18 : 0.05,
-                background:
-                  windowHour >= 20 || windowHour < 5
-                    ? 'rgba(10,10,30,0.7)'
-                    : windowHour < 8
-                      ? 'rgba(40,35,50,0.3)'
-                      : 'rgba(255,240,220,0.1)',
-                transition: 'opacity 2s ease, background 2s ease',
-              }}
-            />
-          )}
 
           {/* Clock — left of the poster */}
           {clockTooltip && (

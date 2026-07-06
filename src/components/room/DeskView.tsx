@@ -43,7 +43,7 @@ interface DeskViewProps {
 
 export function DeskView(props: DeskViewProps) {
   const { shortcuts, backLabel, screenLabel, desktopLabel, expandLabel, browserTitle, speakersLabel, onBack } = props
-  const scale = useStageScale()
+  const scale = useStageScale() * 0.75
   const router = useRouter()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()

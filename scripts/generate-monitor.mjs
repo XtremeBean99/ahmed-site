@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const outDir = join(__dirname, '..', 'public', 'room')
-const sourceDir = join(__dirname, '..', '..', 'pixel-art', 'monitor')
+const sourceDir = join(__dirname, '..', 'assets', 'pixel-art', 'monitor')
 
 // Monitor design (pixel art, matching background palette)
 // Background palette reference (sampled from background.png):

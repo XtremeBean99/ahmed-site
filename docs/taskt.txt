@@ -1,0 +1,395 @@
+# Project: Digital Bedroom Homepage
+
+## Overview
+
+Redesign the root homepage of my existing personal website into an immersive interactive experience while preserving the existing application.
+
+This should not become another developer portfolio.
+
+It should become a digital place.
+
+The homepage represents my own cosy room on the internet. Visitors should feel as though they have entered someone's personal space that has existed for years and accumulated personality over time.
+
+The room serves as the gateway into the rest of the website.
+
+---
+
+# Existing Application
+
+## Framework
+
+* Next.js (latest App Router)
+* TypeScript
+* Existing application already deployed on Vercel
+* Single GitHub repository
+* Existing pages must remain functional
+* Existing routes should not be broken
+
+Do **not** create multiple applications or a monorepo.
+
+---
+
+# Routing
+
+Current homepage becomes an interactive experience located at:
+
+```
+/
+```
+
+All existing routes continue to exist, including examples such as:
+
+```
+/games
+/projects
+/about
+/contact
+/blog
+```
+
+The homepage simply becomes the new front door.
+
+---
+
+# Core Philosophy
+
+Avoid making another portfolio homepage.
+
+Instead, build a memorable experience.
+
+The room should communicate personality before presenting information.
+
+Users should spend time exploring before clicking "Enter Website."
+
+Think of it as a digital home rather than a landing page.
+
+---
+
+# Emotional Goals
+
+The homepage should feel:
+
+* warm
+* nostalgic
+* calm
+* handcrafted
+* playful
+* slightly mysterious
+* rewarding to explore
+* polished
+* timeless
+
+Avoid:
+
+* corporate aesthetics
+* SaaS landing pages
+* minimalism for its own sake
+* excessive text
+* overwhelming animations
+* sensory overload
+
+---
+
+# Visual Style
+
+Primary inspirations:
+
+* early 2000s personal websites
+* Y2K nostalgia
+* pixel art
+* CRT monitors
+* cosy bedrooms
+* retro game interiors
+* hand-crafted Neocities sites
+* old Flash interactions
+
+Blend these inspirations with modern UI quality.
+
+The result should feel like:
+
+"What if someone recreated a beloved early-2000s personal homepage using modern web technologies?"
+
+---
+
+# Homepage Scene
+
+Create a pixel-art inspired bedroom.
+
+Suggested objects include:
+
+* CRT computer
+* wooden desk
+* bookshelves
+* rug
+* desk lamp
+* sleeping cat
+* window
+* potted plants
+* cassette player
+* handheld game console
+* camera
+* floppy disks
+* notebooks
+* coffee mug
+* framed artwork
+* shelves
+* wall posters
+
+The room should feel lived in.
+
+Small imperfections are encouraged.
+
+---
+
+# Primary Navigation
+
+The CRT monitor is the central focus.
+
+When clicked:
+
+* monitor powers on
+* CRT flickers
+* fake BIOS sequence
+* operating system boot animation
+* monitor glow
+* transition into the existing website
+
+The transition should feel satisfying and memorable.
+
+---
+
+# Secondary Interactions
+
+Every object should reward curiosity.
+
+Examples:
+
+Bookshelf → About
+
+Camera → Photography
+
+Game console → Games
+
+Notebook → Blog
+
+Floppy disk → Resume
+
+Coffee mug → Random quote
+
+Plant → Small animation
+
+Window → Weather
+
+Cat → Interaction
+
+Lamp → Toggle room lighting
+
+---
+
+# Window
+
+The outside world should react to:
+
+* local time
+* sunrise
+* sunset
+* seasons
+
+Optional weather effects:
+
+* rain
+* snow
+* stars
+* clouds
+
+---
+
+# Audio
+
+Audio should always be optional.
+
+Possible sounds:
+
+* CRT hum
+* keyboard clicks
+* rain ambience
+* cassette hiss
+* button clicks
+* Game Boy startup
+* soft room ambience
+
+Provide mute controls.
+
+Respect browser autoplay restrictions.
+
+---
+
+# Animation
+
+Animations should feel premium.
+
+Examples:
+
+* breathing motion
+* floating particles
+* CRT scanlines
+* dust
+* subtle lighting
+* flickering monitor
+* cursor interactions
+* object hover reactions
+
+Prioritise smoothness.
+
+Target 60 FPS.
+
+---
+
+# Hidden Content
+
+Reward exploration.
+
+Ideas include:
+
+* Konami code
+* secret room
+* hidden floppy disk
+* achievements
+* hidden messages
+* collectible stickers
+* developer notes
+* fake terminal
+* unlockable wallpapers
+* clickable stars
+* mystery drawer
+* hidden arcade cabinet
+
+Use localStorage to remember discoveries.
+
+---
+
+# Persistence
+
+Returning visitors should notice changes.
+
+Remember:
+
+* achievements
+* settings
+* unlocked secrets
+* selected theme
+* audio preference
+
+---
+
+# Accessibility
+
+Meet WCAG AA where possible.
+
+Include:
+
+* keyboard navigation
+* screen reader support
+* reduced motion mode
+* captions where appropriate
+* colour contrast compliance
+
+---
+
+# Performance
+
+Aim for:
+
+* Lighthouse 95+
+* responsive loading
+* code splitting
+* lazy loading
+* image optimisation
+* efficient animation loops
+
+Do not sacrifice responsiveness for visual effects.
+
+---
+
+# Technical Freedom
+
+Choose the best technologies as needed.
+
+Possible tools include:
+
+* GSAP
+* Framer Motion
+* React Three Fiber
+* Three.js
+* PixiJS
+* Web Audio API
+* GLSL shaders
+* SVG animation
+* CSS Houdini
+* View Transitions API
+
+Only introduce dependencies that clearly improve the experience.
+
+---
+
+# Asset Generation
+
+Create custom pixel-art assets where needed.
+
+Maintain a consistent visual language.
+
+Avoid placeholder graphics.
+
+---
+
+# Code Quality
+
+Produce production-quality code.
+
+Architecture should be:
+
+* modular
+* reusable
+* documented
+* maintainable
+* strongly typed
+
+Avoid duplicated logic.
+
+---
+
+# Development Process
+
+Do not stop after the first working implementation.
+
+Instead:
+
+1. Build an initial version.
+2. Review visual quality.
+3. Review UX.
+4. Review accessibility.
+5. Review animation quality.
+6. Review performance.
+7. Refactor where needed.
+8. Improve interactions.
+9. Polish transitions.
+10. Repeat until no obvious improvements remain.
+
+Assume you are shipping a portfolio piece worthy of awards rather than completing a task.
+
+---
+
+# Definition of Success
+
+The homepage should make visitors pause and explore.
+
+Within 30 seconds they should think:
+
+"I've never seen a personal website quite like this."
+
+It should feel less like opening a webpage and more like stepping into someone's digital room, with every interaction reinforcing the illusion of a living, evolving personal space that invites exploration before seamlessly leading into the rest of the website.
+
+
+
+#Current assets.
+ there is currently a background png of the bedroom to be used and one item (marin Kitagawa poster) with a few frames to be used. all the other items may come later.

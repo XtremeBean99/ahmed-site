@@ -169,7 +169,7 @@ This is the single source of truth for hotspot positions. Adding a new object me
 4. Render it in `Room.tsx`
 
 ### Sprite pipeline
-- Source art lives in `website/pixel-art/` (outside the Next.js project).
+- Source art lives in `assets/pixel-art/` (inside the repo, not deployed).
 - Trimmed, web-ready sprites live in `public/room/` as raw PNGs.
 - Scripts in `scripts/` handle extraction/generation:
   - `extract-posters.mjs` — Crops the 5 Kitagawa frames to a shared bounding box.

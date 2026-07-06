@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const outDir = join(__dirname, '..', 'public', 'room')
-const pixelDir = join(__dirname, '..', '..', 'pixel-art')
+const pixelDir = join(__dirname, '..', 'assets', 'pixel-art')
 
 async function getBounds(imagePath) {
   const { data, info } = await sharp(imagePath).ensureAlpha().raw().toBuffer({ resolveWithObject: true })

@@ -480,6 +480,9 @@ export const en = {
     contact: 'Contact',
     legal: 'Legal',
     back: 'Room',
+    desktop: 'Desktop',
+    expand: 'Expand',
+    browserTitle: 'Website preview',
     screenLabel: 'Desktop shortcuts',
   },
 

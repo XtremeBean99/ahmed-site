@@ -477,6 +477,9 @@ export const fr: Dictionary = {
     contact: 'Contact',
     legal: 'Légal',
     back: 'Chambre',
+    desktop: 'Bureau',
+    expand: 'Agrandir',
+    browserTitle: 'Aperçu du site',
     screenLabel: 'Raccourcis du bureau',
   },
 

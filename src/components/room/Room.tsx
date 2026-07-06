@@ -51,6 +51,9 @@ interface RoomProps {
       contact: string
       legal: string
       back: string
+      desktop: string
+      expand: string
+      browserTitle: string
       screenLabel: string
     }
   }
@@ -64,6 +67,11 @@ export function Room({ dict }: RoomProps) {
   const [lampOn, setLampOn] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
   const [windowHour, setWindowHour] = useState(new Date().getHours())
+
+  // Recursion guard: redirect if rendered inside own monitor iframe
+  useEffect(() => {
+    if (window.self !== window.top) window.location.replace('/home')
+  }, [])
 
   // Load lamp pref on mount
   useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn) }, [])
@@ -192,8 +200,11 @@ export function Room({ dict }: RoomProps) {
           shortcuts={deskShortcuts}
           backLabel={t.desk.back}
           screenLabel={t.desk.screenLabel}
-          onBack={handleDeskBack}
+          desktopLabel={t.desk.desktop}
+          expandLabel={t.desk.expand}
+          browserTitle={t.desk.browserTitle}
           speakersLabel={t.room.audio.speakersLabel}
+          onBack={handleDeskBack}
         />
         <NowPlaying labels={t.room.audio} />
       </RoomAudioProvider>

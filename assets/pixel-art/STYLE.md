@@ -39,3 +39,13 @@ every sprite below is a trim of a source in sources/ at the listed stage rect.
 - note-1: music-note1.png trim → 16×22
 - note-2: music-note2.png trim → 21×22
 - note-3: music-note3.png trim → 16×22
+- coffee-1..6: sources/cofee-cup/coffecup-bedroom.png (rest) + coffecup-bedroom1..5.png
+  (hover highlight) → union box (160,475) 83×83. Frame 1 is the rest state.
+- coffee-steam: sources/cofee-cup/cofee-steam-bedroom.png trim → (187,460) 25×45.
+  Animated as three staggered CSS wisps (steam-rise keyframes), not a sprite sheet.
+- coffee-cup: superseded by coffee-1..6 (single-frame extraction, kept for reference)
+
+## Speaker driver holes (stage coords, for the music-note emitter)
+- Left speaker: tweeter (284,349) r34, woofer (284,478) r50
+- Right speaker: tweeter (1118,352) r38, woofer (1115,472) r52
+Notes spawn on random points around these rims at a constant rate (MusicNotes.tsx).

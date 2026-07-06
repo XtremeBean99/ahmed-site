@@ -456,6 +456,7 @@ export const fr: Dictionary = {
     lampLabel: 'Lampe de bureau',
     coffeeLabel: 'Tasse de café',
     posterClickHint: 'Jolie affiche !',
+    clockTip: 'Il est {time}',
     enterSite: 'Entrer dans le site',
     audio: {
       play: 'Lire',

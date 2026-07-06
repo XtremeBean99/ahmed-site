@@ -165,6 +165,20 @@ Desk icons open the real site inside the monitor screen via a same-origin `<ifra
 - Below 700 px viewport width: icons navigate full-page (mobile fallback).
 - Recursion guard in `Room.tsx`: if `window.self !== window.top`, `location.replace('/home')`.
 
+### Critical: framing headers must stay SAMEORIGIN / 'self'
+In-monitor browsing only works because `next.config.ts` sends
+`X-Frame-Options: SAMEORIGIN` and CSP `frame-ancestors 'self'` (and vercel.json
+does the same for `/games/ninja/*`). Do NOT "harden" these back to DENY /
+'none' — that silently breaks the desk browser in every browser while keeping
+third-party embedding blocked exactly as before.
+
+### Critical: audio filenames are case-sensitive in production
+Vercel serves from a case-sensitive filesystem; Windows dev machines are
+case-insensitive. A track that plays locally but 404s in production almost
+certainly has a filename-case mismatch between git and `playlist.ts`
+(e.g. the `Saffron.mp3` vs `saffron.mp3` incident). Keep all `public/audio/`
+filenames kebab-case lowercase and verify with `git ls-files public/audio`.
+
 ### Critical: RoomAudioProvider MUST always provide context
 Do NOT gate the context provider behind reduced motion or any condition.
 `useRoomAudio()` throws if called outside the provider. Every component using it

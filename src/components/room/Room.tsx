@@ -33,6 +33,7 @@ interface RoomProps {
       lampLabel: string
       coffeeLabel: string
       posterClickHint: string
+      clockTip: string
       enterSite: string
       hint: string
       skip: string
@@ -297,6 +298,7 @@ export function Room({ dict }: RoomProps) {
             frames={bonsaiObj.frames}
             frameDuration={250}
             mode="loop"
+            tooltipAlign="right"
           />
 
           {/* Window time-of-day tint overlay */}
@@ -338,7 +340,7 @@ export function Room({ dict }: RoomProps) {
                 boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
               }}
             >
-              It&apos;s {clockTooltip}
+              {t.room.clockTip.replace('{time}', clockTooltip)}
             </div>
           )}
 
@@ -350,45 +352,52 @@ export function Room({ dict }: RoomProps) {
             style={{ left: 60, top: 300, width: 110, height: 220 }}
           />
 
-          {/* Coffee mug */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={coffeeObj.frames[0]}
-            alt={t.room.coffeeLabel}
-            draggable={false}
-            className="absolute"
-            style={{
-              left: coffeeObj.x,
-              top: coffeeObj.y,
-              width: coffeeObj.w,
-              height: coffeeObj.h,
-              imageRendering: 'pixelated',
-            }}
-          />
-
-          {/* Coffee steam animation */}
+          {/* Coffee steam: three staggered wisps rising from the cup rim.
+              Rendered before the mug so steam appears from behind it. */}
           {!reduce && (
             <div
               aria-hidden
               className="absolute pointer-events-none"
-              style={{
-                left: 187,
-                top: 460,
-                width: 24,
-                height: 44,
-                animation: 'coffee-steam 3s ease-in-out infinite',
-              }}
+              style={{ left: 175, top: 415, width: 48, height: 96 }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/room/coffee-steam.png"
-                alt=""
-                draggable={false}
-                className="w-full h-full"
-                style={{ imageRendering: 'pixelated' }}
-              />
+              {[
+                { left: 6, sway: '6px', dur: '2.8s', delay: '0s' },
+                { left: 0, sway: '-5px', dur: '3.6s', delay: '-1.2s' },
+                { left: 13, sway: '4px', dur: '3.1s', delay: '-2.4s' },
+              ].map((wisp, i) => (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  key={i}
+                  src="/room/coffee-steam.png"
+                  alt=""
+                  draggable={false}
+                  className="steam-wisp absolute"
+                  style={
+                    {
+                      left: wisp.left,
+                      bottom: 0,
+                      imageRendering: 'pixelated',
+                      animationDelay: wisp.delay,
+                      '--sway': wisp.sway,
+                      '--dur': wisp.dur,
+                    } as React.CSSProperties
+                  }
+                />
+              ))}
             </div>
           )}
+
+          {/* Coffee mug: hover plays the highlight frames */}
+          <AnimatedSprite
+            label={t.room.coffeeLabel}
+            x={coffeeObj.x}
+            y={coffeeObj.y}
+            w={coffeeObj.w}
+            h={coffeeObj.h}
+            frames={coffeeObj.frames}
+            frameDuration={90}
+            mode="play-once-hold"
+          />
 
         </RoomStage>
       </nav>

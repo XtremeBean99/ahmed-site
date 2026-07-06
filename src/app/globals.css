@@ -117,12 +117,21 @@
 }
 
 .note-float {
-  animation: note-float var(--dur) ease-out var(--delay) forwards;
+  animation: note-float var(--dur, 2s) ease-out forwards;
 }
 
-@keyframes coffee-steam {
-  0%, 100% { opacity: 0.4; transform: translateY(0); }
-  50%      { opacity: 0.9; transform: translateY(-6px); }
+/* Coffee steam wisps: rise, sway, expand, fade. One animation per wisp,
+   staggered via animation-delay; --sway and --dur set inline per wisp. */
+@keyframes steam-rise {
+  0%   { opacity: 0; transform: translate(0, 10px) scale(0.8); }
+  20%  { opacity: 0.75; }
+  55%  { opacity: 0.5; transform: translate(var(--sway, 5px), -20px) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--sway, 5px) * -0.6), -46px) scale(1.2); }
+}
+
+.steam-wisp {
+  animation: steam-rise var(--dur, 3s) ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 @keyframes lamp-flicker {

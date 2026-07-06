@@ -459,6 +459,7 @@ export const en = {
     lampLabel: 'Desk lamp',
     coffeeLabel: 'Coffee mug',
     posterClickHint: 'Nice poster!',
+    clockTip: "It's {time}",
     enterSite: 'Enter website',
     hint: 'Click around to explore',
     skip: 'Skip to the website',

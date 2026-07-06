@@ -71,11 +71,6 @@ export function Room({ dict }: RoomProps) {
   const [toast, setToast] = useState<string | null>(null)
   const [clockTooltip, setClockTooltip] = useState('')
 
-  // Recursion guard: redirect if rendered inside own monitor iframe
-  useEffect(() => {
-    if (window.self !== window.top) window.location.replace('/home')
-  }, [])
-
   // Load lamp pref on mount
   useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn) }, [])
 

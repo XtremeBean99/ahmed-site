@@ -50,6 +50,7 @@ export const en = {
     descriptor2: 'Working toward a future in tech law',
     ctaPrimary: 'Connect on LinkedIn',
     ctaSecondary: 'Get in touch',
+    ctaRoom: 'My room',
     intro: 'Introduction',
     scroll: 'Scroll',
   },

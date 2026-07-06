@@ -47,6 +47,7 @@ export const fr: Dictionary = {
     descriptor2: 'En route vers une carrière dans le droit des technologies',
     ctaPrimary: 'Me suivre sur LinkedIn',
     ctaSecondary: 'Me contacter',
+    ctaRoom: 'Ma chambre',
     intro: 'Introduction',
     scroll: 'Défiler',
   },

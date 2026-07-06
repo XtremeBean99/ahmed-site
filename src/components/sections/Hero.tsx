@@ -90,6 +90,9 @@ export function Hero() {
             <Button href="#contact" variant="secondary">
               {t.hero.ctaSecondary}
             </Button>
+            <Button href="/" variant="secondary">
+              {t.hero.ctaRoom}
+            </Button>
           </motion.div>
         </motion.div>
       </div>

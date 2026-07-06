@@ -23,7 +23,9 @@
   body {
     @apply bg-background text-foreground font-sans;
     min-height: 100dvh;
-    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
   }
 
   h1,

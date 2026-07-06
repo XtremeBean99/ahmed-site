@@ -190,7 +190,7 @@ export function Room({ dict }: RoomProps) {
   }
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#1a1210]">
+    <div className="relative w-full h-screen overflow-hidden bg-[#1a1210]">
       <RoomHud
         enterLabel={t.room.enterSite}
         hintLabel={t.room.hint}

@@ -76,16 +76,7 @@ export function DeskView({ shortcuts, backLabel, screenLabel, onBack }: DeskView
     [reduce, router],
   )
 
-  // Click outside screen → back
-  const handleBackgroundClick = useCallback(
-    (e: React.MouseEvent) => {
-      if ((e.target as HTMLElement).closest('[data-screen-area]')) return
-      onBack()
-    },
-    [onBack],
-  )
-
-  // Screen area transform
+  // Screen area style
   const screenStyle: React.CSSProperties = {
     position: 'absolute',
     left: SCREEN_X,
@@ -98,8 +89,7 @@ export function DeskView({ shortcuts, backLabel, screenLabel, onBack }: DeskView
   return (
     <div
       className="relative"
-      style={{ width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}
-      onClick={handleBackgroundClick}
+      style={{ width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}
     >
       {/* Stage */}
       <motion.div

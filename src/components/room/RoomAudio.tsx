@@ -21,41 +21,47 @@ export function RoomAudio({
 }: RoomAudioProps) {
   const reduce = useReducedMotion()
   const [playing, setPlaying] = useState(false)
-  const [mounted, setMounted] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const trackIndexRef = useRef(randomTrack())
-  const triedAutoplay = useRef(false)
+  const triedRef = useRef(false)
 
+  // Create audio element and attempt autoplay once mounted
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // Try autoplay on mount
-  useEffect(() => {
-    if (!mounted || reduce || triedAutoplay.current) return
-    triedAutoplay.current = true
+    if (reduce || triedRef.current) return
+    triedRef.current = true
 
     const prefs = loadPrefs()
-    if (!prefs.audio) return // user previously muted
+    if (!prefs.audio) return
 
-    const audio = audioRef.current
-    if (!audio) return
-
+    const audio = new Audio(TRACKS[trackIndexRef.current])
+    audio.loop = true
     audio.volume = 0.3
+    audioRef.current = audio
 
+    // Attempt autoplay
     audio.play().then(() => {
       setPlaying(true)
     }).catch(() => {
-      // Autoplay blocked — try on first user interaction
-      const onInteraction = () => {
+      // Blocked — wait for any user gesture
+      const onGesture = () => {
         audio.play().then(() => setPlaying(true)).catch(() => {})
-        document.removeEventListener('click', onInteraction)
-        document.removeEventListener('keydown', onInteraction)
+        cleanup()
       }
-      document.addEventListener('click', onInteraction, { once: true })
-      document.addEventListener('keydown', onInteraction, { once: true })
+      const cleanup = () => {
+        document.removeEventListener('click', onGesture)
+        document.removeEventListener('keydown', onGesture)
+        document.removeEventListener('touchstart', onGesture)
+      }
+      document.addEventListener('click', onGesture)
+      document.addEventListener('keydown', onGesture)
+      document.addEventListener('touchstart', onGesture)
     })
-  }, [mounted, reduce])
+
+    return () => {
+      audio.pause()
+      audioRef.current = null
+    }
+  }, [reduce])
 
   const toggle = useCallback(() => {
     const audio = audioRef.current
@@ -73,28 +79,19 @@ export function RoomAudio({
     }
   }, [playing])
 
-  if (!mounted || reduce) return null
+  if (reduce) return null
 
   return (
-    <>
-      <audio
-        ref={audioRef}
-        src={TRACKS[trackIndexRef.current]}
-        loop
-        preload="auto"
-      />
-
-      <button
-        onClick={toggle}
-        aria-label={playing ? muteLabel : unmuteLabel}
-        className="fixed bottom-4 left-4 z-30 text-[11px] text-[#a09080] hover:text-[#c8b89a] transition-colors"
-        style={{
-          fontFamily: 'var(--font-pixel), "Courier New", monospace',
-          textShadow: '0 1px 2px rgba(0,0,0,0.8)',
-        }}
-      >
-        MUSIC {playing ? 'ON' : 'OFF'}
-      </button>
-    </>
+    <button
+      onClick={toggle}
+      aria-label={playing ? muteLabel : unmuteLabel}
+      className="fixed bottom-4 left-4 z-30 text-[11px] text-[#a09080] hover:text-[#c8b89a] transition-colors"
+      style={{
+        fontFamily: 'var(--font-pixel), "Courier New", monospace',
+        textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+      }}
+    >
+      MUSIC {playing ? 'ON' : 'OFF'}
+    </button>
   )
 }

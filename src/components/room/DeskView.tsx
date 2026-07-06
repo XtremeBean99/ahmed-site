@@ -38,7 +38,6 @@ export function DeskView(props: DeskViewProps) {
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
   const [showDesktop, setShowDesktop] = useState(false)
-  const [leaving, setLeaving] = useState(false)
   const [time, setTime] = useState('')
   const [screenMode, setScreenMode] = useState<ScreenMode>('desktop')
   const [browserPath, setBrowserPath] = useState('')
@@ -275,15 +274,6 @@ export function DeskView(props: DeskViewProps) {
           </AnimatePresence>
         </div>
       </motion.div>
-
-      {/* White bloom */}
-      <AnimatePresence>
-        {leaving && !reduce && (
-          <motion.div className="fixed inset-0 z-50 pointer-events-none"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }} style={{ backgroundColor: '#faf8f5' }} />
-        )}
-      </AnimatePresence>
     </div>
   )
 }

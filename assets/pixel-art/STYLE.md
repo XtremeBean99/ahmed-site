@@ -36,3 +36,6 @@ every sprite below is a trim of a source in sources/ at the listed stage rect.
 - mouse: sources/mouse-only-closeup.png → trim (1007,608) 110×80
 - speaker-left: desk-closeup crop → (190,265) 175×300
 - speaker-right: desk-closeup crop → (1005,270) 215×300
+- note-1: music-note1.png trim → 16×22
+- note-2: music-note2.png trim → 21×22
+- note-3: music-note3.png trim → 16×22

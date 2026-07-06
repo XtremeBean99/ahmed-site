@@ -1,24 +1,21 @@
 # Audio Licences
 
-Tracks served from `public/audio/`. Licensing status as stated by the site owner.
+Tracks served from `public/audio/`. Licensing status as recorded on 6 July 2026.
 
-| File | Title | Source | Licence |
-|------|-------|--------|---------|
-| `lo-fi-beat.mp3` | Lo‑Fi Beat | Original / royalty-free | Pending owner confirmation |
-| `saffron.mp3` | Saffron | Original / royalty-free | Pending owner confirmation |
-| `cant-look-in-my-eyes.mp3` | Can't Look In My Eyes | Commercial recording | **⚠️ Unlicensed — do not publish** |
-| `big-poppa-habaytak-remix.mp3` | Big Poppa x حبيتك بالصيف (Abuzeid Remix) | Commercial recording / remix | **⚠️ Unlicensed — do not publish** |
-| `remember-summer-days.mp3` | Remember Summer Days | Commercial recording | **⚠️ Unlicensed — do not publish** |
-| `sky-restaurant.mp3` | Sky Restaurant | Commercial recording | **⚠️ Unlicensed — do not publish** |
+**Owner direction (6 July 2026):** The deployment is treated as private/testing. Commercial recordings ship at the owner's informed risk. This decision is to be revisited before any public promotion of the site. The domain itself is publicly reachable; the tracks are accessible to anyone who knows the URL.
 
-The owners of commercial recordings flagged above should either:
-- Obtain a licence or permission from the rights holder
-- Replace with royalty-free / Creative Commons tracks (e.g. Free Music Archive)
-- Remove from `public/audio/` before deploying publicly
+**This is general information, not legal advice.**
 
-**This is general information, not legal advice.** The site owner (a law student) should make their own licensing determination.
+| File | Title | Status |
+|------|-------|--------|
+| `lo-fi-beat.mp3` | Lo‑Fi Beat | To be confirmed |
+| `saffron.mp3` | Saffron | To be confirmed |
+| `cant-look-in-my-eyes.mp3` | Can't Look In My Eyes | Commercial recording ⚠️ |
+| `big-poppa-habaytak-remix.mp3` | Big Poppa x حبيتك بالصيف (Abuzeid Remix) | Commercial remix ⚠️ |
+| `remember-summer-days.mp3` | Remember Summer Days | Commercial recording ⚠️ |
+| `sky-restaurant.mp3` | Sky Restaurant | Commercial recording ⚠️ |
 
 Covers in `public/audio/covers/`:
-- `fayrouz.jpg` — album art for the Fairuz remix
-- `sky-restaurant.jpg` — album art for Sky Restaurant
-- `summer-days.jpg` — album art for Remember Summer Days
+- `fayrouz.jpg` — Fairuz album art
+- `sky-restaurant.jpg` — Sky Restaurant album art
+- `summer-days.jpg` — Remember Summer Days album art

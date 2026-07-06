@@ -153,6 +153,22 @@ The root page.tsx is a server component that reads the dictionary and passes it 
 - `NowPlaying` — Bottom-left widget: cover (28×28, cassette SVG fallback), title, artist,
   play/pause SVG icon, skip SVG icon. Present in both views. Uses `useRoomAudio()`.
 - Speaker hotspots in `DeskView` — two transparent buttons over speaker rects call `toggle()`.
+  Press-dip (active:scale-[0.98], 120ms), muted glyph when paused.
+- `MusicNotes` — per-speaker CSS keyframe note animations (pooled, 3 slots). No React re-renders.
+
+### In-monitor browsing (Task 2)
+Desk icons open the real site inside the monitor screen via a same-origin `<iframe>`.
+- State: `screenMode: 'desktop' | 'browser'`, path tracked by polling `contentWindow.location`.
+- In-iframe navigation uses `location.replace()` to avoid polluting joint browser history.
+- Top strip: Desktop / Expand / ←Room buttons in browser mode.
+- Escape ladder: browser → desktop → room.
+- Below 700 px viewport width: icons navigate full-page (mobile fallback).
+- Recursion guard in `Room.tsx`: if `window.self !== window.top`, `location.replace('/home')`.
+
+### Critical: RoomAudioProvider MUST always provide context
+Do NOT gate the context provider behind reduced motion or any condition.
+`useRoomAudio()` throws if called outside the provider. Every component using it
+(NowPlaying, DeskView speakers, MusicNotes) must be wrapped.
 
 ### Stage transform structure (do NOT reintroduce the A1 origin bug)
 The RoomStage uses a two-element transform to keep the room centred at all viewport sizes

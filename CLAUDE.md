@@ -20,24 +20,16 @@ not another developer portfolio" — warm, nostalgic, rewarding to explore, Y2K/
 with modern quality). The conventional site lives under `/home`, `/games`, `/projects`,
 `/tutoring`, `/legal`.
 
-## Current State (6 July 2026)
+## Current State (6 July 2026, end of session)
 
-Implemented across five spec iterations (v1 `b70857e` … v5, see Session History below):
+All five spec iterations implemented and verified:
 room scene with monitor/poster/bonsai/lamp/coffee hotspots, zoom transition into a desk
-close-up, in-monitor browsing of the real site via same-origin iframe, six-track music player
-with now-playing widget and speaker mute, pointer-following desk mouse, music notes from the
-speaker drivers, coffee steam, lamp-off art, time-of-day window tint, dust motes, idle
-screensaver, EN/FR throughout.
-
-### ⚠ Pending owner actions (as of last session)
-1. **Saffron case rename** (production 404; dev works). In repo root:
-   `git mv public/audio/Saffron.mp3 public/audio/saffron-tmp.mp3 && git mv public/audio/saffron-tmp.mp3 public/audio/saffron.mp3 && git commit -m "fix: lowercase saffron.mp3"`
-2. **Build + deploy verification** of the v5 session edits (headers fix requires a deployed
-   preview to test; `next dev` does not send production headers). Checklist: in-monitor
-   browsing renders in Firefox and Chrome; saffron plays; notes emit from all four speaker
-   drivers at a constant rhythm and stop on mute; coffee hover highlight + three steam wisps;
-   bonsai tooltip on-screen; FR clock bubble; reduced-motion sweep.
-3. Optional cleanup: `git rm public/room/coffee-cup.png` (superseded by `coffee-1..6.png`).
+close-up, in-monitor browsing of the real site via same-origin iframe (site content zoomed
+out 25% for readability), six-track music player with now-playing widget (with embedded ID3
+cover art extraction) and speaker mute, pointer-following desk mouse, music notes from the
+speaker drivers, three-wisp coffee steam, lamp-off art crossfade with flicker, dust motes,
+idle screensaver (15 s), visitor counter, "My room" CTA on /home linking back to /,
+EN/FR throughout. No pending actions remain.
 
 ---
 
@@ -133,32 +125,37 @@ shipped once and was the v3 "site is off-centre" bug.
 
 ### View state machine (`Room.tsx`)
 `room → zooming (800 ms, Escape-cancellable, 1.5 s safety) → desk`. Desk state is
-`history.pushState('#desk')`; `/#desk` deep-links; popstate/Escape return. Recursion guard:
-if `window.self !== window.top`, `location.replace('/home')`.
+`history.pushState('#desk')`; `/#desk` deep-links; popstate/Escape return. The room renders
+inside its own monitor iframe (recursion guard removed — `/` is accessible from the desk browser).
 
 ### Desk view (`DeskView.tsx`)
 Close-up art (`desk-closeup.png`) with: screen rect (436,152,536×308) hosting a pixel desktop
 (clock strip + 6 shortcut icons) or the **in-monitor browser** — a same-origin `<iframe>` of
-real site pages. Iframe navigation between desk opens uses `contentWindow.location.replace()`
+real site pages (zoomed out 25% via `scale(0.75)` for readability). Iframe navigation
+between desk opens uses `contentWindow.location.replace()`
 (keeps joint browser history clean); current path tracked by 500 ms same-origin polling;
-strip gains Desktop/Expand buttons in browser mode; Escape ladder browser→desktop→room;
+strip gains Desktop/Expand buttons in browser mode; Expand opens in a new tab (`window.open`);
+Escape ladder browser→desktop→room;
 below 700 px viewport, icons navigate full-page instead. Speakers (left 190,265 175×300;
 right 1005,270 215×300) are mute-toggle buttons with press-dip and muted glyph. Music notes
 emit from the driver holes (left: 284,349 r34 / 284,478 r50; right: 1118,352 r38 /
 1115,472 r52) at a constant 1100 ms rate, 2000 ms float, pooled `<img>`s + CSS keyframes.
 The desk mouse (110×80 sprite) follows the pointer proportionally within x 975–1140,
 y 572–635 via rAF + lerp writing transforms directly (never React state per pointer event);
-rest point (1007,608); static on touch/reduced-motion. Idle screensaver after 90 s.
+rest point (1007,608); static on touch/reduced-motion. Idle screensaver after 15 s.
+Mouse jitter triggers on any click outside the screen area.
 
-### Audio (`RoomAudioProvider` + `playlist.ts` + `NowPlaying`)
+### Audio (`RoomAudioProvider` + `playlist.ts` + `NowPlaying` + `id3.ts`)
 One context provider mounted above both views owning a single `Audio` element.
 **It must ALWAYS provide context** — gating it behind reduced motion crashed every
 reduced-motion visitor once (`useRoomAudio()` throws outside the provider). Reduced motion
 never disables sound, only animation. Track index lives in a ref (URL string-matching against
 `audio.src` broke `ended` advancement once). Autoplay attempts on mount when the stored pref
 allows, falling back to first-gesture. Volume 0.3. `NowPlaying` (bottom-left, both views):
-28×28 cover with cassette-SVG fallback on missing/erroring cover, title/artist, play/pause,
-skip. All labels from dictionaries.
+36×36 cover — external cover file first, then embedded ID3 APIC frame via `id3.ts`, then
+cassette-SVG placeholder. Title 12px, artist 10px, play/pause/skip 18px icons. All labels
+from dictionaries. `id3.ts` is a zero-dependency ID3v2 parser that fetches the first 256 KB
+of an MP3 and extracts APIC (attached picture) frames.
 
 ### Room-view objects (`objects.ts` registry + `AnimatedSprite`)
 monitor (240,261 393×343 → zoom to desk) · poster (997,78 134×247, 5 frames, play-once-hold,
@@ -166,8 +163,9 @@ click toast) · bonsai (1241,291 99×131, 5 frames, loop, `tooltipAlign="right"`
 centred bubble overflowed the right edge) · lamp (60,300 110×220, toggles lamp-off art
 crossfade + flicker, persisted) · coffee (160,475 83×83, 6 frames: rest + 5-frame hover
 highlight, play-once-hold) with three staggered CSS steam wisps (`steam-rise` keyframes,
-per-wisp `--sway`/`--dur`, negative delays, rendered behind the mug). Window tint follows
-local hour; clock bubble uses `room.clockTip` dictionary key. Adding an object: entry in
+per-wisp `--sway`/`--dur`, negative delays, rendered behind the mug). Clock bubble at
+(860,100) uses `room.clockTip` dictionary key and shows a visitor counter (`👁 N`)
+incremented on each page load (persisted in `room-save-v1`). Adding an object: entry in
 `ROOM_OBJECTS` → sprites in `public/room/` → both dictionaries → render in `Room.tsx`.
 
 ### Accessibility invariants
@@ -197,7 +195,7 @@ Background (`background.png`, ~55 KB) loads `fetchpriority="high"` as the LCP el
 Owner direction 6 July 2026: deployment treated as private/testing; commercial recordings ship
 at the owner's informed risk; revisit before public promotion. The domain is publicly
 reachable. (General information, not legal advice.) Tracks in `public/audio/`:
-lo-fi-beat (TBC) · saffron (TBC; see pending rename) · cant-look-in-my-eyes ⚠ commercial ·
+lo-fi-beat (TBC) · saffron (TBC) · cant-look-in-my-eyes ⚠ commercial ·
 big-poppa-habaytak-remix ⚠ commercial remix · remember-summer-days ⚠ commercial ·
 sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-days.jpg.
 
@@ -209,10 +207,13 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   pref false.
 - **v4** `aa9db95`–`ca70b5b`: reduced-motion crash fix, in-monitor browsing, music notes,
   coffee mug + owner extras (clock, flicker, dust, jitter, screensaver).
-- **v5** (session of 6 July, uncommitted at write time): frame-headers fix (the "embed fails"
-  bug was the site's own XFO DENY), constant-rate notes from driver holes, coffee highlight
-  frames + 3-wisp steam, bonsai `tooltipAlign`, clock i18n, docs consolidation into this file.
-  Saffron rename left to the owner (git case rename).
+- **v5** `ea902e8`–`64101ee`: frame-headers fix (XFO DENY → SAMEORIGIN), constant-rate
+  notes from driver holes, coffee highlight frames + 3-wisp steam, bonsai `tooltipAlign`,
+  clock i18n, docs consolidation into this file, saffron case rename done.
+- **Post-v5** `674c158`–`9820230`: "My room" CTA on /home hero, recursion guard removed
+  (room renders inside its own iframe), body `overflow:hidden` removed (iframe scroll fix),
+  ID3 embedded cover art extractor, iframe site content zoomed out 25%, expand opens new tab,
+  visitor counter, window tint removed, animation speeds bumped, UI sizes increased.
 - Recurring session hazard: the agent sandbox's mount of this repo went stale repeatedly
   (phantom deletions, NUL-padded reads, unremovable `.git/index.lock`). Builds and `git
   status` from a sandbox are unreliable; trust direct file reads and run builds locally.
@@ -221,17 +222,14 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
 
 ## Roadmap — Suggestions From Basic to Ambitious
 
-Owner-curated backlog. Tiers are effort/scope, not priority order.
-
-**Immediate (pending actions)** — saffron rename; deploy + verification sweep; delete
-superseded `coffee-cup.png`.
+Owner-curated backlog. Tiers are effort/scope, not priority order. ~~Struck~~ = done.
 
 **Basic (hours)**
 1. Skip-no-repeat: `nextTrack` avoids repeating the last-played track.
 2. Desk session persistence: remember `screenMode`/`browserPath` in `sessionStorage`.
 3. Room OG image: replace the text-card `opengraph-image.tsx` on `/` with a 1200×630 room crop.
 4. `/room` alias redirect to `/`.
-5. Visit odometer: pixel counter on the desk (localStorage), pure nostalgia.
+5. ~~Visit odometer~~ — visitor counter next to clock (9820230).
 6. Bonsai growth: resting frame advances with a `visits` counter in prefs (5 stages drawn).
 7. Volume control: small 3-step volume on the NowPlaying widget (prefs-persisted).
 

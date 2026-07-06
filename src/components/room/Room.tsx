@@ -35,6 +35,13 @@ interface RoomProps {
       enterSite: string
       hint: string
       skip: string
+      audio: {
+        play: string
+        pause: string
+        skip: string
+        nowPlaying: string
+        speakersLabel: string
+      }
     }
     desk: {
       home: string
@@ -186,8 +193,9 @@ export function Room({ dict }: RoomProps) {
           backLabel={t.desk.back}
           screenLabel={t.desk.screenLabel}
           onBack={handleDeskBack}
+          speakersLabel={t.room.audio.speakersLabel}
         />
-        <NowPlaying />
+        <NowPlaying labels={t.room.audio} />
       </RoomAudioProvider>
     )
   }
@@ -201,7 +209,7 @@ export function Room({ dict }: RoomProps) {
         skipLabel={t.room.skip}
       />
 
-      <NowPlaying />
+      <NowPlaying labels={t.room.audio} />
 
       <nav aria-label={t.room.navLabel}>
         <RoomStage

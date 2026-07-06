@@ -35,14 +35,15 @@ interface DeskViewProps {
   shortcuts: Shortcut[]
   backLabel: string
   screenLabel: string
+  speakersLabel: string
   onBack: () => void
 }
 
-export function DeskView({ shortcuts, backLabel, screenLabel, onBack }: DeskViewProps) {
+export function DeskView({ shortcuts, backLabel, screenLabel, speakersLabel, onBack }: DeskViewProps) {
   const scale = useStageScale()
   const router = useRouter()
   const reduce = useReducedMotion()
-  const { toggle } = useRoomAudio()
+  const { playing, toggle } = useRoomAudio()
   const [showDesktop, setShowDesktop] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [time, setTime] = useState('')
@@ -113,12 +114,12 @@ export function DeskView({ shortcuts, backLabel, screenLabel, onBack }: DeskView
     }
 
     window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerleave', onLeave)
+    document.documentElement.addEventListener('mouseleave', onLeave)
     rafRef.current = requestAnimationFrame(loop)
 
     return () => {
       window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerleave', onLeave)
+      document.documentElement.removeEventListener('mouseleave', onLeave)
       cancelAnimationFrame(rafRef.current)
     }
   }, [reduce])
@@ -156,16 +157,31 @@ export function DeskView({ shortcuts, backLabel, screenLabel, onBack }: DeskView
         {/* Speaker hotspots */}
         <button
           onClick={(e) => { e.stopPropagation(); toggle() }}
-          aria-label="Toggle speakers"
-          className="absolute cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2"
+          aria-label={speakersLabel}
+          className="absolute cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2 transition-transform duration-[120ms] active:scale-[0.98]"
           style={{ left: SPEAKER_LEFT.x, top: SPEAKER_LEFT.y, width: SPEAKER_LEFT.w, height: SPEAKER_LEFT.h }}
-        />
+        >
+          {/* Muted glyph */}
+          {!playing && (
+            <span className="absolute top-2 right-2 text-[#a09080] opacity-70 pointer-events-none"
+              style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace', fontSize: '10px' }}>
+              ✕♪
+            </span>
+          )}
+        </button>
         <button
           onClick={(e) => { e.stopPropagation(); toggle() }}
-          aria-label="Toggle speakers"
-          className="absolute cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2"
+          aria-label={speakersLabel}
+          className="absolute cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2 transition-transform duration-[120ms] active:scale-[0.98]"
           style={{ left: SPEAKER_RIGHT.x, top: SPEAKER_RIGHT.y, width: SPEAKER_RIGHT.w, height: SPEAKER_RIGHT.h }}
-        />
+        >
+          {!playing && (
+            <span className="absolute top-2 right-2 text-[#a09080] opacity-70 pointer-events-none"
+              style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace', fontSize: '10px' }}>
+              ✕♪
+            </span>
+          )}
+        </button>
 
         {/* Decorative mouse follower */}
         {/* eslint-disable-next-line @next/next/no-img-element */}

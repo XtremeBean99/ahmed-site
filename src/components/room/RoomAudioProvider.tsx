@@ -9,7 +9,6 @@ import {
   useCallback,
   type ReactNode,
 } from 'react'
-import { useReducedMotion } from 'framer-motion'
 import { loadPrefs, savePrefs } from '@/lib/room/storage'
 import { PLAYLIST } from '@/lib/room/playlist'
 
@@ -28,38 +27,31 @@ export function useRoomAudio(): AudioState {
   return ctx
 }
 
-/** Returns the audio element, creating it on first call. */
-function createAudio(): HTMLAudioElement {
-  const audio = new Audio()
-  audio.loop = false
-  audio.volume = 0.3
-  return audio
-}
-
 export function RoomAudioProvider({ children }: { children: ReactNode }) {
-  const reduce = useReducedMotion()
   const [playing, setPlaying] = useState(false)
   const [trackIndex, setTrackIndex] = useState(0)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const triedRef = useRef(false)
   const playingRef = useRef(false)
+  const trackIdxRef = useRef(0)
 
-  // Initialise
+  // Initialise audio (always — reduced motion does not affect sound)
   useEffect(() => {
-    if (reduce) return
-    const audio = createAudio()
+    const audio = new Audio()
+    audio.loop = false
+    audio.volume = 0.3
     audioRef.current = audio
     playingRef.current = false
 
-    // Random start
     const idx = Math.floor(Math.random() * PLAYLIST.length)
+    trackIdxRef.current = idx
     setTrackIndex(idx)
     loadTrack(audio, idx)
 
     audio.addEventListener('ended', () => {
-      const next = (audioRef.current ? (PLAYLIST.findIndex(t => t.src === audio.src) + 1) % PLAYLIST.length : 0)
-      setTrackIndex(next)
-      loadTrack(audio, next)
+      trackIdxRef.current = (trackIdxRef.current + 1) % PLAYLIST.length
+      setTrackIndex(trackIdxRef.current)
+      loadTrack(audio, trackIdxRef.current)
       if (playingRef.current) audio.play().catch(() => {})
     })
 
@@ -67,11 +59,11 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
       audio.pause()
       audioRef.current = null
     }
-  }, [reduce])
+  }, [])
 
   // Autoplay
   useEffect(() => {
-    if (reduce || triedRef.current) return
+    if (triedRef.current) return
     triedRef.current = true
     const prefs = loadPrefs()
     if (!prefs.audio || !audioRef.current) return
@@ -96,7 +88,7 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
       document.addEventListener('keydown', onGesture)
       document.addEventListener('touchstart', onGesture)
     })
-  }, [reduce])
+  }, [])
 
   const toggle = useCallback(() => {
     const audio = audioRef.current
@@ -118,13 +110,11 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
   const nextTrack = useCallback(() => {
     const audio = audioRef.current
     if (!audio) return
-    const next = (trackIndex + 1) % PLAYLIST.length
-    setTrackIndex(next)
-    loadTrack(audio, next)
+    trackIdxRef.current = (trackIdxRef.current + 1) % PLAYLIST.length
+    setTrackIndex(trackIdxRef.current)
+    loadTrack(audio, trackIdxRef.current)
     if (playingRef.current) audio.play().catch(() => {})
-  }, [trackIndex])
-
-  if (reduce) return <>{children}</>
+  }, [])
 
   return (
     <AudioCtx.Provider value={{ playing, trackIndex, toggle, nextTrack }}>
@@ -134,7 +124,6 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
 }
 
 function loadTrack(audio: HTMLAudioElement, index: number) {
-  const track = PLAYLIST[index]
-  audio.src = track.src
+  audio.src = PLAYLIST[index].src
   audio.load()
 }

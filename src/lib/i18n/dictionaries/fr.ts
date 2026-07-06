@@ -456,6 +456,13 @@ export const fr: Dictionary = {
     lampLabel: 'Lampe de bureau',
     posterClickHint: 'Jolie affiche !',
     enterSite: 'Entrer dans le site',
+    audio: {
+      play: 'Lire',
+      pause: 'Pause',
+      skip: 'Suivant',
+      nowPlaying: 'En cours de lecture',
+      speakersLabel: 'Activer les haut-parleurs',
+    },
     hint: 'Cliquez pour explorer',
     skip: 'Aller au site',
     metaTitle: 'La chambre d’Ahmed',

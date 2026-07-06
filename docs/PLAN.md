@@ -1,142 +1,119 @@
-# SPEC v3: Living Desk — Mouse Follow, Speaker Mute, Now Playing, Lamp Art, Centring Fix
+# SPEC v4: Site in the Monitor, Music Notes, Full Playlist, Fixes
 
-Executable specification for an agent manager. Supersedes SPEC v2 (this file replaces it; v2 content is retired). Written 6 July 2026 after review of the v2 implementation (commits `5643ee2` … `76d854d`).
+Executable specification for an agent manager. Supersedes SPEC v3 (retired by this write). Written 6 July 2026 after review of the v3 implementation (commits `0127b8d` … `f23d0e4`).
 
----
-
-## Part A: Review findings from v2 (fix in Task 1)
-
-The v2 implementation is substantially complete and good: route/layout structure intact, `AnimatedSprite` consolidation done, Minecraft font wired through `--font-pixel`, desk view with six pixel icons works, storage module matches spec, EN and FR dictionaries both carry `room.*` and `desk.*` keys, `/home#contact` anchor verified to exist. Defects:
-
-**A1. The room is off-centre (owner-reported, root cause found).** `RoomStage` applies the rest-state fit scale on the same element whose `transformOrigin` is permanently set to the monitor screen point (`zoomOriginX/Y` ≈ 360, 333). Scaling about a non-centre origin at rest shifts the whole stage down-right whenever fit scale ≠ 1, so the room sits off-centre on every viewport that isn't exactly 1408×768. Commit `76d854d` attempted a centring fix but the origin problem remains. Fix by separating the two transforms onto two nested elements: an outer wrapper that centres and fit-scales about `center center` (exactly as `DeskView` already does with `translate(-50%,-50%) scale(fit)`), and an inner zoom wrapper whose `transformOrigin` is the monitor point in stage coordinates and which animates only `zoomScale`. Stage coordinates remain valid on the inner element.
-
-**A2. Deployed close-up art is stale.** The owner removed the mouse from `assets/pixel-art/sources/desk-closeup.png`, but `public/room/desk-closeup.png` still contains the baked-in mouse. Copy the updated source over the public file (confirm first: the source's mousepad right of the keyboard is empty; the current public file's is not).
-
-**A3. Music toggle is dead when audio starts disabled.** In `RoomAudio`, the `Audio` element is created only inside the mount effect and only when `prefs.audio` is true. With a saved `audio: false`, `audioRef` stays null and the toggle button does nothing, permanently. Restructure: create the element lazily on first demand (mount-with-pref-true or first toggle-on), one code path.
-
-**A4. Hardcoded English strings.** `RoomAudio` ships default prop labels ("Mute music", "Play music") and renders literal "MUSIC ON/OFF"; `Room.tsx` passes no labels. This violates the bilingual rule. Task 3 replaces this control with the now-playing widget; all its strings come from the dictionaries.
-
-**A5. Transition timers leak into history.** In `handleEnter`, the 1.5 s safety timeout is not cleared when the 800 ms path succeeds, so both run: `pushState('#desk')` at 800 ms, then `location.hash = 'desk'` again at 1500 ms, and `navigatingRef` resets twice. Clear both timers in whichever path fires first (Escape already clears them). Unify on `pushState` for entering the desk; the reduced-motion path's `location.hash =` assignment creates an inconsistent extra history entry.
-
-**A6. Desk click-outside-back is claimed but absent.** Commit `76d854d` mentions "desk click-outside", but `DeskView` has no such handler. Add: clicking the scene outside the monitor screen area returns to the room (pointer cursor on that region; the accessible path remains the "← Room" button and Escape).
-
-Carried observations, no action: autoplay-after-first-gesture is retained by owner preference; keep it gated on the stored `audio` pref. The new `assets/` MP3s are commercial recordings/remixes; publishing them from `public/` carries copyright infringement risk, and the licensing call rests with the owner (general information, not legal advice). Record whatever ships in `docs/audio-licences.md`.
+Owner directions incorporated: copyrighted tracks are accepted for now (site treated as not publicly released; owner's call, recorded in Task 4); all six tracks stay in the playlist; the real site should render inside the monitor frame if possible (it is — Task 2); three pixel music-note sprites were supplied for the speaker animation (Task 3).
 
 ---
 
-## Ground truth: new assets and measurements
+## Part A: Review findings from v3 (fix in Task 1)
 
-All measurements in 1408×768 stage coordinates; re-verify programmatically at implementation (sampled at 2–4 px stride).
+Implemented and verified good: centring fix (two-element transform, room now centres), stale close-up art replaced (mouse removed from `public/room/desk-closeup.png`), audio provider + full six-track playlist manifest with covers, now-playing widget with cassette placeholder and play/pause/skip, mouse follower (correct rAF + lerp + ref discipline, `pointer: fine` guard, travel box respected), lamp-off art wired, speaker hotspots present, desk click-outside-back present. Defects:
 
-* `assets/pixel-art/sources/mouse-only-closeup.png`: mouse sprite on transparent canvas, non-transparent bbox **(1007, 608) → (1117, 688)**, i.e. 110×80. Extract trimmed to `public/room/mouse.png`.
-* `assets/pixel-art/sources/desk-closeup.png` (updated): mouse removed. Mousepad is a perspective trapezoid: top edge y ≈ 565 spanning x ≈ 195–1212; bottom edge y ≈ 724 spanning x ≈ 180–1260. Keyboard occupies roughly x 435–965, y 585–705.
-* Mouse travel box (top-left of the 110×80 sprite; keeps it on the pad, right of the keyboard, clear of the pad's right edge): start with **x ∈ [975, 1140], y ∈ [572, 635]**, tune visually. Natural at-rest position: (1007, 608).
-* Speakers in the close-up: left ≈ **(190, 265)–(365, 565)**; right ≈ **(1005, 270)–(1220, 570)**.
-* `assets/pixel-art/background_lamp_off.png`: 1408×768 room background variant with the lamp off. Not yet deployed or referenced.
-* New tracks in `assets/`: `02 Can't Look In My Eyes.mp3` and `Biggie X Fairuz - Big Poppa X حبيتك بالصيف (Abuzeid Remix).mp3`, plus `AlbumArtSmall.jpg` and `Folder.jpg` (album art). `public/audio/` currently holds `lo-fi-beat.mp3` and `saffron.mp3`, matching the current `TRACKS`.
-* `docs/` lives in the repo: `PLAN.md` (this file), `taskt.txt`, `suggestions.txt`.
+**A1. CRASH: reduced-motion users get an error page on `/`.** `RoomAudioProvider` renders `{children}` **without** the context provider when `useReducedMotion()` is true, but `DeskView` and `NowPlaying` call `useRoomAudio()` unconditionally, which throws. Any visitor with `prefers-reduced-motion` crashes the room. Fix: always provide the context; reduced motion must not disable audio at all (it is a motion preference, not a sound preference). Remove the `if (reduce) return <>{children}</>` and the `reduce` guards from the provider's effects; keep reduce-guards only on animations.
 
-## Global constraints and negative prompts (carried from v2, all still binding)
+**A2. NowPlaying hidden under reduced motion.** `if (reduce) return null` removes the whole widget. It must render and function; only decorative animation is dropped.
 
-Hard rules: no URL breaks; no new dependencies; both dictionaries per user-facing string, same commit; type-check/lint/build green per task on the owner's machine (sandbox mounts went stale twice this project; do not trust sandbox builds or sandbox `git status`); reduced motion honoured; sprites as raw `<img>` + `image-rendering: pixelated`, never `next/image`; animate `transform`/`opacity` only.
+**A3. Track-end always jumps to track 1.** The `ended` handler locates the current track via `PLAYLIST.findIndex(t => t.src === audio.src)`, but `audio.src` is an absolute URL and `t.src` is a relative path, so `findIndex` returns −1 and `next` is always 0. Fix: keep the current index in a ref and increment it; do not string-match URLs.
 
-Negative prompts: no CRT/boot content; no new hotspots without finished art; no colour into `(site)` pages; no `@ts-ignore`/`any`/`eslint-disable` fixes; no scope creep into fake-OS windows, weather, achievements, cat, or secrets; do not touch contact/leaderboard/api code; no transition over 1.6 s; do not move `assets/` MP3s into `public/` without the owner's explicit licensing decision recorded in `docs/audio-licences.md`.
+**A4. Hardcoded English strings, third recurrence.** `NowPlaying`: "Now playing", "Pause", "Play", "Skip". `DeskView` speaker buttons: "Toggle speakers". The dictionary keys specified in v3 (`room.audio.*`) were never wired. Add EN + FR keys and pass them through. Add a lint-stage guard this time: a comment in CLAUDE.md is not working; add a simple unit-style check script or at minimum a grep step in Task 5.
+
+**A5. Speaker feedback incomplete.** v3's tooltip, press-dip, and muted cue were not implemented (hotspots only). Superseded/absorbed by Task 3 (music notes + muted cue); the press dip remains required.
+
+**A6. `window` `pointerleave` rarely fires.** The mouse-return-to-rest listener is attached to `window`; use `document.documentElement` `mouseleave` (or `pointerout` with `relatedTarget === null`) so the mouse actually eases back when the cursor leaves the page.
+
+---
+
+## Ground truth
+
+* Playlist (all six ship, per owner): lo-fi-beat, saffron, cant-look-in-my-eyes, big-poppa-habaytak-remix, remember-summer-days, sky-restaurant; covers exist for three (`public/audio/covers/`). Manifest: `src/lib/room/playlist.ts`.
+* Note sprites: `assets/pixel-art/music-note1.png`, `music-note2.png`, `music-note3.png` (plus `.ase` source, keep in assets). Small single-note glyphs. Trim and copy to `public/room/note-1.png` … `note-3.png`.
+* Desk view constants (already in `DeskView.tsx`): screen rect (436, 152, 536×308); speakers left (190, 265, 175×300), right (1005, 270, 215×300); top strip height 28 px (`h-7`).
+* Speaker note spawn points (top-centre of each cabinet): left ≈ (277, 258), right ≈ (1112, 262).
+* The site is same-origin, so an `<iframe>` of any route is scriptable and navigable from the parent page. Existing icon hrefs: `/home`, `/games`, `/projects`, `/tutoring`, `/home#contact`, `/legal/terms`.
+
+## Global constraints and negative prompts
+
+Carried, binding: no URL breaks; no new dependencies; EN + FR per string, same commit; type-check/lint/build on the owner's machine; sprites raw `<img>` pixelated, never `next/image`; animate `transform`/`opacity` only; no transition over 1.6 s; reduced motion honoured for motion only (see A1 — never for function).
+
+Amended this version: the previous "no iframe of the real site" prohibition is **lifted for Task 2 only** — it existed to keep v2 scoped, and the owner has now explicitly requested in-monitor rendering. The audio-copyright gate is **resolved by owner decision** (Task 4 records it); tracks ship.
+
+Still prohibited: fake-OS windowing beyond what Task 2 specifies; weather, achievements, cat, secrets (see Further improvements); AnalyserNode/beat detection; `@ts-ignore`/`any`/`eslint-disable`; touching `api/` or `(site)` page internals except where Task 2 names them.
 
 ---
 
 ## Task 1: Defect fixes (A1–A6)
 
-Acceptance: room visually centred at 1920×1080, 1440×900, 1280×720, and 390×844 (screenshot each; letterbox bars symmetric — this is the owner's headline complaint); desk close-up shows no baked-in mouse; with saved `audio:false` the music control starts playback on first press; no double history entries after the zoom; Escape during zoom still cancels; clicking the desk scene outside the screen returns to the room; no English literals remain in room components (grep for `'MUSIC`, `'Mute`, `'Play`).
+Acceptance: with OS-level reduced motion enabled, `/` renders, desk view works, widget visible and functional, no console errors; every track advances to the *next* track on end (test with `audio.currentTime = duration − 1`); grep of `src/components/room` finds no quoted user-facing English; mouse eases to rest when the cursor leaves the page.
 
-Negative prompts: do not fix A1 by removing the zoom origin (the zoom must still converge on the monitor screen); do not introduce a second scale hook; do not regress `DeskView`'s already-correct centring.
+Negative prompts: do not silence the A1 crash by wrapping `useRoomAudio` in try/catch or making the hook return nulls — provide real context always; do not disable autoplay-gesture logic under reduced motion.
 
-## Task 2: Audio architecture — provider + playlist manifest
+## Task 2: The site renders inside the monitor (headline)
 
-Three consumers now need shared audio state (now-playing widget, desk speakers, autoplay). Refactor before building them:
+Clicking a desk icon now opens that page *inside the monitor screen* instead of leaving the room. The desk becomes a tiny working computer.
 
-1. `src/lib/room/playlist.ts`, single source of truth:
-```ts
-export interface Track { id: string; title: string; artist?: string; src: string; cover?: string }
-export const PLAYLIST: Track[] = [ /* lo-fi-beat, saffron, plus newly shipped tracks */ ]
-```
-2. Move owner-approved tracks from `assets/` to `public/audio/` with kebab-case ASCII filenames (e.g. `cant-look-in-my-eyes.mp3`, `big-poppa-habaytak-remix.mp3`); covers to `public/audio/covers/` (`AlbumArtSmall.jpg` → the matching track's cover, renamed; delete `Folder.jpg` if it duplicates it). Titles/artists live in the manifest, not filenames. Arabic display text in `title` is fine; filenames stay ASCII.
-3. `RoomAudioProvider` (client context) mounted once in `Room.tsx` above both views: owns the single `Audio` element; exposes `{ playing, track, toggle, next }`; persists the `audio` pref on change; keeps autoplay-with-gesture-fallback gated on the pref; volume 0.3; on `ended` advances to the next track (drop `loop` — loop the playlist, not the track); random start index kept.
-4. `next` reuses the element safely: set `src`, `load()`, then `play()` only if currently playing.
+1. **State.** `DeskView` gains `screenMode: 'desktop' | 'browser'` and `browserPath: string`. Icon click (unmodified left-click only) → `screenMode='browser'`, `browserPath=href`. Modifier/middle clicks keep native behaviour (real new tab).
+2. **Iframe.** In browser mode, render `<iframe>` filling the screen area below the top strip (536 × 280 stage px), `title` from a new dictionary key (`desk.browserTitle`), background `#faf8f5`. The site renders at 536 CSS px width → its existing responsive mobile layout, which is the correct fit for a small monitor. A pixel "LOADING…"-style indicator (DOM text in the pixel font, not the baked art) shows until the iframe `load` event.
+3. **History hygiene.** Set the iframe's initial `src` when entering browser mode. For subsequent in-desk opens (user clicks a different icon after going back to the desktop), navigate the existing iframe via `iframe.contentWindow.location.replace(href)` — `replace` avoids polluting the joint browser history. Do not unmount/remount the iframe per navigation. Parent history gains nothing; browser-back still means "leave desk / leave room" exactly as today.
+4. **Top strip additions** (right of the clock, left of "← Room"): a "Desktop" button (returns `screenMode='desktop'`, shown only in browser mode) and an "Expand" button that `router.push`es the iframe's *current* path so the user can jump to the real full-size page. Track the current path by polling `iframe.contentWindow.location.pathname + hash` every 500 ms while in browser mode (same-origin; App Router client navigation does not refire `load`). Dictionary keys: `desk.desktop`, `desk.expand`.
+5. **Recursion guard.** In the room's client root: if `window.self !== window.top`, immediately `location.replace('/home')`. The room never renders inside its own monitor.
+6. **Keyboard and focus.** On entering browser mode, move focus to the iframe. Escape ladder: browser mode → desktop mode → room (extend the existing Escape handling; document the order in code). On returning to desktop mode, restore focus to the icon that was activated.
+7. **Small viewports.** Below 700 px viewport width, icon clicks keep the current full-page navigation (bloom + `router.push`); a monitor-in-monitor on a phone is unusable. The cutoff constant lives beside the other stage constants.
+8. **Audio continuity.** The provider lives in the parent page, so music continues while browsing in-monitor — verify, this is half the charm.
+9. **Scrollbars.** Leave native scrolling inside the iframe. Do not inject CSS into the iframe document.
 
-Acceptance: audio state survives room ↔ desk view switches without restarting the track; `ended` advances; toggle works from both views; prefs persist across reloads.
+Acceptance: from the desk, open Games in-monitor, click through to a game page inside the monitor, music still playing, Expand lands on the same path full-page; back button conduct: after browsing three pages in-monitor, one browser-back leaves the desk (no phantom iframe history steps); Escape ladder works; reduced motion functional; < 700 px falls back to navigation; `/#desk` deep link still works; no recursion when someone opens `/` inside the monitor manually (types it in a game's link etc.).
 
-Negative prompts: no Web Audio graph, crossfades, volume slider, or shuffle UI; no second `<audio>` element; no runtime ID3 parsing (metadata is in the manifest).
+Negative prompts: do not build tabs, address bar, bookmarks, or window chrome; do not scale the iframe with transforms (native 536 px mobile layout is the design); do not intercept or rewrite links inside the iframe; do not use `srcdoc` or proxying; do not let the iframe capture Escape (listen in the parent; if focus is inside the iframe, the parent cannot see keys — acceptable, the strip buttons and click-outside remain).
 
-## Task 3: Now-playing corner widget (replaces the MUSIC ON/OFF button)
+## Task 3: Music-note speaker animation (uses the owner's three sprites)
 
-Bottom-left corner, present in both views, pixel font, tooltip palette (#3d2e1e / #5a4430 / #e8d5b0):
+1. Trim `music-note1/2/3.png` and copy to `public/room/note-1.png` … `note-3.png`. Record trimmed sizes in STYLE.md.
+2. `MusicNotes` component in `DeskView`, one per speaker, `aria-hidden`, `pointer-events: none`, rendered inside the stage so scaling is inherited.
+3. Behaviour while `playing` is true: each speaker emits a note every 900–1300 ms (randomised; the two speakers offset so they do not sync). A note: random sprite of the three, spawns at the speaker's spawn point ± 10 px x-jitter, floats up 40–60 stage px with a gentle horizontal sway, fades out over 1.8–2.4 s.
+4. Implementation: a fixed pool (3 slots per speaker) of `<img>` elements recycled on `animationend`; motion via CSS keyframes animating `transform` and `opacity`, per-note variation through CSS custom properties (`--dx`, `--dur`, `--delay`) set at spawn. No per-frame React state; spawning may use one `setTimeout` chain per speaker.
+5. Notes stop spawning (in-flight notes finish) when paused/muted; everything off under reduced motion; pool torn down when leaving the desk view.
+6. Complete the v3 leftovers: press-dip on speaker click (`scale(0.98)`, 120 ms) and the crossed-note muted glyph at each speaker's top-right while muted (fade 150 ms).
 
-1. Layout: album cover 28×28 (`image-rendering: pixelated`, 2 px border) | track title (artist beneath, smaller, if present) | two buttons: play/pause (single toggling button) and skip-next. Title truncates with ellipsis at ~160 px; no marquee.
-2. Cover fallback: if `track.cover` is missing or errors (`onError`), render an inline pixel-art cassette SVG placeholder (16×16 grid, `shape-rendering: crispEdges`, `DeskIcon` palette). Never a broken-image glyph.
-3. Controls are pixel SVG icons in the `DeskIcon` style: play (right triangle), pause (two bars), skip (triangle + bar). Dictionary aria-labels; focus-visible rings consistent with the room.
-4. When paused, the widget stays visible (cover + queued title + play icon) so the feature is discoverable.
-5. Below 500 px viewport width, collapse to cover + play/pause only.
-6. i18n keys (EN + FR): `room.audio.play`, `.pause`, `.skip`, `.nowPlaying` (region aria-label). Reduced motion: fully functional, decorative animation off.
+Acceptance: notes visibly float from both speakers while music plays, stop on mute, resume on unmute; no React re-renders during steady-state animation (DevTools profiler); no notes under reduced motion; sprites crisp at all stage scales.
 
-Acceptance: correct metadata for every track; placeholder shows for cover-less tracks (test by removing a cover path temporarily); skip advances and preserves playing state; keyboard operable; FR labels render; widget never overlaps the HUD enter link (bottom-right) at any viewport.
+Negative prompts: no unbounded DOM node creation (pool only); no Framer Motion for the notes (CSS keyframes are sufficient and cheaper); notes must not overlap the screen area's interactive content (spawn points and travel keep them over the wall/speakers).
 
-Negative prompts: no progress bar, seek, track-list dropdown, or equaliser bars; no network cover fetching.
+## Task 4: Documentation updates
 
-## Task 4: Interactive speakers — mute/unmute (desk view)
+1. `docs/audio-licences.md`: record the owner's direction of 6 July 2026 — the deployment is treated as private/testing, commercial recordings ship at the owner's informed risk, decision to be revisited before any public promotion of the site. List all six tracks with status (three commercial/remix, three to be confirmed). Note plainly that the domain itself is publicly reachable. (General information, not legal advice.)
+2. CLAUDE.md room section: in-monitor browsing architecture (iframe, `replace()` navigation, recursion guard, 700 px fallback), music-note pool pattern, and a bold line that `RoomAudioProvider` must always provide context (A1's class of bug).
+3. `assets/pixel-art/STYLE.md`: note sprites entry (sources, trimmed sizes, palette).
+4. This file replaces SPEC v3 (done by this write). `docs/` should contain: `PLAN.md`, `taskt.txt`, `audio-licences.md`, and `suggestions.txt` only if the owner still wants it.
 
-1. Two hotspots in `DeskView` at the measured speaker rects, both `<button>`s inside the desk nav, dictionary labels (`room.audio.speakersLabel`, EN "Speakers — mute music" style, FR equivalent), both calling `toggle`.
-2. Tooltip on hover/focus: the speech-bubble component currently lives room-side; extract it for reuse in `DeskView`.
-3. Animation (subtle): crop the two speaker regions from the updated `desk-closeup.png` into `public/room/speaker-left.png` / `speaker-right.png` and overlay each hotspot with its own crop, so animation moves art rather than an empty box. While music plays: a heartbeat pulse, `scale(1 → 1.015)` every ~1.6 s, `transform` only. On toggle: one-shot press dip (`scale(0.98)`, 120 ms). All off under reduced motion.
-4. Muted cue: a small crossed-note pixel SVG at each speaker's top-right corner, fading in/out 150 ms while muted.
+## Task 5: Verification pass
 
-Acceptance: either speaker mutes/unmutes; the pulse runs only while audio is audibly playing; overlay crops align pixel-perfectly (at rest the seam must be invisible — screenshot diff against the plain background at two scales); keyboard focus reaches both speakers in a documented, sensible order.
-
-Negative prompts: no AnalyserNode or beat detection (fixed rhythm only); speakers never navigate anywhere; do not repaint or regenerate the speaker art itself.
-
-## Task 5: Pointer-following mouse on the mousepad (desk view)
-
-1. Extract the mouse sprite trimmed (110×80) to `public/room/mouse.png`; render in `DeskView` as an `aria-hidden` decorative `<img>` positioned via `transform: translate(x, y)` inside the stage (inherits stage scaling automatically).
-2. Mapping (proportional, as requested): normalise the pointer over the viewport (`nx = clientX / innerWidth`, `ny = clientY / innerHeight`), map linearly into the travel box: `x = X_MIN + nx × (X_MAX − X_MIN)`, likewise y. Whole viewport drives the whole pad.
-3. Discipline: `pointermove` listener on `window` writes to a ref; a single `requestAnimationFrame` loop applies it with lerp smoothing (`current += (target − current) × 0.15`) directly to the DOM node. No React state per move, zero re-renders. Cancel loop and listener on unmount and whenever the desk view is not active.
-4. Idle: starts at the natural spot (1007, 608); follows on first pointer move; eases back to natural spot when the pointer leaves the viewport.
-5. Touch devices (`matchMedia('(pointer: fine)')` false) and reduced motion: static at the natural spot.
-6. `pointer-events: none` — the sprite never intercepts input.
-
-Acceptance: tracks smoothly at 60 FPS (Performance panel clean; React DevTools shows no re-renders during movement); never exits the pad or overlaps the keyboard at any viewport; returns to rest on pointer leave; static on touch/reduced motion; icon and speaker clicks unaffected.
-
-Negative prompts: do not hide or restyle the real OS cursor; no React state or Framer Motion springs per pointer event; the pad mouse is not clickable or focusable; no follow behaviour in the room view.
-
-## Task 6: Lamp-off background art (room view)
-
-1. Copy `assets/pixel-art/background_lamp_off.png` → `public/room/background-lamp-off.png`. Confirm 1408×768 and pixel alignment with `background.png` by programmatic overlay diff; if the diff extends beyond the lamp and its light cone (owner may have regenerated the whole scene), stop and report before wiring.
-2. Replace the CSS radial-gradient dim hack: stack both background `<img>`s (lamp-on above lamp-off), toggle the top one's `opacity` 0/1 over 400 ms (instant under reduced motion). Lamp-off image inserted after first paint or `fetchpriority="low"` so LCP stays the lamp-on background.
-3. Lamp hotspot, stored pref, and focus ring stay as-is. The ambient lamp-glow pulse renders only while the lamp is on.
-
-Acceptance: toggle crossfades real art; pref persists; LCP unchanged (Lighthouse before/after); no flash of unloaded image on first toggle.
-
-Negative prompts: do not swap `src` on a single `<img>` (decode flicker); do not leave the old gradient overlay stacked on the new art.
-
-## Task 7: Housekeeping and documentation
-
-1. `docs/`: this file replaces the v2 plan (done by this write). Delete `docs/suggestions.txt` if the owner confirms it is stale (it predates the room project); otherwise leave.
-2. `docs/audio-licences.md`: every file in `public/audio/` with source and licensing status as stated by the owner; plainly flag commercial recordings.
-3. `assets/`: after Task 2, `assets/` should hold only `pixel-art/` and `svgs/`; delete loose files that were moved. Update `assets/pixel-art/STYLE.md` with the mouse sprite, speaker crops, and lamp-off background.
-4. CLAUDE.md: update the room section — audio provider architecture, playlist manifest location, the two-element transform structure from Task 1 (so future agents do not reintroduce the origin bug).
-5. Confirm `.gitignore` does not exclude `public/audio/covers/`.
-
-Negative prompts: do not delete `taskt.txt` or anything under `assets/pixel-art/sources/`; do not rewrite unrelated CLAUDE.md sections; do not rename previously shipped files under `public/room/`.
-
-## Task 8: Verification pass
-
-1. `npm run type-check && npm run lint && npm run build` on the owner's machine. If `git` misbehaves, check for a stale `.git/index.lock`.
-2. Centring screenshots at the four Task 1 viewports; bars symmetric, room centred.
-3. Full flows, mouse and keyboard-only: room → zoom → desk → icon → site page → back → `/#desk` → back → room; Escape at every stage.
-4. Audio matrix: fresh profile (autoplay attempt); saved `audio:false` (widget starts music); speaker mute/unmute; widget skip; track `ended` advance; state across view switches.
-5. Reduced-motion sweep: static pad mouse, no pulses, instant fades, everything operable.
-6. FR locale sweep of all new strings; `type-check` confirms dictionary parity.
-7. Lighthouse `/` and `/home` ≥ 95 performance/accessibility; LCP still `background.png`; zero 404s (fonts, sprites, audio, covers).
-8. Diff review: nothing under `api/` or `(site)` pages beyond intended; grep room components for hardcoded user-facing strings.
+1. Type-check, lint, build on the owner's machine.
+2. Reduced-motion sweep FIRST (it crashed in v3): `/`, desk, widget, in-monitor browsing, all functional.
+3. In-monitor browsing matrix: each of the six icons; internal link-following; Expand from a deep path; back-button conduct; audio continuity; `/#desk`; recursion guard (`/` typed inside the iframe context redirects to `/home`).
+4. Audio: end-of-track advances sequentially through all six (A3), skip cycles, prefs persist.
+5. Notes animation: play/pause/mute transitions; profiler shows no re-render churn; 60 FPS with notes + mouse follower simultaneously active.
+6. FR sweep of every new key (`desk.browserTitle`, `desk.desktop`, `desk.expand`, `room.audio.*`); grep for hardcoded strings (A4 has now recurred three times — treat any hit as a blocker).
+7. Lighthouse `/` and `/home` ≥ 95 performance/accessibility; the iframe must not load until browser mode is entered (network panel on desk entry shows no page fetch).
+8. Diff review: `api/` and `(site)` untouched except any recursion-guard placement.
 
 ## Execution order
 
-Task 1 → Task 2 → Tasks 3, 4, 5 in any order (all depend on 2; 4 and 5 also on 1's A2 art copy) → Task 6 → Task 7 → Task 8. Commit per task. Stop-and-report triggers: lamp-off art misaligned (Task 6.1), speaker crops that cannot be made seam-invisible (Task 4), or any filesystem inconsistency resembling this session's stale-mount episodes.
+Task 1 → Task 2 and Task 3 in parallel → Task 4 → Task 5. Commit per task. Stop-and-report triggers: iframe focus/Escape interaction proves unworkable (report options rather than hacking key listeners into the iframe), or history pollution cannot be fully avoided with `location.replace`.
+
+---
+
+## Further improvements (owner-requested suggestions, not commissioned work)
+
+Ranked roughly by value for effort, all compatible with the current architecture:
+
+1. **Persist the desk session.** Remember `screenMode`/`browserPath` in `sessionStorage` so returning from Expand (or a refresh) restores the page open in the monitor. Small, high polish.
+2. **Idle screensaver.** After ~90 s idle in desk view, a pixel starfield or bouncing-logo screensaver on the monitor; any input wakes it. Pure CSS/canvas on the screen rect, very in-theme.
+3. **Wallpaper unlocks.** Alternative desktop backgrounds for the monitor (variants of the site palette), selectable from a tiny settings icon; stored in the existing prefs object. First step towards the achievements idea without the full system.
+4. **Window weather.** The original brief's window reacting to real weather (Open-Meteo, no key, one API route with an hour of caching). The time-of-day tint already exists; rain/snow overlays on the window art would complete it.
+5. **Cat.** The brief's sleeping cat on the bed, with wake/stretch frames and an occasional position change between visits (uses the existing visit-counter idea in prefs). Needs new art in the established pipeline.
+6. **Interaction sounds.** Soft click for icons, page-flip for the poster, purr for the future cat, gated behind the existing audio pref and a separate `sfx` boolean. The provider architecture already supports a second, non-music element.
+7. **Konami code → fake terminal.** The deferred v1 idea; the desk monitor is now the natural home for it (a `terminal` screenMode beside `desktop`/`browser`).
+8. **Room OG image.** `/`'s open-graph image is still the old text card; a 1200×630 crop of the room art would make shares land the aesthetic.
+9. **Bonsai growth.** Bonsai frame index advances with visit count (5 stages already drawn) — the room quietly ages with the visitor.
+10. **A `/room` alias.** A tiny redirect route so the owner can send people directly to the experience even if `/` ever changes role.

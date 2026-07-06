@@ -463,6 +463,13 @@ export const en = {
     skip: 'Skip to the website',
     metaTitle: "Ahmed's Room",
     metaDescription: 'Step into my digital room — a cosy pixel-art space and the front door to my personal website.',
+    audio: {
+      play: 'Play',
+      pause: 'Pause',
+      skip: 'Skip',
+      nowPlaying: 'Now playing',
+      speakersLabel: 'Toggle speakers',
+    },
   },
 
   desk: {

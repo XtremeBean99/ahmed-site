@@ -97,7 +97,14 @@ export function RoomObject({
             className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-20"
             style={{ bottom: 'calc(100% + 8px)' }}
           >
-            <span className="block whitespace-nowrap px-2 py-1 text-[11px] font-sans bg-[#1a1512] border border-[#3a3228] text-[#c8b89a] rounded-sm leading-none">
+            <span
+              className="block whitespace-nowrap px-2 py-1 text-[10px] bg-[#1a1512] border border-[#3a3228] text-[#c8b89a] leading-none"
+              style={{
+                fontFamily: '"Courier New", "Lucida Console", monospace',
+                letterSpacing: '0.5px',
+                imageRendering: 'pixelated',
+              }}
+            >
               {label}
             </span>
           </motion.div>

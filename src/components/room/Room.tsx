@@ -9,6 +9,7 @@ import { RoomHud } from './RoomHud'
 import { RoomAudio } from './RoomAudio'
 import { Monitor } from './Monitor'
 import { Poster } from './Poster'
+import { Bonsai } from './Bonsai'
 import { EASE_OUT_EXPO } from '@/lib/motion'
 
 const STAGE_W = 1408
@@ -21,6 +22,7 @@ interface RoomProps {
       navLabel: string
       monitorLabel: string
       posterLabel: string
+      bonsaiLabel: string
       enterSite: string
       hint: string
       skip: string
@@ -99,10 +101,12 @@ export function Room({ dict }: RoomProps) {
 
   const monitorObj = ROOM_OBJECTS.find((o) => o.id === 'monitor')!
   const posterObj = ROOM_OBJECTS.find((o) => o.id === 'poster')!
+  const bonsaiObj = ROOM_OBJECTS.find((o) => o.id === 'bonsai')!
 
   // Monitor screen centre in stage coords (for transform-origin)
+  // New sprite includes keyboard+mouse below — screen is roughly the top 45% of the sprite
   const screenCenterX = monitorObj.x + monitorObj.w / 2
-  const screenCenterY = monitorObj.y + monitorObj.h * 0.35 // upper portion (screen area)
+  const screenCenterY = monitorObj.y + monitorObj.h * 0.22 // screen area in upper portion
 
   // Screen glow position (in viewport percentage, approximate based on stage layout)
   // The screen is roughly at monitorObj.x+22 to monitorObj.x+218, monitorObj.y+12 to monitorObj.y+128
@@ -175,6 +179,16 @@ export function Room({ dict }: RoomProps) {
               w={posterObj.w}
               h={posterObj.h}
               frames={posterObj.frames}
+            />
+
+            {/* Bonsai */}
+            <Bonsai
+              label={t.room.bonsaiLabel}
+              x={bonsaiObj.x}
+              y={bonsaiObj.y}
+              w={bonsaiObj.w}
+              h={bonsaiObj.h}
+              frames={bonsaiObj.frames}
             />
           </RoomStage>
         </motion.div>

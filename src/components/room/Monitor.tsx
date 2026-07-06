@@ -36,7 +36,7 @@ export function Monitor({ label, x, y, w, h, frames, href, onEnter }: MonitorPro
     onEnter?.()
   }, [reduce, router, href, onEnter])
 
-  const currentFrame = active ? frames[1] ?? frames[0] : frames[0]
+  const sprite = frames[0]
 
   return (
     <RoomObject
@@ -56,7 +56,7 @@ export function Monitor({ label, x, y, w, h, frames, href, onEnter }: MonitorPro
       }}
     >
       <motion.img
-        src={currentFrame}
+        src={sprite}
         alt=""
         draggable={false}
         className="block w-full h-full"

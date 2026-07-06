@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { RoomObject } from './RoomObject'
 
-interface PosterProps {
+interface BonsaiProps {
   label: string
   x: number
   y: number
@@ -13,9 +13,9 @@ interface PosterProps {
   frames: string[]
 }
 
-const FRAME_DURATION = 100 // ms between each frame advance
+const FRAME_DURATION = 120 // ms between each frame
 
-export function Poster({ label, x, y, w, h, frames }: PosterProps) {
+export function Bonsai({ label, x, y, w, h, frames }: BonsaiProps) {
   const [active, setActive] = useState(false)
   const [frameIndex, setFrameIndex] = useState(0)
   const reduce = useReducedMotion()
@@ -25,31 +25,22 @@ export function Poster({ label, x, y, w, h, frames }: PosterProps) {
     setActive(true)
     if (reduce || frames.length <= 1) return
 
-    // Animate from frame 1 through to last frame, then hold
-    let idx = 1 // start from frame 2 (index 1)
-    setFrameIndex(0) // reset to frame 1 immediately
+    let idx = 0
     timerRef.current = setInterval(() => {
-      idx++
-      if (idx >= frames.length) {
-        // Reached last frame, hold
-        setFrameIndex(frames.length - 1)
-        if (timerRef.current) clearInterval(timerRef.current)
-        return
-      }
+      idx = (idx + 1) % frames.length
       setFrameIndex(idx)
     }, FRAME_DURATION)
   }, [reduce, frames.length])
 
   const stopAnimation = useCallback(() => {
     setActive(false)
-    setFrameIndex(0) // revert to frame 1
+    setFrameIndex(0)
     if (timerRef.current) {
       clearInterval(timerRef.current)
       timerRef.current = undefined
     }
   }, [])
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)

@@ -21,12 +21,13 @@ export interface RoomObjectDef {
 export const ROOM_OBJECTS: RoomObjectDef[] = [
   {
     id: 'monitor',
-    x: 350,
-    y: 260,
-    w: 240,
-    h: 200,
+    // New monitor+keyboard+mouse sprite, extracted from screen-keybaord-mouse-mousapd.png
+    x: 240,
+    y: 261,
+    w: 393,
+    h: 343,
     labelKey: 'room.monitorLabel',
-    frames: ['/room/monitor-off.png', '/room/monitor-on.png'],
+    frames: ['/room/monitor-desk.png'],
     href: '/home',
   },
   {
@@ -42,6 +43,23 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
       '/room/poster-3.png',
       '/room/poster-4.png',
       '/room/poster-5.png',
+    ],
+    href: null,
+  },
+  {
+    id: 'bonsai',
+    // Windowsill bonsai plant, extracted from pixel-art/bonsai/
+    x: 1241,
+    y: 291,
+    w: 99,
+    h: 131,
+    labelKey: 'room.bonsaiLabel',
+    frames: [
+      '/room/bonsai-1.png',
+      '/room/bonsai-2.png',
+      '/room/bonsai-3.png',
+      '/room/bonsai-4.png',
+      '/room/bonsai-5.png',
     ],
     href: null,
   },

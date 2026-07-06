@@ -451,7 +451,8 @@ export const fr: Dictionary = {
   room: {
     navLabel: 'Navigation de la chambre',
     monitorLabel: 'Entrer dans le site',
-    posterLabel: 'Changer l’image de l’affiche',
+    posterLabel: 'Affiche My Dress Up Darling',
+    bonsaiLabel: 'Bonsaï sur le rebord de la fenêtre',
     enterSite: 'Entrer dans le site',
     hint: 'Cliquez pour explorer',
     skip: 'Aller au site',

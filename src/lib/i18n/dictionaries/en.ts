@@ -454,7 +454,8 @@ export const en = {
   room: {
     navLabel: 'Room navigation',
     monitorLabel: 'Enter the website',
-    posterLabel: 'Cycle poster frame',
+    posterLabel: 'My Dress Up Darling Poster',
+    bonsaiLabel: 'Windowsill bonsai tree',
     enterSite: 'Enter website',
     hint: 'Click around to explore',
     skip: 'Skip to the website',

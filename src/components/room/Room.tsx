@@ -66,8 +66,10 @@ export function Room({ dict }: RoomProps) {
   const scale = useStageScale()
   const [view, setView] = useState<View>('room')
   const [lampOn, setLampOn] = useState(true)
+  const [lampFlicker, setLampFlicker] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [windowHour, setWindowHour] = useState(new Date().getHours())
+  const [clockTooltip, setClockTooltip] = useState('')
 
   // Recursion guard: redirect if rendered inside own monitor iframe
   useEffect(() => {
@@ -77,12 +79,16 @@ export function Room({ dict }: RoomProps) {
   // Load lamp pref on mount
   useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn) }, [])
 
-  // Window time-of-day — update on hour change
+  // Window time-of-day — update on hour change, and clock tooltip every minute
   useEffect(() => {
-    const update = () => setWindowHour(new Date().getHours())
-    const msToNextHour = (60 - new Date().getMinutes()) * 60000 - new Date().getSeconds() * 1000
-    const id = setTimeout(() => { update(); setInterval(update, 3600000) }, msToNextHour)
-    return () => clearTimeout(id)
+    const tick = () => {
+      const now = new Date()
+      setWindowHour(now.getHours())
+      setClockTooltip(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }))
+    }
+    tick()
+    const id = setInterval(tick, 30000)
+    return () => clearInterval(id)
   }, [])
 
   // Timeout refs
@@ -248,7 +254,7 @@ export function Room({ dict }: RoomProps) {
             alt=""
             fetchPriority="high"
             draggable={false}
-            className="absolute inset-0 w-full h-full"
+            className={`absolute inset-0 w-full h-full ${lampFlicker && !reduce ? 'animate-[lamp-flicker_0.5s_ease-out]' : ''}`}
             style={{
               imageRendering: 'pixelated',
               opacity: lampOn ? 1 : 0,
@@ -314,9 +320,27 @@ export function Room({ dict }: RoomProps) {
             />
           )}
 
+          {/* Window clock tooltip */}
+          {clockTooltip && (
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: 1140,
+                top: 240,
+                fontFamily: 'var(--font-pixel), "Courier New", monospace',
+                fontSize: '10px',
+                color: '#c8b89a',
+                textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              It&apos;s {clockTooltip} in your world
+            </div>
+          )}
+
           {/* Lamp toggle hotspot */}
           <button
-            onClick={() => { setLampOn((v) => { const n = !v; savePrefs({ lampOn: n }); return n }) }}
+            onClick={() => { setLampOn((v) => { const n = !v; savePrefs({ lampOn: n }); setLampFlicker(true); setTimeout(() => setLampFlicker(false), 500); return n }) }}
             aria-label={t.room.lampLabel}
             className="absolute cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2"
             style={{ left: 60, top: 300, width: 110, height: 220 }}
@@ -431,6 +455,30 @@ export function Room({ dict }: RoomProps) {
             animation: 'lamp-glow 6s ease-in-out infinite',
           }}
         />
+      )}
+
+      {/* Ambient dust motes */}
+      {!reduce && view === 'room' && (
+        <div className="fixed inset-0 pointer-events-none z-0" aria-hidden>
+          {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                left: `${8 + Math.random() * 18}%`,
+                top: `${10 + Math.random() * 20}%`,
+                width: '2px',
+                height: '2px',
+                backgroundColor: '#c8a064',
+                '--dx': `${(Math.random() - 0.5) * 40}px`,
+                '--dy': `${-20 - Math.random() * 40}px`,
+                '--dust-opacity': 0.3 + Math.random() * 0.3,
+                '--ds': 0.5 + Math.random(),
+                animation: `dust-float ${4 + Math.random() * 6}s ease-in-out ${Math.random() * 5}s infinite`,
+              } as React.CSSProperties}
+            />
+          ))}
+        </div>
       )}
     </div>
     </RoomAudioProvider>

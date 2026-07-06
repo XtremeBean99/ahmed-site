@@ -27,6 +27,6 @@ export function savePrefs(prefs: Partial<RoomSave>): void {
     const merged = { ...current, ...prefs }
     localStorage.setItem(KEY, JSON.stringify(merged))
   } catch {
-    // localStorage unavailable — silently ignore
+    // silently ignore
   }
 }

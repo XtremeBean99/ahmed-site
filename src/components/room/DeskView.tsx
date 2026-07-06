@@ -42,13 +42,16 @@ export function DeskView(props: DeskViewProps) {
   const [screenMode, setScreenMode] = useState<ScreenMode>('desktop')
   const [browserPath, setBrowserPath] = useState('')
   const [iframeLoaded, setIframeLoaded] = useState(false)
+  const [mouseJitter, setMouseJitter] = useState(false)
+  const [screensaver, setScreensaver] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const activeIconRef = useRef<HTMLAnchorElement>(null)
-  const mouseRef = useRef<HTMLImageElement>(null)
+  const mouseRef = useRef<HTMLButtonElement>(null)
   const mouseTarget = useRef({ x: MOUSE_REST_X, y: MOUSE_REST_Y })
   const mouseCurrent = useRef({ x: MOUSE_REST_X, y: MOUSE_REST_Y })
   const rafRef = useRef(0)
   const pathTimerRef = useRef<ReturnType<typeof setInterval>>(undefined)
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const isMobile = typeof window !== 'undefined' && window.innerWidth < MOBILE_CUTOFF
 
   // Prefetch
@@ -137,6 +140,22 @@ export function DeskView(props: DeskViewProps) {
     }
   }, [screenMode])
 
+  // Idle screensaver: reset timer on any activity, trigger after 90s
+  useEffect(() => {
+    const reset = () => {
+      setScreensaver(false)
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+      idleTimerRef.current = setTimeout(() => setScreensaver(true), 90000)
+    }
+    const events = ['mousemove', 'keydown', 'pointerdown', 'wheel']
+    for (const e of events) window.addEventListener(e, reset)
+    reset()
+    return () => {
+      for (const e of events) window.removeEventListener(e, reset)
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+    }
+  }, [])
+
   // Mouse follower (unchanged)
   useEffect(() => {
     if (reduce) return
@@ -199,10 +218,19 @@ export function DeskView(props: DeskViewProps) {
         <MusicNotes cx={277} cy={258} />
         <MusicNotes cx={1112} cy={262} />
 
-        {/* Decorative mouse */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img ref={mouseRef} src="/room/mouse.png" alt="" draggable={false} aria-hidden
-          className="absolute pointer-events-none" style={{ imageRendering: 'pixelated', transform: `translate(${MOUSE_REST_X}px, ${MOUSE_REST_Y}px)`, willChange: 'transform' }} />
+        {/* Decorative mouse (clickable for jitter) */}
+        <button
+          ref={mouseRef}
+          onClick={() => { setMouseJitter(true); setTimeout(() => setMouseJitter(false), 300) }}
+          aria-label="Click the mouse"
+          className="absolute cursor-pointer outline-none"
+          style={{ left: 0, top: 0, width: 110, height: 80, border: 0, background: 'transparent', transform: `translate(${MOUSE_REST_X}px, ${MOUSE_REST_Y}px)`, willChange: 'transform' }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/room/mouse.png" alt="" draggable={false}
+            className={`block pointer-events-none ${mouseJitter && !reduce ? 'animate-[mouse-jitter_0.3s_ease-out]' : ''}`}
+            style={{ imageRendering: 'pixelated' }} />
+        </button>
 
         {/* Screen area */}
         <div data-screen-area style={screenStyle}>
@@ -227,6 +255,31 @@ export function DeskView(props: DeskViewProps) {
                     ))}
                   </div>
                 </nav>
+
+                {/* Idle screensaver overlay */}
+                {screensaver && !reduce && (
+                  <div className="absolute inset-0 flex items-center justify-center overflow-hidden"
+                    style={{ backgroundColor: '#faf8f5' }} aria-hidden>
+                    <div className="relative"
+                      style={{
+                        width: 40, height: 20,
+                        animation: 'screensaver-drift 10s linear infinite',
+                        '--sw': SCREEN_W + 'px', '--sh': SCREEN_H + 'px',
+                      } as React.CSSProperties}>
+                      <div style={{
+                        width: 40, height: 20,
+                        backgroundColor: '#3a3028',
+                        borderRadius: '2px',
+                        fontFamily: 'var(--font-pixel), "Courier New", monospace',
+                        fontSize: '8px',
+                        color: '#faf8f5',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>AH</div>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
 

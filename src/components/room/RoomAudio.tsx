@@ -3,11 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useReducedMotion } from 'framer-motion'
 
-const TRACKS = [
-  '/audio/2pac do for love.mp3',
-  '/audio/3killsss.mp3',
-  '/audio/Saffron.mp3',
-]
+const TRACKS = ['/audio/lo-fi-beat.mp3', '/audio/saffron.mp3']
 
 function randomTrack(): number {
   return Math.floor(Math.random() * TRACKS.length)

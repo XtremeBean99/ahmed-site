@@ -8,15 +8,15 @@ import { DURATION } from '@/lib/motion'
 interface RoomObjectProps {
   children: ReactNode
   label: string
-  /** Whether to show the tooltip (controlled by parent hover state) */
+  /** Whether to show the tooltip (controlled by parent hover/focus state) */
   showTooltip: boolean
-  /** Called on pointer enter */
+  /** Called on pointer enter / focus */
   onActivate: () => void
-  /** Called on pointer leave */
+  /** Called on pointer leave / blur */
   onDeactivate: () => void
   /** Click handler */
-  onClick?: () => void
-  /** If provided, renders as an anchor */
+  onClick?: (e: React.MouseEvent) => void
+  /** Always renders as an anchor with this href */
   href?: string
   tabIndex?: number
   style?: React.CSSProperties
@@ -55,21 +55,26 @@ export function RoomObject({
     onBlur: handleDeactivate,
   }
 
+  // focus-visible ring: shown only on keyboard focus, not mouse hover
+  const focusClass =
+    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2 focus-visible:outline'
+
   return (
     <div className="relative" style={style}>
       {href ? (
         <a
           href={href}
-          className="block cursor-pointer outline-none"
+          className={`block cursor-pointer ${focusClass}`}
           aria-label={label}
           tabIndex={tabIndex}
+          onClick={onClick}
           {...sharedHandlers}
         >
           {children}
         </a>
       ) : (
         <button
-          className="block cursor-pointer outline-none"
+          className={`block cursor-pointer ${focusClass}`}
           aria-label={label}
           tabIndex={tabIndex}
           onClick={onClick}
@@ -90,7 +95,6 @@ export function RoomObject({
             className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-20"
             style={{ bottom: 'calc(100% + 12px)' }}
           >
-            {/* Speech bubble body */}
             <div
               className="relative px-3 py-2 border-2"
               style={{
@@ -123,7 +127,6 @@ export function RoomObject({
                   borderTop: '7px solid #5a4430',
                 }}
               />
-              {/* Inner triangle for border effect */}
               <div
                 style={{
                   position: 'absolute',

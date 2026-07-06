@@ -8,9 +8,7 @@ import { RoomStage } from './RoomStage'
 import { RoomHud } from './RoomHud'
 import { RoomAudio } from './RoomAudio'
 import { Monitor } from './Monitor'
-import { Poster } from './Poster'
-import { Bonsai } from './Bonsai'
-import { EASE_OUT_EXPO } from '@/lib/motion'
+import { AnimatedSprite } from './AnimatedSprite'
 
 const STAGE_W = 1408
 const STAGE_H = 768
@@ -35,8 +33,10 @@ export function Room({ dict }: RoomProps) {
   const reduce = useReducedMotion()
   const [scale, setScale] = useState(1)
   const [transitioning, setTransitioning] = useState(false)
-  // Guard to prevent re-triggering navigation
   const navigatingRef = useRef(false)
+  // Store timeout ids in refs so Escape/unmount can clear them
+  const safetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const navRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Compute scale — always fit (letterbox with black bars)
   const updateScale = useCallback(() => {
@@ -61,48 +61,51 @@ export function Room({ dict }: RoomProps) {
     navigatingRef.current = true
     setTransitioning(true)
 
-    // Safety timeout: force navigation after 1.5s if animation callback never fires
-    const safetyTimeout = setTimeout(() => {
+    // Safety timeout: force navigation after 1.5s
+    safetyRef.current = setTimeout(() => {
       router.push('/home')
     }, 1500)
 
-    // Navigate after zoom + overlay animation completes (~800 ms)
-    const navTimeout = setTimeout(() => {
+    // Navigate after zoom + overlay completes (~800 ms)
+    navRef.current = setTimeout(() => {
       router.push('/home')
     }, 800)
-
-    return () => {
-      clearTimeout(safetyTimeout)
-      clearTimeout(navTimeout)
-    }
   }, [reduce, router])
 
-  // Cancel transition on Escape (before navigation fires)
+  // Cancel transition on Escape
+  const cancelTransition = useCallback(() => {
+    setTransitioning(false)
+    navigatingRef.current = false
+    if (safetyRef.current) { clearTimeout(safetyRef.current); safetyRef.current = null }
+    if (navRef.current) { clearTimeout(navRef.current); navRef.current = null }
+  }, [])
+
   useEffect(() => {
     if (!transitioning) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setTransitioning(false)
-        navigatingRef.current = false
-      }
+      if (e.key === 'Escape') cancelTransition()
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [transitioning])
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      // Cleanup timeouts on unmount
+      if (safetyRef.current) clearTimeout(safetyRef.current)
+      if (navRef.current) clearTimeout(navRef.current)
+    }
+  }, [transitioning, cancelTransition])
 
   const monitorObj = ROOM_OBJECTS.find((o) => o.id === 'monitor')!
   const posterObj = ROOM_OBJECTS.find((o) => o.id === 'poster')!
   const bonsaiObj = ROOM_OBJECTS.find((o) => o.id === 'bonsai')!
 
-  // Monitor screen centre in stage coords (for transform-origin)
-  // New sprite includes keyboard+mouse below — screen is roughly the top 45% of the sprite
-  const screenCenterX = monitorObj.x + monitorObj.w / 2
-  const screenCenterY = monitorObj.y + monitorObj.h * 0.22 // screen area in upper portion
+  // Monitor screen centre in stage coords (for zoom origin on inner stage div)
+  // Screen area within monitor-desk.png: sprite-local x 22-218, y 12-128
+  const screenCenterX = monitorObj.x + 22 + 98 // (218-22)/2 ≈ 98, screen centre in stage coords
+  const screenCenterY = monitorObj.y + 12 + 58 // (128-12)/2 ≈ 58
 
-  // Screen glow position (in viewport percentage, approximate based on stage layout)
-  // The screen is roughly at monitorObj.x+22 to monitorObj.x+218, monitorObj.y+12 to monitorObj.y+128
-  const glowX = ((monitorObj.x + 22 + 109) / STAGE_W) * 100 // screen centre x as % of stage
-  const glowY = ((monitorObj.y + 12 + 58) / STAGE_H) * 100 // screen centre y as % of stage
+  // Screen glow position (in viewport percentage)
+  const glowX = ((monitorObj.x + 22 + 98) / STAGE_W) * 100
+  const glowY = ((monitorObj.y + 12 + 58) / STAGE_H) * 100
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#1a1210]">
@@ -113,79 +116,67 @@ export function Room({ dict }: RoomProps) {
         skipLabel={t.room.skip}
       />
 
-      {/* Background music toggle (hidden on reduced motion) */}
+      {/* Background music toggle */}
       <RoomAudio />
 
       {/* Room nav landmark */}
       <nav aria-label={t.room.navLabel}>
-        {/* Zoom container */}
-        <motion.div
-          className="w-full h-full"
-          animate={
-            transitioning && !reduce
-              ? {
-                  scale: 3.2,
-                }
-              : {
-                  scale: 1,
-                }
-          }
-          style={{
-            transformOrigin: `${screenCenterX}px ${screenCenterY}px`,
-          }}
-          transition={{
-            duration: transitioning ? 0.6 : 0,
-            ease: EASE_OUT_EXPO,
-          }}
+        <RoomStage
+          scale={scale}
+          zoomScale={transitioning && !reduce ? 3.2 : 1}
+          zoomOriginX={screenCenterX}
+          zoomOriginY={screenCenterY}
         >
-          <RoomStage scale={scale}>
-            {/* Background image (LCP) — raw <img> required for pixel-art rendering */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/room/background.png"
-              alt=""
-              fetchPriority="high"
-              draggable={false}
-              className="absolute inset-0 w-full h-full"
-              style={{ imageRendering: 'pixelated' }}
-            />
+          {/* Background image (LCP) — raw <img> required for pixel-art rendering */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/room/background.png"
+            alt=""
+            fetchPriority="high"
+            draggable={false}
+            className="absolute inset-0 w-full h-full"
+            style={{ imageRendering: 'pixelated' }}
+          />
 
-            {/* Monitor */}
-            <Monitor
-              label={t.room.monitorLabel}
-              x={monitorObj.x}
-              y={monitorObj.y}
-              w={monitorObj.w}
-              h={monitorObj.h}
-              frames={monitorObj.frames}
-              href={monitorObj.href!}
-              onEnter={handleEnter}
-            />
+          {/* Monitor */}
+          <Monitor
+            label={t.room.monitorLabel}
+            x={monitorObj.x}
+            y={monitorObj.y}
+            w={monitorObj.w}
+            h={monitorObj.h}
+            frames={monitorObj.frames}
+            href={monitorObj.href!}
+            onEnter={handleEnter}
+          />
 
-            {/* Poster */}
-            <Poster
-              label={t.room.posterLabel}
-              x={posterObj.x}
-              y={posterObj.y}
-              w={posterObj.w}
-              h={posterObj.h}
-              frames={posterObj.frames}
-            />
+          {/* Poster */}
+          <AnimatedSprite
+            label={t.room.posterLabel}
+            x={posterObj.x}
+            y={posterObj.y}
+            w={posterObj.w}
+            h={posterObj.h}
+            frames={posterObj.frames}
+            frameDuration={100}
+            mode="play-once-hold"
+          />
 
-            {/* Bonsai */}
-            <Bonsai
-              label={t.room.bonsaiLabel}
-              x={bonsaiObj.x}
-              y={bonsaiObj.y}
-              w={bonsaiObj.w}
-              h={bonsaiObj.h}
-              frames={bonsaiObj.frames}
-            />
-          </RoomStage>
-        </motion.div>
+          {/* Bonsai */}
+          <AnimatedSprite
+            label={t.room.bonsaiLabel}
+            x={bonsaiObj.x}
+            y={bonsaiObj.y}
+            w={bonsaiObj.w}
+            h={bonsaiObj.h}
+            frames={bonsaiObj.frames}
+            frameDuration={120}
+            mode="loop"
+          />
+        </RoomStage>
       </nav>
 
-      {/* Screen-coloured glow bloom (radial gradient from screen centre) */}
+      {/* Screen-coloured glow bloom */}
       <AnimatePresence>
         {transitioning && !reduce && (
           <motion.div
@@ -215,7 +206,7 @@ export function Room({ dict }: RoomProps) {
         )}
       </AnimatePresence>
 
-      {/* Ambient lamp glow pulse (CSS only, not during transition) */}
+      {/* Ambient lamp glow pulse */}
       {!reduce && !transitioning && (
         <div
           className="fixed pointer-events-none z-0"

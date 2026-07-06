@@ -27,13 +27,21 @@ export function Monitor({ label, x, y, w, h, frames, href, onEnter }: MonitorPro
     router.prefetch(href)
   }, [router, href])
 
-  const handleClick = useCallback(() => {
-    if (reduce) {
-      router.push(href)
-      return
-    }
-    onEnter?.()
-  }, [reduce, router, href, onEnter])
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Middle-click, ctrl+click, etc. — let the browser handle natively
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+
+      if (reduce) {
+        // Reduced motion: navigate immediately (the <a> handles it natively)
+        return
+      }
+
+      e.preventDefault()
+      onEnter?.()
+    },
+    [reduce, onEnter],
+  )
 
   const sprite = frames[0]
 
@@ -44,7 +52,7 @@ export function Monitor({ label, x, y, w, h, frames, href, onEnter }: MonitorPro
       onActivate={() => setHovered(true)}
       onDeactivate={() => setHovered(false)}
       onClick={handleClick}
-      href={reduce ? href : undefined}
+      href={href}
       tabIndex={0}
       style={{
         position: 'absolute',
@@ -60,11 +68,7 @@ export function Monitor({ label, x, y, w, h, frames, href, onEnter }: MonitorPro
         draggable={false}
         className="block w-full h-full"
         style={{ imageRendering: 'pixelated' }}
-        animate={
-          hovered && !reduce
-            ? { y: -2 }
-            : { y: 0 }
-        }
+        animate={hovered && !reduce ? { y: -2 } : { y: 0 }}
         transition={{ duration: DURATION.fast }}
       />
     </RoomObject>

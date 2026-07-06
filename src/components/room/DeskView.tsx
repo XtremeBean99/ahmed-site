@@ -89,7 +89,10 @@ export function DeskView({ shortcuts, backLabel, screenLabel, onBack }: DeskView
   return (
     <div
       className="relative"
-      style={{ width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}
+      style={{ width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: '#000', cursor: 'default' }}
+      onClick={(e) => {
+        if (!(e.target as HTMLElement).closest('[data-screen-area]')) onBack()
+      }}
     >
       {/* Stage */}
       <motion.div

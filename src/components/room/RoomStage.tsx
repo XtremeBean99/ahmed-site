@@ -7,15 +7,16 @@ import { STAGE_W, STAGE_H } from '@/lib/room/useStageScale'
 
 interface RoomStageProps {
   children: ReactNode
-  /** Fit scale factor (always letterbox) */
+  /** Fit scale factor (letterbox) */
   scale: number
-  /** Additional zoom scale applied to the stage (for monitor transition) */
+  /** Zoom scale (1 = none, >1 = zooming into monitor) */
   zoomScale?: number
-  /** Transform origin in stage coordinates (for zoom) */
+  /** Zoom origin in stage coordinates */
   zoomOriginX?: number
   zoomOriginY?: number
 }
 
+/** Two-element transform: outer centres + fit-scales about centre, inner zooms about monitor point. */
 export function RoomStage({
   children,
   scale,
@@ -35,24 +36,31 @@ export function RoomStage({
         backgroundColor: '#000000',
       }}
     >
-      <motion.div
+      {/* Outer: fit-scale about centre (never shifts off-centre) */}
+      <div
         style={{
-          width: STAGE_W,
-          height: STAGE_H,
-          transformOrigin: `${zoomOriginX}px ${zoomOriginY}px`,
-          position: 'relative',
+          transform: `scale(${scale})`,
+          transformOrigin: 'center center',
           flexShrink: 0,
         }}
-        animate={{
-          scale: scale * zoomScale,
-        }}
-        transition={{
-          duration: zoomScale > 1 ? 0.6 : 0,
-          ease: EASE_OUT_EXPO,
-        }}
       >
-        {children}
-      </motion.div>
+        {/* Inner: zoom about monitor point (stage coords valid here) */}
+        <motion.div
+          style={{
+            width: STAGE_W,
+            height: STAGE_H,
+            position: 'relative',
+            transformOrigin: `${zoomOriginX}px ${zoomOriginY}px`,
+          }}
+          animate={{ scale: zoomScale }}
+          transition={{
+            duration: zoomScale > 1 ? 0.6 : 0,
+            ease: EASE_OUT_EXPO,
+          }}
+        >
+          {children}
+        </motion.div>
+      </div>
     </div>
   )
 }

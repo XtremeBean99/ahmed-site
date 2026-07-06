@@ -95,11 +95,19 @@ export function Room({ dict }: RoomProps) {
     return () => window.removeEventListener('popstate', onPop)
   }, [view])
 
-  // Clear timeouts on unmount or view change
+  // Clear timeouts helper
   const clearTimeouts = useCallback(() => {
     if (safetyRef.current) { clearTimeout(safetyRef.current); safetyRef.current = null }
     if (navRef.current) { clearTimeout(navRef.current); navRef.current = null }
   }, [])
+
+  // Shared helper: enter desk view, clearing both timers
+  const enterDesk = useCallback(() => {
+    clearTimeouts()
+    setView('desk')
+    window.history.pushState({ view: 'desk' }, '', '#desk')
+    navigatingRef.current = false
+  }, [clearTimeouts])
 
   useEffect(() => {
     return () => clearTimeouts()
@@ -108,27 +116,18 @@ export function Room({ dict }: RoomProps) {
   // Monitor click → zoom into desk
   const handleEnter = useCallback(() => {
     if (reduce || navigatingRef.current) {
-      setView('desk')
-      window.location.hash = 'desk'
+      enterDesk()
       return
     }
     navigatingRef.current = true
     setView('zooming')
 
-    // Safety timeout
-    safetyRef.current = setTimeout(() => {
-      setView('desk')
-      window.location.hash = 'desk'
-      navigatingRef.current = false
-    }, 1500)
+    // Safety timeout: force entry after 1.5s
+    safetyRef.current = setTimeout(enterDesk, 1500)
 
-    // After zoom completes
-    navRef.current = setTimeout(() => {
-      setView('desk')
-      window.history.pushState({ view: 'desk' }, '', '#desk')
-      navigatingRef.current = false
-    }, 800)
-  }, [reduce])
+    // After zoom completes (~800 ms)
+    navRef.current = setTimeout(enterDesk, 800)
+  }, [reduce, enterDesk])
 
   // Escape cancels zoom
   const cancelTransition = useCallback(() => {

@@ -39,8 +39,7 @@ a desk close-up, in-monitor browsing of the real site via same-origin iframe (si
 zoomed out 25% for readability), six-track music player with now-playing widget (with
 embedded ID3 cover art extraction) and speaker mute, pointer-following desk mouse, music
 notes from the speaker drivers, three-wisp coffee steam, lamp-off art crossfade with
-flicker, dust motes,
-idle screensaver (15 s), "My room" CTA on /home linking back to /,
+flicker, idle screensaver (15 s), "My room" CTA on /home linking back to /,
 EN/FR throughout. No pending actions remain.
 
 ---
@@ -211,7 +210,7 @@ are never graded.
 
 Every hotspot is a real `<a>`/`<button>` inside `<nav aria-label>`; visible focus-visible
 rings (2 px warm outline, offset); tooltips on focus as well as hover; skip link first in tab
-order targeting `/home`; decorative layers (`MusicNotes`, steam, dust, pad mouse) are
+order targeting `/home`; decorative layers (`MusicNotes`, steam, pad mouse) are
 `aria-hidden` + `pointer-events: none`; `prefers-reduced-motion` disables all decorative
 animation but never functionality.
 
@@ -266,7 +265,7 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   mouse, lamp art. Notable bugs fixed: off-centre transform origin; dead toggle when audio
   pref false.
 - **v4** `aa9db95`–`ca70b5b`: reduced-motion crash fix, in-monitor browsing, music notes,
-  coffee mug + owner extras (clock, flicker, dust, jitter, screensaver).
+  coffee mug + owner extras (clock, flicker, jitter, screensaver).
 - **v5** `ea902e8`–`64101ee`: frame-headers fix (XFO DENY → SAMEORIGIN), constant-rate
   notes from driver holes, coffee highlight frames + 3-wisp steam, bonsai `tooltipAlign`,
   clock i18n, docs consolidation into this file, saffron case rename done.
@@ -279,7 +278,8 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   tooltips added to lamp and speakers; updated background-lamp-off art.
 - **v8** (7 July 2026): visitor-local lighting engine (build-time graded sprites for
   dawn/day/night, `npm run lighting` pipeline, `?light=` query override, 1.5 s background
-  crossfade, runtime `LightingProvider` context, clock unfrozen to live visitor-local time).
+  crossfade, runtime `LightingProvider` context, clock unfrozen to live visitor-local time,
+  night brightness bumped 0.62→0.70 so the lamp feels brighter at night).
 - **v9** (7 July 2026): Pixel OS v1 launcher replacing the six site shortcuts with three
   icons (Home/Paint/Minesweeper); Paint app (`DeskPaint.tsx`) with 10-colour palette,
   tools (pencil/eraser/fill), persistent canvas (`room-paint-v1`), PNG download;
@@ -287,6 +287,8 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   first-click safety, flagging (right-click/long-press/F key), best-time storage;
   ScreenStrip and DeskDesktop extracted from DeskView; screen modes expanded to
   `desktop | browser | paint | minesweeper`; Escape ladder app → desktop → room.
+- **v9b** (7 July 2026): removed CSS lamp glow overlay and ambient dust motes from
+  the room view; bumped night lighting brightness.
 - **v6 (security hardening)** `7 July 2026`: Deleted live Vercel OIDC token from
   `.vercel/.env.production.local` (never committed, now removed). Tightened contact CSRF
   check: absent Origin is now rejected in production (previously skipped). Escaped `<` and

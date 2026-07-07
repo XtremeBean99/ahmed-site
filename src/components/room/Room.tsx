@@ -547,44 +547,7 @@ export function Room({ dict }: RoomProps) {
         )}
       </AnimatePresence>
 
-      {/* Lamp glow */}
-      {!reduce && view === 'room' && (
-        <div
-          className="fixed pointer-events-none z-0"
-          style={{
-            left: '8.5%',
-            top: '12%',
-            width: '15%',
-            height: '15%',
-            background: 'radial-gradient(ellipse, rgba(200,160,100,0.12) 0%, transparent 70%)',
-            animation: 'lamp-glow 6s ease-in-out infinite',
-          }}
-        />
-      )}
 
-      {/* Ambient dust motes */}
-      {!reduce && view === 'room' && (
-        <div className="fixed inset-0 pointer-events-none z-0" aria-hidden>
-          {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-            <div
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                left: `${8 + Math.random() * 18}%`,
-                top: `${10 + Math.random() * 20}%`,
-                width: '2px',
-                height: '2px',
-                backgroundColor: '#c8a064',
-                '--dx': `${(Math.random() - 0.5) * 40}px`,
-                '--dy': `${-20 - Math.random() * 40}px`,
-                '--dust-opacity': 0.3 + Math.random() * 0.3,
-                '--ds': 0.5 + Math.random(),
-                animation: `dust-float ${4 + Math.random() * 6}s ease-in-out ${Math.random() * 5}s infinite`,
-              } as React.CSSProperties}
-            />
-          ))}
-        </div>
-      )}
     </div>
     </RoomAudioProvider>
   )

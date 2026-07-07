@@ -1,3 +1,16 @@
+/**
+ * Ninja leaderboard API.
+ *
+ * TRUST MODEL: Scores are client-trusted. The game client submits
+ * {name, timeCs, tokensPercent} and the server only validates range/format,
+ * not proof-of-play. Anyone can fabricate a run with a curl request.
+ * This is a cosmetic game leaderboard with no privileges or money attached —
+ * the board is for fun, not an authoritative record.
+ *
+ * If authenticity is ever needed: sign runs with a server-issued HMAC over
+ * gameplay events, or validate plausibility server-side.
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { ninjaScoreSchema } from '@/lib/validations'
 import { addScore, topScores, type LeaderboardEntry } from '@/services/leaderboard'

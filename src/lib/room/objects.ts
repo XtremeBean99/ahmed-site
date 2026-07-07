@@ -21,13 +21,20 @@ export interface RoomObjectDef {
 export const ROOM_OBJECTS: RoomObjectDef[] = [
   {
     id: 'monitor',
-    // New monitor+keyboard+mouse sprite, extracted from screen-keybaord-mouse-mousapd.png
-    x: 240,
-    y: 261,
-    w: 393,
-    h: 343,
+    // Monitor+keyboard+mousepad. Union bbox +2px pad across the rest frame and
+    // the 3 hover-highlight frames (the yellow outline extends past the art).
+    x: 235,
+    y: 257,
+    w: 402,
+    h: 350,
     labelKey: 'room.monitorLabel',
-    frames: ['/room/monitor-desk.png'],
+    // Frame 1 = rest, frames 2–4 = hover highlight steps (play-once-hold).
+    frames: [
+      '/room/monitor-1.png',
+      '/room/monitor-2.png',
+      '/room/monitor-3.png',
+      '/room/monitor-4.png',
+    ],
     href: '/home',
   },
   {
@@ -95,3 +102,16 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
     href: null,
   },
 ]
+
+/**
+ * Windows-98-style boot sequence drawn on the monitor glass while the PC is
+ * hovered. Decorative overlay (aria-hidden). Rect is in stage coordinates —
+ * the loading source canvases are top-left aligned with the stage, and the
+ * content bbox is identical in all 18 frames.
+ */
+export const MONITOR_LOADING_RECT = { x: 266, y: 275, w: 214, h: 171 }
+
+export const MONITOR_LOADING_FRAMES = Array.from(
+  { length: 18 },
+  (_, i) => `/room/monitor-loading-${i + 1}.png`,
+)

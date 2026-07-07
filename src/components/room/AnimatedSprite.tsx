@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { RoomObject } from './RoomObject'
+import { DURATION } from '@/lib/motion'
 
 export type SpriteMode = 'loop' | 'play-once-hold'
 
@@ -116,13 +117,14 @@ export function AnimatedSprite({
         tabIndex={0}
         tooltipAlign={tooltipAlign}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <motion.img
           src={frames[frameIndex]}
           alt=""
           draggable={false}
           className="block w-full h-full"
           style={{ imageRendering: 'pixelated' }}
+          animate={hovered && !reduce ? { y: -2 } : { y: 0 }}
+          transition={{ duration: DURATION.fast }}
         />
       </RoomObject>
     </div>

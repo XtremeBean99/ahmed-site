@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
-import { ROOM_OBJECTS } from '@/lib/room/objects'
+import { ROOM_OBJECTS, MONITOR_LOADING_FRAMES, MONITOR_LOADING_RECT } from '@/lib/room/objects'
 import { useStageScale } from '@/lib/room/useStageScale'
 import { loadPrefs, savePrefs } from '@/lib/room/storage'
 import { RoomStage } from './RoomStage'
@@ -10,6 +10,7 @@ import { RoomHud } from './RoomHud'
 import { RoomAudioProvider } from './RoomAudioProvider'
 import { NowPlaying } from './NowPlaying'
 import { Monitor } from './Monitor'
+import { RoomSpeakers } from './RoomSpeakers'
 import { AnimatedSprite } from './AnimatedSprite'
 import { DeskView } from './DeskView'
 import {
@@ -173,18 +174,32 @@ export function Room({ dict }: RoomProps) {
     }
   }, [])
 
+  // One lamp toggle for both views: persists the pref and fires the flicker.
+  const toggleLamp = useCallback(() => {
+    setLampOn((v) => {
+      const n = !v
+      savePrefs({ lampOn: n })
+      setLampFlicker(true)
+      setTimeout(() => setLampFlicker(false), 500)
+      return n
+    })
+  }, [])
+
   const monitorObj = ROOM_OBJECTS.find((o) => o.id === 'monitor')!
   const posterObj = ROOM_OBJECTS.find((o) => o.id === 'poster')!
   const bonsaiObj = ROOM_OBJECTS.find((o) => o.id === 'bonsai')!
   const coffeeObj = ROOM_OBJECTS.find((o) => o.id === 'coffee')!
 
-  const screenCenterX = monitorObj.x + 22 + 98
-  const screenCenterY = monitorObj.y + 12 + 58
+  // Stage point the zoom converges on: the centre of the monitor glass,
+  // (360, 331) in stage coords. Offsets are relative to the monitor rect
+  // (235, 257) — re-derive if the sprite crop ever changes.
+  const screenCenterX = monitorObj.x + 125
+  const screenCenterY = monitorObj.y + 74
 
   const STAGE_W = 1408
   const STAGE_H = 768
-  const glowX = ((monitorObj.x + 22 + 98) / STAGE_W) * 100
-  const glowY = ((monitorObj.y + 12 + 58) / STAGE_H) * 100
+  const glowX = (screenCenterX / STAGE_W) * 100
+  const glowY = (screenCenterY / STAGE_H) * 100
 
   const deskShortcuts = [
     { id: 'home', label: t.desk.home, href: '/home', icon: ICON_HOME },
@@ -207,6 +222,10 @@ export function Room({ dict }: RoomProps) {
           expandLabel={t.desk.expand}
           browserTitle={t.desk.browserTitle}
           speakersLabel={t.room.audio.speakersLabel}
+          lampOn={lampOn}
+          lampFlicker={lampFlicker}
+          lampLabel={t.room.lampLabel}
+          onToggleLamp={toggleLamp}
           onBack={handleDeskBack}
         />
         <NowPlaying labels={t.room.audio} />
@@ -264,8 +283,19 @@ export function Room({ dict }: RoomProps) {
             w={monitorObj.w}
             h={monitorObj.h}
             frames={monitorObj.frames}
+            loadingFrames={MONITOR_LOADING_FRAMES}
+            loadingRect={MONITOR_LOADING_RECT}
             href={monitorObj.href!}
             onEnter={handleEnter}
+          />
+
+          {/* Desktop speakers — rendered AFTER Monitor so the cabinet buttons
+              win clicks over the monitor's big anchor rect. Coffee mug (later
+              still) wins its own overlap with the left cabinet. */}
+          <RoomSpeakers
+            lampOn={lampOn}
+            lampFlicker={lampFlicker}
+            speakersLabel={t.room.audio.speakersLabel}
           />
 
           <AnimatedSprite
@@ -319,7 +349,7 @@ export function Room({ dict }: RoomProps) {
 
           {/* Lamp toggle hotspot */}
           <button
-            onClick={() => { setLampOn((v) => { const n = !v; savePrefs({ lampOn: n }); setLampFlicker(true); setTimeout(() => setLampFlicker(false), 500); return n }) }}
+            onClick={toggleLamp}
             aria-label={t.room.lampLabel}
             className="absolute cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2"
             style={{ left: 60, top: 300, width: 110, height: 220 }}

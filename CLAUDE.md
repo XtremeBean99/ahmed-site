@@ -20,14 +20,18 @@ not another developer portfolio" — warm, nostalgic, rewarding to explore, Y2K/
 with modern quality). The conventional site lives under `/home`, `/games`, `/projects`,
 `/tutoring`, `/legal`.
 
-## Current State (6 July 2026, end of session)
+## Current State (7 July 2026)
 
-All five spec iterations implemented and verified:
-room scene with monitor/poster/bonsai/lamp/coffee hotspots, zoom transition into a desk
-close-up, in-monitor browsing of the real site via same-origin iframe (site content zoomed
-out 25% for readability), six-track music player with now-playing widget (with embedded ID3
-cover art extraction) and speaker mute, pointer-following desk mouse, music notes from the
-speaker drivers, three-wisp coffee steam, lamp-off art crossfade with flicker, dust motes,
+Monitor hover highlight (4-frame yellow outline + simultaneous 18-frame Win98 boot-screen
+overlay, both play-once-hold), −2px hover lifts on all room objects (monitor, poster, bonsai,
+coffee), clickable room-view speakers with mute/unmute + music notes, clickable lamp in
+desk close-up with lamp-off art crossfade, desk close-up respects persisted lamp state.
+Continuing: room scene with monitor/poster/bonsai/lamp/coffee hotspots, zoom transition into
+a desk close-up, in-monitor browsing of the real site via same-origin iframe (site content
+zoomed out 25% for readability), six-track music player with now-playing widget (with
+embedded ID3 cover art extraction) and speaker mute, pointer-following desk mouse, music
+notes from the speaker drivers, three-wisp coffee steam, lamp-off art crossfade with
+flicker, dust motes,
 idle screensaver (15 s), visitor counter, "My room" CTA on /home linking back to /,
 EN/FR throughout. No pending actions remain.
 
@@ -98,6 +102,7 @@ src/
 ├── components/
 │   ├── room/              Room.tsx (state machine: room→zooming→desk), RoomStage,
 │   │                      RoomObject (hotspot + tooltip), AnimatedSprite, Monitor,
+│   │                      RoomSpeakers (art + mute/unmute + MusicNotes),
 │   │                      DeskView (close-up + iframe browser), DeskIcon, MusicNotes,
 │   │                      NowPlaying, RoomAudioProvider, RoomHud
 │   ├── games/ layout/ projects/ sections/ ui/   (unchanged monochrome site components)
@@ -129,7 +134,9 @@ shipped once and was the v3 "site is off-centre" bug.
 inside its own monitor iframe (recursion guard removed — `/` is accessible from the desk browser).
 
 ### Desk view (`DeskView.tsx`)
-Close-up art (`desk-closeup.png`) with: screen rect (436,152,536×308) hosting a pixel desktop
+Close-up art (`desk-closeup.png` and `desk-closeup-lamp-off.png`, crossfaded+flickered via
+`lampOn`/`lampFlicker` props passed from Room) with a clickable lamp toggle at (8,88 160×480)
+sharing Room's `toggleLamp` callback (one persistence path). Also: screen rect (436,152,536×308) hosting a pixel desktop
 (clock strip + 6 shortcut icons) or the **in-monitor browser** — a same-origin `<iframe>` of
 real site pages (zoomed out 25% via `scale(0.75)` for readability). Iframe navigation
 between desk opens uses `contentWindow.location.replace()`
@@ -158,12 +165,21 @@ from dictionaries. `id3.ts` is a zero-dependency ID3v2 parser that fetches the f
 of an MP3 and extracts APIC (attached picture) frames.
 
 ### Room-view objects (`objects.ts` registry + `AnimatedSprite`)
-monitor (240,261 393×343 → zoom to desk) · poster (997,78 134×247, 5 frames, play-once-hold,
+monitor (235,257 402×350, 4 frames: rest + 3-frame hover highlight, play-once-hold,
+with an 18-frame Win98 boot-screen overlay on the glass (266,275 214×171) that plays
+simultaneously and also holds its last frame → zoom to desk; zoom origin stays at
+stage (360,331) = rect + (125,74)) · poster (997,78 134×247, 5 frames, play-once-hold,
 click toast) · bonsai (1241,291 99×131, 5 frames, loop, `tooltipAlign="right"` because the
 centred bubble overflowed the right edge) · lamp (60,300 110×220, toggles lamp-off art
 crossfade + flicker, persisted) · coffee (160,475 83×83, 6 frames: rest + 5-frame hover
 highlight, play-once-hold) with three staggered CSS steam wisps (`steam-rise` keyframes,
-per-wisp `--sway`/`--dur`, negative delays, rendered behind the mug). Clock bubble at
+per-wisp `--sway`/`--dur`, negative delays, rendered behind the mug). All AnimatedSprite
+objects (poster, bonsai, coffee) and the Monitor share a −2px hover lift (`motion.img`/
+`motion.div` with `animate={{ y: -2 }}`, `DURATION.fast`). Desktop speakers
+(`RoomSpeakers.tsx`): art layer (146,292 435×218) crossfades/flickers with the lamp;
+cabinets (left 148,355 108×154; right 490,290 91×141) are mute-toggle buttons rendered
+AFTER the monitor so they win its overlapping anchor rect; notes emit from driver holes
+(left 215,408 r15 / 215,463 r25; right 546,345 r14 / 546,397 r24). Clock bubble at
 (860,100) uses `room.clockTip` dictionary key and shows a visitor counter (`👁 N`)
 incremented on each page load (persisted in `room-save-v1`). Adding an object: entry in
 `ROOM_OBJECTS` → sprites in `public/room/` → both dictionaries → render in `Room.tsx`.
@@ -180,13 +196,20 @@ Source art in `assets/pixel-art/` (repo-internal, not deployed); web sprites in 
 as raw PNG served via `<img>` with `image-rendering: pixelated` — **never `next/image`**
 (resampling destroys pixel art). Multi-frame sprites are cropped to a **shared union bbox
 +2 px pad** across all frames so playback never jitters (`scripts/extract-*.mjs`).
+Source-file note: monitor hover/loading/speaker source exports live in
+`assets/pixel-art/sources/` under kebab-case names (`monitor-keyboard-mouse-highlight-1..3.png`,
+`monitor-loading-screen-1..18.png`, `room-speakers[-lamp-off].png`, `desk-closeup-lamp-off.png`).
 Palette: warm dusk bedroom — wall #4a3e3a, wood #6b4d3a/#5a3d2a/#4a3020, floor #3a2820,
 bezel #2a2220; lamp amber from the left, dusk-blue window light from the right; clean 1 px
 outlines, no anti-aliasing. UI palette for bubbles/toasts: #3d2e1e fill, #5a4430 border,
 #e8d5b0 text. Pixel font: `src/fonts/Minecraft.ttf` (fan recreation, free for personal use)
 via `next/font/local` → `--font-pixel`, fallback `"Courier New", monospace`.
-Extracted sprite ledger: poster-1..5 (997,78 134×247) · monitor-desk (240,261 393×343) ·
-bonsai-1..5 (1241,291 99×131) · desk-closeup (full canvas) · background / background-lamp-off
+Extracted sprite ledger: poster-1..5 (997,78 134×247) ·
+monitor-1..4 (235,257 402×350, rest + hover highlight) ·
+monitor-loading-1..18 (266,275 214×171, boot screen on the glass) ·
+room-speakers / room-speakers-lamp-off (146,292 435×218) ·
+bonsai-1..5 (1241,291 99×131) · desk-closeup (full canvas) ·
+desk-closeup-lamp-off (full canvas) · background / background-lamp-off
 (full canvas) · mouse (1007,608 110×80) · speaker-left/right (speaker rects) · note-1..3
 (~16–21×22) · coffee-1..6 (160,475 83×83) · coffee-steam (187,460 25×45).
 Background (`background.png`, ~55 KB) loads `fetchpriority="high"` as the LCP element.
@@ -214,6 +237,11 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   (room renders inside its own iframe), body `overflow:hidden` removed (iframe scroll fix),
   ID3 embedded cover art extractor, iframe site content zoomed out 25%, expand opens new tab,
   visitor counter, window tint removed, animation speeds bumped, UI sizes increased.
+- **v6 (security hardening)** `7 July 2026`: Deleted live Vercel OIDC token from
+  `.vercel/.env.production.local` (never committed, now removed). Tightened contact CSRF
+  check: absent Origin is now rejected in production (previously skipped). Escaped `<` and
+  `-->` sequences in `JsonLd` component's serialized JSON as defense-in-depth against
+  script-tag breakout. Documented leaderboard client-trust model in route source.
 - Recurring session hazard: the agent sandbox's mount of this repo went stale repeatedly
   (phantom deletions, NUL-padded reads, unremovable `.git/index.lock`). Builds and `git
   status` from a sandbox are unreliable; trust direct file reads and run builds locally.
@@ -246,8 +274,8 @@ Owner-curated backlog. Tiers are effort/scope, not priority order. ~~Struck~~ = 
     `help`, `whoami`, `cat todo.txt`, `exit`.
 14. Mobile polish: drag-to-pan the room stage on phones, larger hit areas, tap hints.
 15. Hardening (June audit carry-overs): move the rate limiter to Upstash so cold starts don't
-    reset it; confirm the stray `VERCEL_OIDC_TOKEN` in `.env.local` was never committed and
-    delete it; consider CSP nonces to drop `unsafe-inline`.
+    reset it; ~~confirm the stray `VERCEL_OIDC_TOKEN` was never committed and delete it~~;
+    consider CSP nonces to drop `unsafe-inline`.
 
 **Ambitious (multi-day, design-heavy)**
 16. Desktop OS expansion: draggable pixel windows on the monitor — file-explorer window

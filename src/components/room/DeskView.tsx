@@ -38,11 +38,18 @@ interface DeskViewProps {
   expandLabel: string
   browserTitle: string
   speakersLabel: string
+  /** Persisted lamp state — picks the close-up art variant */
+  lampOn: boolean
+  /** True for 500ms after a toggle; drives the flicker animation */
+  lampFlicker: boolean
+  /** Accessible label for the lamp button (room.lampLabel) */
+  lampLabel: string
+  onToggleLamp: () => void
   onBack: () => void
 }
 
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, expandLabel, browserTitle, speakersLabel, onBack } = props
+  const { shortcuts, backLabel, screenLabel, desktopLabel, expandLabel, browserTitle, speakersLabel, lampOn, lampFlicker, lampLabel, onToggleLamp, onBack } = props
   const scale = useStageScale()
   const router = useRouter()
   const reduce = useReducedMotion()
@@ -211,8 +218,19 @@ export function DeskView(props: DeskViewProps) {
         width: STAGE_W, height: STAGE_H, position: 'absolute', top: '50%', left: '50%',
         transform: `translate(-50%, -50%) scale(${scale})`, transformOrigin: 'center center',
       }} initial={reduce ? undefined : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+        {/* Lamp-off close-up (always present, behind the lit version) */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/room/desk-closeup.png" alt="" draggable={false} className="absolute inset-0 w-full h-full" style={{ imageRendering: 'pixelated' }} />
+        <img src="/room/desk-closeup-lamp-off.png" alt="" draggable={false} className="absolute inset-0 w-full h-full" style={{ imageRendering: 'pixelated' }} />
+        {/* Lamp-on close-up (fades out when the lamp is off, flickers on toggle) */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/room/desk-closeup.png" alt="" draggable={false}
+          className={`absolute inset-0 w-full h-full ${lampFlicker && !reduce ? 'animate-[lamp-flicker_0.5s_ease-out]' : ''}`}
+          style={{ imageRendering: 'pixelated', opacity: lampOn ? 1 : 0, transition: reduce ? 'none' : 'opacity 0.4s ease' }} />
+
+        {/* Desk lamp toggle (left edge of the close-up) */}
+        <button onClick={(e) => { e.stopPropagation(); onToggleLamp() }} aria-label={lampLabel}
+          className="absolute cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2"
+          style={{ left: 8, top: 88, width: 160, height: 480 }} />
 
         {/* Speaker buttons */}
         <button onClick={(e) => { e.stopPropagation(); toggle() }} aria-label={speakersLabel}

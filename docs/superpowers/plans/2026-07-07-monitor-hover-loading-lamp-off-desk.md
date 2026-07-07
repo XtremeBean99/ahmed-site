@@ -1,21 +1,21 @@
-# Monitor Hover Highlight + Loading Screen + Lamp-Off Desk View — Implementation Plan
+# Monitor Hover Highlight + Loading Screen + Lamp-Off Desk + Room Speakers — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Hovering the PC in the room view plays a yellow-outline highlight animation on the monitor/keyboard/mousepad while a Windows-98-style boot sequence plays simultaneously on the monitor glass — both hold their last frame until the pointer leaves; and the desk close-up view respects the persisted lamp state via a new lamp-off art variant.
+**Goal:** Hovering the PC in the room view plays a yellow-outline highlight animation on the monitor/keyboard/mousepad while a Windows-98-style boot sequence plays simultaneously on the monitor glass — both hold their last frame until the pointer leaves; the desk close-up view respects the persisted lamp state via a new lamp-off art variant; and new desktop speakers appear in the room view with lamp-on/lamp-off art that crossfades with the lamp toggle.
 
-**Architecture:** New source art in `assets/pixel-art/sources/` is cropped into web sprites in `public/room/` by a new sharp extraction script (same union-bbox pattern as `scripts/extract-all-sprites.mjs`). `Monitor.tsx` gains a single interval "tick" clock driving two clamped frame sequences (4 highlight frames on the hotspot, 18 loading frames on an absolutely-positioned overlay over the glass). `DeskView.tsx` gains a `lampOn` prop and the same two-image crossfade already used for the room background.
+**Architecture:** New source art in `assets/pixel-art/sources/` is cropped into web sprites in `public/room/` by a new sharp extraction script (same union-bbox pattern as `scripts/extract-all-sprites.mjs`). `Monitor.tsx` gains a single interval "tick" clock driving two clamped frame sequences (4 highlight frames on the hotspot, 18 loading frames on an absolutely-positioned overlay over the glass). `DeskView.tsx` gains a `lampOn` prop and the same two-image crossfade already used for the room background. The room speakers are a decorative two-image layer in `Room.tsx` between the backgrounds and the monitor, crossfading on the existing `lampOn` state.
 
 **Tech Stack:** Next.js App Router, React client components, sharp (available in `node_modules` transitively via Next — `import sharp from 'sharp'` works in `scripts/*.mjs` with no install; do NOT add it to package.json).
 
 ## Global Constraints (from CLAUDE.md — binding)
 
 - Pixel art is served as raw `<img>` with `image-rendering: pixelated` — **never `next/image`**.
-- Multi-frame sprites are cropped to a **shared union bbox +2px pad** across all frames so playback never jitters.
+- Multi-frame / multi-variant sprites are cropped to a **shared union bbox +2px pad** across all frames so playback and crossfades never jitter.
 - `public/room/` filenames are kebab-case lowercase (Vercel is case-sensitive; Windows is not).
-- `prefers-reduced-motion` disables all decorative animation but **never functionality** (the monitor link must still navigate).
+- `prefers-reduced-motion` disables all decorative animation but **never functionality** (the monitor link must still navigate; the lamp crossfades become instant swaps).
 - Decorative layers are `aria-hidden` + `pointer-events: none`.
-- Every user-facing string goes in BOTH `src/lib/i18n/dictionaries/en.ts` and `fr.ts` — **this feature adds no user-facing strings** (the monitor label `room.monitorLabel` is unchanged; the loading overlay is decorative/aria-hidden), so no dictionary work is needed. Do not add any quoted UI strings.
+- Every user-facing string goes in BOTH `src/lib/i18n/dictionaries/en.ts` and `fr.ts` — **this feature adds no user-facing strings** (the monitor label `room.monitorLabel` is unchanged; the loading overlay and speakers are decorative/aria-hidden), so no dictionary work is needed. Do not add any quoted UI strings.
 - Room prefs live in localStorage key `room-save-v1` via `src/lib/room/storage.ts` — `lampOn` already exists there; no storage changes needed.
 - There is no unit-test runner in this repo (scripts: `dev`, `build`, `start`, `lint`, `type-check`). Verification gates are `npm run type-check`, `npm run lint`, `npm run build`, plus the manual dev-server checks written into each task.
 - Commit messages end with:
@@ -23,32 +23,35 @@
 
 ## Measured Facts (already verified — do not re-derive, just use)
 
-All measurements were made with a sharp alpha-bbox scan and verified visually by compositing. Stage coordinate space is 1408×768.
+All measurements were made with a sharp alpha-bbox scan and verified visually by compositing. Stage coordinate space is 1408×768. Source filenames below are the **cleaned-up names committed on this branch** (the owner's original exports had typos — `highighted`, `keybaord`, `speakrs` — and were renamed; the room-speaker files were also renamed from `monitor speakrs in rooml.png` / `monitor speakrs in room_lamp_light_off.png`).
 
-| Asset | Canvas | Content bbox (l,t → r,b) | Notes |
+| Asset (`assets/pixel-art/sources/`) | Canvas | Content bbox (l,t → r,b) | Notes |
 |---|---|---|---|
-| `sources/monitor-keyboard-mouse.png` (base, tracked) | 1408×768 | (242,263) → (630,601) | Identical crop to the current `public/room/monitor-desk.png` after +2 pad |
-| `sources/monitor-keyboard-mouse_highighted1.png` | 1408×768 | (242,263) → (630,601) | Faint outline |
-| `sources/monitor-keyboard-mouse_highighted2.png` | 1408×768 | (240,262) → (632,602) | Outline grows |
-| `sources/monitor-keyboard-mouse_highighted3.png` | 1408×768 | (237,259) → (634,604) | Full yellow outline |
-| `sources/monitor_keybaord_mouse_loading-screen1..18.png` | **1380×752** | (266,275) → (479,445) — identical in all 18 frames | Win98 boot sequence drawn in the glass's perspective |
-| `sources/desk-closeup_lamp_off.png` | 1408×768 | full canvas | Desk close-up with the lamp dark and wall glow removed |
+| `monitor-keyboard-mouse.png` (base, previously tracked) | 1408×768 | (242,263) → (630,601) | Identical crop to the current `public/room/monitor-desk.png` after +2 pad |
+| `monitor-keyboard-mouse-highlight-1.png` | 1408×768 | (242,263) → (630,601) | Faint outline |
+| `monitor-keyboard-mouse-highlight-2.png` | 1408×768 | (240,262) → (632,602) | Outline grows |
+| `monitor-keyboard-mouse-highlight-3.png` | 1408×768 | (237,259) → (634,604) | Full yellow outline |
+| `monitor-loading-screen-1..18.png` | **1380×752** | (266,275) → (479,445) — identical in all 18 frames | Win98 boot sequence drawn in the glass's perspective |
+| `desk-closeup-lamp-off.png` | 1408×768 | full canvas | Desk close-up with the lamp dark and wall glow removed |
+| `room-speakers.png` | 1408×768 | (148,294) → (578,507) | Desktop speakers flanking the monitor, lamp-lit (left cabinet glows warm) |
+| `room-speakers-lamp-off.png` | 1408×768 | (148,294) → (578,507) — identical to lamp-on | Same speakers, dusk lighting |
 
 - **Union bbox of the 4 hover frames +2px pad = (235, 257), 402×350.** This becomes the new monitor hotspot rect (the current one is (240,261) 393×343 — the highlight outline extends past it).
 - **The loading frames' 1380×752 canvas is TOP-LEFT ALIGNED with the 1408×768 stage.** Verified pixel-perfect by compositing frame 1 over highlight frame 3 at offset (0,0) — the boot screen fills the glass exactly. So loading-frame coordinates ARE stage coordinates. Crop all 18 at exactly **(266, 275), 214×171** (bbox is constant across frames, so no jitter; no pad needed or wanted — pad would sample outside the glass).
 - **The zoom origin must stay at stage point (360, 331).** `Room.tsx` currently computes it as `monitorObj.x + 22 + 98` / `monitorObj.y + 12 + 58` against the old rect (240,261). With the new rect (235,257) the offsets become **+125 / +74**. Getting this wrong re-introduces the v3 "site is off-centre" zoom bug.
 - Loading overlay position inside the new monitor hotspot: left = 266−235 = **31**, top = 275−257 = **18**.
+- **Room speakers: union bbox +2px pad = (146, 292), 435×218.** Both variants share the exact same bbox, so a single crop rect serves both and the crossfade cannot jitter. The right speaker (x 490–580) sits beside the monitor's right bezel and slightly inside the monitor hotspot's horizontal span, so the speakers layer must render **before (under) the `<Monitor>` sprite** in the DOM — the monitor art and its hover highlight outline paint on top of any overlap.
 
 ## File Structure
 
 - Create: `scripts/extract-monitor-hover.mjs` — one-shot sprite extraction (mirrors `extract-all-sprites.mjs`)
-- Create (generated): `public/room/monitor-1.png` … `monitor-4.png`, `public/room/monitor-loading-1.png` … `monitor-loading-18.png`, `public/room/desk-closeup-lamp-off.png`
+- Create (generated): `public/room/monitor-1.png` … `monitor-4.png`, `public/room/monitor-loading-1.png` … `monitor-loading-18.png`, `public/room/desk-closeup-lamp-off.png`, `public/room/room-speakers.png`, `public/room/room-speakers-lamp-off.png`
 - Delete: `public/room/monitor-desk.png` (superseded by `monitor-1.png`; deleted in Task 2 together with the code that stops referencing it)
 - Modify: `src/lib/room/objects.ts` — monitor rect + frames, new exported loading constants
 - Modify: `src/components/room/Monitor.tsx` — dual play-once-hold hover animation
-- Modify: `src/components/room/Room.tsx` — zoom-origin offsets, new Monitor props, pass `lampOn` to DeskView
+- Modify: `src/components/room/Room.tsx` — zoom-origin offsets, new Monitor props, speakers layer, pass `lampOn` to DeskView
 - Modify: `src/components/room/DeskView.tsx` — `lampOn` prop + art crossfade
-- Modify: `CLAUDE.md` — sprite ledger + room section kept accurate
+- Modify: `CLAUDE.md` — sprite ledger + room sections kept accurate
 
 ---
 
@@ -56,11 +59,11 @@ All measurements were made with a sharp alpha-bbox scan and verified visually by
 
 **Files:**
 - Create: `scripts/extract-monitor-hover.mjs`
-- Generated output: `public/room/monitor-1..4.png`, `public/room/monitor-loading-1..18.png`, `public/room/desk-closeup-lamp-off.png`
+- Generated output: `public/room/monitor-1..4.png`, `public/room/monitor-loading-1..18.png`, `public/room/desk-closeup-lamp-off.png`, `public/room/room-speakers.png`, `public/room/room-speakers-lamp-off.png`
 
 **Interfaces:**
-- Consumes: source PNGs in `assets/pixel-art/sources/` (committed in this branch — verify with `git ls-files assets/pixel-art/sources | grep -i monitor`)
-- Produces: the 23 web sprites listed above, which Tasks 2 and 3 reference by URL path (`/room/monitor-1.png` etc.)
+- Consumes: source PNGs in `assets/pixel-art/sources/` (committed on this branch under the cleaned names in the Measured Facts table — verify with `git ls-files assets/pixel-art/sources`)
+- Produces: the 25 web sprites listed above, which Tasks 2–4 reference by URL path (`/room/monitor-1.png` etc.)
 
 - [ ] **Step 1: Write the extraction script**
 
@@ -84,11 +87,15 @@ const MON = { left: 235, top: 257, width: 402, height: 350 }
 // the 1408×768 stage, so these are stage coordinates.
 const LOAD = { left: 266, top: 275, width: 214, height: 171 }
 
+// Room-view desktop speakers: lamp-on/lamp-off pair, union bbox +2px pad
+// (identical content bbox in both variants, so the crossfade cannot jitter).
+const SPK = { left: 146, top: 292, width: 435, height: 218 }
+
 const hoverSources = [
   'monitor-keyboard-mouse.png',
-  'monitor-keyboard-mouse_highighted1.png',
-  'monitor-keyboard-mouse_highighted2.png',
-  'monitor-keyboard-mouse_highighted3.png',
+  'monitor-keyboard-mouse-highlight-1.png',
+  'monitor-keyboard-mouse-highlight-2.png',
+  'monitor-keyboard-mouse-highlight-3.png',
 ]
 
 for (let i = 0; i < hoverSources.length; i++) {
@@ -100,16 +107,24 @@ for (let i = 0; i < hoverSources.length; i++) {
 }
 
 for (let i = 1; i <= 18; i++) {
-  await sharp(join(srcDir, `monitor_keybaord_mouse_loading-screen${i}.png`))
+  await sharp(join(srcDir, `monitor-loading-screen-${i}.png`))
     .extract(LOAD)
     .png()
     .toFile(join(outDir, `monitor-loading-${i}.png`))
 }
 console.log(`monitor-loading-1..18 ${LOAD.width}x${LOAD.height} at stage (${LOAD.left},${LOAD.top})`)
 
+for (const name of ['room-speakers.png', 'room-speakers-lamp-off.png']) {
+  await sharp(join(srcDir, name))
+    .extract(SPK)
+    .png()
+    .toFile(join(outDir, name))
+  console.log(`${name} ${SPK.width}x${SPK.height} at stage (${SPK.left},${SPK.top})`)
+}
+
 // Lamp-off desk close-up is used at full canvas size; pass through sharp to
 // normalise the PNG encoding.
-await sharp(join(srcDir, 'desk-closeup_lamp_off.png'))
+await sharp(join(srcDir, 'desk-closeup-lamp-off.png'))
   .png()
   .toFile(join(outDir, 'desk-closeup-lamp-off.png'))
 console.log('desk-closeup-lamp-off.png (full canvas)')
@@ -118,20 +133,20 @@ console.log('desk-closeup-lamp-off.png (full canvas)')
 - [ ] **Step 2: Run it**
 
 Run: `node scripts/extract-monitor-hover.mjs`
-Expected output: four `monitor-N.png 402x350 at stage (235,257)` lines, `monitor-loading-1..18 214x171 at stage (266,275)`, `desk-closeup-lamp-off.png (full canvas)`. No errors.
+Expected output: four `monitor-N.png 402x350 at stage (235,257)` lines, `monitor-loading-1..18 214x171 at stage (266,275)`, two `room-speakers… 435x218 at stage (146,292)` lines, `desk-closeup-lamp-off.png (full canvas)`. No errors.
 
 - [ ] **Step 3: Verify the output files**
 
-Run: `node -e "const s=require('sharp');Promise.all(['monitor-1','monitor-4','monitor-loading-1','monitor-loading-18','desk-closeup-lamp-off'].map(n=>s('public/room/'+n+'.png').metadata().then(m=>console.log(n,m.width+'x'+m.height))))"`
-Expected: `monitor-1 402x350`, `monitor-4 402x350`, `monitor-loading-1 214x171`, `monitor-loading-18 214x171`, `desk-closeup-lamp-off 1408x768`.
+Run: `node -e "const s=require('sharp');Promise.all(['monitor-1','monitor-4','monitor-loading-1','monitor-loading-18','room-speakers','room-speakers-lamp-off','desk-closeup-lamp-off'].map(n=>s('public/room/'+n+'.png').metadata().then(m=>console.log(n,m.width+'x'+m.height))))"`
+Expected: `monitor-1 402x350`, `monitor-4 402x350`, `monitor-loading-1 214x171`, `monitor-loading-18 214x171`, `room-speakers 435x218`, `room-speakers-lamp-off 435x218`, `desk-closeup-lamp-off 1408x768`.
 
-Also confirm all filenames are lowercase kebab-case: `git status --short public/room` should show only the 23 new files, no case oddities.
+Also confirm all filenames are lowercase kebab-case: `git status --short public/room` should show only the 25 new files, no case oddities.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add scripts/extract-monitor-hover.mjs public/room
-git commit -m "feat: extract monitor hover, loading-screen, and lamp-off desk sprites
+git commit -m "feat: extract monitor hover, loading-screen, room-speaker, and lamp-off desk sprites
 
 Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ```
@@ -148,7 +163,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 **Interfaces:**
 - Consumes: sprites from Task 1 (`/room/monitor-1..4.png`, `/room/monitor-loading-1..18.png`); existing `RoomObject` component (props: `label, showTooltip, onActivate, onDeactivate, onClick, href, tabIndex, style, children`).
-- Produces: `Monitor` component with new required props `loadingFrames: string[]` and `loadingRect: { x: number; y: number; w: number; h: number }`; `objects.ts` exports `MONITOR_LOADING_FRAMES: string[]` and `MONITOR_LOADING_RECT: { x: number; y: number; w: number; h: number }`. Task 3 does not depend on these.
+- Produces: `Monitor` component with new required props `loadingFrames: string[]` and `loadingRect: { x: number; y: number; w: number; h: number }`; `objects.ts` exports `MONITOR_LOADING_FRAMES: string[]` and `MONITOR_LOADING_RECT: { x: number; y: number; w: number; h: number }`. Tasks 3–4 do not depend on these.
 
 Behavioural spec (owner's words): on hover, the highlight animation and the loading-screen animation **play at the same time**; each **remains at its last frame until the mouse moves off**; moving off resets both. This is the existing `play-once-hold` pattern (see `AnimatedSprite.tsx`) except two sequences of different lengths share one start/stop. Focus/blur must behave like hover/leave (accessibility invariant — `RoomObject` already forwards both). Under reduced motion: static base frame, no overlay, and the click/navigation behaviour is unchanged.
 
@@ -523,18 +538,90 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 ---
 
-### Task 4: Documentation sync + full pre-deploy gate
+### Task 4: Desktop speakers in the room view (lamp-on/lamp-off)
+
+**Files:**
+- Modify: `src/components/room/Room.tsx` (room-view stage children, directly after the two background `<img>`s and **before** `<Monitor …/>`)
+
+**Interfaces:**
+- Consumes: `public/room/room-speakers.png` and `public/room/room-speakers-lamp-off.png` from Task 1; `Room`'s existing `lampOn` + `lampFlicker` state and `reduce`.
+- Produces: nothing consumed by other tasks — a purely decorative layer.
+
+The speakers are decorative room furniture (no hotspot, no tooltip, no dictionary entry — the mute-toggle speakers live in the desk view). They must dim in sync with the room background when the lamp toggles, including the 0.5 s flicker animation on switch-on, which is why the lamp-on layer copies the background's `lamp-flicker` class binding exactly.
+
+- [ ] **Step 1: Add the speakers layer to Room.tsx**
+
+In the room-view return of `src/components/room/Room.tsx`, insert between the lamp-on background `<img>` (ends ~line 258) and `<Monitor …/>`:
+
+```tsx
+          {/* Desktop speakers flanking the monitor. Decorative furniture —
+              rendered under the Monitor sprite so its hover highlight paints
+              on top. Lamp-on/off art crossfades in sync with the background. */}
+          <div
+            aria-hidden
+            className="absolute pointer-events-none"
+            style={{ left: 146, top: 292, width: 435, height: 218 }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/room/room-speakers-lamp-off.png"
+              alt=""
+              draggable={false}
+              className="absolute inset-0 w-full h-full"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/room/room-speakers.png"
+              alt=""
+              draggable={false}
+              className={`absolute inset-0 w-full h-full ${lampFlicker && !reduce ? 'animate-[lamp-flicker_0.5s_ease-out]' : ''}`}
+              style={{
+                imageRendering: 'pixelated',
+                opacity: lampOn ? 1 : 0,
+                transition: reduce ? 'none' : 'opacity 0.4s ease',
+              }}
+            />
+          </div>
+```
+
+- [ ] **Step 2: Static verification**
+
+Run: `npm run type-check && npm run lint`
+Expected: both pass.
+
+- [ ] **Step 3: Manual verification in the dev server**
+
+With `npm run dev` on `http://localhost:3000/`:
+- Two speaker cabinets sit on the desk flanking the monitor (left one beside the lamp, right one beside the monitor's right bezel), grounded on the desk art with no floating edges or misaligned outlines.
+- Toggle the lamp: the speakers dim/brighten **together with** the background crossfade, and the lamp-on art flickers in sync with the background's flicker on switch-on.
+- Hover the PC: the yellow highlight outline paints **over** the right speaker where they meet (speakers render under the monitor sprite).
+- The speakers are not clickable, show no tooltip, and don't affect tab order (aria-hidden + pointer-events-none).
+- Emulate `prefers-reduced-motion: reduce`: lamp toggle swaps the speaker art instantly, no flicker.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/components/room/Room.tsx
+git commit -m "feat: desktop speakers in the room view with lamp-off variant
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 5: Documentation sync + full pre-deploy gate
 
 **Files:**
 - Modify: `CLAUDE.md` (sprite ledger + room sections)
 
 **Interfaces:**
-- Consumes: everything shipped in Tasks 1–3.
+- Consumes: everything shipped in Tasks 1–4.
 - Produces: accurate agent context for future sessions (CLAUDE.md is the single consolidated context doc and must stay truthful).
 
 - [ ] **Step 1: Update CLAUDE.md**
 
-Three precise edits:
+Four precise edits:
 
 (a) In the **Room-view objects** section, replace the monitor line's description `monitor (240,261 393×343 → zoom to desk)` with:
 
@@ -543,6 +630,13 @@ monitor (235,257 402×350, 4 frames: rest + 3-frame hover highlight, play-once-h
 with an 18-frame Win98 boot-screen overlay on the glass (266,275 214×171) that plays
 simultaneously and also holds its last frame → zoom to desk; zoom origin stays at
 stage (360,331) = rect + (125,74))
+```
+
+and add to the same section:
+
+```
+Decorative desktop speakers (146,292 435×218) flank the monitor, rendered under the
+monitor sprite; lamp-on/off art crossfades and flickers in sync with the background.
 ```
 
 (b) In the **Desk view** section, after the sentence describing `desk-closeup.png`, add:
@@ -557,10 +651,13 @@ under the lit art with the same opacity-crossfade pattern as the room background
 
 ```
 monitor-1..4 (235,257 402×350, rest + hover highlight) ·
-monitor-loading-1..18 (266,275 214×171, boot screen on the glass)
+monitor-loading-1..18 (266,275 214×171, boot screen on the glass) ·
+room-speakers / room-speakers-lamp-off (146,292 435×218)
 ```
 
 and after `desk-closeup (full canvas)` add ` · desk-closeup-lamp-off (full canvas)`.
+
+(d) In the **Sprite pipeline** section, note the source-file cleanup: source exports for these sprites live in `assets/pixel-art/sources/` under kebab-case names (`monitor-keyboard-mouse-highlight-1..3.png`, `monitor-loading-screen-1..18.png`, `room-speakers[-lamp-off].png`, `desk-closeup-lamp-off.png`) — the owner's original typo'd filenames were renamed on this branch.
 
 - [ ] **Step 2: Full pre-deploy gate**
 
@@ -571,7 +668,7 @@ Expected: all three pass. (The build is the final gate — CLAUDE.md's pre-deplo
 
 ```bash
 git add CLAUDE.md
-git commit -m "docs: sprite ledger + room sections for monitor hover and lamp-off desk
+git commit -m "docs: sprite ledger + room sections for monitor hover, room speakers, lamp-off desk
 
 Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ```
@@ -581,6 +678,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ## Out of Scope (do not do)
 
 - The `assets/pixel-art/music sfx/` folder (relocated music-note sprites + a new `.ase`) — separate future work, likely Roadmap item 8 (interaction SFX). Leave untouched.
-- Any change to the desk-view screen rect, iframe browser, speakers, or mouse follower.
+- Making the room-view speakers interactive (mute toggle like the desk view's) — they are decorative furniture unless the owner asks otherwise.
+- Any change to the desk-view screen rect, iframe browser, desk speakers, or mouse follower.
 - Any new dictionary keys (nothing user-facing changes).
 - Adding sharp to package.json, adding a test framework, or touching `next.config.ts` headers.

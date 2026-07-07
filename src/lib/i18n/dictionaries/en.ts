@@ -456,6 +456,7 @@ export const en = {
     navLabel: 'Room navigation',
     monitorLabel: 'Enter the website',
     posterLabel: 'My Dress Up Darling Poster',
+    saitamaLabel: 'Saitama Poster',
     bonsaiLabel: 'Windowsill bonsai tree',
     lampLabel: 'Desk lamp',
     coffeeLabel: 'Coffee mug',

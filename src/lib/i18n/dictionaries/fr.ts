@@ -453,6 +453,7 @@ export const fr: Dictionary = {
     navLabel: 'Navigation de la chambre',
     monitorLabel: 'Entrer dans le site',
     posterLabel: 'Affiche My Dress Up Darling',
+    saitamaLabel: 'Affiche Saitama',
     bonsaiLabel: 'Bonsaï sur le rebord de la fenêtre',
     lampLabel: 'Lampe de bureau',
     coffeeLabel: 'Tasse de café',

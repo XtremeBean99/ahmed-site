@@ -30,6 +30,7 @@ interface RoomProps {
       navLabel: string
       monitorLabel: string
       posterLabel: string
+      saitamaLabel: string
       bonsaiLabel: string
       lampLabel: string
       coffeeLabel: string
@@ -187,6 +188,7 @@ export function Room({ dict }: RoomProps) {
 
   const monitorObj = ROOM_OBJECTS.find((o) => o.id === 'monitor')!
   const posterObj = ROOM_OBJECTS.find((o) => o.id === 'poster')!
+  const saitamaObj = ROOM_OBJECTS.find((o) => o.id === 'saitama')!
   const bonsaiObj = ROOM_OBJECTS.find((o) => o.id === 'bonsai')!
   const coffeeObj = ROOM_OBJECTS.find((o) => o.id === 'coffee')!
 
@@ -311,6 +313,17 @@ export function Room({ dict }: RoomProps) {
               setToast(t.room.posterClickHint)
               setTimeout(() => setToast(null), 2000)
             }}
+          />
+
+          <AnimatedSprite
+            label={t.room.saitamaLabel}
+            x={saitamaObj.x}
+            y={saitamaObj.y}
+            w={saitamaObj.w}
+            h={saitamaObj.h}
+            frames={saitamaObj.frames}
+            frameDuration={100}
+            mode="play-all-loop-last-two"
           />
 
           <AnimatedSprite

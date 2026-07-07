@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { RoomObject } from './RoomObject'
 import { DURATION } from '@/lib/motion'
 
-export type SpriteMode = 'loop' | 'play-once-hold'
+export type SpriteMode = 'loop' | 'play-once-hold' | 'play-all-loop-last-two'
 
 interface AnimatedSpriteProps {
   label: string
@@ -63,6 +63,16 @@ export function AnimatedSprite({
           setFrameIndex(frames.length - 1)
           clearTimer()
           return
+        }
+        setFrameIndex(idxRef.current)
+      }, frameDuration)
+    } else if (mode === 'play-all-loop-last-two') {
+      // Play all frames 0→...→last, then loop the last two indefinitely
+      intervalRef.current = setInterval(() => {
+        idxRef.current++
+        if (idxRef.current >= frames.length) {
+          // Bounce between last two: frames.length-2 and frames.length-1
+          idxRef.current = frames.length - 2
         }
         setFrameIndex(idxRef.current)
       }, frameDuration)

@@ -54,6 +54,32 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
     href: null,
   },
   {
+    id: 'saitama',
+    // Saitama (One Punch Man) poster, 14 frames: play all then loop last two
+    x: 761,
+    y: 76,
+    w: 177,
+    h: 243,
+    labelKey: 'room.saitamaLabel',
+    frames: [
+      '/room/saitama-1.png',
+      '/room/saitama-2.png',
+      '/room/saitama-3.png',
+      '/room/saitama-4.png',
+      '/room/saitama-5.png',
+      '/room/saitama-6.png',
+      '/room/saitama-7.png',
+      '/room/saitama-8.png',
+      '/room/saitama-9.png',
+      '/room/saitama-10.png',
+      '/room/saitama-11.png',
+      '/room/saitama-12.png',
+      '/room/saitama-13.png',
+      '/room/saitama-14.png',
+    ],
+    href: null,
+  },
+  {
     id: 'bonsai',
     // Windowsill bonsai plant, extracted from pixel-art/bonsai/
     x: 1241,

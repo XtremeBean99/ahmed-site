@@ -127,6 +127,19 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
     ],
     href: null,
   },
+  {
+    id: 'clock',
+    // Digital alarm clock on the side table. Single frame — the face is blank
+    // in the art; SideTableClock renders the LED digits on it. Click toggles
+    // 12/24-hour display. Deliberately no hover lift.
+    x: 658,
+    y: 386,
+    w: 71,
+    h: 55,
+    labelKey: 'room.sideTableClockLabel',
+    frames: ['/room/side-table-clock.png'],
+    href: null,
+  },
 ]
 
 /**
@@ -141,3 +154,18 @@ export const MONITOR_LOADING_FRAMES = Array.from(
   { length: 18 },
   (_, i) => `/room/monitor-loading-${i + 1}.png`,
 )
+
+/**
+ * Decorative side table between the desk and the bed. No hotspot, no hover
+ * lift — rendered as a plain background layer in Room.tsx.
+ */
+export const SIDE_TABLE_RECT = { x: 641, y: 409, w: 173, h: 215 }
+
+/**
+ * The clock's dark face plane in stage coords. Left/right edges are vertical;
+ * top/bottom edges rise ~11° to the right, so the digit layer uses
+ * skewY(CLOCK_FACE_SKEW_DEG) with transform-origin top-left (NOT rotate —
+ * rotation would tilt the vertical bezel edges).
+ */
+export const CLOCK_FACE_RECT = { x: 679, y: 409, w: 43, h: 22 }
+export const CLOCK_FACE_SKEW_DEG = -11

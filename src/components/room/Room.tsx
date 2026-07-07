@@ -343,7 +343,7 @@ export function Room({ dict }: RoomProps) {
             <div
               className="absolute pointer-events-none px-2 py-1 border-2"
               style={{
-                left: 860,
+                left: 620,
                 top: 100,
                 backgroundColor: '#3d2e1e',
                 borderColor: '#5a4430',

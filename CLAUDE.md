@@ -22,6 +22,8 @@ with modern quality). The conventional site lives under `/home`, `/games`, `/pro
 
 ## Current State (7 July 2026)
 
+Side table + digital alarm clock on it (static 21:07 in green LED digits skewY'd −11° onto
+the face plane; click toggles 12/24 h, persisted as `clock24h`; deliberately no hover lift),
 Monitor hover highlight (4-frame yellow outline + simultaneous 18-frame Win98 boot-screen
 overlay, both play-once-hold), −2px hover lifts on all room objects (monitor, poster, bonsai,
 coffee), clickable room-view speakers with mute/unmute + music notes, clickable lamp in
@@ -55,7 +57,7 @@ No general-purpose database. Contact submissions are emailed via Resend, not per
 exception: ninja leaderboard run times in Upstash Redis behind `src/services/leaderboard.ts`
 (lazy client `src/lib/redis.ts`, env-var credentials). Future persistent storage must follow
 the same pattern: behind `src/services/`, env vars only. (Room preferences use `localStorage`
-client-side only: `room-save-v1` key, currently `{ audio, lampOn, visitCount, volume }`.)
+client-side only: `room-save-v1` key, currently `{ audio, lampOn, visitCount, volume, clock24h }`.)
 
 ### 4. Secrets via environment variables only
 `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` etc. Never hardcoded. See
@@ -173,7 +175,12 @@ click toast) · bonsai (1241,291 99×131, 5 frames, loop, `tooltipAlign="right"`
 centred bubble overflowed the right edge) · lamp (60,300 110×220, toggles lamp-off art
 crossfade + flicker, persisted) · coffee (160,475 83×83, 6 frames: rest + 5-frame hover
 highlight, play-once-hold) with three staggered CSS steam wisps (`steam-rise` keyframes,
-per-wisp `--sway`/`--dur`, negative delays, rendered behind the mug). All AnimatedSprite
+per-wisp `--sway`/`--dur`, negative delays, rendered behind the mug) ·
+side table (641,409 173×215, decorative layer, no hotspot, dims with the lamp) ·
+digital clock (658,386 71×55, single frame, no hover lift; SideTableClock renders static
+21:07 in LED green #35e65c on the blank face — digit plane (679,409) 43×22, skewY(−11°),
+1 Hz colon blink gated by reduced motion; click toggles 12/24 h via `clock24h` pref).
+All AnimatedSprite
 objects (poster, bonsai, coffee) and the Monitor share a −2px hover lift (`motion.img`/
 `motion.div` with `animate={{ y: -2 }}`, `DURATION.fast`). Desktop speakers
 (`RoomSpeakers.tsx`): art layer (146,292 435×218) crossfades/flickers with the lamp;
@@ -218,7 +225,9 @@ room-speakers / room-speakers-lamp-off (146,292 435×218) ·
 bonsai-1..5 (1241,291 99×131) · desk-closeup (full canvas) ·
 desk-closeup-lamp-off (full canvas) · background / background-lamp-off
 (full canvas) · mouse (1007,608 110×80) · speaker-left/right (speaker rects) · note-1..3
-(~16–21×22) · coffee-1..6 (160,475 83×83) · coffee-steam (187,460 25×45).
+(~16–21×22) · coffee-1..6 (160,475 83×83) · coffee-steam (187,460 25×45) ·
+side-table (641,409 173×215) · side-table-clock (658,386 71×55) — both extracted by
+scripts/extract-side-table.mjs from assets/pixel-art/background/.
 Background (`background.png`, ~55 KB) loads `fetchpriority="high"` as the LCP element.
 
 ### Audio licences (former audio-licences.md)
@@ -244,6 +253,8 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   (room renders inside its own iframe), body `overflow:hidden` removed (iframe scroll fix),
   ID3 embedded cover art extractor, iframe site content zoomed out 25%, expand opens new tab,
   visitor counter, window tint removed, animation speeds bumped, UI sizes increased.
+- **v7** (7 July 2026): side table + digital clock (static 21:07, green LED digits on the
+  isometric face plane, 12/24 h click toggle persisted, no hover pickup by design).
 - **v6 (security hardening)** `7 July 2026`: Deleted live Vercel OIDC token from
   `.vercel/.env.production.local` (never committed, now removed). Tightened contact CSRF
   check: absent Origin is now rejected in production (previously skipped). Escaped `<` and

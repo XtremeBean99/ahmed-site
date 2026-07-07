@@ -81,7 +81,7 @@ export function RoomSpeakers({ lampOn, lampFlicker, speakersLabel }: RoomSpeaker
         onClick={toggle}
         aria-label={speakersLabel}
         className={cabinetClass}
-        style={{ left: CABINET_LEFT.x, top: CABINET_LEFT.y, width: CABINET_LEFT.w, height: CABINET_LEFT.h }}
+        style={{ left: CABINET_LEFT.x, top: CABINET_LEFT.y, width: CABINET_LEFT.w, height: CABINET_LEFT.h, zIndex: 2 }}
       >
         {mutedGlyph}
       </button>
@@ -89,7 +89,7 @@ export function RoomSpeakers({ lampOn, lampFlicker, speakersLabel }: RoomSpeaker
         onClick={toggle}
         aria-label={speakersLabel}
         className={cabinetClass}
-        style={{ left: CABINET_RIGHT.x, top: CABINET_RIGHT.y, width: CABINET_RIGHT.w, height: CABINET_RIGHT.h }}
+        style={{ left: CABINET_RIGHT.x, top: CABINET_RIGHT.y, width: CABINET_RIGHT.w, height: CABINET_RIGHT.h, zIndex: 2 }}
       >
         {mutedGlyph}
       </button>

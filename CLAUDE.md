@@ -166,7 +166,7 @@ of an MP3 and extracts APIC (attached picture) frames.
 
 ### Room-view objects (`objects.ts` registry + `AnimatedSprite`)
 monitor (235,257 402×350, 4 frames: rest + 3-frame hover highlight, play-once-hold,
-with an 18-frame Win98 boot-screen overlay on the glass (266,275 214×171) that plays
+with an 18-frame Win98 boot-screen overlay on the glass (272,283 214×171) that plays
 simultaneously and also holds its last frame → zoom to desk; zoom origin stays at
 stage (360,331) = rect + (125,74)) · poster (997,78 134×247, 5 frames, play-once-hold,
 click toast) · bonsai (1241,291 99×131, 5 frames, loop, `tooltipAlign="right"` because the
@@ -196,9 +196,16 @@ Source art in `assets/pixel-art/` (repo-internal, not deployed); web sprites in 
 as raw PNG served via `<img>` with `image-rendering: pixelated` — **never `next/image`**
 (resampling destroys pixel art). Multi-frame sprites are cropped to a **shared union bbox
 +2 px pad** across all frames so playback never jitters (`scripts/extract-*.mjs`).
-Source-file note: monitor hover/loading/speaker source exports live in
-`assets/pixel-art/sources/` under kebab-case names (`monitor-keyboard-mouse-highlight-1..3.png`,
-`monitor-loading-screen-1..18.png`, `room-speakers[-lamp-off].png`, `desk-closeup-lamp-off.png`).
+Source art is organised by category under `assets/pixel-art/`:
+- `background/` — full-canvas room backgrounds + bedroom-gen-original
+- `bonsai/` — bonsai tree frames (`tree1..5.png`)
+- `close-up-desk/` — desk close-up art + mouse-only-closeup
+- `coffee/` — coffee mug + steam source frames
+- `music-sfx/` — music-note sprite art
+- `poster/` — kitagawa poster frames (`kitagawa-1..5.png`)
+- `room-view-monitor/` — monitor+keyboard+mouse base + highlight frames,
+  `room-view-monitor/monitor-loading/` — Win98 boot-screen frames,
+  room-speakers lamp-on/off art
 Palette: warm dusk bedroom — wall #4a3e3a, wood #6b4d3a/#5a3d2a/#4a3020, floor #3a2820,
 bezel #2a2220; lamp amber from the left, dusk-blue window light from the right; clean 1 px
 outlines, no anti-aliasing. UI palette for bubbles/toasts: #3d2e1e fill, #5a4430 border,
@@ -206,7 +213,7 @@ outlines, no anti-aliasing. UI palette for bubbles/toasts: #3d2e1e fill, #5a4430
 via `next/font/local` → `--font-pixel`, fallback `"Courier New", monospace`.
 Extracted sprite ledger: poster-1..5 (997,78 134×247) ·
 monitor-1..4 (235,257 402×350, rest + hover highlight) ·
-monitor-loading-1..18 (266,275 214×171, boot screen on the glass) ·
+monitor-loading-1..18 (272,283 214×171, boot screen on the glass) ·
 room-speakers / room-speakers-lamp-off (146,292 435×218) ·
 bonsai-1..5 (1241,291 99×131) · desk-closeup (full canvas) ·
 desk-closeup-lamp-off (full canvas) · background / background-lamp-off

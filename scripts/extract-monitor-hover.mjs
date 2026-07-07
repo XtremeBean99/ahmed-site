@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const outDir = join(__dirname, '..', 'public', 'room')
-const srcDir = join(__dirname, '..', 'assets', 'pixel-art', 'sources')
+const srcDir = join(__dirname, '..', 'assets', 'pixel-art', 'room-view-monitor')
 
 // Union bbox of the base + 3 highlight frames, +2px pad (pre-measured across
 // all four 1408×768 canvases so hover playback never jitters).
@@ -35,7 +35,7 @@ for (let i = 0; i < hoverSources.length; i++) {
 }
 
 for (let i = 1; i <= 18; i++) {
-  await sharp(join(srcDir, `monitor-loading-screen-${i}.png`))
+  await sharp(join(srcDir, 'monitor-loading', `monitor-loading-screen-${i}.png`))
     .extract(LOAD)
     .png()
     .toFile(join(outDir, `monitor-loading-${i}.png`))
@@ -52,7 +52,7 @@ for (const name of ['room-speakers.png', 'room-speakers-lamp-off.png']) {
 
 // Lamp-off desk close-up is used at full canvas size; pass through sharp to
 // normalise the PNG encoding.
-await sharp(join(srcDir, 'desk-closeup-lamp-off.png'))
+await sharp(join(srcDir, 'close-up-desk', 'desk-closeup-lamp-off.png'))
   .png()
   .toFile(join(outDir, 'desk-closeup-lamp-off.png'))
 console.log('desk-closeup-lamp-off.png (full canvas)')

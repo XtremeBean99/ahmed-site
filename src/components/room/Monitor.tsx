@@ -127,6 +127,7 @@ export function Monitor({
         top: y,
         width: w,
         height: h,
+        zIndex: 1,
       }}
     >
       {/* Lift wrapper: the sprite and the glass overlay rise together. The

@@ -4,7 +4,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const sourceDir = join(__dirname, '..', 'assets', 'pixel-art', 'sources', 'poster')
+const sourceDir = join(__dirname, '..', 'assets', 'pixel-art', 'poster')
 const outputDir = join(__dirname, '..', 'public', 'room')
 
 /**

@@ -253,7 +253,8 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   ID3 embedded cover art extractor, iframe site content zoomed out 25%, expand opens new tab,
   visitor counter, window tint removed, animation speeds bumped, UI sizes increased.
 - **v7** (7 July 2026): side table + digital clock (live user time, green LED digits on the
-  isometric face plane, 12/24 h click toggle persisted, no hover pickup by design).
+  isometric face plane, 12/24 h click toggle persisted, no hover pickup by design); hover
+  tooltips added to lamp and speakers; updated background-lamp-off art.
 - **v6 (security hardening)** `7 July 2026`: Deleted live Vercel OIDC token from
   `.vercel/.env.production.local` (never committed, now removed). Tightened contact CSRF
   check: absent Origin is now rejected in production (previously skipped). Escaped `<` and

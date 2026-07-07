@@ -2,8 +2,9 @@
 
 The single consolidated context document for this project. Read this before touching any code.
 It absorbs the former `docs/PLAN.md` (spec history), `docs/taskt.txt` (original room brief),
-`docs/audio-licences.md`, `docs/suggestions.txt` (June audit), and `assets/pixel-art/STYLE.md`,
-all of which have been retired. Last consolidated: 6 July 2026.
+`docs/audio-licences.md`, `docs/suggestions.txt` (June audit), `assets/pixel-art/STYLE.md`,
+`CONTENT.md`, and `SECURITY-REVIEW.md` (July 2026 review — see Security), all of which have
+been retired. Last consolidated: 7 July 2026.
 
 ---
 
@@ -79,6 +80,15 @@ nothing (third-party embedding is already blocked by same-origin-only).
 Vercel serves case-sensitively; Windows dev machines do not. A track that plays locally but
 404s deployed is a case mismatch between git and `playlist.ts` (the Saffron incident). Keep
 `public/audio/` kebab-case lowercase; verify with `git ls-files public/audio`.
+
+### 8. Documentation policy — exactly three markdown files
+Owner direction 7 July 2026: the repository contains exactly three markdown docs —
+`CLAUDE.md` (this file, the single consolidated context), `README.md`, and, only while work
+is in flight, `TODO.md` (the active task plan / checklist). `TODO.md` is **deleted in the
+final commit** once its tasks are all complete. No `docs/` folder, no other `.md` files
+anywhere (`CONTENT.md` and `SECURITY-REVIEW.md` were folded in and removed under this
+policy — it has already been violated once by a parallel session resurrecting them).
+Durable knowledge goes into this file; task plans go into `TODO.md`.
 
 ---
 
@@ -169,7 +179,9 @@ monitor (235,257 402×350, 4 frames: rest + 3-frame hover highlight, play-once-h
 with an 18-frame Win98 boot-screen overlay on the glass (270,282 214×171) that plays
 simultaneously and also holds its last frame → zoom to desk; zoom origin stays at
 stage (360,331) = rect + (125,74)) · poster (997,78 134×247, 5 frames, play-once-hold,
-click toast) · bonsai (1241,291 99×131, 5 frames, loop, `tooltipAlign="right"` because the
+click toast) · saitama poster (761,76 177×243, 14 frames, `play-all-loop-last-two` —
+a third `SpriteMode` that plays all frames once then bounces between the last two) ·
+bonsai (1241,291 99×131, 5 frames, loop, `tooltipAlign="right"` because the
 centred bubble overflowed the right edge) · lamp (60,300 110×220, toggles lamp-off art
 crossfade + flicker, persisted) · coffee (160,475 83×83, 6 frames: rest + 5-frame hover
 highlight, play-once-hold) with three staggered CSS steam wisps (`steam-rise` keyframes,
@@ -180,7 +192,7 @@ objects (poster, bonsai, coffee) and the Monitor share a −2px hover lift (`mot
 cabinets (left 148,355 108×154; right 490,290 91×141) are mute-toggle buttons rendered
 AFTER the monitor so they win its overlapping anchor rect; notes emit from driver holes
 (left 215,408 r15 / 215,463 r25; right 546,345 r14 / 546,397 r24). Clock bubble at
-(860,100) uses `room.clockTip` dictionary key and shows a visitor counter (`👁 N`)
+(620,100) (moved left of the saitama poster) uses `room.clockTip` dictionary key and shows a visitor counter (`👁 N`)
 incremented on each page load (persisted in `room-save-v1`). Adding an object: entry in
 `ROOM_OBJECTS` → sprites in `public/room/` → both dictionaries → render in `Room.tsx`.
 
@@ -202,7 +214,8 @@ Source art is organised by category under `assets/pixel-art/`:
 - `close-up-desk/` — desk close-up art + mouse-only-closeup
 - `coffee/` — coffee mug + steam source frames
 - `music-sfx/` — music-note sprite art
-- `poster/` — kitagawa poster frames (`kitagawa-1..5.png`)
+- `poster/` — kitagawa poster frames (`kitagawa-1..5.png`) + saitama frames
+  (`saitama-1..14.png`, `saitama.ase`)
 - `room-view-monitor/` — monitor+keyboard+mouse base + highlight frames,
   `room-view-monitor/monitor-loading/` — Win98 boot-screen frames,
   room-speakers lamp-on/off art
@@ -212,6 +225,7 @@ outlines, no anti-aliasing. UI palette for bubbles/toasts: #3d2e1e fill, #5a4430
 #e8d5b0 text. Pixel font: `src/fonts/Minecraft.ttf` (fan recreation, free for personal use)
 via `next/font/local` → `--font-pixel`, fallback `"Courier New", monospace`.
 Extracted sprite ledger: poster-1..5 (997,78 134×247) ·
+saitama-1..14 (761,76 177×243) ·
 monitor-1..4 (235,257 402×350, rest + hover highlight) ·
 monitor-loading-1..18 (270,282 214×171, boot screen on the glass) ·
 room-speakers / room-speakers-lamp-off (146,292 435×218) ·
@@ -228,6 +242,9 @@ reachable. (General information, not legal advice.) Tracks in `public/audio/`:
 lo-fi-beat (TBC) · saffron (TBC) · cant-look-in-my-eyes ⚠ commercial ·
 big-poppa-habaytak-remix ⚠ commercial remix · remember-summer-days ⚠ commercial ·
 sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-days.jpg.
+The same private/testing caveat applies to the poster art: kitagawa (My Dress-Up Darling)
+and saitama (One Punch Man) are fan art of commercial IP — revisit alongside the audio
+before public promotion.
 
 ### Session history (condensed from the retired PLAN.md specs)
 - **v1** `b70857e`–`a109482`: `(site)` restructure, room v1 (monitor→/home, poster, bonsai).
@@ -258,6 +275,16 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
 ## Roadmap — Suggestions From Basic to Ambitious
 
 Owner-curated backlog. Tiers are effort/scope, not priority order. ~~Struck~~ = done.
+
+**Assessment, 7 July 2026 — recommended order.** The room feature set is now rich and has
+a documented history of regressions (reduced-motion crash, off-centre zoom, XFO DENY,
+four i18n misses, audio `ended` bug), so the highest-leverage next step is **23 (Playwright
+E2E of the room flows)** — every future feature lands faster once the zoom/desk/audio/
+reduced-motion paths are pinned. Then **15 (durable rate limiting — the two open security
+items)**, then the quick wins **1, 2, 7** (skip-no-repeat, desk session persistence,
+volume control), then **3 (room OG image)** for link previews, then **8 (interaction SFX —
+`music-sfx/` and `saitama.ase` show the art pipeline is already warming up for it)** and
+**6 (bonsai growth)**. New items 25–26 below came out of the same assessment.
 
 **Basic (hours)**
 1. Skip-no-repeat: `nextTrack` avoids repeating the last-played track.
@@ -301,6 +328,12 @@ Owner-curated backlog. Tiers are effort/scope, not priority order. ~~Struck~~ = 
 23. Regression net: Playwright E2E of the room flows (zoom, desk, iframe, audio, reduced
     motion) + Lighthouse CI on previews.
 24. Admin dashboard under `/app/admin/` with middleware auth (service layer is ready).
+25. Room asset weight: consolidate the 18 boot-screen frames (and other frame sets) into
+    single sprite-sheet PNGs animated via CSS `steps()` / background-position — cuts ~30
+    requests on first hover; audit which of the ~60 room sprites deserve `<link rel=preload>`.
+26. Honest visitor counter: the clock's `👁 N` is localStorage-only (it counts only your own
+    visits). Replace with a Redis `INCR` behind `src/services/` (same pattern as the
+    leaderboard) or relabel it — currently it reads as a site-wide count but isn't.
 
 ---
 
@@ -350,8 +383,7 @@ defines `Dictionary`), `fr.ts`, `server.ts` (`getLocale`/`getDictionary` for ser
 components), `client.tsx` (`I18nProvider`, `useT()`).
 
 Workflow for any copy change: add to `en.ts` → add French at the identical path (formal
-*vous*; first person for Ahmed's bio) → reference via `t.…` → `npm run type-check` →
-keep `CONTENT.md` in sync.
+*vous*; first person for Ahmed's bio) → reference via `t.…` → `npm run type-check`.
 
 Deliberate English-only boundaries: SEO metadata/OG images; large editorial datasets
 (typing phrases, AGLC4 configs). Cookie-read makes content pages dynamically rendered —
@@ -397,6 +429,16 @@ X-Content-Type-Options, Referrer-Policy, Permissions-Policy, CSP with
 
 AI crawler blocking: `robots.ts` disallows GPTBot, ClaudeBot, Google-Extended, PerplexityBot,
 CCBot, Bytespider, etc.; Terms prohibit scraping/AI training. Do not remove.
+
+**July 2026 security review** (absorbed from the retired `SECURITY-REVIEW.md`): no critical
+or high findings. Resolved same-day: stray Vercel OIDC token deleted from disk (never
+committed); contact CSRF now rejects header-less requests in production; `JsonLd` escapes
+`<`/`-->` against script-tag breakout; leaderboard client-trust model documented in the
+route source (scores are spoofable by design — cosmetic board, no privileges). Open items,
+tracked as Roadmap 15: in-memory rate limiter is per-instance on serverless (move to
+Upstash) and its IP key trusts the leftmost `X-Forwarded-For` value; CSP `unsafe-inline`
+accepted as a Next.js trade-off (nonces would be the upgrade). Dependencies: two moderate
+advisories, build-time only — monitor.
 
 ---
 

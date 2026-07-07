@@ -22,6 +22,9 @@ with modern quality). The conventional site lives under `/home`, `/games`, `/pro
 
 ## Current State (7 July 2026)
 
+Visitor-local lighting states (dawn/day/dusk/night, build-time graded variants via
+`scripts/generate-lighting.mjs` + `npm run lighting`, `?light=` override, 1.5 s background
+crossfade),
 Side table + digital alarm clock on it (live user time in green LED digits skewY'd −11° onto
 the face plane; click toggles 12/24 h, persisted as `clock24h`; deliberately no hover lift),
 Monitor hover highlight (4-frame yellow outline + simultaneous 18-frame Win98 boot-screen
@@ -57,7 +60,8 @@ No general-purpose database. Contact submissions are emailed via Resend, not per
 exception: ninja leaderboard run times in Upstash Redis behind `src/services/leaderboard.ts`
 (lazy client `src/lib/redis.ts`, env-var credentials). Future persistent storage must follow
 the same pattern: behind `src/services/`, env vars only. (Room preferences use `localStorage`
-client-side only: `room-save-v1` key, currently `{ audio, lampOn, visitCount, volume, clock24h }`.)
+client-side only: `room-save-v1` key, currently `{ audio, lampOn, visitCount, volume, clock24h }`.
+(Also `room-paint-v1` for the Paint app canvas.))
 
 ### 4. Secrets via environment variables only
 `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` etc. Never hardcoded. See
@@ -191,6 +195,11 @@ AFTER the monitor so they win its overlapping anchor rect; notes emit from drive
 `ROOM_OBJECTS` → sprites in `public/room/` → both dictionaries → render in `Room.tsx`.
 
 ### Accessibility invariants
+AnimatedSprite, Monitor, and RoomSpeakers map their frame srcs through the
+`LightingProvider` context (via `useLighting()` + `lightingSrc()` from
+`src/lib/room/lighting.tsx`). Emissive layers (boot screen, music notes, clock LED digits)
+are never graded.
+
 Every hotspot is a real `<a>`/`<button>` inside `<nav aria-label>`; visible focus-visible
 rings (2 px warm outline, offset); tooltips on focus as well as hover; skip link first in tab
 order targeting `/home`; decorative layers (`MusicNotes`, steam, dust, pad mouse) are
@@ -217,6 +226,10 @@ bezel #2a2220; lamp amber from the left, dusk-blue window light from the right; 
 outlines, no anti-aliasing. UI palette for bubbles/toasts: #3d2e1e fill, #5a4430 border,
 #e8d5b0 text. Pixel font: `src/fonts/Minecraft.ttf` (fan recreation, free for personal use)
 via `next/font/local` → `--font-pixel`, fallback `"Courier New", monospace`.
+Lighting variants: `public/room/lighting/<state>/` generated from the `public/room/`
+originals (dusk = originals); regenerate with `npm run lighting` after ANY sprite
+re-extraction.
+
 Extracted sprite ledger: poster-1..5 (997,78 134×247) ·
 monitor-1..4 (235,257 402×350, rest + hover highlight) ·
 monitor-loading-1..18 (270,282 214×171, boot screen on the glass) ·
@@ -255,6 +268,9 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
 - **v7** (7 July 2026): side table + digital clock (live user time, green LED digits on the
   isometric face plane, 12/24 h click toggle persisted, no hover pickup by design); hover
   tooltips added to lamp and speakers; updated background-lamp-off art.
+- **v8** (7 July 2026): visitor-local lighting engine (build-time graded sprites for
+  dawn/day/night, `npm run lighting` pipeline, `?light=` query override, 1.5 s background
+  crossfade, runtime `LightingProvider` context, clock unfrozen to live visitor-local time).
 - **v6 (security hardening)** `7 July 2026`: Deleted live Vercel OIDC token from
   `.vercel/.env.production.local` (never committed, now removed). Tightened contact CSRF
   check: absent Origin is now rejected in production (previously skipped). Escaped `<` and

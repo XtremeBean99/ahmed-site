@@ -34,7 +34,7 @@ zoomed out 25% for readability), six-track music player with now-playing widget 
 embedded ID3 cover art extraction) and speaker mute, pointer-following desk mouse, music
 notes from the speaker drivers, three-wisp coffee steam, lamp-off art crossfade with
 flicker, dust motes,
-idle screensaver (15 s), visitor counter, "My room" CTA on /home linking back to /,
+idle screensaver (15 s), "My room" CTA on /home linking back to /,
 EN/FR throughout. No pending actions remain.
 
 ---
@@ -186,9 +186,7 @@ objects (poster, bonsai, coffee) and the Monitor share a −2px hover lift (`mot
 (`RoomSpeakers.tsx`): art layer (146,292 435×218) crossfades/flickers with the lamp;
 cabinets (left 148,355 108×154; right 490,290 91×141) are mute-toggle buttons rendered
 AFTER the monitor so they win its overlapping anchor rect; notes emit from driver holes
-(left 215,408 r15 / 215,463 r25; right 546,345 r14 / 546,397 r24). Clock bubble at
-(860,100) uses `room.clockTip` dictionary key and shows a visitor counter (`👁 N`)
-incremented on each page load (persisted in `room-save-v1`). Adding an object: entry in
+(left 215,408 r15 / 215,463 r25; right 546,345 r14 / 546,397 r24). Adding an object: entry in
 `ROOM_OBJECTS` → sprites in `public/room/` → both dictionaries → render in `Room.tsx`.
 
 ### Accessibility invariants

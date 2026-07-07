@@ -44,7 +44,6 @@ interface RoomProps {
       coffeeLabel: string
       sideTableClockLabel: string
       posterClickHint: string
-      clockTip: string
       enterSite: string
       hint: string
       skip: string
@@ -81,23 +80,11 @@ export function Room({ dict }: RoomProps) {
   const [lampOn, setLampOn] = useState(true)
   const [lampFlicker, setLampFlicker] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
-  const [clockTooltip, setClockTooltip] = useState('')
   const [visitCount, setVisitCount] = useState(0)
   const [clock24h, setClock24h] = useState(true)
 
   // Load lamp pref on mount
   useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setVisitCount(p.visitCount + 1); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
-
-  // Clock tooltip — update every 30s
-  useEffect(() => {
-    const tick = () => {
-      const now = new Date()
-      setClockTooltip(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }))
-    }
-    tick()
-    const id = setInterval(tick, 30000)
-    return () => clearInterval(id)
-  }, [])
 
   // Timeout refs
   const safetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -391,28 +378,6 @@ export function Room({ dict }: RoomProps) {
             mode="loop"
             tooltipAlign="right"
           />
-
-          {/* Clock — left of the poster */}
-          {clockTooltip && (
-            <div
-              className="absolute pointer-events-none px-2 py-1 border-2"
-              style={{
-                left: 620,
-                top: 100,
-                backgroundColor: '#3d2e1e',
-                borderColor: '#5a4430',
-                borderRadius: '3px',
-                fontFamily: 'var(--font-pixel), "Courier New", monospace',
-                fontSize: '13px',
-                color: '#e8d5b0',
-                whiteSpace: 'nowrap',
-                textShadow: '1px 1px 0 #1a0e04',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
-              }}
-            >
-              {t.room.clockTip.replace('{time}', clockTooltip)}  ·  👁 {visitCount}
-            </div>
-          )}
 
           {/* Lamp toggle hotspot */}
           <button

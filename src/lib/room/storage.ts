@@ -4,9 +4,11 @@ interface RoomSave {
   audio: boolean
   lampOn: boolean
   visitCount: number
+  /** Music volume 0–1 */
+  volume: number
 }
 
-const DEFAULTS: RoomSave = { audio: true, lampOn: true, visitCount: 0 }
+const DEFAULTS: RoomSave = { audio: true, lampOn: true, visitCount: 0, volume: 0.3 }
 
 export function loadPrefs(): RoomSave {
   try {
@@ -17,6 +19,10 @@ export function loadPrefs(): RoomSave {
       audio: typeof parsed.audio === 'boolean' ? parsed.audio : DEFAULTS.audio,
       lampOn: typeof parsed.lampOn === 'boolean' ? parsed.lampOn : DEFAULTS.lampOn,
       visitCount: typeof parsed.visitCount === 'number' ? parsed.visitCount : DEFAULTS.visitCount,
+      volume:
+        typeof parsed.volume === 'number' && parsed.volume >= 0 && parsed.volume <= 1
+          ? parsed.volume
+          : DEFAULTS.volume,
     }
   } catch {
     return { ...DEFAULTS }

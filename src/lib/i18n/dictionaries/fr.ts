@@ -466,6 +466,7 @@ export const fr: Dictionary = {
       skip: 'Suivant',
       nowPlaying: 'En cours de lecture',
       speakersLabel: 'Activer les haut-parleurs',
+      volume: 'Volume',
     },
     hint: 'Cliquez pour explorer',
     skip: 'Aller au site',

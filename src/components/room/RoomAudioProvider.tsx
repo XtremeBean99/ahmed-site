@@ -15,8 +15,10 @@ import { PLAYLIST } from '@/lib/room/playlist'
 interface AudioState {
   playing: boolean
   trackIndex: number
+  volume: number
   toggle: () => void
   nextTrack: () => void
+  setVolume: (v: number) => void
 }
 
 const AudioCtx = createContext<AudioState | null>(null)
@@ -30,6 +32,7 @@ export function useRoomAudio(): AudioState {
 export function RoomAudioProvider({ children }: { children: ReactNode }) {
   const [playing, setPlaying] = useState(false)
   const [trackIndex, setTrackIndex] = useState(0)
+  const [volume, setVolumeState] = useState(0.3)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const triedRef = useRef(false)
   const playingRef = useRef(false)
@@ -39,7 +42,9 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const audio = new Audio()
     audio.loop = false
-    audio.volume = 0.3
+    const prefs = loadPrefs()
+    audio.volume = prefs.volume
+    setVolumeState(prefs.volume)
     audioRef.current = audio
     playingRef.current = false
 
@@ -49,7 +54,7 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
     loadTrack(audio, idx)
 
     audio.addEventListener('ended', () => {
-      trackIdxRef.current = (trackIdxRef.current + 1) % PLAYLIST.length
+      trackIdxRef.current = pickNextIndex(trackIdxRef.current)
       setTrackIndex(trackIdxRef.current)
       loadTrack(audio, trackIdxRef.current)
       if (playingRef.current) audio.play().catch(() => {})
@@ -110,17 +115,34 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
   const nextTrack = useCallback(() => {
     const audio = audioRef.current
     if (!audio) return
-    trackIdxRef.current = (trackIdxRef.current + 1) % PLAYLIST.length
+    trackIdxRef.current = pickNextIndex(trackIdxRef.current)
     setTrackIndex(trackIdxRef.current)
     loadTrack(audio, trackIdxRef.current)
     if (playingRef.current) audio.play().catch(() => {})
   }, [])
 
+  const setVolume = useCallback((v: number) => {
+    const clamped = Math.min(1, Math.max(0, v))
+    if (audioRef.current) audioRef.current.volume = clamped
+    setVolumeState(clamped)
+    savePrefs({ volume: clamped })
+  }, [])
+
   return (
-    <AudioCtx.Provider value={{ playing, trackIndex, toggle, nextTrack }}>
+    <AudioCtx.Provider value={{ playing, trackIndex, volume, toggle, nextTrack, setVolume }}>
       {children}
     </AudioCtx.Provider>
   )
+}
+
+/** Random next index, never the current one (unless the playlist has 1 track). */
+function pickNextIndex(current: number): number {
+  if (PLAYLIST.length <= 1) return current
+  let next = current
+  while (next === current) {
+    next = Math.floor(Math.random() * PLAYLIST.length)
+  }
+  return next
 }
 
 function loadTrack(audio: HTMLAudioElement, index: number) {

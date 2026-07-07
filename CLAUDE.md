@@ -55,7 +55,7 @@ No general-purpose database. Contact submissions are emailed via Resend, not per
 exception: ninja leaderboard run times in Upstash Redis behind `src/services/leaderboard.ts`
 (lazy client `src/lib/redis.ts`, env-var credentials). Future persistent storage must follow
 the same pattern: behind `src/services/`, env vars only. (Room preferences use `localStorage`
-client-side only: `room-save-v1` key, currently `{ audio, lampOn }`.)
+client-side only: `room-save-v1` key, currently `{ audio, lampOn, visitCount, volume }`.)
 
 ### 4. Secrets via environment variables only
 `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` etc. Never hardcoded. See
@@ -158,7 +158,7 @@ One context provider mounted above both views owning a single `Audio` element.
 reduced-motion visitor once (`useRoomAudio()` throws outside the provider). Reduced motion
 never disables sound, only animation. Track index lives in a ref (URL string-matching against
 `audio.src` broke `ended` advancement once). Autoplay attempts on mount when the stored pref
-allows, falling back to first-gesture. Volume 0.3. `NowPlaying` (bottom-left, both views):
+allows, falling back to first-gesture. Volume defaults to 0.3, adjustable via a NowPlaying range slider, persisted as `volume` in `room-save-v1`. Track advance (skip and `ended`) picks randomly, never repeating the current track. `NowPlaying` (bottom-left, both views):
 36×36 cover — external cover file first, then embedded ID3 APIC frame via `id3.ts`, then
 cassette-SVG placeholder. Title 12px, artist 10px, play/pause/skip 18px icons. All labels
 from dictionaries. `id3.ts` is a zero-dependency ID3v2 parser that fetches the first 256 KB
@@ -260,13 +260,14 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
 Owner-curated backlog. Tiers are effort/scope, not priority order. ~~Struck~~ = done.
 
 **Basic (hours)**
-1. Skip-no-repeat: `nextTrack` avoids repeating the last-played track.
+1. ~~Skip-no-repeat~~ — random advance, never repeats current (shared by skip + ended).
 2. Desk session persistence: remember `screenMode`/`browserPath` in `sessionStorage`.
-3. Room OG image: replace the text-card `opengraph-image.tsx` on `/` with a 1200×630 room crop.
+3. ~~Room OG image~~ — static 1200x630 crop of background.png at src/app/opengraph-image.png
+   (scripts/generate-og-image.mjs); regenerate if the background art changes.
 4. `/room` alias redirect to `/`.
 5. ~~Visit odometer~~ — visitor counter next to clock (9820230).
 6. Bonsai growth: resting frame advances with a `visits` counter in prefs (5 stages drawn).
-7. Volume control: small 3-step volume on the NowPlaying widget (prefs-persisted).
+7. ~~Volume control~~ — range slider on NowPlaying, volume pref in room-save-v1.
 
 **Intermediate (a day or two each)**
 8. Interaction SFX behind a separate `sfx` pref: icon clicks, poster flip, lamp switch, purr.
@@ -280,8 +281,9 @@ Owner-curated backlog. Tiers are effort/scope, not priority order. ~~Struck~~ = 
 13. Konami code → `terminal` screenMode on the desk (state machine already supports modes):
     `help`, `whoami`, `cat todo.txt`, `exit`.
 14. Mobile polish: drag-to-pan the room stage on phones, larger hit areas, tap hints.
-15. Hardening (June audit carry-overs): move the rate limiter to Upstash so cold starts don't
-    reset it; ~~confirm the stray `VERCEL_OIDC_TOKEN` was never committed and delete it~~;
+15. Hardening (June audit carry-overs): ~~move the rate limiter to Upstash~~ (done — rl:* keys,
+    in-memory fallback, getClientIp uses x-real-ip/rightmost XFF);
+    ~~confirm the stray `VERCEL_OIDC_TOKEN` was never committed and delete it~~;
     consider CSP nonces to drop `unsafe-inline`.
 
 **Ambitious (multi-day, design-heavy)**
@@ -365,7 +367,8 @@ accepted trade-off. Contact-form client validation messages are localised via
 ```
 POST /api/contact
   1. CSRF: Origin/Referer must match production domain
-  2. Rate-limit by IP (5 req/hr, in-memory — src/lib/ratelimit.ts; resets on cold start)
+  2. Rate-limit by IP (5 req/hr, Upstash-backed fixed window — src/lib/ratelimit.ts;
+     in-memory fallback in dev/outage; IP via getClientIp: x-real-ip then rightmost XFF)
   3. contactSchema.safeParse() server-side + honeypot ("website" must be empty)
   4. services/contact.ts → lazy Resend client → email
   5. 200 / 400 / 429 / 500
@@ -427,5 +430,5 @@ Never commit `.env.local` / `.env`. (June audit flagged a stray `VERCEL_OIDC_TOK
 ## What Does Not Exist Yet (deliberately)
 
 Admin dashboard (service layer ready; `/app/admin/` + middleware auth when built), newsletter
-(Resend audiences), blog (needs MDX; see Roadmap 21), durable rate limiting (Roadmap 15),
+(Resend audiences), blog (needs MDX; see Roadmap 21),
 general-purpose database (constraint 3).

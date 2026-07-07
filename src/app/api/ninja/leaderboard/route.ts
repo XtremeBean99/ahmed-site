@@ -14,7 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ninjaScoreSchema } from '@/lib/validations'
 import { addScore, topScores, type LeaderboardEntry } from '@/services/leaderboard'
-import { checkRateLimit } from '@/lib/ratelimit'
+import { checkRateLimit, getClientIp } from '@/lib/ratelimit'
 
 const ALLOWED_ORIGINS = new Set([
   'https://ahmedyhussain.com',
@@ -41,8 +41,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-  const { allowed } = checkRateLimit(`ninja:${ip}`)
+  const ip = getClientIp(req.headers)
+  const { allowed } = await checkRateLimit(`ninja:${ip}`)
   if (!allowed) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }

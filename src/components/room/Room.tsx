@@ -45,6 +45,7 @@ interface RoomProps {
         skip: string
         nowPlaying: string
         speakersLabel: string
+        volume: string
       }
     }
     desk: {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { contactSchema } from '@/lib/validations'
 import { submitContact } from '@/services/contact'
-import { checkRateLimit } from '@/lib/ratelimit'
+import { checkRateLimit, getClientIp } from '@/lib/ratelimit'
 
 export async function POST(request: NextRequest) {
   // CSRF check - verify the request originates from our domain.
@@ -19,9 +19,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Rate-limit by IP (Vercel provides x-forwarded-for)
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-  const { allowed } = checkRateLimit(ip)
+  // Rate-limit by IP (durable via Upstash; see src/lib/ratelimit.ts)
+  const ip = getClientIp(request.headers)
+  const { allowed } = await checkRateLimit(`contact:${ip}`)
   if (!allowed) {
     return NextResponse.json(
       { error: 'You have sent too many messages. Please try again later.' },

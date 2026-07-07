@@ -11,11 +11,12 @@ interface NowPlayingProps {
     pause: string
     skip: string
     nowPlaying: string
+    volume: string
   }
 }
 
 export function NowPlaying({ labels }: NowPlayingProps) {
-  const { playing, trackIndex, toggle, nextTrack } = useRoomAudio()
+  const { playing, trackIndex, volume, toggle, nextTrack, setVolume } = useRoomAudio()
   const [coverError, setCoverError] = useState(false)
   const [embeddedCover, setEmbeddedCover] = useState<string | null>(null)
   const prevTrackRef = useRef('')
@@ -111,6 +112,19 @@ export function NowPlaying({ labels }: NowPlayingProps) {
           <rect x="12" y="2" width="2" height="12" fill="currentColor" />
         </svg>
       </button>
+
+      {/* Volume slider */}
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.05}
+        value={volume}
+        onChange={(e) => setVolume(Number(e.target.value))}
+        aria-label={labels.volume}
+        className="flex-shrink-0 cursor-pointer outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#c8b89a]"
+        style={{ width: 56, height: 14, accentColor: '#c8b89a' }}
+      />
     </div>
   )
 }

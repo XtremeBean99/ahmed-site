@@ -473,6 +473,7 @@ export const en = {
       skip: 'Skip',
       nowPlaying: 'Now playing',
       speakersLabel: 'Toggle speakers',
+      volume: 'Volume',
     },
   },
 

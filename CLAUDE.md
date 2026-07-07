@@ -166,7 +166,7 @@ of an MP3 and extracts APIC (attached picture) frames.
 
 ### Room-view objects (`objects.ts` registry + `AnimatedSprite`)
 monitor (235,257 402×350, 4 frames: rest + 3-frame hover highlight, play-once-hold,
-with an 18-frame Win98 boot-screen overlay on the glass (272,283 214×171) that plays
+with an 18-frame Win98 boot-screen overlay on the glass (270,282 214×171) that plays
 simultaneously and also holds its last frame → zoom to desk; zoom origin stays at
 stage (360,331) = rect + (125,74)) · poster (997,78 134×247, 5 frames, play-once-hold,
 click toast) · bonsai (1241,291 99×131, 5 frames, loop, `tooltipAlign="right"` because the
@@ -213,7 +213,7 @@ outlines, no anti-aliasing. UI palette for bubbles/toasts: #3d2e1e fill, #5a4430
 via `next/font/local` → `--font-pixel`, fallback `"Courier New", monospace`.
 Extracted sprite ledger: poster-1..5 (997,78 134×247) ·
 monitor-1..4 (235,257 402×350, rest + hover highlight) ·
-monitor-loading-1..18 (272,283 214×171, boot screen on the glass) ·
+monitor-loading-1..18 (270,282 214×171, boot screen on the glass) ·
 room-speakers / room-speakers-lamp-off (146,292 435×218) ·
 bonsai-1..5 (1241,291 99×131) · desk-closeup (full canvas) ·
 desk-closeup-lamp-off (full canvas) · background / background-lamp-off

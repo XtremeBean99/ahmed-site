@@ -1,47 +1,53 @@
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 
 interface DeskIconProps {
   label: string
-  href: string
+  /** Speech-bubble hint shown on hover/focus */
+  tooltip?: string
+  /** Site links render an <a>; apps omit href and render a <button> */
+  href?: string
   icon: ReactNode
   onClick: (e: React.MouseEvent) => void
 }
 
-export function DeskIcon({ label, href, icon, onClick }: DeskIconProps) {
-  return (
-    <a
-      href={href}
-      onClick={onClick}
-      className="flex flex-col items-center gap-1 group outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(0,0,0,0.4)] focus-visible:outline-offset-1"
-      aria-label={label}
-      style={{
-        fontFamily: 'var(--font-pixel), "Courier New", monospace',
-      }}
-    >
-      {/* Icon */}
-      <div className="w-10 h-10 flex items-center justify-center group-hover:-translate-y-px transition-transform duration-100">
-        <svg
-          width="32"
-          height="32"
-          viewBox="0 0 16 16"
-          fill="none"
-          shapeRendering="crispEdges"
-          aria-hidden="true"
+export function DeskIcon({ label, tooltip, href, icon, onClick }: DeskIconProps) {
+  const tipId = useId()
+  const className =
+    'relative flex flex-col items-center gap-1 group outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(0,0,0,0.4)] focus-visible:outline-offset-1'
+  const style = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as React.CSSProperties
+  const inner = (
+    <>
+      {tooltip && (
+        <span
+          id={tipId}
+          role="tooltip"
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 border whitespace-nowrap opacity-0 pointer-events-none transition-opacity duration-100 group-hover:opacity-100 group-focus-visible:opacity-100 z-10"
+          style={{ backgroundColor: '#3d2e1e', borderColor: '#5a4430', borderRadius: '2px', fontSize: '9px', color: '#e8d5b0' }}
         >
+          {tooltip}
+        </span>
+      )}
+      <div className="w-10 h-10 flex items-center justify-center group-hover:-translate-y-px transition-transform duration-100">
+        <svg width="32" height="32" viewBox="0 0 16 16" fill="none" shapeRendering="crispEdges" aria-hidden="true">
           {icon}
         </svg>
       </div>
-      {/* Label */}
       <span
         className="text-[9px] text-[#2a2520] text-center leading-tight max-w-[56px]"
-        style={{
-          fontFamily: 'var(--font-pixel), "Courier New", monospace',
-          textShadow: 'none',
-        }}
+        style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace', textShadow: 'none' }}
       >
         {label}
       </span>
+    </>
+  )
+  return href ? (
+    <a href={href} onClick={onClick} className={className} aria-label={label} aria-describedby={tooltip ? tipId : undefined} style={style}>
+      {inner}
     </a>
+  ) : (
+    <button type="button" onClick={onClick} className={className} aria-label={label} aria-describedby={tooltip ? tipId : undefined} style={style}>
+      {inner}
+    </button>
   )
 }
 
@@ -117,5 +123,36 @@ export const ICON_LEGAL = (
     {/* Base */}
     <rect x="7" y="12" width="4" height="1" fill="#3a3028" />
     <rect x="8" y="13" width="2" height="2" fill="#5a4a3a" />
+  </>
+)
+
+export const ICON_PAINT = (
+  <>
+    {/* Brush handle + ferrule */}
+    <rect x="10" y="1" width="2" height="5" fill="#5a4a3a" />
+    <rect x="9" y="6" width="4" height="2" fill="#3a3028" />
+    <rect x="10" y="8" width="2" height="2" fill="#e8d5b0" />
+    {/* Paint blob */}
+    <rect x="3" y="10" width="8" height="3" fill="#8a4a3a" />
+    <rect x="2" y="11" width="1" height="2" fill="#8a4a3a" />
+    <rect x="11" y="11" width="1" height="1" fill="#8a4a3a" />
+    <rect x="5" y="9" width="3" height="1" fill="#8a4a3a" />
+    <rect x="4" y="13" width="5" height="1" fill="#6a3a2a" />
+  </>
+)
+
+export const ICON_MINESWEEPER = (
+  <>
+    {/* Mine body */}
+    <rect x="5" y="5" width="6" height="6" fill="#3a3028" />
+    <rect x="6" y="4" width="4" height="8" fill="#3a3028" />
+    <rect x="4" y="6" width="8" height="4" fill="#3a3028" />
+    {/* Spikes */}
+    <rect x="7" y="1" width="2" height="2" fill="#5a4a3a" />
+    <rect x="7" y="13" width="2" height="2" fill="#5a4a3a" />
+    <rect x="1" y="7" width="2" height="2" fill="#5a4a3a" />
+    <rect x="13" y="7" width="2" height="2" fill="#5a4a3a" />
+    {/* Glint */}
+    <rect x="6" y="6" width="2" height="2" fill="#faf8f5" />
   </>
 )

@@ -34,6 +34,7 @@ interface RoomProps {
       bonsaiLabel: string
       lampLabel: string
       coffeeLabel: string
+      sideTableClockLabel: string
       posterClickHint: string
       clockTip: string
       enterSite: string

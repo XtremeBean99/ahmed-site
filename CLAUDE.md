@@ -22,6 +22,9 @@ with modern quality). The conventional site lives under `/home`, `/games`, `/pro
 
 ## Current State (7 July 2026)
 
+Pixel OS v1 desk launcher (Home/Paint/Minesweeper icons with bubble tooltips; Paint app
+with persistent localStorage canvas `room-paint-v1` + PNG download; in-monitor Minesweeper
+with pure engine in `src/lib/games/minesweeper-engine.ts` and best time via games storage),
 Visitor-local lighting states (dawn/day/dusk/night, build-time graded variants via
 `scripts/generate-lighting.mjs` + `npm run lighting`, `?light=` override, 1.5 s background
 crossfade),
@@ -109,7 +112,9 @@ src/
 │   ├── room/              Room.tsx (state machine: room→zooming→desk), RoomStage,
 │   │                      RoomObject (hotspot + tooltip), AnimatedSprite, Monitor,
 │   │                      RoomSpeakers (art + mute/unmute + MusicNotes),
-│   │                      DeskView (close-up + iframe browser), DeskIcon, MusicNotes,
+│   │                      DeskView (close-up + launcher/browser/paint/minesweeper),
+│   │                      DeskDesktop, DeskIcon, DeskPaint, DeskMinesweeper,
+│   │                      ScreenStrip, MusicNotes, SideTableClock,
 │   │                      NowPlaying, RoomAudioProvider, RoomHud
 │   ├── games/ layout/ projects/ sections/ ui/   (unchanged monochrome site components)
 │
@@ -142,17 +147,21 @@ inside its own monitor iframe (recursion guard removed — `/` is accessible fro
 ### Desk view (`DeskView.tsx`)
 Close-up art (`desk-closeup.png` and `desk-closeup-lamp-off.png`, crossfaded+flickered via
 `lampOn`/`lampFlicker` props passed from Room) with a clickable lamp toggle at (8,88 160×480)
-sharing Room's `toggleLamp` callback (one persistence path). Also: screen rect (436,152,536×308) hosting a pixel desktop
-(clock strip + 6 shortcut icons) or the **in-monitor browser** — a same-origin `<iframe>` of
-real site pages (zoomed out 25% via `scale(0.75)` for readability). Iframe navigation
-between desk opens uses `contentWindow.location.replace()`
-(keeps joint browser history clean); current path tracked by 500 ms same-origin polling;
-strip gains Desktop/Expand buttons in browser mode; Expand opens in a new tab (`window.open`);
-Escape ladder browser→desktop→room;
-below 700 px viewport, icons navigate full-page instead. Speakers (left 190,265 175×300;
-right 1005,270 215×300) are mute-toggle buttons with press-dip and muted glyph. Music notes
-emit from the driver holes (left: 284,349 r34 / 284,478 r50; right: 1118,352 r38 /
-1115,472 r52) at a constant 1100 ms rate, 2000 ms float, pooled `<img>`s + CSS keyframes.
+sharing Room's `toggleLamp` callback (one persistence path). Also: screen rect (436,152,536×308) hosting a pixel desktop.
+Screen modes: `desktop` (three-icon launcher via `DeskDesktop.tsx` + `ScreenStrip.tsx`),
+`browser` (same-origin in-monitor iframe zoomed out 25%), `paint` (`DeskPaint.tsx`:
+107×50 pixel canvas, 10-colour palette, pencil/eraser/fill tools, persistent to
+`room-paint-v1`, PNG download), `minesweeper` (`DeskMinesweeper.tsx`: 9×9/10 mines,
+pure engine in `src/lib/games/minesweeper-engine.ts`, first-click safety, right-click/
+long-press/F-key flagging, roving-tabindex keyboard play, best-time localStorage).
+Escape ladder app→desktop→room.
+Iframe navigation uses `contentWindow.location.replace()`; current path tracked by 500 ms
+same-origin polling; Expand opens in a new tab (`window.open`).
+Below 700 px viewport, app icons are hidden and Home navigates full-page.
+Speakers (left 190,265 175×300; right 1005,270 215×300) are mute-toggle buttons with
+press-dip and muted glyph. Music notes emit from the driver holes (left: 284,349 r34 /
+284,478 r50; right: 1118,352 r38 / 1115,472 r52) at a constant 1100 ms rate, 2000 ms
+float, pooled `<img>`s + CSS keyframes.
 The desk mouse (110×80 sprite) follows the pointer proportionally within x 975–1140,
 y 572–635 via rAF + lerp writing transforms directly (never React state per pointer event);
 rest point (1007,608); static on touch/reduced-motion. Idle screensaver after 15 s.
@@ -271,6 +280,13 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
 - **v8** (7 July 2026): visitor-local lighting engine (build-time graded sprites for
   dawn/day/night, `npm run lighting` pipeline, `?light=` query override, 1.5 s background
   crossfade, runtime `LightingProvider` context, clock unfrozen to live visitor-local time).
+- **v9** (7 July 2026): Pixel OS v1 launcher replacing the six site shortcuts with three
+  icons (Home/Paint/Minesweeper); Paint app (`DeskPaint.tsx`) with 10-colour palette,
+  tools (pencil/eraser/fill), persistent canvas (`room-paint-v1`), PNG download;
+  Minesweeper app (`DeskMinesweeper.tsx`) with pure engine (`minesweeper-engine.ts`),
+  first-click safety, flagging (right-click/long-press/F key), best-time storage;
+  ScreenStrip and DeskDesktop extracted from DeskView; screen modes expanded to
+  `desktop | browser | paint | minesweeper`; Escape ladder app → desktop → room.
 - **v6 (security hardening)** `7 July 2026`: Deleted live Vercel OIDC token from
   `.vercel/.env.production.local` (never committed, now removed). Tightened contact CSRF
   check: absent Origin is now rejected in production (previously skipped). Escaped `<` and

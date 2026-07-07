@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation'
 import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
 import { useStageScale, STAGE_W, STAGE_H } from '@/lib/room/useStageScale'
 import { useRoomAudio } from './RoomAudioProvider'
-import { DeskIcon } from './DeskIcon'
+import { DeskDesktop, type DesktopShortcut } from './DeskDesktop'
+import { DeskPaint, type PaintLabels } from './DeskPaint'
+import { DeskMinesweeper, type MinesLabels } from './DeskMinesweeper'
+import { ScreenStrip, StripButton } from './ScreenStrip'
 import { MusicNotes } from './MusicNotes'
 
 const SCREEN_X = 436; const SCREEN_Y = 152; const SCREEN_W = 536; const SCREEN_H = 308
@@ -26,12 +29,10 @@ const MOUSE_Y_MIN = 572; const MOUSE_Y_MAX = 635
 const MOUSE_REST_X = 1007; const MOUSE_REST_Y = 608
 const MOBILE_CUTOFF = 700
 
-type ScreenMode = 'desktop' | 'browser'
-
-interface Shortcut { id: string; label: string; href: string; icon: React.ReactNode }
+type ScreenMode = 'desktop' | 'browser' | 'paint' | 'minesweeper'
 
 interface DeskViewProps {
-  shortcuts: Shortcut[]
+  shortcuts: DesktopShortcut[]
   backLabel: string
   screenLabel: string
   desktopLabel: string
@@ -44,12 +45,16 @@ interface DeskViewProps {
   lampFlicker: boolean
   /** Accessible label for the lamp button (room.lampLabel) */
   lampLabel: string
+  /** Labels for the Paint app */
+  paintLabels: PaintLabels
+  /** Labels for the Minesweeper app */
+  minesLabels: MinesLabels
   onToggleLamp: () => void
   onBack: () => void
 }
 
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, expandLabel, browserTitle, speakersLabel, lampOn, lampFlicker, lampLabel, onToggleLamp, onBack } = props
+  const { shortcuts, backLabel, screenLabel, desktopLabel, expandLabel, browserTitle, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, onToggleLamp, onBack } = props
   const scale = useStageScale()
   const router = useRouter()
   const reduce = useReducedMotion()
@@ -73,7 +78,7 @@ export function DeskView(props: DeskViewProps) {
 
   // Prefetch
   useEffect(() => {
-    for (const s of shortcuts) router.prefetch(s.href)
+    for (const s of shortcuts) if (s.kind === 'site') router.prefetch(s.target)
   }, [shortcuts, router])
 
   // Live clock
@@ -102,32 +107,39 @@ export function DeskView(props: DeskViewProps) {
     return () => { if (pathTimerRef.current) clearInterval(pathTimerRef.current) }
   }, [screenMode])
 
-  const handleShortcutClick = useCallback((e: React.MouseEvent, href: string) => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
-    e.preventDefault()
-    if (reduce || isMobile) { router.push(href); return }
+  const handleShortcutClick = useCallback(
+    (e: React.MouseEvent, s: DesktopShortcut) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+      e.preventDefault()
+      if (s.kind === 'external') {
+        window.open(s.target, '_blank', 'noopener,noreferrer')
+        return
+      }
+      if (s.kind === 'app') {
+        setScreenMode(s.target as ScreenMode)
+        return
+      }
+      if (reduce || isMobile) { router.push(s.target); return }
+      if (screenMode === 'browser') {
+        try {
+          iframeRef.current?.contentWindow?.location.replace(s.target)
+          setBrowserPath(s.target)
+        } catch { /* ignore */ }
+        return
+      }
+      activeIconRef.current = e.currentTarget as HTMLAnchorElement
+      setBrowserPath(s.target)
+      setScreenMode('browser')
+      setIframeLoaded(false)
+    },
+    [reduce, isMobile, router, screenMode],
+  )
 
-    if (screenMode === 'browser') {
-      // Navigate existing iframe via replace
-      try {
-        iframeRef.current?.contentWindow?.location.replace(href)
-        setBrowserPath(href)
-      } catch { /* ignore */ }
-      return
-    }
-
-    // Enter browser mode
-    activeIconRef.current = e.currentTarget as HTMLAnchorElement
-    setBrowserPath(href)
-    setScreenMode('browser')
-    setIframeLoaded(false)
-  }, [reduce, isMobile, router, screenMode])
-
-  // Escape ladder: browser → desktop → room
+  // Escape ladder: paint/minesweeper/browser → desktop → room
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
-      if (screenMode === 'browser') {
+      if (screenMode !== 'desktop') {
         setScreenMode('desktop')
         activeIconRef.current?.focus()
       } else {
@@ -157,7 +169,7 @@ export function DeskView(props: DeskViewProps) {
     }
   }, [screenMode])
 
-  // Idle screensaver: reset timer on any activity, trigger after 90s
+  // Idle screensaver: reset timer on any activity, trigger after 15s
   useEffect(() => {
     const reset = () => {
       setScreensaver(false)
@@ -267,50 +279,21 @@ export function DeskView(props: DeskViewProps) {
         <div data-screen-area style={screenStyle}>
           <AnimatePresence mode="wait">
             {screenMode === 'desktop' && showDesktop && (
-              <motion.div key="desktop" className="absolute inset-0 flex flex-col"
-                style={{ backgroundColor: '#faf8f5' }}
+              <motion.div key="desktop" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.3 }}>
-                <div className="flex items-center justify-between px-3 h-7 border-b"
-                  style={{ backgroundColor: '#e8e0d8', borderColor: '#c8b8a8', fontFamily: 'var(--font-pixel), "Courier New", monospace', fontSize: '10px', color: '#3a3028' }}>
-                  <span>{time}</span>
-                  <button onClick={(e) => { e.stopPropagation(); onBack() }}
-                    className="hover:text-[#6a5040] transition-colors outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028]"
-                    style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace' }} aria-label={backLabel}>← {backLabel}</button>
-                </div>
-                <nav aria-label={screenLabel} className="flex-1 flex items-center justify-center">
-                  <div className="grid grid-cols-3 gap-x-8 gap-y-5 px-4">
-                    {shortcuts.map((s) => (
-                      <DeskIcon key={s.id} label={s.label} href={s.href} icon={s.icon}
-                        onClick={(e) => handleShortcutClick(e, s.href)} />
-                    ))}
-                  </div>
-                </nav>
-
-                {/* Idle screensaver overlay */}
-                {screensaver && !reduce && (
-                  <div className="absolute inset-0 flex items-center justify-center overflow-hidden"
-                    style={{ backgroundColor: '#faf8f5' }} aria-hidden>
-                    <div className="relative"
-                      style={{
-                        width: 40, height: 20,
-                        animation: 'screensaver-drift 10s linear infinite',
-                        '--sw': SCREEN_W + 'px', '--sh': SCREEN_H + 'px',
-                      } as React.CSSProperties}>
-                      <div style={{
-                        width: 40, height: 20,
-                        backgroundColor: '#3a3028',
-                        borderRadius: '2px',
-                        fontFamily: 'var(--font-pixel), "Courier New", monospace',
-                        fontSize: '8px',
-                        color: '#faf8f5',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>AH</div>
-                    </div>
-                  </div>
-                )}
+                <DeskDesktop
+                  time={time}
+                  backLabel={backLabel}
+                  screenLabel={screenLabel}
+                  shortcuts={isMobile ? shortcuts.filter((s) => s.kind === 'site') : shortcuts}
+                  screensaver={screensaver}
+                  reduce={reduce}
+                  screenW={SCREEN_W}
+                  screenH={SCREEN_H}
+                  onBack={(e) => { e.stopPropagation(); onBack() }}
+                  onShortcutClick={handleShortcutClick}
+                />
               </motion.div>
             )}
 
@@ -319,22 +302,11 @@ export function DeskView(props: DeskViewProps) {
                 style={{ backgroundColor: '#faf8f5' }}
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                {/* Top strip */}
-                <div className="flex items-center justify-between px-3 h-7 border-b flex-shrink-0"
-                  style={{ backgroundColor: '#e8e0d8', borderColor: '#c8b8a8', fontFamily: 'var(--font-pixel), "Courier New", monospace', fontSize: '10px', color: '#3a3028' }}>
-                  <span>{time}</span>
-                  <div className="flex items-center gap-2">
-                    <button onClick={goDesktop}
-                      className="hover:text-[#6a5040] transition-colors outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028]"
-                      style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace' }}>{desktopLabel}</button>
-                    <button onClick={goExpand}
-                      className="hover:text-[#6a5040] transition-colors outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028]"
-                      style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace' }}>{expandLabel}</button>
-                    <button onClick={(e) => { e.stopPropagation(); onBack() }}
-                      className="hover:text-[#6a5040] transition-colors outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028]"
-                      style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace' }} aria-label={backLabel}>← {backLabel}</button>
-                  </div>
-                </div>
+                <ScreenStrip time={time}>
+                  <StripButton onClick={goDesktop}>{desktopLabel}</StripButton>
+                  <StripButton onClick={goExpand}>{expandLabel}</StripButton>
+                  <StripButton onClick={(e) => { e.stopPropagation(); onBack() }} ariaLabel={backLabel}>← {backLabel}</StripButton>
+                </ScreenStrip>
                 {/* Iframe area — zoomed out 25% so site content appears smaller */}
                 <div className="flex-1 relative overflow-hidden">
                   {!iframeLoaded && (
@@ -359,6 +331,26 @@ export function DeskView(props: DeskViewProps) {
                     sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
                   />
                 </div>
+              </motion.div>
+            )}
+
+            {screenMode === 'paint' && (
+              <motion.div key="paint" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskPaint time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                  labels={paintLabels} onDesktop={goDesktop}
+                  onBack={(e) => { e.stopPropagation(); onBack() }} />
+              </motion.div>
+            )}
+
+            {screenMode === 'minesweeper' && (
+              <motion.div key="minesweeper" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskMinesweeper time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                  labels={minesLabels} onDesktop={goDesktop}
+                  onBack={(e) => { e.stopPropagation(); onBack() }} />
               </motion.div>
             )}
           </AnimatePresence>

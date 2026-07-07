@@ -24,12 +24,10 @@ import { SideTableClock } from './SideTableClock'
 import { RoomObject } from './RoomObject'
 import {
   ICON_HOME,
-  ICON_GAMES,
-  ICON_PROJECTS,
-  ICON_TUTORING,
-  ICON_CONTACT,
-  ICON_LEGAL,
+  ICON_PAINT,
+  ICON_MINESWEEPER,
 } from './DeskIcon'
+import type { DesktopShortcut } from './DeskDesktop'
 import { useLightingClock, LightingProvider, lightingSrc, type LightingState } from '@/lib/room/lighting'
 
 type View = 'room' | 'zooming' | 'desk' | 'leaving'
@@ -60,16 +58,18 @@ interface RoomProps {
     }
     desk: {
       home: string
-      games: string
-      projects: string
-      tutoring: string
-      contact: string
-      legal: string
+      paint: string
+      minesweeper: string
+      homeTip: string
+      paintTip: string
+      minesweeperTip: string
       back: string
       desktop: string
       expand: string
       browserTitle: string
       screenLabel: string
+      paintApp: { pencil: string; eraser: string; fill: string; clear: string; download: string; color: string; canvas: string }
+      mines: { board: string; cell: string; minesLeft: string; time: string; best: string; reset: string; won: string; lost: string }
     }
   }
 }
@@ -240,13 +240,11 @@ export function Room({ dict }: RoomProps) {
   const glowX = (screenCenterX / STAGE_W) * 100
   const glowY = (screenCenterY / STAGE_H) * 100
 
-  const deskShortcuts = [
-    { id: 'home', label: t.desk.home, href: '/home', icon: ICON_HOME },
-    { id: 'games', label: t.desk.games, href: '/games', icon: ICON_GAMES },
-    { id: 'projects', label: t.desk.projects, href: '/projects', icon: ICON_PROJECTS },
-    { id: 'tutoring', label: t.desk.tutoring, href: '/tutoring', icon: ICON_TUTORING },
-    { id: 'contact', label: t.desk.contact, href: '/home#contact', icon: ICON_CONTACT },
-    { id: 'legal', label: t.desk.legal, href: '/legal/terms', icon: ICON_LEGAL },
+  // Desktop launcher. Future friends' links: append { kind: 'external', target: 'https://…' } entries.
+  const deskShortcuts: DesktopShortcut[] = [
+    { id: 'home', kind: 'site', target: '/home', label: t.desk.home, tooltip: t.desk.homeTip, icon: ICON_HOME },
+    { id: 'paint', kind: 'app', target: 'paint', label: t.desk.paint, tooltip: t.desk.paintTip, icon: ICON_PAINT },
+    { id: 'minesweeper', kind: 'app', target: 'minesweeper', label: t.desk.minesweeper, tooltip: t.desk.minesweeperTip, icon: ICON_MINESWEEPER },
   ]
 
   // Desk view
@@ -264,6 +262,8 @@ export function Room({ dict }: RoomProps) {
           lampOn={lampOn}
           lampFlicker={lampFlicker}
           lampLabel={t.room.lampLabel}
+          paintLabels={t.desk.paintApp}
+          minesLabels={t.desk.mines}
           onToggleLamp={toggleLamp}
           onBack={handleDeskBack}
         />

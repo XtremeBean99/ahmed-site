@@ -1,17 +1,8 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { RoomObject } from './RoomObject'
-
-/**
- * Static "photograph" time — the room is frozen at dusk, so the clock shows a
- * fixed 21:07 (a 7/7 nod), not the visitor's live time. The wall clock bubble
- * next to the posters already shows real time.
- */
-const TIME_24 = '21:07'
-const TIME_12 = '9:07'
-const TIME_12_SUFFIX = 'PM'
 
 interface SideTableClockProps {
   label: string
@@ -30,6 +21,17 @@ interface SideTableClockProps {
   onToggle: () => void
 }
 
+function getTimeParts(is24h: boolean) {
+  const now = new Date()
+  const hours = now.getHours()
+  const mins = now.getMinutes().toString().padStart(2, '0')
+  if (is24h) {
+    return { hh: hours.toString().padStart(2, '0'), mm: mins, suffix: '' }
+  }
+  const h12 = hours % 12 || 12
+  return { hh: h12.toString(), mm: mins, suffix: hours >= 12 ? 'PM' : 'AM' }
+}
+
 export function SideTableClock({
   label,
   x,
@@ -44,12 +46,18 @@ export function SideTableClock({
   onToggle,
 }: SideTableClockProps) {
   const [hovered, setHovered] = useState(false)
+  const [time, setTime] = useState(() => getTimeParts(is24h))
   const reduce = useReducedMotion()
 
   const activate = useCallback(() => setHovered(true), [])
   const deactivate = useCallback(() => setHovered(false), [])
 
-  const [hh, mm] = (is24h ? TIME_24 : TIME_12).split(':')
+  // Update the clock every 10 seconds
+  useEffect(() => {
+    setTime(getTimeParts(is24h))
+    const id = setInterval(() => setTime(getTimeParts(is24h)), 10_000)
+    return () => clearInterval(id)
+  }, [is24h])
 
   return (
     <div
@@ -101,12 +109,12 @@ export function SideTableClock({
             textShadow: '0 0 3px rgba(53,230,92,0.55)',
           }}
         >
-          {hh}
+          {time.hh}
           <span className={reduce ? undefined : 'clock-colon'} style={{ position: 'relative', top: '-1px' }}>
             :
           </span>
-          {mm}
-          {!is24h && <span style={{ fontSize: '6px', marginLeft: '2px' }}>{TIME_12_SUFFIX}</span>}
+          {time.mm}
+          {time.suffix && <span style={{ fontSize: '6px', marginLeft: '2px' }}>{time.suffix}</span>}
         </div>
       </RoomObject>
     </div>

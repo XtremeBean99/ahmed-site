@@ -1,7 +1,9 @@
 'use client'
 
+import { useState, useCallback } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { useRoomAudio } from './RoomAudioProvider'
+import { RoomObject } from './RoomObject'
 import { MusicNotes } from './MusicNotes'
 
 // Stage-space geometry measured from sources/room-speakers.png.
@@ -33,6 +35,9 @@ interface RoomSpeakersProps {
 export function RoomSpeakers({ lampOn, lampFlicker, speakersLabel }: RoomSpeakersProps) {
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
+  const [hovered, setHovered] = useState(false)
+  const activate = useCallback(() => setHovered(true), [])
+  const deactivate = useCallback(() => setHovered(false), [])
 
   const cabinetClass =
     'absolute cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2 transition-transform duration-[120ms] active:scale-[0.98]'
@@ -76,23 +81,33 @@ export function RoomSpeakers({ lampOn, lampFlicker, speakersLabel }: RoomSpeaker
         />
       </div>
 
-      {/* Mute/unmute — one button per cabinet */}
-      <button
+      {/* Mute/unmute — one button per cabinet, each with its own tooltip */}
+      <RoomObject
+        label={speakersLabel}
+        showTooltip={hovered}
+        onActivate={activate}
+        onDeactivate={deactivate}
         onClick={toggle}
-        aria-label={speakersLabel}
-        className={cabinetClass}
-        style={{ left: CABINET_LEFT.x, top: CABINET_LEFT.y, width: CABINET_LEFT.w, height: CABINET_LEFT.h, zIndex: 2 }}
+        tabIndex={0}
+        style={{ position: 'absolute', left: CABINET_LEFT.x, top: CABINET_LEFT.y, width: CABINET_LEFT.w, height: CABINET_LEFT.h, zIndex: 2 }}
       >
-        {mutedGlyph}
-      </button>
-      <button
+        <div className={`w-full h-full ${cabinetClass} relative`}>
+          {mutedGlyph}
+        </div>
+      </RoomObject>
+      <RoomObject
+        label={speakersLabel}
+        showTooltip={hovered}
+        onActivate={activate}
+        onDeactivate={deactivate}
         onClick={toggle}
-        aria-label={speakersLabel}
-        className={cabinetClass}
-        style={{ left: CABINET_RIGHT.x, top: CABINET_RIGHT.y, width: CABINET_RIGHT.w, height: CABINET_RIGHT.h, zIndex: 2 }}
+        tabIndex={0}
+        style={{ position: 'absolute', left: CABINET_RIGHT.x, top: CABINET_RIGHT.y, width: CABINET_RIGHT.w, height: CABINET_RIGHT.h, zIndex: 2 }}
       >
-        {mutedGlyph}
-      </button>
+        <div className={`w-full h-full ${cabinetClass} relative`}>
+          {mutedGlyph}
+        </div>
+      </RoomObject>
 
       {/* Constant-rate notes from the driver holes while music plays */}
       <MusicNotes holes={HOLES_LEFT} startDelay={0} />

@@ -22,7 +22,7 @@ with modern quality). The conventional site lives under `/home`, `/games`, `/pro
 
 ## Current State (7 July 2026)
 
-Side table + digital alarm clock on it (static 21:07 in green LED digits skewY'd −11° onto
+Side table + digital alarm clock on it (live user time in green LED digits skewY'd −11° onto
 the face plane; click toggles 12/24 h, persisted as `clock24h`; deliberately no hover lift),
 Monitor hover highlight (4-frame yellow outline + simultaneous 18-frame Win98 boot-screen
 overlay, both play-once-hold), −2px hover lifts on all room objects (monitor, poster, bonsai,
@@ -172,19 +172,20 @@ with an 18-frame Win98 boot-screen overlay on the glass (270,282 214×171) that 
 simultaneously and also holds its last frame → zoom to desk; zoom origin stays at
 stage (360,331) = rect + (125,74)) · poster (997,78 134×247, 5 frames, play-once-hold,
 click toast) · bonsai (1241,291 99×131, 5 frames, loop, `tooltipAlign="right"` because the
-centred bubble overflowed the right edge) · lamp (60,300 110×220, toggles lamp-off art
+centred bubble overflowed the right edge) · lamp (60,300 110×220, hover tooltip, toggles lamp-off art
 crossfade + flicker, persisted) · coffee (160,475 83×83, 6 frames: rest + 5-frame hover
 highlight, play-once-hold) with three staggered CSS steam wisps (`steam-rise` keyframes,
 per-wisp `--sway`/`--dur`, negative delays, rendered behind the mug) ·
 side table (641,409 173×215, decorative layer, no hotspot, dims with the lamp) ·
-digital clock (658,386 71×55, single frame, no hover lift; SideTableClock renders static
-21:07 in LED green #35e65c on the blank face — digit plane (679,409) 43×22, skewY(−11°),
-1 Hz colon blink gated by reduced motion; click toggles 12/24 h via `clock24h` pref).
+digital clock (658,386 71×55, single frame, no hover lift; SideTableClock renders live user
+time in LED green #35e65c on the blank face — digit plane (679,409) 43×22, skewY(−11°),
+1 Hz colon blink gated by reduced motion, updates every 10 s; click toggles 12/24 h via
+`clock24h` pref).
 All AnimatedSprite
 objects (poster, bonsai, coffee) and the Monitor share a −2px hover lift (`motion.img`/
 `motion.div` with `animate={{ y: -2 }}`, `DURATION.fast`). Desktop speakers
 (`RoomSpeakers.tsx`): art layer (146,292 435×218) crossfades/flickers with the lamp;
-cabinets (left 148,355 108×154; right 490,290 91×141) are mute-toggle buttons rendered
+cabinets (left 148,355 108×154; right 490,290 91×141) are mute-toggle buttons with hover tooltips, rendered
 AFTER the monitor so they win its overlapping anchor rect; notes emit from driver holes
 (left 215,408 r15 / 215,463 r25; right 546,345 r14 / 546,397 r24). Adding an object: entry in
 `ROOM_OBJECTS` → sprites in `public/room/` → both dictionaries → render in `Room.tsx`.
@@ -251,7 +252,7 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   (room renders inside its own iframe), body `overflow:hidden` removed (iframe scroll fix),
   ID3 embedded cover art extractor, iframe site content zoomed out 25%, expand opens new tab,
   visitor counter, window tint removed, animation speeds bumped, UI sizes increased.
-- **v7** (7 July 2026): side table + digital clock (static 21:07, green LED digits on the
+- **v7** (7 July 2026): side table + digital clock (live user time, green LED digits on the
   isometric face plane, 12/24 h click toggle persisted, no hover pickup by design).
 - **v6 (security hardening)** `7 July 2026`: Deleted live Vercel OIDC token from
   `.vercel/.env.production.local` (never committed, now removed). Tightened contact CSRF

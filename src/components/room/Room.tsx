@@ -21,6 +21,7 @@ import { RoomSpeakers } from './RoomSpeakers'
 import { AnimatedSprite } from './AnimatedSprite'
 import { DeskView } from './DeskView'
 import { SideTableClock } from './SideTableClock'
+import { RoomObject } from './RoomObject'
 import {
   ICON_HOME,
   ICON_GAMES,
@@ -82,6 +83,7 @@ export function Room({ dict }: RoomProps) {
   const [toast, setToast] = useState<string | null>(null)
   const [visitCount, setVisitCount] = useState(0)
   const [clock24h, setClock24h] = useState(true)
+  const [lampHovered, setLampHovered] = useState(false)
 
   // Load lamp pref on mount
   useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setVisitCount(p.visitCount + 1); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
@@ -380,12 +382,18 @@ export function Room({ dict }: RoomProps) {
           />
 
           {/* Lamp toggle hotspot */}
-          <button
+          <RoomObject
+            label={t.room.lampLabel}
+            showTooltip={lampHovered}
+            onActivate={() => setLampHovered(true)}
+            onDeactivate={() => setLampHovered(false)}
             onClick={toggleLamp}
-            aria-label={t.room.lampLabel}
-            className="absolute cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2"
-            style={{ left: 60, top: 300, width: 110, height: 220 }}
-          />
+            tabIndex={0}
+            style={{ position: 'absolute', left: 60, top: 300, width: 110, height: 220 }}
+          >
+            {/* Invisible hotspot — lamp art is baked into the background */}
+            <div className="w-full h-full" />
+          </RoomObject>
 
           {/* Coffee steam: three staggered wisps rising from the cup rim.
               Rendered before the mug so steam appears from behind it. */}

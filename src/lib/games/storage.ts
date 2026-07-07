@@ -7,6 +7,7 @@ const vk = (key: string) => `${NS}:v${STORAGE_VERSION}:${key}`
 export const BEST_KEYS = {
   typing: 'typing-best',
   breakout: 'breakout-best',
+  minesweeper: 'minesweeper-best',
 } as const
 
 /** Read a numeric best score. SSR-safe; returns 0 on any failure. */
@@ -26,6 +27,21 @@ export function setBestIfHigher(key: string, value: number): boolean {
   if (typeof window === 'undefined') return false
   try {
     if (value > getBest(key)) {
+      window.localStorage.setItem(vk(key), String(value))
+      return true
+    }
+    return false
+  } catch {
+    return false
+  }
+}
+
+/** Write value only if it is LOWER than the stored best (for times). 0/absent means no best yet. */
+export function setBestIfLower(key: string, value: number): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    const current = getBest(key)
+    if (value > 0 && (current === 0 || value < current)) {
       window.localStorage.setItem(vk(key), String(value))
       return true
     }

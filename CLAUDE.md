@@ -280,11 +280,10 @@ Owner-curated backlog. Tiers are effort/scope, not priority order. ~~Struck~~ = 
 a documented history of regressions (reduced-motion crash, off-centre zoom, XFO DENY,
 four i18n misses, audio `ended` bug), so the highest-leverage next step is **23 (Playwright
 E2E of the room flows)** — every future feature lands faster once the zoom/desk/audio/
-reduced-motion paths are pinned. Then **15 (durable rate limiting — the two open security
-items)**, then the quick wins **1, 2, 7** (skip-no-repeat, desk session persistence,
-volume control), then **3 (room OG image)** for link previews, then **8 (interaction SFX —
-`music-sfx/` and `saitama.ase` show the art pipeline is already warming up for it)** and
-**6 (bonsai growth)**. New items 25–26 below came out of the same assessment.
+reduced-motion paths are pinned. Owner's picks from this assessment — **15 (rate-limiter
+hardening), 1 (skip-no-repeat), 7 (volume slider), 3 (room OG image from background.png)** —
+are in flight via `TODO.md` (7 July); the rest (2, 8, 6, 25, 26, …) stay deferred here.
+New items 25–26 below came out of the same assessment.
 
 **Basic (hours)**
 1. Skip-no-repeat: `nextTrack` avoids repeating the last-played track.

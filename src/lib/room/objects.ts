@@ -109,7 +109,7 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
  * the loading source canvases are top-left aligned with the stage, and the
  * content bbox is identical in all 18 frames.
  */
-export const MONITOR_LOADING_RECT = { x: 266, y: 275, w: 214, h: 171 }
+export const MONITOR_LOADING_RECT = { x: 269, y: 278, w: 214, h: 171 }
 
 export const MONITOR_LOADING_FRAMES = Array.from(
   { length: 18 },

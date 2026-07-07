@@ -2,7 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
-import { ROOM_OBJECTS, MONITOR_LOADING_FRAMES, MONITOR_LOADING_RECT } from '@/lib/room/objects'
+import {
+  ROOM_OBJECTS,
+  MONITOR_LOADING_FRAMES,
+  MONITOR_LOADING_RECT,
+  SIDE_TABLE_RECT,
+  CLOCK_FACE_RECT,
+  CLOCK_FACE_SKEW_DEG,
+} from '@/lib/room/objects'
 import { useStageScale } from '@/lib/room/useStageScale'
 import { loadPrefs, savePrefs } from '@/lib/room/storage'
 import { RoomStage } from './RoomStage'
@@ -13,6 +20,7 @@ import { Monitor } from './Monitor'
 import { RoomSpeakers } from './RoomSpeakers'
 import { AnimatedSprite } from './AnimatedSprite'
 import { DeskView } from './DeskView'
+import { SideTableClock } from './SideTableClock'
 import {
   ICON_HOME,
   ICON_GAMES,
@@ -75,9 +83,10 @@ export function Room({ dict }: RoomProps) {
   const [toast, setToast] = useState<string | null>(null)
   const [clockTooltip, setClockTooltip] = useState('')
   const [visitCount, setVisitCount] = useState(0)
+  const [clock24h, setClock24h] = useState(true)
 
   // Load lamp pref on mount
-  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setVisitCount(p.visitCount + 1); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
+  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setVisitCount(p.visitCount + 1); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
 
   // Clock tooltip — update every 30s
   useEffect(() => {
@@ -188,11 +197,21 @@ export function Room({ dict }: RoomProps) {
     })
   }, [])
 
+  // Digital clock: click toggles 12/24-hour display, persisted.
+  const toggleClockFormat = useCallback(() => {
+    setClock24h((v) => {
+      const n = !v
+      savePrefs({ clock24h: n })
+      return n
+    })
+  }, [])
+
   const monitorObj = ROOM_OBJECTS.find((o) => o.id === 'monitor')!
   const posterObj = ROOM_OBJECTS.find((o) => o.id === 'poster')!
   const saitamaObj = ROOM_OBJECTS.find((o) => o.id === 'saitama')!
   const bonsaiObj = ROOM_OBJECTS.find((o) => o.id === 'bonsai')!
   const coffeeObj = ROOM_OBJECTS.find((o) => o.id === 'coffee')!
+  const clockObj = ROOM_OBJECTS.find((o) => o.id === 'clock')!
 
   // Stage point the zoom converges on: the centre of the monitor glass,
   // (360, 331) in stage coords. Offsets are relative to the monitor rect
@@ -300,6 +319,39 @@ export function Room({ dict }: RoomProps) {
             lampOn={lampOn}
             lampFlicker={lampFlicker}
             speakersLabel={t.room.audio.speakersLabel}
+          />
+
+          {/* Side table — decorative, no hotspot, no hover lift. Dims with the lamp. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/room/side-table.png"
+            alt=""
+            draggable={false}
+            className="absolute"
+            style={{
+              left: SIDE_TABLE_RECT.x,
+              top: SIDE_TABLE_RECT.y,
+              width: SIDE_TABLE_RECT.w,
+              height: SIDE_TABLE_RECT.h,
+              imageRendering: 'pixelated',
+              filter: lampOn ? 'none' : 'brightness(0.72)',
+              transition: reduce ? 'none' : 'filter 0.4s ease',
+            }}
+          />
+
+          {/* Digital clock on the side table — click toggles 12/24 h. No hover lift. */}
+          <SideTableClock
+            label={t.room.sideTableClockLabel}
+            x={clockObj.x}
+            y={clockObj.y}
+            w={clockObj.w}
+            h={clockObj.h}
+            frame={clockObj.frames[0]}
+            faceRect={CLOCK_FACE_RECT}
+            faceSkewDeg={CLOCK_FACE_SKEW_DEG}
+            is24h={clock24h}
+            lampOn={lampOn}
+            onToggle={toggleClockFormat}
           />
 
           <AnimatedSprite

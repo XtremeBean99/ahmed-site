@@ -15,7 +15,7 @@ const assetsBgDir = join(__dirname, '..', 'assets', 'pixel-art', 'background')
 const GRADES = {
   dawn:  { tint: [1.08, 0.97, 0.92], bright: 0.95, sat: 0.95 },
   day:   { tint: [1.04, 1.02, 0.98], bright: 1.18, sat: 1.0 },
-  night: { tint: [0.62, 0.68, 1.0],  bright: 0.70, sat: 0.78 },
+  night: { tint: [0.62, 0.68, 1.0],  bright: 0.93, sat: 0.78 },
 }
 
 // Pixels at or below this on every channel are outline ink — never graded.

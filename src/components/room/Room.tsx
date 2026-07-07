@@ -547,6 +547,20 @@ export function Room({ dict }: RoomProps) {
         )}
       </AnimatePresence>
 
+      {/* Lamp glow */}
+      {!reduce && view === 'room' && (
+        <div
+          className="fixed pointer-events-none z-0"
+          style={{
+            left: '8.5%',
+            top: '12%',
+            width: '15%',
+            height: '15%',
+            background: 'radial-gradient(ellipse, rgba(200,160,100,0.12) 0%, transparent 70%)',
+            animation: 'lamp-glow 6s ease-in-out infinite',
+          }}
+        />
+      )}
 
     </div>
     </RoomAudioProvider>

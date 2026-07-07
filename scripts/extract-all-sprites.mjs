@@ -29,7 +29,7 @@ async function main() {
   await mkdir(outDir, { recursive: true })
 
   // 1. Extract monitor+keyboard+mouse sprite
-  const skmPath = join(pixelDir, 'screen-keybaord-mouse-mousapd.png')
+  const skmPath = join(pixelDir, 'sources', 'monitor-keyboard-mouse.png')
   const skmBounds = await getBounds(skmPath)
   if (skmBounds) {
     const pad = 2
@@ -49,10 +49,10 @@ async function main() {
   }
 
   // 2. Extract bonsai tree sprites (like poster - union box across all)
-  const bonsaiDir = join(pixelDir, 'bonsai')
+  const bonsaiDir = join(pixelDir, 'sources', 'bonsai')
   let unionBox = null
   for (let i = 1; i <= 5; i++) {
-    const bounds = await getBounds(join(bonsaiDir, 'tree' + i + '.png'))
+    const bounds = await getBounds(join(bonsaiDir, 'bonsai-' + i + '.png'))
     if (!bounds) continue
     if (!unionBox) {
       unionBox = { ...bounds }
@@ -75,7 +75,7 @@ async function main() {
     const h = unionBox.bottom - unionBox.top + 1
 
     for (let i = 0; i < 5; i++) {
-      await sharp(join(bonsaiDir, 'tree' + (i + 1) + '.png'))
+      await sharp(join(bonsaiDir, 'bonsai-' + (i + 1) + '.png'))
         .extract({ left: unionBox.left, top: unionBox.top, width: w, height: h })
         .png()
         .toFile(join(outDir, 'bonsai-' + (i + 1) + '.png'))

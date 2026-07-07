@@ -2,8 +2,8 @@
 
 The single consolidated context document for this project. Read this before touching any code.
 It absorbs the former `docs/PLAN.md` (spec history), `docs/taskt.txt` (original room brief),
-`docs/audio-licences.md`, `docs/suggestions.txt` (June audit), and `assets/pixel-art/STYLE.md`,
-all of which have been retired. Last consolidated: 6 July 2026.
+`docs/audio-licences.md`, `docs/suggestions.txt` (June audit), `assets/pixel-art/STYLE.md`,
+and `CONTENT.md`, all of which have been retired. Last consolidated: 7 July 2026.
 
 ---
 
@@ -75,6 +75,14 @@ nothing (third-party embedding is already blocked by same-origin-only).
 Vercel serves case-sensitively; Windows dev machines do not. A track that plays locally but
 404s deployed is a case mismatch between git and `playlist.ts` (the Saffron incident). Keep
 `public/audio/` kebab-case lowercase; verify with `git ls-files public/audio`.
+
+### 8. Documentation policy — exactly three markdown files
+Owner direction 7 July 2026: the repository contains exactly three markdown docs —
+`CLAUDE.md` (this file, the single consolidated context), `README.md`, and, only while work
+is in flight, `TODO.md` (the active task plan / checklist). `TODO.md` is **deleted in the
+final commit** once its tasks are all complete. No `docs/` folder, no other `.md` files
+anywhere (`CONTENT.md` was removed under this policy). Durable knowledge goes into this
+file; task plans go into `TODO.md`.
 
 ---
 
@@ -176,7 +184,15 @@ order targeting `/home`; decorative layers (`MusicNotes`, steam, dust, pad mouse
 animation but never functionality.
 
 ### Sprite pipeline and style guide (former STYLE.md)
-Source art in `assets/pixel-art/` (repo-internal, not deployed); web sprites in `public/room/`
+Source art in `assets/pixel-art/` (repo-internal, not deployed). **This is the owner's
+working folder — they edit sprites here.** Keep it organised, kebab-case lowercase, no
+spaces or typos in names. Layout (7 July 2026): `sources/` holds full-canvas 1408×768
+stage-aligned scene exports (`background[-lamp-off]`, `desk-closeup[-lamp-off]`,
+`monitor-keyboard-mouse[-highlight-1..3]`, `monitor-loading-screen-1..18` (1380×752,
+top-left aligned), `room-speakers[-lamp-off]`, `mouse-only-closeup`); multi-frame objects
+get a subfolder — `sources/bonsai/bonsai-1..5.png`, `sources/poster/kitagawa-1..5.png`,
+`sources/coffee/coffee-1..6.png` + `coffee-steam.png`; `music-sfx/` holds the music-note
+art (`music-note-1..3.png` + `.ase`). Web sprites in `public/room/`
 as raw PNG served via `<img>` with `image-rendering: pixelated` — **never `next/image`**
 (resampling destroys pixel art). Multi-frame sprites are cropped to a **shared union bbox
 +2 px pad** across all frames so playback never jitters (`scripts/extract-*.mjs`).
@@ -315,8 +331,7 @@ defines `Dictionary`), `fr.ts`, `server.ts` (`getLocale`/`getDictionary` for ser
 components), `client.tsx` (`I18nProvider`, `useT()`).
 
 Workflow for any copy change: add to `en.ts` → add French at the identical path (formal
-*vous*; first person for Ahmed's bio) → reference via `t.…` → `npm run type-check` →
-keep `CONTENT.md` in sync.
+*vous*; first person for Ahmed's bio) → reference via `t.…` → `npm run type-check`.
 
 Deliberate English-only boundaries: SEO metadata/OG images; large editorial datasets
 (typing phrases, AGLC4 configs). Cookie-read makes content pages dynamically rendered —

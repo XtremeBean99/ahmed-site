@@ -382,18 +382,25 @@ export function Room({ dict }: RoomProps) {
           />
 
           {/* Lamp toggle hotspot */}
-          <RoomObject
-            label={t.room.lampLabel}
-            showTooltip={lampHovered}
-            onActivate={() => setLampHovered(true)}
-            onDeactivate={() => setLampHovered(false)}
-            onClick={toggleLamp}
-            tabIndex={0}
+          <div
             style={{ position: 'absolute', left: 60, top: 300, width: 110, height: 220 }}
+            onMouseEnter={() => setLampHovered(true)}
+            onMouseLeave={() => setLampHovered(false)}
+            onFocus={() => setLampHovered(true)}
+            onBlur={() => setLampHovered(false)}
           >
-            {/* Invisible hotspot — lamp art is baked into the background */}
-            <div className="w-full h-full" />
-          </RoomObject>
+            <RoomObject
+              label={t.room.lampLabel}
+              showTooltip={lampHovered}
+              onActivate={() => setLampHovered(true)}
+              onDeactivate={() => setLampHovered(false)}
+              onClick={toggleLamp}
+              tabIndex={0}
+            >
+              {/* Invisible hit target that forces the button to fill the area */}
+              <div style={{ width: 110, height: 220 }} />
+            </RoomObject>
+          </div>
 
           {/* Coffee steam: three staggered wisps rising from the cup rim.
               Rendered before the mug so steam appears from behind it. */}

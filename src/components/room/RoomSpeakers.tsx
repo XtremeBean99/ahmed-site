@@ -39,9 +39,6 @@ export function RoomSpeakers({ lampOn, lampFlicker, speakersLabel }: RoomSpeaker
   const activate = useCallback(() => setHovered(true), [])
   const deactivate = useCallback(() => setHovered(false), [])
 
-  const cabinetClass =
-    'absolute cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2 transition-transform duration-[120ms] active:scale-[0.98]'
-
   const mutedGlyph = !playing && (
     <span
       className="absolute top-1 right-1 text-[#a09080] opacity-70 pointer-events-none"
@@ -82,32 +79,46 @@ export function RoomSpeakers({ lampOn, lampFlicker, speakersLabel }: RoomSpeaker
       </div>
 
       {/* Mute/unmute — one button per cabinet, each with its own tooltip */}
-      <RoomObject
-        label={speakersLabel}
-        showTooltip={hovered}
-        onActivate={activate}
-        onDeactivate={deactivate}
-        onClick={toggle}
-        tabIndex={0}
+      <div
         style={{ position: 'absolute', left: CABINET_LEFT.x, top: CABINET_LEFT.y, width: CABINET_LEFT.w, height: CABINET_LEFT.h, zIndex: 2 }}
+        onMouseEnter={activate}
+        onMouseLeave={deactivate}
+        onFocus={activate}
+        onBlur={deactivate}
       >
-        <div className={`w-full h-full ${cabinetClass} relative`}>
-          {mutedGlyph}
-        </div>
-      </RoomObject>
-      <RoomObject
-        label={speakersLabel}
-        showTooltip={hovered}
-        onActivate={activate}
-        onDeactivate={deactivate}
-        onClick={toggle}
-        tabIndex={0}
+        <RoomObject
+          label={speakersLabel}
+          showTooltip={hovered}
+          onActivate={activate}
+          onDeactivate={deactivate}
+          onClick={toggle}
+          tabIndex={0}
+        >
+          <div style={{ width: CABINET_LEFT.w, height: CABINET_LEFT.h, position: 'relative' }}>
+            {mutedGlyph}
+          </div>
+        </RoomObject>
+      </div>
+      <div
         style={{ position: 'absolute', left: CABINET_RIGHT.x, top: CABINET_RIGHT.y, width: CABINET_RIGHT.w, height: CABINET_RIGHT.h, zIndex: 2 }}
+        onMouseEnter={activate}
+        onMouseLeave={deactivate}
+        onFocus={activate}
+        onBlur={deactivate}
       >
-        <div className={`w-full h-full ${cabinetClass} relative`}>
-          {mutedGlyph}
-        </div>
-      </RoomObject>
+        <RoomObject
+          label={speakersLabel}
+          showTooltip={hovered}
+          onActivate={activate}
+          onDeactivate={deactivate}
+          onClick={toggle}
+          tabIndex={0}
+        >
+          <div style={{ width: CABINET_RIGHT.w, height: CABINET_RIGHT.h, position: 'relative' }}>
+            {mutedGlyph}
+          </div>
+        </RoomObject>
+      </div>
 
       {/* Constant-rate notes from the driver holes while music plays */}
       <MusicNotes holes={HOLES_LEFT} startDelay={0} />

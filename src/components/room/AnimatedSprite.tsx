@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { RoomObject } from './RoomObject'
 import { DURATION } from '@/lib/motion'
+import { useLighting, lightingSrc } from '@/lib/room/lighting'
 
 export type SpriteMode = 'loop' | 'play-once-hold' | 'play-all-loop-last-two'
 
@@ -34,6 +35,7 @@ export function AnimatedSprite({
   tooltipAlign,
 }: AnimatedSpriteProps) {
   const [hovered, setHovered] = useState(false)
+  const lighting = useLighting()
   const [frameIndex, setFrameIndex] = useState(0)
   const reduce = useReducedMotion()
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -128,7 +130,7 @@ export function AnimatedSprite({
         tooltipAlign={tooltipAlign}
       >
         <motion.img
-          src={frames[frameIndex]}
+          src={lightingSrc(frames[frameIndex], lighting)}
           alt=""
           draggable={false}
           className="block w-full h-full"

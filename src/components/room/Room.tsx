@@ -30,6 +30,7 @@ import {
   ICON_CONTACT,
   ICON_LEGAL,
 } from './DeskIcon'
+import { useLightingClock, LightingProvider, lightingSrc, type LightingState } from '@/lib/room/lighting'
 
 type View = 'room' | 'zooming' | 'desk' | 'leaving'
 
@@ -84,6 +85,32 @@ export function Room({ dict }: RoomProps) {
   const [visitCount, setVisitCount] = useState(0)
   const [clock24h, setClock24h] = useState(true)
   const [lampHovered, setLampHovered] = useState(false)
+
+  // Lighting: target follows the visitor's local clock; `light` is what is
+  // rendered; `prevLight` keeps the outgoing background pair mounted during
+  // the 1.5s crossfade. The swap waits for the target backgrounds to load.
+  const targetLight = useLightingClock()
+  const [light, setLight] = useState<LightingState>('dusk')
+  const [prevLight, setPrevLight] = useState<LightingState | null>(null)
+  useEffect(() => {
+    if (targetLight === light) return
+    if (reduce) { setLight(targetLight); return }
+    let cancelled = false
+    const srcs = [
+      lightingSrc('/room/background.png', targetLight),
+      lightingSrc('/room/background-lamp-off.png', targetLight),
+    ]
+    Promise.all(srcs.map((s) => new Promise<void>((res) => {
+      const img = new window.Image()
+      img.onload = () => res(); img.onerror = () => res(); img.src = s
+    }))).then(() => {
+      if (cancelled) return
+      setPrevLight(light)
+      setLight(targetLight)
+      setTimeout(() => setPrevLight(null), 1500)
+    })
+    return () => { cancelled = true }
+  }, [targetLight, light, reduce])
 
   // Load lamp pref on mount
   useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setVisitCount(p.visitCount + 1); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
@@ -257,6 +284,7 @@ export function Room({ dict }: RoomProps) {
       <NowPlaying labels={t.room.audio} />
 
       <nav aria-label={t.room.navLabel}>
+        <LightingProvider state={light}>
         <RoomStage
           scale={scale}
           zoomScale={view === 'zooming' && !reduce ? 3.2 : 1}
@@ -266,7 +294,7 @@ export function Room({ dict }: RoomProps) {
           {/* Lamp-off background (always present, behind lamp-on) */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/room/background-lamp-off.png"
+            src={lightingSrc('/room/background-lamp-off.png', light)}
             alt=""
             draggable={false}
             className="absolute inset-0 w-full h-full"
@@ -276,7 +304,7 @@ export function Room({ dict }: RoomProps) {
           {/* Lamp-on background (LCP, fades out when lamp off) */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/room/background.png"
+            src={lightingSrc('/room/background.png', light)}
             alt=""
             fetchPriority="high"
             draggable={false}
@@ -287,6 +315,19 @@ export function Room({ dict }: RoomProps) {
               transition: reduce ? 'none' : 'opacity 0.4s ease',
             }}
           />
+
+          {/* Outgoing lighting state, fading out over the new one */}
+          {prevLight && (
+            <div className="absolute inset-0 lighting-fade pointer-events-none" aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={lightingSrc('/room/background-lamp-off.png', prevLight)} alt="" draggable={false}
+                className="absolute inset-0 w-full h-full" style={{ imageRendering: 'pixelated' }} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={lightingSrc('/room/background.png', prevLight)} alt="" draggable={false}
+                className="absolute inset-0 w-full h-full"
+                style={{ imageRendering: 'pixelated', opacity: lampOn ? 1 : 0 }} />
+            </div>
+          )}
 
           <Monitor
             label={t.room.monitorLabel}
@@ -313,7 +354,7 @@ export function Room({ dict }: RoomProps) {
           {/* Side table — decorative, no hotspot, no hover lift. Dims with the lamp. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/room/side-table.png"
+            src={lightingSrc('/room/side-table.png', light)}
             alt=""
             draggable={false}
             className="absolute"
@@ -335,7 +376,7 @@ export function Room({ dict }: RoomProps) {
             y={clockObj.y}
             w={clockObj.w}
             h={clockObj.h}
-            frame={clockObj.frames[0]}
+            frame={lightingSrc(clockObj.frames[0], light)}
             faceRect={CLOCK_FACE_RECT}
             faceSkewDeg={CLOCK_FACE_SKEW_DEG}
             is24h={clock24h}
@@ -418,7 +459,7 @@ export function Room({ dict }: RoomProps) {
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   key={i}
-                  src="/room/coffee-steam.png"
+                  src={lightingSrc('/room/coffee-steam.png', light)}
                   alt=""
                   draggable={false}
                   className="steam-wisp absolute"
@@ -450,6 +491,7 @@ export function Room({ dict }: RoomProps) {
           />
 
         </RoomStage>
+        </LightingProvider>
       </nav>
 
       {/* Glow bloom */}

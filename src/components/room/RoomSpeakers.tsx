@@ -5,6 +5,7 @@ import { useReducedMotion } from 'framer-motion'
 import { useRoomAudio } from './RoomAudioProvider'
 import { RoomObject } from './RoomObject'
 import { MusicNotes } from './MusicNotes'
+import { useLighting, lightingSrc } from '@/lib/room/lighting'
 
 // Stage-space geometry measured from sources/room-speakers.png.
 const ART = { x: 146, y: 292, w: 435, h: 218 }
@@ -35,6 +36,7 @@ interface RoomSpeakersProps {
 export function RoomSpeakers({ lampOn, lampFlicker, speakersLabel }: RoomSpeakersProps) {
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
+  const lighting = useLighting()
   const [hovered, setHovered] = useState(false)
   const activate = useCallback(() => setHovered(true), [])
   const deactivate = useCallback(() => setHovered(false), [])
@@ -58,7 +60,7 @@ export function RoomSpeakers({ lampOn, lampFlicker, speakersLabel }: RoomSpeaker
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/room/room-speakers-lamp-off.png"
+          src={lightingSrc('/room/room-speakers-lamp-off.png', lighting)}
           alt=""
           draggable={false}
           className="absolute inset-0 w-full h-full"
@@ -66,7 +68,7 @@ export function RoomSpeakers({ lampOn, lampFlicker, speakersLabel }: RoomSpeaker
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/room/room-speakers.png"
+          src={lightingSrc('/room/room-speakers.png', lighting)}
           alt=""
           draggable={false}
           className={`absolute inset-0 w-full h-full ${lampFlicker && !reduce ? 'animate-[lamp-flicker_0.5s_ease-out]' : ''}`}

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion, useReducedMotion } from 'framer-motion'
 import { RoomObject } from './RoomObject'
 import { DURATION } from '@/lib/motion'
+import { useLighting, lightingSrc } from '@/lib/room/lighting'
 
 /** One clock drives both the highlight steps and the loading sequence. */
 const FRAME_MS = 80
@@ -41,6 +42,7 @@ export function Monitor({
   const [tick, setTick] = useState(0)
   const router = useRouter()
   const reduce = useReducedMotion()
+  const lighting = useLighting()
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const tickRef = useRef(0)
 
@@ -108,7 +110,7 @@ export function Monitor({
     [reduce, onEnter],
   )
 
-  const frameSrc = frames[Math.min(tick, frames.length - 1)]
+  const frameSrc = lightingSrc(frames[Math.min(tick, frames.length - 1)], lighting)
   const loadingSrc =
     tick >= 1 ? loadingFrames[Math.min(tick, loadingFrames.length) - 1] : null
 

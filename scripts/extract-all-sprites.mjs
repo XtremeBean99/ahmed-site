@@ -49,7 +49,7 @@ async function main() {
   }
 
   // 2. Extract bonsai tree sprites (like poster - union box across all)
-  const bonsaiDir = join(pixelDir, 'bonsai')
+  const bonsaiDir = join(pixelDir, 'sources', 'bonsai')
   let unionBox = null
   for (let i = 1; i <= 5; i++) {
     const bounds = await getBounds(join(bonsaiDir, 'tree' + i + '.png'))

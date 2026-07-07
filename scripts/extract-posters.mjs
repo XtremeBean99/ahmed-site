@@ -4,7 +4,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const sourceDir = join(__dirname, '..', 'assets', 'pixel-art', 'kitagawa')
+const sourceDir = join(__dirname, '..', 'assets', 'pixel-art', 'sources', 'poster')
 const outputDir = join(__dirname, '..', 'public', 'room')
 
 /**
@@ -42,7 +42,7 @@ async function main() {
 
   const files = []
   for (let i = 1; i <= 5; i++) {
-    files.push(join(sourceDir, `kitagawa${i}.png`))
+    files.push(join(sourceDir, `kitagawa-${i}.png`))
   }
 
   // Compute union bounding box across all frames

@@ -61,13 +61,25 @@ export function DeskMusic({ time, desktopLabel, labels, onDesktop }: DeskMusicPr
               }}
               aria-label={`${labels.select}: ${track.title}`}
             >
-              {/* Track number / play icon */}
-              <span
-                className="flex-shrink-0 w-4 text-center text-[9px]"
-                style={{ ...PIXEL, color: isActive && playing ? '#1db954' : '#808080' }}
+              {/* Album cover or track number */}
+              <div
+                className="flex-shrink-0 flex items-center justify-center"
+                style={{ width: 24, height: 24, backgroundColor: isActive && playing ? '#1db954' : '#333' }}
               >
-                {isActive && playing ? '♪' : i + 1}
-              </span>
+                {track.cover ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={track.cover}
+                    alt=""
+                    className="block"
+                    style={{ width: 24, height: 24, objectFit: 'cover', imageRendering: 'auto' }}
+                  />
+                ) : (
+                  <span className="text-[9px]" style={{ ...PIXEL, color: isActive && playing ? '#ffffff' : '#808080' }}>
+                    {isActive && playing ? '♪' : i + 1}
+                  </span>
+                )}
+              </div>
 
               {/* Track info */}
               <div className="flex-1 min-w-0">
@@ -87,7 +99,7 @@ export function DeskMusic({ time, desktopLabel, labels, onDesktop }: DeskMusicPr
                 )}
               </div>
 
-              {/* Duration placeholder + active dot */}
+              {/* Active indicator */}
               <span className="flex-shrink-0 text-[9px]" style={{ ...PIXEL, color: '#808080' }}>
                 {isActive && playing ? (
                   <span style={{ color: '#1db954' }}>●</span>

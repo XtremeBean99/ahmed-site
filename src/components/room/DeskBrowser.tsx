@@ -47,7 +47,6 @@ export function DeskBrowser({ time, desktopLabel, labels, onDesktop }: DeskBrows
       const trimmed = raw.trim()
       if (!trimmed) return
       const resolved = resolveUrl(trimmed)
-      // Google and search queries open in new tab (iframe blocked)
       if (resolved.includes('google.com/search')) {
         window.open(resolved, '_blank', 'noopener,noreferrer')
         setUrl('')
@@ -101,7 +100,6 @@ export function DeskBrowser({ time, desktopLabel, labels, onDesktop }: DeskBrows
           </ToolbarButton>
         </div>
 
-        {/* URL bar */}
         <form onSubmit={handleSubmit} className="flex-1 flex items-center min-w-0">
           <label className="sr-only" htmlFor="desk-browser-url">
             {labels.urlPlaceholder}
@@ -138,13 +136,8 @@ export function DeskBrowser({ time, desktopLabel, labels, onDesktop }: DeskBrows
         {displayUrl ? (
           <>
             {loading && (
-              <div
-                className="absolute inset-0 flex items-center justify-center z-10"
-                style={{ backgroundColor: '#ffffff' }}
-              >
-                <span className="text-[10px]" style={{ ...PIXEL, color: '#808080' }}>
-                  LOADING…
-                </span>
+              <div className="absolute inset-0 flex items-center justify-center z-10" style={{ backgroundColor: '#ffffff' }}>
+                <span className="text-[10px]" style={{ ...PIXEL, color: '#808080' }}>LOADING…</span>
               </div>
             )}
             <iframe
@@ -155,9 +148,18 @@ export function DeskBrowser({ time, desktopLabel, labels, onDesktop }: DeskBrows
               onLoad={() => setLoading(false)}
               sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
             />
+            <div className="absolute bottom-1 right-1 z-20">
+              <button
+                type="button"
+                onClick={() => window.open(displayUrl, '_blank', 'noopener,noreferrer')}
+                className="px-2 py-[1px] text-[9px]"
+                style={{ ...PIXEL, backgroundColor: '#ffffff', color: '#000080', border: '1px solid #808080', textDecoration: 'underline' }}
+              >
+                Open in new tab
+              </button>
+            </div>
           </>
         ) : (
-          /* Welcome / start page */
           <div className="flex-1 flex flex-col items-center justify-center">
             <p className="text-[10px] text-center px-6 mb-1" style={{ ...PIXEL, color: '#404040' }}>
               Type a URL or search query above and press Enter.
@@ -175,42 +177,22 @@ export function DeskBrowser({ time, desktopLabel, labels, onDesktop }: DeskBrows
       </div>
 
       {/* Status bar */}
-      <div
-        className="flex items-center px-2 h-5 border-t flex-shrink-0 text-[9px]"
-        style={{ backgroundColor: '#c0c0c0', borderColor: '#808080', color: '#202020', ...PIXEL }}
-      >
+      <div className="flex items-center px-2 h-5 border-t flex-shrink-0 text-[9px]"
+        style={{ backgroundColor: '#c0c0c0', borderColor: '#808080', color: '#202020', ...PIXEL }}>
         {displayUrl || 'about:blank'}
       </div>
     </div>
   )
 }
 
-function ToolbarButton({
-  onClick,
-  disabled,
-  label,
-  children,
-}: {
-  onClick: () => void
-  disabled: boolean
-  label: string
-  children: React.ReactNode
+function ToolbarButton({ onClick, disabled, label, children }: {
+  onClick: () => void; disabled: boolean; label: string; children: React.ReactNode
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={label}
-      title={label}
+    <button type="button" onClick={onClick} disabled={disabled} aria-label={label} title={label}
       className="flex items-center justify-center w-[22px] h-[22px] p-0"
-      style={{
-        backgroundColor: '#c0c0c0',
-        border: '1px solid',
-        borderColor: disabled ? '#c0c0c0' : '#ffffff #808080 #808080 #ffffff',
-        opacity: disabled ? 0.4 : 1,
-      }}
-    >
+      style={{ backgroundColor: '#c0c0c0', border: '1px solid',
+        borderColor: disabled ? '#c0c0c0' : '#ffffff #808080 #808080 #ffffff', opacity: disabled ? 0.4 : 1 }}>
       {children}
     </button>
   )
@@ -218,41 +200,23 @@ function ToolbarButton({
 
 function QuickLink({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="px-2 py-1 text-[10px]"
-      style={{
-        ...PIXEL,
-        backgroundColor: '#e0e0e0',
-        color: '#000080',
-        border: '1px solid #808080',
-        textDecoration: 'underline',
-      }}
-    >
+    <button type="button" onClick={onClick} className="px-2 py-1 text-[10px]"
+      style={{ ...PIXEL, backgroundColor: '#e0e0e0', color: '#000080', border: '1px solid #808080', textDecoration: 'underline' }}>
       {label}
     </button>
   )
 }
 
-// ---- Tiny pixel icons ----
-
 function HomeIcon() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 10 10" shapeRendering="crispEdges" aria-hidden="true">
-      <rect x="3" y="5" width="2" height="5" fill="#202020" />
-      <rect x="6" y="5" width="2" height="5" fill="#202020" />
-      <rect x="2" y="4" width="6" height="1" fill="#202020" />
-      <polygon points="1,4 5,1 9,4" fill="#202020" />
-    </svg>
-  )
+  return (<svg width="10" height="10" viewBox="0 0 10 10" shapeRendering="crispEdges" aria-hidden="true">
+    <rect x="3" y="5" width="2" height="5" fill="#202020" /><rect x="6" y="5" width="2" height="5" fill="#202020" />
+    <rect x="2" y="4" width="6" height="1" fill="#202020" /><polygon points="1,4 5,1 9,4" fill="#202020" />
+  </svg>)
 }
 
 function ReloadIcon() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 10 10" shapeRendering="crispEdges" aria-hidden="true">
-      <path d="M5,2 A3,3 0 0,0 2,5 M8,5 A3,3 0 0,1 5,8" stroke="#202020" strokeWidth="1.5" fill="none" />
-      <polygon points="7,2 8,1 9,3" fill="#202020" />
-    </svg>
-  )
+  return (<svg width="10" height="10" viewBox="0 0 10 10" shapeRendering="crispEdges" aria-hidden="true">
+    <path d="M5,2 A3,3 0 0,0 2,5 M8,5 A3,3 0 0,1 5,8" stroke="#202020" strokeWidth="1.5" fill="none" />
+    <polygon points="7,2 8,1 9,3" fill="#202020" />
+  </svg>)
 }

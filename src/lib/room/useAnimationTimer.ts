@@ -10,6 +10,10 @@ export function useAnimationTimer(frameMs: number, reduce: boolean | null) {
   const [tick, setTick] = useState(0)
   const tickRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Store reduce in a ref so start/stop don't re-create when reduce
+  // flips null→false during hydration — avoids racing hover callbacks.
+  const reduceRef = useRef(reduce)
+  reduceRef.current = reduce
 
   const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
@@ -32,12 +36,12 @@ export function useAnimationTimer(frameMs: number, reduce: boolean | null) {
   /** Start stepping. `stepFn` runs every `frameMs`. */
   const start = useCallback(
     (stepFn: () => void) => {
-      if (reduce) return
+      if (reduceRef.current) return
       clearTimer()
       advanceTo(0)
       timerRef.current = setInterval(stepFn, frameMs)
     },
-    [reduce, frameMs, clearTimer, advanceTo],
+    [frameMs, clearTimer, advanceTo],
   )
 
   useEffect(() => {

@@ -12,6 +12,7 @@
  */
 
 import { useRef, useState, useEffect } from 'react'
+import { prefersReducedMotion } from '@/lib/motion'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Line } from '@react-three/drei'
 import * as THREE from 'three'
@@ -228,7 +229,8 @@ function SvgFallback() {
 /* ---------- Main exported component ---------- */
 export function SiliconAtom() {
   const [webglSupported, setWebglSupported] = useState(true)
-  const [reducedMotion, setReducedMotion] = useState(false)
+  // Animations are intentionally always on (see @/lib/motion).
+  const reducedMotion = prefersReducedMotion()
 
   useEffect(() => {
     // Check WebGL support
@@ -242,13 +244,6 @@ export function SiliconAtom() {
     } catch {
       setWebglSupported(false)
     }
-
-    // Check reduced motion preference
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setReducedMotion(mq.matches)
-    const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
   }, [])
 
   if (!webglSupported) {

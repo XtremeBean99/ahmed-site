@@ -53,6 +53,7 @@ export default async function RoomPage() {
         dict={{
           room: dict.room,
           desk: dict.desk,
+          legal: dict.legal,
         }}
         readmeContent={readmeContent}
       />

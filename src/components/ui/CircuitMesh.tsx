@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useRef } from 'react'
+import { prefersReducedMotion } from '@/lib/motion'
 
 interface Node {
   x: number
@@ -42,9 +43,7 @@ export function CircuitMesh({ className }: { className?: string }) {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const prefersReduced =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const prefersReduced = prefersReducedMotion()
 
     // Stable node cloud (seeded once per mount).
     const nodes: Node[] = Array.from({ length: NODE_COUNT }, (_, i) => ({

@@ -1,5 +1,19 @@
 import type { Variants, Transition } from 'framer-motion'
 
+/**
+ * Single source of truth for reduced-motion behaviour outside framer-motion
+ * (canvas / WebGL loops that read the media query directly).
+ *
+ * This site intentionally plays all animations even when the OS "reduce motion"
+ * setting is on, so this always returns false. Framer-motion components are
+ * handled separately by MotionProvider (reducedMotion="never"). Change this to
+ * read window.matchMedia('(prefers-reduced-motion: reduce)').matches to restore
+ * standard reduced-motion respect.
+ */
+export function prefersReducedMotion(): boolean {
+  return false
+}
+
 /** Easing already used by SectionReveal; keep site motion consistent. */
 export const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const
 

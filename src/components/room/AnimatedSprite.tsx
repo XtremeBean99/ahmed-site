@@ -84,6 +84,15 @@ export function AnimatedSprite({
       if (touchTimerRef.current) clearTimeout(touchTimerRef.current)
     }
   }, [])
+  // Warm the browser cache for the hover frames so the first play-once
+  // hover does not skip frames while images stream in (matches Monitor).
+  useEffect(() => {
+    if (frames.length <= 1) return
+    for (const src of frames.slice(1)) {
+      const img = new window.Image()
+      img.src = src
+    }
+  }, [frames])
 
   // Touch tap handler: on coarse-pointer devices, a tap starts the animation
   // and auto-stops after the full sequence completes (or on a second tap).

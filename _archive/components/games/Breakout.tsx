@@ -14,6 +14,7 @@ import {
 import type { GameState } from '@/lib/games/types'
 import { getBest, setBestIfHigher, addScore, getTopScores, BEST_KEYS, SCORES_KEYS } from '@/lib/games/storage'
 import { useT } from '@/lib/i18n/client'
+import { prefersReducedMotion } from '@/lib/motion'
 
 const LOGICAL_W = 800
 const LOGICAL_H = 600
@@ -103,7 +104,7 @@ export function Breakout() {
 
   // Game loop.
   useEffect(() => {
-    reduceRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    reduceRef.current = prefersReducedMotion()
     setBest(getBest(BEST_KEYS.breakout))
     setTopScores(getTopScores(SCORES_KEYS.breakout))
 

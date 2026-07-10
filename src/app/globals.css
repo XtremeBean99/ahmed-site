@@ -46,17 +46,11 @@
     border-radius: 2px;
   }
 
-  /* Respect reduced motion */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
-  }
+  /* Animations are intentionally always on for this site: the reduced-motion
+     override that previously flattened CSS animations/transitions here has been
+     removed so the full experience plays even when the OS requests reduced
+     motion. Motion behaviour is centralised via MotionProvider and
+     prefersReducedMotion() in @/lib/motion. */
 }
 
 @layer utilities {

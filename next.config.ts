@@ -3,10 +3,9 @@ import type { NextConfig } from 'next'
 const securityHeaders = [
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-  // SAMEORIGIN (not DENY): the desk view on `/` renders site pages inside a
-  // same-origin <iframe> ("site in the monitor"). Third-party embedding
-  // remains blocked by both this header and frame-ancestors 'self' below.
-  { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+  // DENY (not SAMEORIGIN): the in-monitor browser was removed (Spec 1, Jul 2026);
+  // the site is room-only with no self-iframe.
+  { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
@@ -22,8 +21,8 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob:",
       "connect-src 'self'",
-      // 'self' (not 'none'): required for the in-monitor iframe on `/`
-      "frame-ancestors 'self'",
+      // 'none': the in-monitor browser was removed (Spec 1, Jul 2026)
+      "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
     ].join('; '),
@@ -46,6 +45,15 @@ const nextConfig: NextConfig = {
         source: '/(.*)',
         headers: securityHeaders,
       },
+    ]
+  },
+  async redirects() {
+    return [
+      { source: '/home', destination: '/', permanent: true },
+      { source: '/projects/:path*', destination: '/', permanent: true },
+      { source: '/tutoring', destination: '/', permanent: true },
+      { source: '/games/:path*', destination: '/', permanent: true },
+      { source: '/legal/:path*', destination: '/', permanent: true },
     ]
   },
 }

@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from 'next/font/google'
 import localFont from 'next/font/local'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { I18nProvider } from '@/lib/i18n/client'
+import { MotionProvider } from '@/components/providers/MotionProvider'
 import { getDictionary, getLocale } from '@/lib/i18n/server'
 import './globals.css'
 
@@ -80,7 +81,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} className={`${inter.variable} ${playfair.variable} ${minecraft.variable}`}>
       <body>
         <I18nProvider locale={locale} dict={dict}>
-          {children}
+          <MotionProvider>{children}</MotionProvider>
         </I18nProvider>
         <SpeedInsights />
       </body>

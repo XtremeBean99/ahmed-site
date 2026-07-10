@@ -14,11 +14,10 @@ Domain: `ahmedyhussain.com`
 Repo: `https://github.com/XtremeBean99/ahmed-site`
 Vercel project: `ahmed-site` (ID: `prj_lF32Zp1qlFEKH7XzEW3yUdddQm61`)
 
-The homepage `/` is the **digital bedroom**: an interactive pixel-art room that acts as the
-front door to the rest of the site (the original creative brief called for "a digital place,
-not another developer portfolio" — warm, nostalgic, rewarding to explore, Y2K/Neocities spirit
-with modern quality). The conventional site lives under `/home`, `/games`, `/projects`,
-`/tutoring`, `/legal`.
+The homepage `/` is the **digital bedroom**: an interactive, room-only pixel-art experience.
+The conventional site pages (`/home`, `/games`, `/projects`, `/tutoring`, `/legal`) were
+retired in Spec 1 (July 2026) and 301-redirect to `/`. Their source code is archived under
+`_archive/` — not part of the build, recoverable via `git mv`.
 
 ## Current State (7 July 2026)
 
@@ -78,13 +77,9 @@ This rule has been violated four separate times in room components ("MUSIC ON/OF
 speakers", "Pause"/"Skip", the clock tooltip) — grep room components for quoted capitalised
 strings during any review.
 
-### 6. Framing headers must stay SAMEORIGIN / 'self'
-`next.config.ts` sends `X-Frame-Options: SAMEORIGIN` and CSP `frame-ancestors 'self'`
-(vercel.json mirrors this for `/games/ninja/*`). In-monitor browsing depends on it. Do NOT
-"harden" these back to DENY/'none' — that silently kills the desk browser while adding
-nothing (third-party embedding is already blocked by same-origin-only).
-
-### 7. Audio filenames are case-sensitive in production
+### 6. Framing headers are now DENY / 'none'
+The in-monitor browser was removed in Spec 1 (July 2026). `next.config.ts` now sends
+`X-Frame-Options: DENY` and CSP `frame-ancestors 'none'`. Third-party embedding is blocked.
 Vercel serves case-sensitively; Windows dev machines do not. A track that plays locally but
 404s deployed is a case mismatch between git and `playlist.ts` (the Saffron incident). Keep
 `public/audio/` kebab-case lowercase; verify with `git ls-files public/audio`.
@@ -147,17 +142,15 @@ inside its own monitor iframe (recursion guard removed — `/` is accessible fro
 ### Desk view (`DeskView.tsx`)
 Close-up art (`desk-closeup.png` and `desk-closeup-lamp-off.png`, crossfaded+flickered via
 `lampOn`/`lampFlicker` props passed from Room) with a clickable lamp toggle at (8,88 160×480)
-sharing Room's `toggleLamp` callback (one persistence path). Also: screen rect (436,152,536×308) hosting a pixel desktop.
-Screen modes: `desktop` (three-icon launcher via `DeskDesktop.tsx` + `ScreenStrip.tsx`),
-`browser` (same-origin in-monitor iframe zoomed out 25%), `paint` (`DeskPaint.tsx`:
-107×50 pixel canvas, 10-colour palette, pencil/eraser/fill tools, persistent to
-`room-paint-v1`, PNG download), `minesweeper` (`DeskMinesweeper.tsx`: 9×9/10 mines,
-pure engine in `src/lib/games/minesweeper-engine.ts`, first-click safety, right-click/
-long-press/F-key flagging, roving-tabindex keyboard play, best-time localStorage).
-Escape ladder app→desktop→room.
-Iframe navigation uses `contentWindow.location.replace()`; current path tracked by 500 ms
-same-origin polling; Expand opens in a new tab (`window.open`).
-Below 700 px viewport, app icons are hidden and Home navigates full-page.
+Screen modes: `desktop | paint | minesweeper | readme | music | legal`. Desktop icons:
+LinkedIn (external), GitHub (external), Music, Paint, Minesweeper, README, Legal.
+`paint` (`DeskPaint.tsx`: 107×50 pixel canvas, 10-colour palette, pencil/eraser/fill tools,
+persistent to `room-paint-v1`, PNG download), `minesweeper` (`DeskMinesweeper.tsx`: 9×9/10
+mines, pure engine in `src/lib/games/minesweeper-engine.ts`, first-click safety,
+right-click/long-press/F-key flagging, roving-tabindex keyboard play, best-time
+localStorage), `readme` (`DeskReadme.tsx`: renders `site-text.txt`), `music`
+(`DeskMusic.tsx`: playlist picker), `legal` (`DeskLegal.tsx`: privacy/terms tabs, scrollable
+legal doc). The `browser` mode was removed (Spec 1, July 2026). Escape ladder app→desktop→room.
 Speakers (left 190,265 175×300; right 1005,270 215×300) are mute-toggle buttons with
 press-dip and muted glyph. Music notes emit from the driver holes (left: 284,349 r34 /
 284,478 r50; right: 1118,352 r38 / 1115,472 r52) at a constant 1100 ms rate, 2000 ms
@@ -295,6 +288,14 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   with a tooltip, persisted in `sideTableOpen` pref in `room-save-v1`; −2px hover lift like
   other room objects; extraction script updated for union-bbox multi-frame output
   (232×210, up from 173×215). No other room invariants changed.
+- **v11 (Spec 1)** `10 July 2026`: Hover animation fix (AnimatedSprite frame preload); room-only
+  architecture — browser removed, Legal app added (`DeskLegal.tsx`, privacy/terms tabs, EN+FR),
+  all `(site)` routes 301 → `/`, code archived to `_archive/`, frame headers hardened to
+  DENY/'none', ninja COOP/COEP block retired from vercel.json, privacy/terms text updated for
+  the form-less site, retired constraint 6, dead env vars noted. Desktop icons: LinkedIn,
+  GitHub, Music, Paint, Minesweeper, README, Legal. Screen modes: `desktop | paint |
+  minesweeper | readme | music | legal`.
+
 - **v6 (security hardening)** `7 July 2026`: Deleted live Vercel OIDC token from
   `.vercel/.env.production.local` (never committed, now removed). Tightened contact CSRF
   check: absent Origin is now rejected in production (previously skipped). Escaped `<` and
@@ -458,12 +459,12 @@ CCBot, Bytespider, etc.; Terms prohibit scraping/AI training. Do not remove.
 
 | Variable | Required | Notes |
 |---|---|---|
-| `RESEND_API_KEY` | Yes | Resend API key |
-| `CONTACT_TO_EMAIL` | No | Defaults to `ahmedyhussain07@gmail.com` |
-| `CONTACT_FROM_EMAIL` | No | Defaults to `Ahmed Hussain <noreply@ahmedyhussain.com>` |
 | `NEXT_PUBLIC_BASE_URL` | No | Defaults to `https://ahmedyhussain.com` |
 | `GITHUB_TOKEN` | No | Raises API rate limit for the code page |
-| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | For leaderboard | `KV_REST_API_*` also read |
+| `RESEND_API_KEY` | Retired | Contact form removed (Spec 1) |
+| `CONTACT_TO_EMAIL` | Retired | Contact form removed (Spec 1) |
+| `CONTACT_FROM_EMAIL` | Retired | Contact form removed (Spec 1) |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Retired | Ninja leaderboard archived (Spec 1) |
 
 Never commit `.env.local` / `.env`. (June audit flagged a stray `VERCEL_OIDC_TOKEN` in
 `.env.local` — confirm never committed, then delete; see Roadmap item 15.)

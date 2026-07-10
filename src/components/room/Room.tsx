@@ -9,6 +9,8 @@ import {
   SIDE_TABLE_RECT,
   CLOCK_FACE_RECT,
   CLOCK_FACE_SKEW_DEG,
+  SPRITE_FRAME_MS,
+  LIGHTING_FADE_MS,
 } from '@/lib/room/objects'
 import { useStageScale } from '@/lib/room/useStageScale'
 import { loadPrefs, savePrefs } from '@/lib/room/storage'
@@ -110,7 +112,7 @@ export function Room({ dict }: RoomProps) {
       if (cancelled) return
       setPrevLight(light)
       setLight(targetLight)
-      setTimeout(() => setPrevLight(null), 1500)
+      setTimeout(() => setPrevLight(null), LIGHTING_FADE_MS)
     })
     return () => { cancelled = true }
   }, [targetLight, light, reduce])
@@ -435,7 +437,7 @@ export function Room({ dict }: RoomProps) {
             w={posterObj.w}
             h={posterObj.h}
             frames={posterObj.frames}
-            frameDuration={130}
+            frameDuration={SPRITE_FRAME_MS.poster}
             mode="play-once-hold"
             onClick={() => {
               setToast(t.room.posterClickHint)
@@ -450,7 +452,7 @@ export function Room({ dict }: RoomProps) {
             w={saitamaObj.w}
             h={saitamaObj.h}
             frames={saitamaObj.frames}
-            frameDuration={100}
+            frameDuration={SPRITE_FRAME_MS.saitama}
             mode="play-all-loop-last-two"
           />
 
@@ -461,7 +463,7 @@ export function Room({ dict }: RoomProps) {
             w={bonsaiObj.w}
             h={bonsaiObj.h}
             frames={bonsaiObj.frames}
-            frameDuration={165}
+            frameDuration={SPRITE_FRAME_MS.bonsai}
             mode="loop"
             tooltipAlign="right"
           />
@@ -530,7 +532,7 @@ export function Room({ dict }: RoomProps) {
             w={coffeeObj.w}
             h={coffeeObj.h}
             frames={coffeeObj.frames}
-            frameDuration={90}
+            frameDuration={SPRITE_FRAME_MS.coffee}
             mode="play-once-hold"
           />
 

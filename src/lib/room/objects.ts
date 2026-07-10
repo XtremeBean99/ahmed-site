@@ -1,4 +1,23 @@
 /**
+ * Shared animation frame durations (ms). Each value is the interval between
+ * sprite frames for the matching room object or component.
+ */
+export const SPRITE_FRAME_MS = {
+  monitor: 80,
+  coffee: 90,
+  saitama: 100,
+  poster: 130,
+  bonsai: 165,
+} as const
+
+/**
+ * Must stay in sync with the `lighting-fade` CSS animation duration
+ * in src/app/globals.css. The JS timeout releases the outgoing layer
+ * after the CSS fade completes.
+ */
+export const LIGHTING_FADE_MS = 1500
+
+/**
  * Registry of interactive objects on the room stage.
  * Each object has a position (in stage coords 1408×768) and a sprite.
  */

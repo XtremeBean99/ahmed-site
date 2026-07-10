@@ -53,14 +53,16 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
     setTrackIndex(idx)
     loadTrack(audio, idx)
 
-    audio.addEventListener('ended', () => {
+    const onEnded = () => {
       trackIdxRef.current = pickNextIndex(trackIdxRef.current)
       setTrackIndex(trackIdxRef.current)
       loadTrack(audio, trackIdxRef.current)
       if (playingRef.current) audio.play().catch(() => {})
-    })
+    }
+    audio.addEventListener('ended', onEnded)
 
     return () => {
+      audio.removeEventListener('ended', onEnded)
       audio.pause()
       audioRef.current = null
     }

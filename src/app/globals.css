@@ -168,7 +168,9 @@
   animation: clock-blink 1s steps(1) infinite;
 }
 
-/* Lighting-state crossfade: the outgoing background pair fades out over 1.5s */
+/* Lighting-state crossfade: the outgoing background pair fades out over
+   LIGHTING_FADE_MS (see src/lib/room/objects.ts). The JS setTimeout in
+   Room.tsx must use the same value. */
 @keyframes lighting-fade {
   from { opacity: 1; }
   to { opacity: 0; }

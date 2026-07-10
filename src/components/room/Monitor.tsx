@@ -1,14 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, useReducedMotion } from 'framer-motion'
 import { RoomObject } from './RoomObject'
 import { DURATION } from '@/lib/motion'
 import { useLighting, lightingSrc } from '@/lib/room/lighting'
-
-/** One clock drives both the highlight steps and the loading sequence. */
-const FRAME_MS = 80
+import { SPRITE_FRAME_MS } from '@/lib/room/objects'
+import { useAnimationTimer } from '@/lib/room/useAnimationTimer'
 
 interface MonitorProps {
   label: string
@@ -39,14 +38,12 @@ export function Monitor({
   onEnter,
 }: MonitorProps) {
   const [hovered, setHovered] = useState(false)
-  const [tick, setTick] = useState(0)
   const router = useRouter()
   const reduce = useReducedMotion()
   const lighting = useLighting()
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const tickRef = useRef(0)
+  const { tick, tickRef, advanceTo, clearTimer, start, stop } = useAnimationTimer(SPRITE_FRAME_MS.monitor, reduce)
   // Touch devices: skip the hover animation and navigate directly on tap
-  const isTouchDevice = typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches
+  const [isTouchDevice] = useState(() => typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches)
 
   useEffect(() => {
     router.prefetch(href)
@@ -61,53 +58,31 @@ export function Monitor({
     }
   }, [frames, loadingFrames])
 
-  const clearTimer = useCallback(() => {
-    if (timerRef.current !== null) {
-      clearInterval(timerRef.current)
-      timerRef.current = null
-    }
-  }, [])
-
   const startHover = useCallback(() => {
     setHovered(true)
     if (reduce) return
-    clearTimer()
-    tickRef.current = 0
-    setTick(0)
-    // Highlight needs frames.length - 1 ticks; the loading overlay appears on
-    // tick 1 and needs loadingFrames.length ticks. Each clamps to its own
-    // last frame; the timer stops once the longer sequence finishes.
     const maxTick = Math.max(frames.length - 1, loadingFrames.length)
-    timerRef.current = setInterval(() => {
-      tickRef.current = Math.min(tickRef.current + 1, maxTick)
-      setTick(tickRef.current)
-      if (tickRef.current >= maxTick) clearTimer()
-    }, FRAME_MS)
-  }, [reduce, frames.length, loadingFrames.length, clearTimer])
+    start(() => {
+      const next = Math.min(tickRef.current + 1, maxTick)
+      advanceTo(next)
+      if (next >= maxTick) clearTimer()
+    })
+  }, [reduce, frames.length, loadingFrames.length, start, advanceTo, clearTimer, tickRef])
 
   const stopHover = useCallback(() => {
     setHovered(false)
-    clearTimer()
-    tickRef.current = 0
-    setTick(0)
-  }, [clearTimer])
-
-  useEffect(() => {
-    return () => clearTimer()
-  }, [clearTimer])
+    stop()
+  }, [stop])
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
-      // Middle-click, ctrl+click, etc. — let the browser handle natively
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
-
       if (reduce || isTouchDevice) {
-        // Reduced motion / touch: navigate immediately (the <a> handles it natively)
+        e.preventDefault()
+        if (onEnter) onEnter()
         return
       }
-
-      e.preventDefault()
-      onEnter?.()
+      // On desktop, clicking navigates directly
+      if (onEnter) onEnter()
     },
     [reduce, isTouchDevice, onEnter],
   )
@@ -120,10 +95,10 @@ export function Monitor({
     <RoomObject
       label={label}
       showTooltip={hovered}
+      href={href}
       onActivate={startHover}
       onDeactivate={stopHover}
       onClick={handleClick}
-      href={href}
       tabIndex={0}
       style={{
         position: 'absolute',
@@ -131,12 +106,8 @@ export function Monitor({
         top: y,
         width: w,
         height: h,
-        zIndex: 1,
       }}
     >
-      {/* Lift wrapper: the sprite and the glass overlay rise together. The
-          transform makes this div the containing block for the overlay, so
-          the overlay's offsets stay relative to the monitor rect. */}
       <motion.div
         className="w-full h-full"
         animate={hovered && !reduce ? { y: -2 } : { y: 0 }}
@@ -150,24 +121,30 @@ export function Monitor({
           className="block w-full h-full"
           style={{ imageRendering: 'pixelated' }}
         />
-        {loadingSrc && (
-          /* eslint-disable-next-line @next/next/no-img-element */
+      </motion.div>
+
+      {/* Loading-screen overlay */}
+      {hovered && loadingSrc && (
+        <div
+          aria-hidden
+          className="absolute pointer-events-none"
+          style={{
+            left: loadingRect.x - x,
+            top: loadingRect.y - y,
+            width: loadingRect.w,
+            height: loadingRect.h,
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={loadingSrc}
             alt=""
-            aria-hidden
             draggable={false}
-            className="absolute pointer-events-none"
-            style={{
-              left: loadingRect.x - x,
-              top: loadingRect.y - y,
-              width: loadingRect.w,
-              height: loadingRect.h,
-              imageRendering: 'pixelated',
-            }}
+            className="block w-full h-full"
+            style={{ imageRendering: 'pixelated' }}
           />
-        )}
-      </motion.div>
+        </div>
+      )}
     </RoomObject>
   )
 }

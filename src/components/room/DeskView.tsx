@@ -14,13 +14,13 @@ import { MusicNotes } from './MusicNotes'
 const SCREEN_X = 436; const SCREEN_Y = 152; const SCREEN_W = 536; const SCREEN_H = 308
 const SPEAKER_LEFT = { x: 190, y: 265, w: 175, h: 300 }
 const SPEAKER_RIGHT = { x: 1005, y: 270, w: 215, h: 300 }
-// Driver holes (tweeter + woofer) per speaker, stage coords, measured from the art.
+// Desk-speaker driver holes (tweeter + woofer), stage coords, measured from desk-closeup art.
 // Module-level constants so the MusicNotes effect dependency stays referentially stable.
-const HOLES_LEFT = [
+const DESK_SPEAKER_HOLES_LEFT = [
   { cx: 284, cy: 349, r: 34 },
   { cx: 284, cy: 478, r: 50 },
 ]
-const HOLES_RIGHT = [
+const DESK_SPEAKER_HOLES_RIGHT = [
   { cx: 1118, cy: 352, r: 38 },
   { cx: 1115, cy: 472, r: 52 },
 ]
@@ -194,7 +194,8 @@ export function DeskView(props: DeskViewProps) {
     }
   }, [])
 
-  // Mouse follower (unchanged)
+  // Mouse follower rAF loop with visibility guard: pauses when the tab is
+  // backgrounded so the animation doesn't burn CPU unseen.
   useEffect(() => {
     if (reduce) return
     if (!matchMedia('(pointer: fine)').matches) return
@@ -216,6 +217,16 @@ export function DeskView(props: DeskViewProps) {
       }, 3000)
     }
     const onLeave = () => { mouseTarget.current.x = MOUSE_REST_X; mouseTarget.current.y = MOUSE_REST_Y }
+    const onVisibility = () => {
+      if (document.hidden) {
+        running = false
+        cancelAnimationFrame(rafRef.current)
+        if (idleTimeout) { clearTimeout(idleTimeout); idleTimeout = undefined }
+      } else {
+        running = true
+        rafRef.current = requestAnimationFrame(loop)
+      }
+    }
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t
     const loop = () => {
       const el = mouseRef.current
@@ -228,6 +239,7 @@ export function DeskView(props: DeskViewProps) {
     }
     window.addEventListener('pointermove', onMove)
     document.documentElement.addEventListener('mouseleave', onLeave)
+    document.addEventListener('visibilitychange', onVisibility)
     rafRef.current = requestAnimationFrame(loop)
     idleTimeout = setTimeout(() => {
       running = false
@@ -238,6 +250,7 @@ export function DeskView(props: DeskViewProps) {
       if (idleTimeout) clearTimeout(idleTimeout)
       window.removeEventListener('pointermove', onMove)
       document.documentElement.removeEventListener('mouseleave', onLeave)
+      document.removeEventListener('visibilitychange', onVisibility)
       cancelAnimationFrame(rafRef.current)
     }
   }, [reduce])
@@ -301,9 +314,8 @@ export function DeskView(props: DeskViewProps) {
             style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace', fontSize: '10px' }}>✕♪</span>}
         </button>
 
-        {/* Music notes emanating from the speaker driver holes */}
-        <MusicNotes holes={HOLES_LEFT} startDelay={0} />
-        <MusicNotes holes={HOLES_RIGHT} startDelay={550} />
+        <MusicNotes holes={DESK_SPEAKER_HOLES_LEFT} startDelay={0} />
+        <MusicNotes holes={DESK_SPEAKER_HOLES_RIGHT} startDelay={550} />
 
         {/* "Click again to return" indicator when back is pending */}
         <AnimatePresence>

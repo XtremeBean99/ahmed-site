@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { RoomObject } from './RoomObject'
 import { DURATION } from '@/lib/motion'
 import { useLighting, lightingSrc } from '@/lib/room/lighting'
+import { useAnimationTimer } from '@/lib/room/useAnimationTimer'
 
 export type SpriteMode = 'loop' | 'play-once-hold' | 'play-all-loop-last-two'
 
@@ -36,81 +37,59 @@ export function AnimatedSprite({
 }: AnimatedSpriteProps) {
   const [hovered, setHovered] = useState(false)
   const lighting = useLighting()
-  const [frameIndex, setFrameIndex] = useState(0)
   const reduce = useReducedMotion()
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const idxRef = useRef(0)
+  const { tick, tickRef, advanceTo, clearTimer, start, stop } = useAnimationTimer(frameDuration, reduce)
+
   // Touch devices: track whether a tap-triggered animation is running
   const touchActiveRef = useRef(false)
   const touchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const isTouchDevice = typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches
-
-  const clearTimer = useCallback(() => {
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-  }, [])
+  const [isTouchDevice] = useState(() => typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches)
 
   const startAnimation = useCallback(() => {
     setHovered(true)
     if (reduce || frames.length <= 1) return
 
-    // Always kill any running timer first
-    clearTimer()
-    setFrameIndex(0)
-    idxRef.current = 0
-
     if (mode === 'play-once-hold') {
-      // Step through frames 0→1→2→...→last, then hold
-      intervalRef.current = setInterval(() => {
-        idxRef.current++
-        if (idxRef.current >= frames.length) {
-          setFrameIndex(frames.length - 1)
+      start(() => {
+        const next = tickRef.current + 1
+        if (next >= frames.length) {
+          advanceTo(frames.length - 1)
           clearTimer()
           return
         }
-        setFrameIndex(idxRef.current)
-      }, frameDuration)
+        advanceTo(next)
+      })
     } else if (mode === 'play-all-loop-last-two') {
-      // Play all frames 0→...→last, then loop the last two indefinitely
-      intervalRef.current = setInterval(() => {
-        idxRef.current++
-        if (idxRef.current >= frames.length) {
-          // Bounce between last two: frames.length-2 and frames.length-1
-          idxRef.current = frames.length - 2
-        }
-        setFrameIndex(idxRef.current)
-      }, frameDuration)
+      start(() => {
+        let next = tickRef.current + 1
+        if (next >= frames.length) next = frames.length - 2
+        advanceTo(next)
+      })
     } else {
       // Loop continuously
-      intervalRef.current = setInterval(() => {
-        idxRef.current = (idxRef.current + 1) % frames.length
-        setFrameIndex(idxRef.current)
-      }, frameDuration)
+      start(() => {
+        advanceTo((tickRef.current + 1) % frames.length)
+      })
     }
-  }, [reduce, frames.length, mode, frameDuration, clearTimer])
+  }, [reduce, frames.length, mode, start, advanceTo, clearTimer, tickRef])
 
   const stopAnimation = useCallback(() => {
     setHovered(false)
-    clearTimer()
-    setFrameIndex(0)
-  }, [clearTimer])
+    stop()
+  }, [stop])
 
-  // Cleanup on unmount
+  // Cleanup touch timer on unmount (interval is handled by useAnimationTimer)
   useEffect(() => {
     return () => {
-      clearTimer()
       if (touchTimerRef.current) clearTimeout(touchTimerRef.current)
     }
-  }, [clearTimer])
+  }, [])
 
   // Touch tap handler: on coarse-pointer devices, a tap starts the animation
   // and auto-stops after the full sequence completes (or on a second tap).
   const handleTouch = useCallback(() => {
     if (!isTouchDevice || reduce) return
     if (touchActiveRef.current) {
-      // Second tap: stop early
       stopAnimation()
       touchActiveRef.current = false
       if (touchTimerRef.current) clearTimeout(touchTimerRef.current)
@@ -119,7 +98,6 @@ export function AnimatedSprite({
     touchActiveRef.current = true
     startAnimation()
     if (onClick) onClick()
-    // Auto-stop after the full animation plays through
     const totalMs = frames.length * frameDuration + 200
     touchTimerRef.current = setTimeout(() => {
       stopAnimation()
@@ -127,9 +105,6 @@ export function AnimatedSprite({
     }, totalMs)
   }, [isTouchDevice, reduce, startAnimation, stopAnimation, onClick, frames.length, frameDuration])
 
-  // Aligned with Monitor: events are registered ONLY on RoomObject (no outer
-  // div with duplicate handlers), and the hover lift is on a motion.div
-  // wrapper around a plain <img> so the transform never displaces the hit area.
   return (
     <RoomObject
       label={label}
@@ -154,7 +129,7 @@ export function AnimatedSprite({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={lightingSrc(frames[frameIndex], lighting)}
+          src={lightingSrc(frames[tick], lighting)}
           alt=""
           draggable={false}
           className="block w-full h-full"

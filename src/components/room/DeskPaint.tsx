@@ -74,8 +74,7 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
   useEffect(() => {
     cellsRef.current = loadCells()
     repaint()
-    const timer = saveTimer.current
-    return () => clearTimeout(timer)
+    return () => clearTimeout(saveTimer.current)
   }, [repaint])
 
   const persist = useCallback(() => {

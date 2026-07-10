@@ -54,20 +54,22 @@ References: Vercel, Linear, Stripe aesthetic.
 scoped to `/` only. Do NOT add colour to any `(site)` page.
 
 ### 2. All user input is hostile
-The contact form has server-side Zod validation and a honeypot field. Any new form or API route
-applies the same pattern from `src/services/contact.ts`. Never skip server-side validation.
+Spec 1 archived the contact form and every API route/service — the room-only site currently has
+**no forms and no API routes** (except the optional Open-Meteo weather route planned in `todo.md`).
+If any form/API is re-added, follow the archived pattern: server-side Zod validation + honeypot
+(`_archive/services/contact.ts`). Never skip server-side validation.
 
-### 3. Minimal persistence — email-only except the ninja leaderboard
-No general-purpose database. Contact submissions are emailed via Resend, not persisted. The one
-exception: ninja leaderboard run times in Upstash Redis behind `src/services/leaderboard.ts`
-(lazy client `src/lib/redis.ts`, env-var credentials). Future persistent storage must follow
-the same pattern: behind `src/services/`, env vars only. (Room preferences use `localStorage`
-client-side only: `room-save-v1` key, currently `{ audio, lampOn, visitCount, volume, clock24h }`.
-(Also `room-paint-v1` for the Paint app canvas.))
+### 3. Persistence is localStorage-only (no database, no server state)
+Spec 1 archived the contact/Resend flow and the ninja leaderboard (Upstash Redis), so the site
+stores nothing server-side. Room preferences live in `localStorage`, client-side only:
+`room-save-v1` = `{ audio, lampOn, visitCount, volume, clock24h, sideTableOpen, sfx, sfxVolume, calmMode }`;
+plus `room-paint-v1` (Paint canvas) and `room-discoveries-v1` (Plan B discoveries set). Any future
+server persistence goes behind `src/services/` with env-var credentials (see `_archive/services/`).
 
 ### 4. Secrets via environment variables only
-`RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` etc. Never hardcoded. See
-`.env.example` and the Environment Variables table below.
+No secrets are currently required — the contact/Resend and leaderboard/Upstash flows were archived
+in Spec 1, so `RESEND_*`, `CONTACT_*`, and `UPSTASH_*`/`KV_*` are retired. If server integrations
+return, keep credentials in env vars only, never hardcoded. See `.env.example`.
 
 ### 5. The site is English-only
 All French was removed in July 2026. Single source of truth: `src/lib/i18n/dictionaries/en.ts`.
@@ -307,6 +309,15 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   calm mode no longer affects motion). Screen modes: `desktop | paint | minesweeper |
   readme | music | legal | settings | terminal`. Desktop icons unchanged (terminal
   is hidden, konami-only).
+- **v14** `11 July 2026`: Plan C (mobile): `useStageScale` reports a mobile mode (fill-height),
+  `RoomStage` accepts a pan translate, drag-to-pan on coarse-pointer/narrow viewports, larger
+  tap targets, idle preload of desk art. **Two known follow-ups from the v12/v13 changes:**
+  (a) the **global click SFX was removed** (v12) — `'click'` is registered in `RoomSfxProvider`
+  but never played; re-add a `pointerdown → play('click')` listener if the always-click
+  behaviour (an explicit earlier request) is still wanted; (b) **calm mode is currently a
+  no-op** — `MotionProvider` is hardcoded `reducedMotion="never"` and `prefersReducedMotion()`
+  returns false, yet `DeskSettings` still renders a Calm-mode toggle. Either restore the pref
+  wiring (see the v12 Settings commit) or remove the dead control.
 
 
 
@@ -342,11 +353,11 @@ Owner-curated backlog. Tiers are effort/scope, not priority order. ~~Struck~~ = 
     the window; time-of-day tint already scaffolds this.
 11. Cat on the bed: sleeping loop, wake/stretch on click, position varies by visit counter —
     needs new art through the union-bbox pipeline.
-12. Achievements/discoveries: localStorage set + pixel toast + `aria-live=polite`; the poster
-    toast is the seed of this system.
-13. Konami code → `terminal` screenMode on the desk (state machine already supports modes):
-    `help`, `whoami`, `cat todo.txt`, `exit`.
-14. Mobile polish: drag-to-pan the room stage on phones, larger hit areas, tap hints.
+12. ~~Achievements/discoveries~~ (done v13): localStorage set + pixel toast + `aria-live=polite`;
+    DiscoveriesBadge found/locked popup.
+13. ~~Konami code → `terminal` screenMode~~ (done v13): `help`, `whoami`, `ls`, `cat readme.txt`,
+    `clock`, `sfx on|off`, `clear`, `exit`.
+14. ~~Mobile polish~~ (done v14): drag-to-pan, fill-height, ≥44px hit areas, idle preload.
 15. Hardening (June audit carry-overs): ~~move the rate limiter to Upstash~~ (done — rl:* keys,
     in-memory fallback, getClientIp uses x-real-ip/rightmost XFF);
     ~~confirm the stray `VERCEL_OIDC_TOKEN` was never committed and delete it~~;
@@ -364,8 +375,7 @@ Owner-curated backlog. Tiers are effort/scope, not priority order. ~~Struck~~ = 
 20. Ambient presence: anonymous "N people are in the room" via Redis presence counter.
 21. Blog in the room: notebook object opens an MDX-backed `/blog` (needs `@next/mdx`,
     monochrome outside the room, dictionaries for chrome).
-22. Full French SEO: `/fr` routes with localised metadata (today FR is cookie-based with
-    English-only SEO by design — this is a deliberate boundary, revisit only with intent).
+22. ~~Full French SEO~~ (moot — French removed July 2026; the site is English-only).
 23. Regression net: Playwright E2E of the room flows (zoom, desk, iframe, audio, reduced
     motion) + Lighthouse CI on previews.
 24. Admin dashboard under `/app/admin/` with middleware auth (service layer is ready).
@@ -410,21 +420,16 @@ hidden/off-screen, edge fade via CSS mask.
 
 ---
 
-## Internationalisation (EN + FR)
+## Internationalisation (English-only)
 
-Language via an EN/FR header toggle stored in a `locale` cookie, read server-side; **no `/fr`
-URLs** (English canonical). `src/lib/i18n/`: `config.ts`, `dictionaries/en.ts` (canonical,
-defines `Dictionary`), `fr.ts`, `server.ts` (`getLocale`/`getDictionary` for server
-components), `client.tsx` (`I18nProvider`, `useT()`).
+French was removed in July 2026 (v12); the site is English-only. `src/lib/i18n/`:
+`dictionaries/en.ts` (the single dictionary; its shape defines the `Dictionary` type),
+`config.ts`, `server.ts` (`getDictionary`, always English), `client.tsx` (`I18nProvider`,
+`useT()`). The provider/hook scaffolding is retained so components need no change and a second
+locale could be reintroduced later, but there is no `fr.ts` and no language toggle.
 
-Workflow for any copy change: add to `en.ts` → add French at the identical path (formal
-*vous*; first person for Ahmed's bio) → reference via `t.…` → `npm run type-check` →
-keep `CONTENT.md` in sync.
-
-Deliberate English-only boundaries: SEO metadata/OG images; large editorial datasets
-(typing phrases, AGLC4 configs). Cookie-read makes content pages dynamically rendered —
-accepted trade-off. Contact-form client validation messages are localised via
-`makeContactSchema(messages)`; the server uses English defaults.
+Workflow for any copy change: edit `en.ts` → reference via `t.…` → `npm run type-check`. There
+is no longer a second-language parity requirement.
 
 ---
 

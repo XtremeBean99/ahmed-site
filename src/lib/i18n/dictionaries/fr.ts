@@ -457,6 +457,7 @@ export const fr: Dictionary = {
     bonsaiLabel: 'Bonsaï sur le rebord de la fenêtre',
     lampLabel: 'Lampe de bureau',
     coffeeLabel: 'Tasse de café',
+    ipodLabel: 'iPod — passer à la piste suivante',
     sideTableClockLabel: 'Horloge numérique basculer l\'affichage 24 h',
     sideTableDrawerLabel: 'Tiroir de la table de chevet — cliquer pour ouvrir/fermer',
     posterClickHint: 'Jolie affiche !',

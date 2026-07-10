@@ -37,6 +37,7 @@ const FILES = [
   'coffee-steam.png',
   ...range('side-table', 2),
   'side-table-clock.png',
+  'ipod.png',
 ]
 
 function gradePixel(data, i, { tint, bright, sat }) {

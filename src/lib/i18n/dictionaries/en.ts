@@ -460,6 +460,7 @@ export const en = {
     bonsaiLabel: 'Windowsill bonsai tree',
     lampLabel: 'Desk lamp',
     coffeeLabel: 'Coffee mug',
+    ipodLabel: 'iPod — skip the track',
     sideTableClockLabel: 'Digital clock toggle 24-hour time',
     sideTableDrawerLabel: 'Side table drawer — click to open/close',
     posterClickHint: 'Nice poster!',

@@ -18,6 +18,8 @@ interface AudioState {
   volume: number
   toggle: () => void
   nextTrack: () => void
+  /** Advance to a fresh random track AND start playback (starts if stopped). */
+  skip: () => void
   selectTrack: (index: number) => void
   setVolume: (v: number) => void
 }
@@ -131,6 +133,20 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
     if (playingRef.current) audio.play().catch(() => {})
   }, [])
 
+  // iPod: skip to a fresh track and always end up playing (starts if stopped).
+  const skip = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    trackIdxRef.current = pickNextIndex(trackIdxRef.current)
+    setTrackIndex(trackIdxRef.current)
+    loadTrack(audio, trackIdxRef.current)
+    audio.play().then(() => {
+      setPlaying(true)
+      playingRef.current = true
+      savePrefs({ audio: true })
+    }).catch(() => {})
+  }, [])
+
   const selectTrack = useCallback((index: number) => {
     const audio = audioRef.current
     if (!audio || index < 0 || index >= PLAYLIST.length) return
@@ -152,7 +168,7 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AudioCtx.Provider value={{ playing, trackIndex, volume, toggle, nextTrack, selectTrack, setVolume }}>
+    <AudioCtx.Provider value={{ playing, trackIndex, volume, toggle, nextTrack, skip, selectTrack, setVolume }}>
       {children}
     </AudioCtx.Provider>
   )

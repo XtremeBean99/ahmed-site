@@ -24,6 +24,7 @@ import { AnimatedSprite } from './AnimatedSprite'
 import { DeskView } from './DeskView'
 import { SideTableClock } from './SideTableClock'
 import { RoomObject } from './RoomObject'
+import { RoomIpod } from './RoomIpod'
 import {
   ICON_LINKEDIN,
   ICON_GITHUB,
@@ -50,6 +51,7 @@ interface RoomProps {
       bonsaiLabel: string
       lampLabel: string
       coffeeLabel: string
+      ipodLabel: string
       sideTableClockLabel: string
       sideTableDrawerLabel: string
       posterClickHint: string
@@ -273,6 +275,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const bonsaiObj = ROOM_OBJECTS.find((o) => o.id === 'bonsai')!
   const coffeeObj = ROOM_OBJECTS.find((o) => o.id === 'coffee')!
   const clockObj = ROOM_OBJECTS.find((o) => o.id === 'clock')!
+  const ipodObj = ROOM_OBJECTS.find((o) => o.id === 'ipod')!
 
   // Stage point the zoom converges on: the centre of the monitor glass,
   // (360, 331) in stage coords. Offsets are relative to the monitor rect
@@ -573,6 +576,9 @@ export function Room({ dict, readmeContent }: RoomProps) {
             frameDuration={SPRITE_FRAME_MS.coffee}
             mode="play-once-hold"
           />
+
+          {/* iPod on the desk — click skips to a fresh track (starts music if stopped) */}
+          <RoomIpod label={t.room.ipodLabel} obj={ipodObj} />
 
         </RoomStage>
         </LightingProvider>

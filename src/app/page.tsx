@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { getDictionary } from '@/lib/i18n/server'
 import { Room } from '@/components/room/Room'
+import { RoomSfxProvider } from '@/components/room/RoomSfxProvider'
 import { JsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
@@ -49,14 +50,16 @@ export default async function RoomPage() {
   return (
     <>
       <JsonLd data={personSchema} />
-      <Room
-        dict={{
-          room: dict.room,
-          desk: dict.desk,
-          legal: dict.legal,
-        }}
-        readmeContent={readmeContent}
-      />
+      <RoomSfxProvider>
+        <Room
+          dict={{
+            room: dict.room,
+            desk: dict.desk,
+            legal: dict.legal,
+          }}
+          readmeContent={readmeContent}
+        />
+      </RoomSfxProvider>
     </>
   )
 }

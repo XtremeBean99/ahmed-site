@@ -147,6 +147,18 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
     href: null,
   },
   {
+    id: 'ipod',
+    // iPod on the desk (extracted from assets/pixel-art/ipod.png via
+    // scripts/extract-ipod.mjs). Single frame. Click skips the music track.
+    x: 604,
+    y: 450,
+    w: 99,
+    h: 42,
+    labelKey: 'room.ipodLabel',
+    frames: ['/room/ipod.png'],
+    href: null,
+  },
+  {
     id: 'clock',
     // Digital alarm clock on the side table. Single frame — the face is blank
     // in the art; SideTableClock renders the LED digits on it. Click toggles

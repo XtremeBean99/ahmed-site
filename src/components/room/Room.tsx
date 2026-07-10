@@ -25,6 +25,7 @@ import { DeskView } from './DeskView'
 import { SideTableClock } from './SideTableClock'
 import { RoomObject } from './RoomObject'
 import { RoomIpod } from './RoomIpod'
+import { useSfx } from './RoomSfxProvider'
 import {
   ICON_LINKEDIN,
   ICON_GITHUB,
@@ -110,6 +111,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const [sideTableHovered, setSideTableHovered] = useState(false)
   const [lampHovered, setLampHovered] = useState(false)
 
+  const sfx = useSfx()
   // Lighting: target follows the visitor's local clock; `light` is what is
   // rendered; `prevLight` keeps the outgoing background pair mounted during
   // the 1.5s crossfade. The swap waits for the target backgrounds to load.
@@ -197,9 +199,8 @@ export function Room({ dict, readmeContent }: RoomProps) {
   useEffect(() => {
     return () => clearTimeouts()
   }, [clearTimeouts])
-
-  // Monitor click → zoom into desk
   const handleEnter = useCallback(() => {
+    sfx.play('pcStart')
     if (reduce || navigatingRef.current) {
       enterDesk()
       return
@@ -212,7 +213,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
 
     // After zoom completes (~800 ms)
     navRef.current = setTimeout(enterDesk, 800)
-  }, [reduce, enterDesk])
+  }, [reduce, enterDesk, sfx])
 
   // Escape cancels zoom
   const cancelTransition = useCallback(() => {
@@ -239,9 +240,8 @@ export function Room({ dict, readmeContent }: RoomProps) {
       setView('room')
     }
   }, [])
-
-  // One lamp toggle for both views: persists the pref and fires the flicker.
   const toggleLamp = useCallback(() => {
+    sfx.play('lamp')
     setLampOn((v) => {
       const n = !v
       savePrefs({ lampOn: n })
@@ -249,25 +249,23 @@ export function Room({ dict, readmeContent }: RoomProps) {
       setTimeout(() => setLampFlicker(false), 500)
       return n
     })
-  }, [])
-
-  // Digital clock: click toggles 12/24-hour display, persisted.
+  }, [sfx])
   const toggleClockFormat = useCallback(() => {
+    sfx.play('clock')
     setClock24h((v) => {
       const n = !v
       savePrefs({ clock24h: n })
       return n
     })
-  }, [])
-
-  // Side table drawer: click toggles open/closed, persisted.
+  }, [sfx])
   const toggleSideTable = useCallback(() => {
+    sfx.play('drawer')
     setSideTableOpen((v) => {
       const n = !v
       savePrefs({ sideTableOpen: n })
       return n
     })
-  }, [])
+  }, [sfx])
 
   const monitorObj = ROOM_OBJECTS.find((o) => o.id === 'monitor')!
   const posterObj = ROOM_OBJECTS.find((o) => o.id === 'poster')!
@@ -481,6 +479,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
             frameDuration={SPRITE_FRAME_MS.poster}
             mode="play-once-hold"
             onClick={() => {
+              sfx.play('poster')
               setToast(t.room.posterClickHint)
               setTimeout(() => setToast(null), 2000)
             }}

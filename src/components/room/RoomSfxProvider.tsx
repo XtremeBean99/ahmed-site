@@ -26,6 +26,11 @@ import { loadPrefs } from '@/lib/room/storage'
 
 const SFX_SRC = {
   click: '/sfx/mouse-click.mp3',
+  lamp: '/sfx/lamp.mp3',
+  drawer: '/sfx/drawer-open.mp3',
+  clock: '/sfx/clock-change.mp3',
+  poster: '/sfx/poster-sound.mp3',
+  pcStart: '/sfx/pc-start.mp3',
 } as const
 
 export type SfxName = keyof typeof SFX_SRC

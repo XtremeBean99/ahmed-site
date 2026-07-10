@@ -195,7 +195,7 @@ export const ICON_LINKEDIN = (
 
 export const ICON_GITHUB = (
   <>
-    {/* Octocat silhouette — dark circle with inner cutout */}
+    {/* Octocat silhouette, dark circle with inner cutout */}
     <circle cx="8" cy="8" r="6" fill="#24292f" />
     {/* Eyes */}
     <circle cx="6" cy="7" r="1.5" fill="#ffffff" />

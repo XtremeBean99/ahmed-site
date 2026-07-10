@@ -288,7 +288,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
     const audio = document.querySelector('audio')
     if (audio) audio.volume = v
   }, [])
-  const handleClockToggle = useCallback((_v: boolean) => {
+  const handleClockToggle = useCallback(() => {
     toggleClockFormat()
   }, [toggleClockFormat])
   const handleCalmToggle = useCallback((v: boolean) => {
@@ -308,7 +308,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
 
   // Stage point the zoom converges on: the centre of the monitor glass,
   // (360, 331) in stage coords. Offsets are relative to the monitor rect
-  // (235, 257) — re-derive if the sprite crop ever changes.
+  // (235, 257), re-derive if the sprite crop ever changes.
   const screenCenterX = monitorObj.x + 125
   const screenCenterY = monitorObj.y + 74
 
@@ -438,7 +438,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
             onEnter={handleEnter}
           />
 
-          {/* Desktop speakers — rendered AFTER Monitor so the cabinet buttons
+          {/* Desktop speakers, rendered AFTER Monitor so the cabinet buttons
               win clicks over the monitor's big anchor rect. Coffee mug (later
               still) wins its own overlap with the left cabinet. */}
           <RoomSpeakers
@@ -447,7 +447,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
             speakersLabel={t.room.audio.speakersLabel}
           />
 
-          {/* Side table — clickable: toggles the drawer open/closed. Dims with the lamp. */}
+          {/* Side table, clickable: toggles the drawer open or closed. Dims with the lamp. */}
           <div
             style={{ position: 'absolute', left: SIDE_TABLE_RECT.x, top: SIDE_TABLE_RECT.y, width: SIDE_TABLE_RECT.w, height: SIDE_TABLE_RECT.h }}
             onMouseEnter={() => setSideTableHovered(true)}
@@ -497,7 +497,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
             </RoomObject>
           </div>
 
-          {/* Digital clock on the side table — click toggles 12/24 h. No hover lift. */}
+          {/* Digital clock on the side table, click toggles 12 or 24 h. No hover lift. */}
           <SideTableClock
             label={t.room.sideTableClockLabel}
             x={clockObj.x}
@@ -537,6 +537,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
             frames={saitamaObj.frames}
             frameDuration={SPRITE_FRAME_MS.saitama}
             mode="play-all-loop-last-two"
+            onClick={() => { sfx.play('poster') }}
           />
 
           <AnimatedSprite
@@ -618,8 +619,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
             frameDuration={SPRITE_FRAME_MS.coffee}
             mode="play-once-hold"
           />
-
-          {/* iPod on the desk — click skips to a fresh track (starts music if stopped) */}
+          {/* iPod on the desk, click skips to a fresh track (starts music if stopped) */}
           <RoomIpod label={t.room.ipodLabel} obj={ipodObj} />
 
         </RoomStage>
@@ -693,8 +693,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
           }}
         />
       )}
-
-      {/* First-visit README popup — styled like room tooltips */}
+      {/* First-visit README popup, styled like room tooltips */}
       <AnimatePresence>
         {showReadmePopup && view === 'room' && (
           <motion.div

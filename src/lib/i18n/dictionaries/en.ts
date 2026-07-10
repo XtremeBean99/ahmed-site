@@ -1,12 +1,7 @@
 /**
  * English dictionary, the canonical source of truth for all translatable UI
- * copy. Its shape defines the `Dictionary` type that every other locale must
- * satisfy, so adding a key here forces a matching key in fr.ts (type error
- * otherwise). See CLAUDE.md → "Internationalisation" for the workflow.
- *
- * Large data-driven editorial datasets are intentionally NOT here (they stay in
- * their own modules and remain English): typing-test phrases
- * and AGLC4 field configs/examples.
+ * copy. Its shape defines the `Dictionary` type. Adding a key here requires
+ * all consumers to handle it.
  */
 
 export const en = {
@@ -23,13 +18,6 @@ export const en = {
     skip: 'Skip to main content',
   },
 
-  language: {
-    label: 'Language',
-    switchTo: 'Switch to French',
-    en: 'English',
-    fr: 'French',
-  },
-
   footer: {
     blurb:
       'All content on this website is copyrighted and may not be reproduced, scraped, indexed for AI training, or incorporated into generative AI systems without prior written permission.',
@@ -41,12 +29,12 @@ export const en = {
     email: 'Email',
     nav: 'Footer navigation',
     rights: 'Ahmed Hussain. All rights reserved.',
-    location: 'Canberra, Australia · ahmedyhussain.com',
+    location: 'Canberra, Australia\u00a0\u00b7 ahmedyhussain.com',
   },
 
   hero: {
     eyebrow: 'Canberra, Australia',
-    descriptor1: 'BCom / LLB(Hons) student at the Australian National University.',
+    descriptor1: 'BCom\u2009/\u2009LLB(Hons) student at the Australian National University.',
     descriptor2: 'Working toward a future in tech law',
     ctaPrimary: 'Connect on LinkedIn',
     ctaSecondary: 'Get in touch',
@@ -112,9 +100,9 @@ export const en = {
 
   contact: {
     eyebrow: 'Contact',
-    heading: 'Let’s talk.',
+    heading: 'Let\u2019s talk.',
     intro: 'Whether you have a question about tutoring, want to talk about legal technology, or just want to connect, I would be glad to hear from you.',
-    bullet1: 'Tutoring enquiries (Years 7–12)',
+    bullet1: 'Tutoring enquiries (Years 7\u201312)',
     bullet2: 'Professional introductions',
     bullet3: 'Research or academic collaboration',
     emailPromptBefore: 'Prefer email? Reach me directly at ',
@@ -131,7 +119,7 @@ export const en = {
     message: 'Message',
     messagePlaceholder: 'Your message',
     send: 'Send message',
-    sending: 'Sending…',
+    sending: 'Sending\u2026',
     successTitle: 'Message sent.',
     successBody: 'Thank you for reaching out. I will be in touch shortly.',
     sendAnother: 'Send another message',
@@ -201,34 +189,34 @@ export const en = {
   },
 
   code: {
-    eyebrow: 'Projects · Code',
+    eyebrow: 'Projects \u00b7 Code',
     heading: 'Code & open source',
     intro: 'Public repositories pulled live from GitHub: the software side of my law-and-computing work.',
     fallbackTitle: 'Unable to load repositories right now.',
     fallbackBody: 'The GitHub API may be temporarily unavailable or rate-limited. You can browse all repositories directly.',
-    fallbackLink: 'github.com/XtremeBean99 →',
+    fallbackLink: 'github.com/XtremeBean99 \u2192',
     dataSource: 'Data source',
     dataSourceBody: 'Repository data is pulled live from the public GitHub REST API and refreshed hourly. Only public, non-fork, non-archived repositories are shown.',
   },
 
   silicon: {
-    eyebrow: 'Projects · Silicon',
+    eyebrow: 'Projects \u00b7 Silicon',
     heading: 'Silicon: from atom to architecture',
     intro: 'An interactive 3D Bohr model of a silicon atom, atomic number 14, with 2 electrons in its first shell, 8 in the second, and 4 in the third. Drag to rotate, scroll to zoom. The four valence electrons are the reason every modern processor exists.',
-    caption: 'Drag to rotate · Scroll to zoom · Reduced-motion users see a static render',
+    caption: 'Drag to rotate \u00b7 Scroll to zoom \u00b7 Reduced-motion users see a static render',
     s1heading: 'Why silicon',
     s1p1: 'Silicon sits in group 14 of the periodic table, right below carbon. It has four electrons in its outermost shell, exactly the number needed to form four covalent bonds and lock into a stable, repeating crystal lattice. Unlike a metal (which conducts electricity freely) or an insulator (which blocks it entirely), pure silicon is a <strong>semiconductor</strong>: it conducts electricity only when given a nudge.',
     s1p2: 'That in-between behaviour is what makes it controllable. Apply a voltage, and it switches from off to on. Remove the voltage, and it switches back. That switch, the binary state, is the physical basis for every logical 1 and 0 in digital computing.',
     s2heading: 'Doping: tuning the conductivity',
     s2p1: 'Pure silicon is not very conductive on its own. The trick is <strong>doping</strong>: introducing a tiny number of impurity atoms into the crystal.',
-    s2p2: 'Add phosphorus (five valence electrons) and you get <strong>n-type</strong> silicon, which has spare electrons ready to move. Add boron (three valence electrons) and you get <strong>p-type</strong> silicon, which has “holes” (gaps where an electron is missing) that behave like positive charge carriers.',
+    s2p2: 'Add phosphorus (five valence electrons) and you get <strong>n-type</strong> silicon, which has spare electrons ready to move. Add boron (three valence electrons) and you get <strong>p-type</strong> silicon, which has \u201choles\u201d (gaps where an electron is missing) that behave like positive charge carriers.',
     s2p3: 'Place a piece of n-type silicon next to a piece of p-type silicon and you have a <strong>p-n junction</strong>, the building block of the diode. Current flows in one direction and is blocked in the other. Stack three layers, p-n-p or n-p-n, and you have the basis of the transistor.',
     s3heading: 'The transistor',
-    s3p1: 'The modern transistor, the <strong>MOSFET</strong> (Metal-Oxide-Semiconductor Field-Effect Transistor), is a voltage-controlled switch. A small voltage applied to the “gate” terminal creates an electric field that opens or closes a conductive channel between the “source” and “drain.” No mechanical parts, no moving pieces, just a field and a semiconductor channel.',
+    s3p1: 'The modern transistor, the <strong>MOSFET</strong> (Metal-Oxide-Semiconductor Field-Effect Transistor), is a voltage-controlled switch. A small voltage applied to the \u201cgate\u201d terminal creates an electric field that opens or closes a conductive channel between the \u201csource\u201d and \u201cdrain.\u201d No mechanical parts, no moving pieces, just a field and a semiconductor channel.',
     s3p2: 'A single modern CPU contains billions of these switches, fabricated at a scale measured in nanometres. Each one flips on and off billions of times per second. Those on/off states, aggregated across billions of transistors, are the 1s and 0s of digital logic. Every line of code you write eventually resolves to voltages across MOSFET gates.',
     s4heading: 'From sand to CPU',
     s4intro: 'Silicon does not come out of the ground ready for a logic gate. The journey from raw material to integrated circuit is one of the most precise manufacturing processes ever devised.',
-    s4b1: '<strong>Refinement.</strong> Quartz (silicon dioxide, SiO₂) is reduced with carbon in an arc furnace to produce metallurgical-grade silicon, then further purified to electronic-grade: 99.9999999% pure.',
+    s4b1: '<strong>Refinement.</strong> Quartz (silicon dioxide, SiO\u2082) is reduced with carbon in an arc furnace to produce metallurgical-grade silicon, then further purified to electronic-grade: 99.9999999% pure.',
     s4b2: '<strong>Crystal growth.</strong> The <strong>Czochralski process</strong> draws a single-crystal ingot from a melt: a flawless cylinder of silicon atoms in a perfect lattice, up to 300 mm across and a metre long.',
     s4b3: '<strong>Wafers.</strong> The ingot is sliced into wafers thinner than a human hair, polished to a mirror finish.',
     s4b4: '<strong>Photolithography.</strong> A light-sensitive resist is applied, exposed through a mask that carries the circuit pattern, and developed. Unprotected silicon is etched away. The process is repeated dozens of times, layer upon layer, to build up the transistors, interconnects, and isolation structures.',
@@ -303,8 +291,6 @@ export const en = {
     topScores: 'Top scores',
   },
 
-
-
   aglc4: {
     eyebrow: 'Legal tool',
     heading: 'AGLC4 citation generator',
@@ -337,7 +323,7 @@ export const en = {
     base8: 'Base 8',
     base16: 'Base 16',
     utf8: 'UTF-8',
-    typeText: 'Type some text…',
+    typeText: 'Type some text\u2026',
     invalidBefore: 'Not a valid ',
     invalidAfter: ' value.',
     bitwiseTitle: 'Bitwise playground',
@@ -402,15 +388,15 @@ export const en = {
     bugsName: 'Name (optional)',
     bugsEmail: 'Email (optional)',
     bugsDescription: 'What happened?',
-    bugsDescriptionPlaceholder: 'Describe the bug and which level you were on…',
+    bugsDescriptionPlaceholder: 'Describe the bug and which level you were on\u2026',
     bugsSend: 'Send bug report',
-    bugsSending: 'Sending…',
+    bugsSending: 'Sending\u2026',
     bugsSuccess: 'Thank you. Bug report sent - I will look into it.',
     bugsError: 'Something went wrong. Please try again or email me directly.',
   },
 
   ninja: {
-    eyebrow: 'Projects · Super Space Monk Ninja Fighter Simulator IV',
+    eyebrow: 'Projects \u00b7 Super Space Monk Ninja Fighter Simulator IV',
     heading: 'Super Space Monk Ninja Fighter Simulator IV',
     intro: 'A fast, movement-focused 2D platformer built in Godot 4.7 with a hand-drawn ink-and-void aesthetic. Seven hand-crafted levels are traced as ink strokes and built into terrain at runtime; you clear each one by flowing through it.',
     gameplayHeading: 'Gameplay',
@@ -445,9 +431,9 @@ export const en = {
     bugsName: 'Name (optional)',
     bugsEmail: 'Email (optional)',
     bugsDescription: 'What happened?',
-    bugsDescriptionPlaceholder: 'Describe the bug and which level you were on…',
+    bugsDescriptionPlaceholder: 'Describe the bug and which level you were on\u2026',
     bugsSend: 'Send bug report',
-    bugsSending: 'Sending…',
+    bugsSending: 'Sending\u2026',
     bugsSuccess: 'Thank you. Bug report sent - I will look into it.',
     bugsError: 'Something went wrong. Please try again or email me directly.',
   },
@@ -460,16 +446,16 @@ export const en = {
     bonsaiLabel: 'Windowsill bonsai tree',
     lampLabel: 'Desk lamp',
     coffeeLabel: 'Coffee mug',
-    ipodLabel: 'iPod — skip the track',
+    ipodLabel: 'iPod, skip the track',
     sideTableClockLabel: 'Digital clock toggle 24-hour time',
-    sideTableDrawerLabel: 'Side table drawer — click to open/close',
+    sideTableDrawerLabel: 'Side table drawer, click to open or close',
     posterClickHint: 'Nice poster!',
     clockTip: "It's {time}",
     enterSite: 'Enter website',
     hint: 'Click around to explore',
     skip: 'Skip to the website',
     metaTitle: "Ahmed's Room",
-    metaDescription: 'Step into my digital room — a cosy pixel-art space and the front door to my personal website.',
+    metaDescription: 'Step into my digital room, a cosy pixel-art space and the front door to my personal website.',
     audio: {
       play: 'Play',
       pause: 'Pause',
@@ -496,9 +482,9 @@ export const en = {
     settingsTip: 'Audio, clock, calm mode',
     paint: 'Paint',
     music: 'Music',
-    musicTip: 'Playlist — pick a track',
+    musicTip: 'Playlist, pick a track',
     minesweeper: 'Minesweeper',
-    paintTip: 'Doodle on a pixel canvas — it saves itself',
+    paintTip: 'Doodle on a pixel canvas, it saves itself',
     minesweeperTip: 'Classic mines, room edition',
     paintApp: {
       pencil: 'Pencil',
@@ -565,10 +551,10 @@ export const en = {
       title: 'Terms of Use',
       date: '14 June 2026',
       s1h: '1. Acceptance',
-      s1b: 'By accessing or using ahmedyhussain.com (the “Site”), you agree to be bound by these Terms of Use. If you do not agree, do not use the Site.',
+      s1b: 'By accessing or using ahmedyhussain.com (the \u201cSite\u201d), you agree to be bound by these Terms of Use. If you do not agree, do not use the Site.',
       s2h: '2. Intellectual Property',
       s2b1: 'All content on this Site, including but not limited to text, design, layout, graphics, and code, is the intellectual property of Ahmed Hussain and is protected by Australian and international copyright law.',
-      s2b2: 'Copyright © Ahmed Hussain. All rights reserved.',
+      s2b2: 'Copyright \u00a9 Ahmed Hussain. All rights reserved.',
       s3h: '3. Prohibited Uses',
       s3intro: 'You expressly agree that you will not, without prior written permission:',
       s3items: [
@@ -581,7 +567,7 @@ export const en = {
       ],
       s4h: '4. AI and Automated Systems',
       s4p1: 'All content on this Site is copyrighted and may not be reproduced, redistributed, scraped, indexed for AI training, used in machine learning datasets, or incorporated into generative AI systems without prior written permission from Ahmed Hussain.',
-      s4p2: 'Operators of AI crawlers and large language model training pipelines are on notice that access to this Site for the purpose of data collection is prohibited. This prohibition is reflected in the Site’s robots.txt file and HTTP response headers.',
+      s4p2: 'Operators of AI crawlers and large language model training pipelines are on notice that access to this Site for the purpose of data collection is prohibited. This prohibition is reflected in the Site\u2019s robots.txt file and HTTP response headers.',
       s5h: '5. Accuracy of Information',
       s5b: 'Content on this Site is provided for informational purposes only and does not constitute legal advice. While I make reasonable efforts to ensure accuracy, I make no representations as to the completeness or timeliness of information provided.',
       s6h: '6. Limitation of Liability',
@@ -595,7 +581,7 @@ export const en = {
       title: 'Privacy Policy',
       date: '16 June 2026',
       s1h: '1. Overview',
-      s1b: 'This Privacy Policy explains how ahmedyhussain.com (“Site”) collects, uses, and stores personal information. I am committed to handling your data responsibly and in accordance with the Australian Privacy Act 1988 (Cth) and applicable Australian Privacy Principles.',
+      s1b: 'This Privacy Policy explains how ahmedyhussain.com (\u201cSite\u201d) collects, uses, and stores personal information. I am committed to handling your data responsibly and in accordance with the Australian Privacy Act 1988 (Cth) and applicable Australian Privacy Principles.',
       s2h: '2. Information Collected',
       s2intro: 'This Site has no contact form, no accounts, and no database. It does not collect personal information you submit. If you email me at the address on this Site, I receive whatever you choose to put in that email.',
       s2items: [],
@@ -610,7 +596,7 @@ export const en = {
       s5h: '5. Retention',
       s5b: 'Because the Site stores nothing, retention is limited to my own email records, kept only as long as necessary to respond and for reasonable record-keeping. You may request deletion at any time.',
       s6h: '6. Cookies, Analytics and Local Storage',
-      s6p1: 'This Site does not use tracking cookies, advertising pixels, or social media tracking scripts. A single cookie may be set only to remember your chosen language (English or French); it contains no personal information and is not used for tracking.',
+      s6p1: 'This Site does not use tracking cookies, advertising pixels, or social media tracking scripts. A single cookie may be set only to remember your chosen language; it contains no personal information and is not used for tracking.',
       s6p2: 'The Site uses Vercel Speed Insights to measure anonymous, aggregated performance metrics such as page load times. It does not use cookies and does not identify you.',
       s6p3: 'The Site saves small preferences (such as your chosen language, audio and lamp state, and any drawing made in the Paint app) in your browser using local storage. That information stays on your device, is never transmitted to me or any third party, and you can clear it any time through your browser settings.',
       s7h: '7. Your Rights',
@@ -627,9 +613,9 @@ export const en = {
     intro1: 'I offer one-on-one tutoring for secondary school students in Canberra. My approach puts understanding ahead of memorisation. The aim is to build the kind of structured thinking that holds up in exams and well after them.',
     intro2: 'Sessions are available online and in person at the ANU campus or nearby locations.',
     seniorSecondary: 'Senior secondary',
-    years1112: 'Years 11–12',
+    years1112: 'Years 11\u201312',
     middleSecondary: 'Middle secondary',
-    years710: 'Years 7–10',
+    years710: 'Years 7\u201310',
     allNonScience: 'All non-science subjects available',
     y1112: [
       { subject: 'Physics', note: 'ACT BSSS curriculum' },
@@ -650,7 +636,7 @@ export const en = {
     faqs: [
       { q: 'Where do sessions take place?', a: 'Sessions are available online via video call, at the Australian National University campus, or at a Canberra location arranged in advance.' },
       { q: 'How long is each session?', a: 'Sessions are typically one hour. Longer sessions can be arranged on request.' },
-      { q: 'What year levels do you tutor?', a: 'Years 7–10 for most non-science subjects, and Years 11–12 for Physics, Mathematics, English, and Legal Studies in line with the ACT BSSS curriculum.' },
+      { q: 'What year levels do you tutor?', a: 'Years 7\u201310 for most non-science subjects, and Years 11\u201312 for Physics, Mathematics, English, and Legal Studies in line with the ACT BSSS curriculum.' },
       { q: 'Do you offer trial sessions?', a: 'Please get in touch to discuss your requirements. I am happy to discuss how I can best support your learning before committing.' },
       { q: 'How do I book a session?', a: 'Use the contact form below or email me directly. I will respond within one business day to arrange a suitable time.' },
     ],

@@ -9,8 +9,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 export const metadata: Metadata = {
   title: "Ahmed's Room",
   description:
-    'Step into my digital room — a cosy pixel-art space and the front door to my personal website.',
-  alternates: { canonical: 'https://ahmedyhussain.com' },
+    'Step into my digital room, a cosy pixel-art space and the front door to my personal website.',
 }
 
 const personSchema = {

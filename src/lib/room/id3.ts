@@ -1,5 +1,5 @@
 /**
- * Lightweight ID3v2 parser — extracts embedded cover art (APIC frame)
+ * Lightweight ID3v2 parser, extracts embedded cover art (APIC frame)
  * from an MP3 file. Reads only the tag header from the start of the file.
  * No dependencies, pure JS.
  */
@@ -19,7 +19,7 @@ export async function extractCoverFromMp3(src: string): Promise<ID3Cover | null>
     const reader = resp.body.getReader()
     const chunks: Uint8Array[] = []
     let total = 0
-    const MAX = 256 * 1024 // 256 KB — enough for any embedded art
+    const MAX = 256 * 1024 // 256 KB, enough for any embedded art
 
     while (total < MAX) {
       const { done, value } = await reader.read()
@@ -113,7 +113,7 @@ function parseID3v2(buf: Uint8Array): ID3Cover | null {
       }
       offset += 10
     } else {
-      // v2.2 — 3-char frame IDs
+      // v2.2, 3-char frame IDs
       frameId = String.fromCharCode(buf[offset], buf[offset + 1], buf[offset + 2])
       frameSize =
         (buf[offset + 3] << 16) |

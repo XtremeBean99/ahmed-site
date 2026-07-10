@@ -7,7 +7,7 @@ import { loadPrefs } from '@/lib/room/storage'
 
 /**
  * Forces every framer-motion animation to play regardless of the OS
- * "reduce motion" setting — unless the user has opted into Calm Mode
+ * "reduce motion" setting, unless the user has opted into Calm Mode
  * (Settings > Calm Mode), which restores OS reduced-motion behaviour.
  *
  * With reducedMotion="never", useReducedMotion() returns false everywhere.

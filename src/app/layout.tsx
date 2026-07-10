@@ -4,7 +4,7 @@ import localFont from 'next/font/local'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { I18nProvider } from '@/lib/i18n/client'
 import { MotionProvider } from '@/components/providers/MotionProvider'
-import { getDictionary, getLocale } from '@/lib/i18n/server'
+import { getDictionary } from '@/lib/i18n/server'
 import './globals.css'
 
 const inter = Inter({
@@ -74,13 +74,12 @@ export const metadata: Metadata = {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = await getLocale()
   const dict = await getDictionary()
 
   return (
-    <html lang={locale} className={`${inter.variable} ${playfair.variable} ${minecraft.variable}`}>
+    <html lang="en" className={`${inter.variable} ${playfair.variable} ${minecraft.variable}`}>
       <body>
-        <I18nProvider locale={locale} dict={dict}>
+        <I18nProvider locale="en" dict={dict}>
           <MotionProvider>{children}</MotionProvider>
         </I18nProvider>
         <SpeedInsights />

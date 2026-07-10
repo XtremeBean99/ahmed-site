@@ -11,7 +11,7 @@ export function useAnimationTimer(frameMs: number, reduce: boolean | null) {
   const tickRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   // Store reduce in a ref so start/stop don't re-create when reduce
-  // flips null→false during hydration — avoids racing hover callbacks.
+  // flips null to false during hydration, avoids racing hover callbacks.
   const reduceRef = useRef(reduce)
   reduceRef.current = reduce
 

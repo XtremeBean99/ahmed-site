@@ -41,7 +41,7 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
   const playingRef = useRef(false)
   const trackIdxRef = useRef(0)
 
-  // Initialise audio (always — reduced motion does not affect sound)
+  // Initialise audio, always; reduced motion does not affect sound
   useEffect(() => {
     const audio = new Audio()
     audio.loop = false

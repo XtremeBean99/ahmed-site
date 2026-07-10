@@ -13,12 +13,11 @@ import { loadPrefs, savePrefs } from '@/lib/room/storage'
 /**
  * Interaction sound effects. Owns a small pool of preloaded <audio> elements
  * per sound and plays them on demand, gated by the `sfx` preference in
- * room-save-v1 (independent of the music `audio` pref — muting music never
+ * room-save-v1 (independent of the music `audio` pref; muting music never
  * mutes SFX). Reduced motion does NOT disable sound.
  *
- * Also installs a document-level listener so *every* click on the site plays
- * the click sound. Because playback is always triggered by a user gesture,
- * there is no autoplay-policy problem.
+ * `useSfx().play(name)` is the sole entry point for interaction sounds.
+ * There is no global click listener; each interaction calls play() explicitly.
  */
 
 const SFX_SRC = {
@@ -104,16 +103,6 @@ export function RoomSfxProvider({ children }: { children: ReactNode }) {
       for (const a of pool) { a.volume = v }
     }
   }, [])
-
-  // Global click sound: any primary-button click anywhere on the site.
-  useEffect(() => {
-    const onDown = (e: PointerEvent) => {
-      if (e.button !== 0) return
-      play('click')
-    }
-    document.addEventListener('pointerdown', onDown)
-    return () => document.removeEventListener('pointerdown', onDown)
-  }, [play])
 
   return <SfxCtx.Provider value={{ play, setEnabled, setVolume }}>{children}</SfxCtx.Provider>
 }

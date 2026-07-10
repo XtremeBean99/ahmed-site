@@ -1,6 +1,6 @@
 // src/lib/games/minesweeper-engine.ts
 /**
- * Pure minesweeper logic. No DOM, no React — every function returns a new
+ * Pure minesweeper logic. No DOM, no React; every function returns a new
  * Board. Mines are placed on the FIRST reveal, never on or adjacent to it.
  */
 

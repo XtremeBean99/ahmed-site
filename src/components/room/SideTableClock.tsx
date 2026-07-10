@@ -69,7 +69,7 @@ export function SideTableClock({
       tabIndex={0}
       style={{ position: 'absolute', left: x, top: y, width: w, height: h }}
     >
-        {/* Plain <img>, NOT motion.img — the clock must not lift on hover. */}
+        {/* Plain <img>, NOT motion.img; the clock must not lift on hover. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={frame}
@@ -82,7 +82,7 @@ export function SideTableClock({
             transition: reduce ? 'none' : 'filter 0.4s ease',
           }}
         />
-        {/* LED digits, skewed onto the face plane. Emissive — not dimmed by
+        {/* LED digits, skewed onto the face plane. Emissive, not dimmed by
             the lamp. aria-hidden: the time is decoration; the button label
             carries the accessible meaning. */}
         <div

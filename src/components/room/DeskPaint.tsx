@@ -83,7 +83,7 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
       try {
         localStorage.setItem(KEY, JSON.stringify(Array.from(cellsRef.current ?? [])))
       } catch {
-        /* storage full — drawing stays in memory */
+        /* storage full, drawing stays in memory */
       }
     }, 400)
   }, [])

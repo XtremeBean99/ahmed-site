@@ -69,13 +69,10 @@ client-side only: `room-save-v1` key, currently `{ audio, lampOn, visitCount, vo
 `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` etc. Never hardcoded. See
 `.env.example` and the Environment Variables table below.
 
-### 5. The site is bilingual — every user-facing string must be translated
-English and French. Single source of truth: `src/lib/i18n/dictionaries/en.ts` and `fr.ts`.
-**Any new or changed user-facing text goes in BOTH dictionaries in the same commit.** The
-`Dictionary` type derives from `en.ts`, so a missing French key fails `npm run type-check`.
-This rule has been violated four separate times in room components ("MUSIC ON/OFF", "Toggle
-speakers", "Pause"/"Skip", the clock tooltip) — grep room components for quoted capitalised
-strings during any review.
+### 5. The site is English-only
+All French was removed in July 2026. Single source of truth: `src/lib/i18n/dictionaries/en.ts`.
+The `Dictionary` type derives from `en.ts`. The i18n wrapper (`I18nProvider`, `getDictionary`)
+remains for compatibility but always returns English.
 
 ### 6. Framing headers are now DENY / 'none'
 The in-monitor browser was removed in Spec 1 (July 2026). `next.config.ts` now sends
@@ -295,6 +292,15 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   the form-less site, retired constraint 6, dead env vars noted. Desktop icons: LinkedIn,
   GitHub, Music, Paint, Minesweeper, README, Legal. Screen modes: `desktop | paint |
   minesweeper | readme | music | legal`.
+- **v12** `10 July 2026`: Removed all French language from the project (fr.ts deleted,
+  i18n simplified to English-only, LanguageToggle removed). Removed global click SFX
+  (pointerdown listener), clicks now play only on explicit SFX calls (monitor/pcStart).
+  Added poster SFX to saitama poster. Removed all em dashes site-wide (replaced with
+  commas or restructured sentences). Settings app added (Spec 7 / Plan A): SFX toggle,
+  SFX/music volume sliders, clock toggle, calm mode. Calm mode restores OS reduced-motion
+  when enabled. Desktop icons: LinkedIn, GitHub, Settings, Music, Paint, Minesweeper,
+  README, Legal. Screen modes: `desktop | paint | minesweeper | readme | music | legal | settings`.
+
 
 - **v6 (security hardening)** `7 July 2026`: Deleted live Vercel OIDC token from
   `.vercel/.env.production.local` (never committed, now removed). Tightened contact CSRF

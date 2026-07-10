@@ -80,7 +80,7 @@ export function RoomSpeakers({ lampOn, lampFlicker, speakersLabel }: RoomSpeaker
         />
       </div>
 
-      {/* Mute/unmute — one button per cabinet, each with its own tooltip */}
+      {/* Mute/unmute, one button per cabinet, each with its own tooltip */}
       <RoomObject
         label={speakersLabel}
         showTooltip={hovered}

@@ -160,7 +160,7 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
   },
   {
     id: 'clock',
-    // Digital alarm clock on the side table. Single frame — the face is blank
+    // Digital alarm clock on the side table. Single frame; the face is blank
     // in the art; SideTableClock renders the LED digits on it. Click toggles
     // 12/24-hour display. Deliberately no hover lift.
     x: 658,
@@ -175,7 +175,7 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
 
 /**
  * Windows-98-style boot sequence drawn on the monitor glass while the PC is
- * hovered. Decorative overlay (aria-hidden). Rect is in stage coordinates —
+ * hovered. Decorative overlay (aria-hidden). Rect is in stage coordinates,
  * the loading source canvases are top-left aligned with the stage, and the
  * content bbox is identical in all 18 frames.
  */
@@ -187,7 +187,7 @@ export const MONITOR_LOADING_FRAMES = Array.from(
 )
 
 /**
- * Side table between the desk and the bed. Clickable — toggles the drawer
+ * Side table between the desk and the bed. Clickable, toggles the drawer
  * open/closed (two frames: closed, open). Dims with the lamp.
  */
 export const SIDE_TABLE_RECT = { x: 641, y: 409, w: 232, h: 210 }
@@ -195,7 +195,7 @@ export const SIDE_TABLE_RECT = { x: 641, y: 409, w: 232, h: 210 }
 /**
  * The clock's dark face plane in stage coords. Left/right edges are vertical;
  * top/bottom edges rise ~11° to the right, so the digit layer uses
- * skewY(CLOCK_FACE_SKEW_DEG) with transform-origin top-left (NOT rotate —
+ * skewY(CLOCK_FACE_SKEW_DEG) with transform-origin top-left (NOT rotate,
  * rotation would tilt the vertical bezel edges).
  */
 export const CLOCK_FACE_RECT = { x: 679, y: 409, w: 43, h: 22 }

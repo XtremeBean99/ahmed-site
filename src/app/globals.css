@@ -183,4 +183,9 @@
 
 /* Reduced motion is handled globally above. */
 
+@keyframes hint-pulse {
+  0%, 100% { outline-color: rgba(200,184,154,0.3); }
+  50%      { outline-color: rgba(200,184,154,0.7); }
+}
+
 

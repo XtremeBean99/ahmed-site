@@ -11,6 +11,7 @@ import { DeskReadme } from './DeskReadme'
 import { DeskMusic } from './DeskMusic'
 import { DeskLegal, type LegalLabels } from './DeskLegal'
 import { DeskSettings, type SettingsLabels } from './DeskSettings'
+import { DeskTerminal } from './DeskTerminal'
 import { MusicNotes } from './MusicNotes'
 
 const SCREEN_X = 436; const SCREEN_Y = 152; const SCREEN_W = 536; const SCREEN_H = 308
@@ -28,7 +29,7 @@ const DESK_SPEAKER_HOLES_RIGHT = [
 const MOUSE_X_MIN = 975; const MOUSE_X_MAX = 1140
 const MOUSE_Y_MIN = 572; const MOUSE_Y_MAX = 635
 const MOUSE_REST_X = 1007; const MOUSE_REST_Y = 608
-type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'readme' | 'music' | 'legal' | 'settings'
+type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'readme' | 'music' | 'legal' | 'settings' | 'terminal'
 
 interface DeskViewProps {
   shortcuts: DesktopShortcut[]
@@ -67,12 +68,18 @@ interface DeskViewProps {
   legalEffectiveDate: string
   /** site-text.txt content for the readme popup */
   readmeContent: string
+  /** Labels for the Terminal app */
+  terminalLabels: { title: string }
+  /** Konami code easter egg trigger */
+  konamiOpen: boolean
+  /** Called after the terminal has been opened so the parent can reset the flag */
+  onKonamiHandled: () => void
   onToggleLamp: () => void
   onBack: () => void
 }
 
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, calm, onCalm, readmeContent, onToggleLamp, onBack } = props
+  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, calm, onCalm, readmeContent, terminalLabels, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
   const scale = useStageScale()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
@@ -114,6 +121,7 @@ export function DeskView(props: DeskViewProps) {
       }
       if (s.kind === 'app') {
         setScreenMode(s.target as ScreenMode)
+        window.dispatchEvent(new CustomEvent('room:app-open', { detail: s.target }))
         return
       }
     },
@@ -135,6 +143,13 @@ export function DeskView(props: DeskViewProps) {
     return () => window.removeEventListener('keydown', onKey)
   }, [screenMode, onBack])
 
+  // Konami code: open terminal when triggered from Room
+  useEffect(() => {
+    if (konamiOpen) {
+      setScreenMode("terminal")
+      onKonamiHandled()
+    }
+  }, [konamiOpen, onKonamiHandled])
   // Return to desktop
   const goDesktop = useCallback(() => {
     setScreenMode('desktop')
@@ -418,6 +433,19 @@ export function DeskView(props: DeskViewProps) {
                   calm={calm}
                   onCalm={onCalm}
                   onDesktop={goDesktop}
+                />
+              </motion.div>
+            )}
+
+            {screenMode === "terminal" && (
+              <motion.div key="terminal" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskTerminal
+                  labels={terminalLabels}
+                  desktopLabel={desktopLabel}
+                  onDesktop={goDesktop}
+                  readmeContent={readmeContent}
                 />
               </motion.div>
             )}

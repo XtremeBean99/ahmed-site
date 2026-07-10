@@ -4,29 +4,10 @@ import type { Variants, Transition } from 'framer-motion'
  * Single source of truth for reduced-motion behaviour outside framer-motion
  * (canvas / WebGL loops that read the media query directly).
  *
- * This site intentionally plays all animations even when the OS "reduce motion"
- * setting is on, unless Calm Mode is enabled (Settings > Calm Mode). When calm
- * mode is on, the OS preference is honoured.
- * Framer-motion components are handled separately by MotionProvider.
+ * This site intentionally plays all animations regardless of OS settings.
+ * Always returns false.
  */
 export function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    const raw = localStorage.getItem('room-save-v1')
-    if (raw) {
-      const parsed: unknown = JSON.parse(raw)
-      if (
-        parsed !== null &&
-        typeof parsed === 'object' &&
-        'calmMode' in parsed
-      ) {
-        const v = (parsed as Record<string, unknown>).calmMode
-        if (typeof v === 'boolean' && v) {
-          return matchMedia('(prefers-reduced-motion: reduce)').matches
-        }
-      }
-    }
-  } catch { /* ignore */ }
   return false
 }
 

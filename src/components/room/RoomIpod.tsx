@@ -10,7 +10,7 @@ import type { RoomObjectDef } from '@/lib/room/objects'
  * fresh track and starts playback if music was stopped. Lives inside
  * RoomAudioProvider so it can consume the audio `skip` action.
  */
-export function RoomIpod({ label, obj }: { label: string; obj: RoomObjectDef }) {
+export function RoomIpod({ label, obj, onActivate }: { label: string; obj: RoomObjectDef; onActivate?: () => void }) {
   const { skip } = useRoomAudio()
   return (
     <AnimatedSprite
@@ -22,7 +22,7 @@ export function RoomIpod({ label, obj }: { label: string; obj: RoomObjectDef }) 
       frames={obj.frames}
       frameDuration={120}
       mode="play-once-hold"
-      onClick={skip}
+      onClick={() => { onActivate?.(); skip() }}
     />
   )
 }

@@ -26,6 +26,8 @@ import { SideTableClock } from './SideTableClock'
 import { RoomObject } from './RoomObject'
 import { RoomIpod } from './RoomIpod'
 import { useSfx } from './RoomSfxProvider'
+import { addDiscovery, DISCOVERY_IDS } from '@/lib/room/discoveries'
+import { DiscoveriesBadge } from './DiscoveriesBadge'
 import {
   ICON_LINKEDIN,
   ICON_GITHUB,
@@ -68,6 +70,10 @@ interface RoomProps {
         speakersLabel: string
         volume: string
       }
+      discoveryTitle: string
+      discoveryFound: string
+      discoveryLocked: string
+      discoveryLabels: Record<string, string>
     }
     desk: {
       back: string
@@ -117,6 +123,17 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const [sfxEnabled, setSfxEnabled] = useState(true)
   const [sfxVolume, setSfxVolumeState] = useState(0.5)
   const [calmMode, setCalmMode] = useState(false)
+  const [konamiOpen, setKonamiOpen] = useState(false)
+  const [discoveryToast, setDiscoveryToast] = useState<string | null>(null)
+  const [hintPulses, setHintPulses] = useState(false)
+
+  const discover = useCallback((id: string, label: string) => {
+    if (addDiscovery(id)) {
+      setDiscoveryToast(label)
+      setTimeout(() => setDiscoveryToast(null), 2000)
+      window.dispatchEvent(new Event('room:discovery'))
+    }
+  }, [])
 
   const sfx = useSfx()
   // Lighting: target follows the visitor's local clock; `light` is what is
@@ -138,15 +155,13 @@ export function Room({ dict, readmeContent }: RoomProps) {
       img.onload = () => res(); img.onerror = () => res(); img.src = s
     }))).then(() => {
       if (cancelled) return
-      setPrevLight(light)
       setLight(targetLight)
       setTimeout(() => setPrevLight(null), LIGHTING_FADE_MS)
     })
     return () => { cancelled = true }
   }, [targetLight, light, reduce])
 
-  // Load lamp pref on mount
-  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); setSfxEnabled(p.sfx); setSfxVolumeState(p.sfxVolume); setCalmMode(p.calmMode); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
+  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); setSfxEnabled(p.sfx); setSfxVolumeState(p.sfxVolume); setCalmMode(p.calmMode); setHintPulses(p.visitCount <= 1); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
 
   // First-visit README popup: shown once, persisted in localStorage.
   const [showReadmePopup, setShowReadmePopup] = useState(false)
@@ -166,6 +181,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const safetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const navRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const navigatingRef = useRef(false)
+  const keyBufRef = useRef<string[]>([])
 
   // Deep-link: check for #desk on mount
   useEffect(() => {
@@ -247,7 +263,66 @@ export function Room({ dict, readmeContent }: RoomProps) {
       setView('room')
     }
   }, [])
+  // Konami code (ArrowUp ArrowUp ArrowDown ArrowDown ArrowLeft ArrowRight ArrowLeft ArrowRight b a)
+  // opens the terminal easter egg.
+  useEffect(() => {
+    const KONAMI = [
+      "ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown",
+      "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight",
+      "b", "a",
+    ]
+    const onKey = (e: KeyboardEvent) => {
+      const buf = keyBufRef.current
+      buf.push(e.key)
+      if (buf.length > 10) buf.shift()
+      if (buf.length === 10 && KONAMI.every((k, i) => k === buf[i])) {
+        setKonamiOpen(true)
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
+
+  // Desk app discovery: listen for DeskView shortcut opens
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const appId = (e as CustomEvent<string>).detail
+      if (appId && (DISCOVERY_IDS as readonly string[]).includes(appId)) {
+        discover(appId, t.room.discoveryLabels[appId] ?? appId)
+      }
+    }
+    window.addEventListener('room:app-open', handler)
+    return () => window.removeEventListener('room:app-open', handler)
+  }, [discover, t.room.discoveryLabels])
+
+  // '?' key re-triggers first-visit hint pulses
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== '?') return
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
+      setHintPulses(true)
+      setTimeout(() => setHintPulses(false), 5000)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  // Cancel hint pulses on first user interaction
+  useEffect(() => {
+    if (!hintPulses) return
+    const cancel = () => setHintPulses(false)
+    window.addEventListener('pointerdown', cancel, { once: true })
+    window.addEventListener('keydown', cancel, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', cancel)
+      window.removeEventListener('keydown', cancel)
+    }
+  }, [hintPulses])
+
+
   const toggleLamp = useCallback(() => {
+    discover('lamp', t.room.discoveryLabels.lamp)
     sfx.play('lamp')
     setLampOn((v) => {
       const n = !v
@@ -256,23 +331,26 @@ export function Room({ dict, readmeContent }: RoomProps) {
       setTimeout(() => setLampFlicker(false), 500)
       return n
     })
-  }, [sfx])
+  }, [sfx, discover, t.room.discoveryLabels])
   const toggleClockFormat = useCallback(() => {
+    discover('clock', t.room.discoveryLabels.clock)
     sfx.play('clock')
     setClock24h((v) => {
       const n = !v
       savePrefs({ clock24h: n })
       return n
     })
-  }, [sfx])
+  }, [sfx, discover, t.room.discoveryLabels])
+
   const toggleSideTable = useCallback(() => {
+    discover('drawer', t.room.discoveryLabels.drawer)
     sfx.play('drawer')
     setSideTableOpen((v) => {
       const n = !v
       savePrefs({ sideTableOpen: n })
       return n
     })
-  }, [sfx])
+  }, [sfx, discover, t.room.discoveryLabels])
 
   // Settings app callbacks
   const handleSfxToggle = useCallback((v: boolean) => {
@@ -362,6 +440,9 @@ export function Room({ dict, readmeContent }: RoomProps) {
           onClock={handleClockToggle}
           calm={calmMode}
           onCalm={handleCalmToggle}
+          terminalLabels={{ title: "Terminal" }}
+          konamiOpen={konamiOpen}
+          onKonamiHandled={() => setKonamiOpen(false)}
         />
         <NowPlaying labels={t.room.audio} />
       </RoomAudioProvider>
@@ -523,6 +604,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
             mode="play-once-hold"
             onClick={() => {
               sfx.play('poster')
+              discover('poster', t.room.discoveryLabels.poster)
               setToast(t.room.posterClickHint)
               setTimeout(() => setToast(null), 2000)
             }}
@@ -537,7 +619,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
             frames={saitamaObj.frames}
             frameDuration={SPRITE_FRAME_MS.saitama}
             mode="play-all-loop-last-two"
-            onClick={() => { sfx.play('poster') }}
+            onClick={() => { sfx.play('poster'); discover('saitama', t.room.discoveryLabels.saitama) }}
           />
 
           <AnimatedSprite
@@ -550,6 +632,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
             frameDuration={SPRITE_FRAME_MS.bonsai}
             mode="loop"
             tooltipAlign="right"
+            onClick={() => { discover('bonsai', t.room.discoveryLabels.bonsai) }}
           />
 
           {/* Lamp toggle hotspot */}
@@ -618,11 +701,35 @@ export function Room({ dict, readmeContent }: RoomProps) {
             frames={coffeeObj.frames}
             frameDuration={SPRITE_FRAME_MS.coffee}
             mode="play-once-hold"
+            onClick={() => { discover('coffee', t.room.discoveryLabels.coffee) }}
           />
           {/* iPod on the desk, click skips to a fresh track (starts music if stopped) */}
-          <RoomIpod label={t.room.ipodLabel} obj={ipodObj} />
+          <RoomIpod label={t.room.ipodLabel} obj={ipodObj} onActivate={() => discover('ipod', t.room.discoveryLabels.ipod)} />
 
         </RoomStage>
+
+      {/* First-visit hint pulses */}
+      {hintPulses && view === 'room' && (
+        <div aria-hidden className="fixed inset-0 z-10 pointer-events-none">
+          {ROOM_OBJECTS.filter(o => o.id !== 'clock').map((obj, i) => (
+            <div
+              key={obj.id}
+              className="absolute animate-[hint-pulse_2s_ease-in-out_infinite]"
+              style={{
+                left: obj.x,
+                top: obj.y,
+                width: obj.w,
+                height: obj.h,
+                outline: '2px solid rgba(200,184,154,0.5)',
+                outlineOffset: '4px',
+                borderRadius: '2px',
+                animationDelay: `${i * 0.3}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
         </LightingProvider>
       </nav>
 
@@ -738,6 +845,43 @@ export function Room({ dict, readmeContent }: RoomProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Discoveries badge */}
+      {view === 'room' && (
+        <DiscoveriesBadge
+          title={t.room.discoveryTitle}
+          discoveryLabels={t.room.discoveryLabels}
+        />
+      )}
+
+      {/* Discovery toast */}
+      <AnimatePresence>
+        {discoveryToast && (
+          <motion.div
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none px-3 py-1.5 border-2"
+            style={{
+              backgroundColor: '#3d2e1e',
+              borderColor: '#5a4430',
+              borderRadius: '3px',
+              fontFamily: 'var(--font-pixel), "Courier New", monospace',
+              fontSize: '12px',
+              color: '#e8d5b0',
+            }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            {'\u2726'} {discoveryToast}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Screen-reader announcements */}
+      <div aria-live="polite" className="sr-only">
+        {discoveryToast ? `Discovered: ${discoveryToast}` : ''}
+      </div>
+
 
     </div>
     </RoomAudioProvider>

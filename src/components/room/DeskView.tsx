@@ -1,21 +1,20 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
 import { useStageScale, STAGE_W, STAGE_H } from '@/lib/room/useStageScale'
 import { useRoomAudio } from './RoomAudioProvider'
 import { DeskDesktop, type DesktopShortcut } from './DeskDesktop'
 import { DeskPaint, type PaintLabels } from './DeskPaint'
 import { DeskMinesweeper, type MinesLabels } from './DeskMinesweeper'
-import { ScreenStrip, StripButton } from './ScreenStrip'
+import { DeskBrowser } from './DeskBrowser'
+import { DeskReadme } from './DeskReadme'
 import { MusicNotes } from './MusicNotes'
 
 const SCREEN_X = 436; const SCREEN_Y = 152; const SCREEN_W = 536; const SCREEN_H = 308
 const SPEAKER_LEFT = { x: 190, y: 265, w: 175, h: 300 }
 const SPEAKER_RIGHT = { x: 1005, y: 270, w: 215, h: 300 }
 // Desk-speaker driver holes (tweeter + woofer), stage coords, measured from desk-closeup art.
-// Module-level constants so the MusicNotes effect dependency stays referentially stable.
 const DESK_SPEAKER_HOLES_LEFT = [
   { cx: 284, cy: 349, r: 34 },
   { cx: 284, cy: 478, r: 50 },
@@ -27,9 +26,8 @@ const DESK_SPEAKER_HOLES_RIGHT = [
 const MOUSE_X_MIN = 975; const MOUSE_X_MAX = 1140
 const MOUSE_Y_MIN = 572; const MOUSE_Y_MAX = 635
 const MOUSE_REST_X = 1007; const MOUSE_REST_Y = 608
-const MOBILE_CUTOFF = 700
 
-type ScreenMode = 'desktop' | 'browser' | 'paint' | 'minesweeper'
+type ScreenMode = 'desktop' | 'browser' | 'paint' | 'minesweeper' | 'readme'
 
 interface DeskViewProps {
   shortcuts: DesktopShortcut[]
@@ -39,55 +37,39 @@ interface DeskViewProps {
   expandLabel: string
   browserTitle: string
   speakersLabel: string
-  /** Persisted lamp state — picks the close-up art variant */
   lampOn: boolean
-  /** True for 500ms after a toggle; drives the flicker animation */
   lampFlicker: boolean
-  /** Accessible label for the lamp button (room.lampLabel) */
   lampLabel: string
-  /** Labels for the Paint app */
   paintLabels: PaintLabels
-  /** Labels for the Minesweeper app */
   minesLabels: MinesLabels
+  /** Labels for the browser app */
+  browserLabels: { back: string; forward: string; home: string; reload: string; search: string; urlPlaceholder: string }
+  /** Labels for the readme popup */
+  readmeLabels: { title: string; close: string }
+  /** site-text.txt content for the readme popup */
+  readmeContent: string
   onToggleLamp: () => void
   onBack: () => void
 }
 
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, expandLabel, browserTitle, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, onToggleLamp, onBack } = props
+  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, browserLabels, readmeLabels, readmeContent, onToggleLamp, onBack } = props
   const scale = useStageScale()
-  const router = useRouter()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
   const [showDesktop, setShowDesktop] = useState(false)
   const [time, setTime] = useState('')
   const [screenMode, setScreenMode] = useState<ScreenMode>('desktop')
-  const [browserPath, setBrowserPath] = useState('')
-  const [iframeLoaded, setIframeLoaded] = useState(false)
   const [mouseJitter, setMouseJitter] = useState(false)
   const [screensaver, setScreensaver] = useState(false)
   const [backPending, setBackPending] = useState(false)
   const backPendingTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const iframeRef = useRef<HTMLIFrameElement>(null)
   const activeIconRef = useRef<HTMLAnchorElement>(null)
   const mouseRef = useRef<HTMLDivElement>(null)
   const mouseTarget = useRef({ x: MOUSE_REST_X, y: MOUSE_REST_Y })
   const mouseCurrent = useRef({ x: MOUSE_REST_X, y: MOUSE_REST_Y })
   const rafRef = useRef(0)
-  const pathTimerRef = useRef<ReturnType<typeof setInterval>>(undefined)
   const idleTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < MOBILE_CUTOFF)
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
-  }, [])
-
-  // Prefetch
-  useEffect(() => {
-    for (const s of shortcuts) if (s.kind === 'site') router.prefetch(s.target)
-  }, [shortcuts, router])
 
   // Live clock
   useEffect(() => {
@@ -103,18 +85,6 @@ export function DeskView(props: DeskViewProps) {
     return () => clearTimeout(id)
   }, [reduce])
 
-  // Poll iframe path while in browser mode
-  useEffect(() => {
-    if (screenMode !== 'browser' || !iframeRef.current) return
-    pathTimerRef.current = setInterval(() => {
-      try {
-        const w = iframeRef.current?.contentWindow
-        if (w) setBrowserPath(w.location.pathname + w.location.hash)
-      } catch { /* cross-origin — ignore */ }
-    }, 500)
-    return () => { if (pathTimerRef.current) clearInterval(pathTimerRef.current) }
-  }, [screenMode])
-
   const handleShortcutClick = useCallback(
     (e: React.MouseEvent, s: DesktopShortcut) => {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
@@ -127,23 +97,11 @@ export function DeskView(props: DeskViewProps) {
         setScreenMode(s.target as ScreenMode)
         return
       }
-      if (reduce || isMobile) { router.push(s.target); return }
-      if (screenMode === 'browser') {
-        try {
-          iframeRef.current?.contentWindow?.location.replace(s.target)
-          setBrowserPath(s.target)
-        } catch { /* ignore */ }
-        return
-      }
-      activeIconRef.current = e.currentTarget as HTMLAnchorElement
-      setBrowserPath(s.target)
-      setScreenMode('browser')
-      setIframeLoaded(false)
     },
-    [reduce, isMobile, router, screenMode],
+    [],
   )
 
-  // Escape ladder: paint/minesweeper/browser → desktop → room
+  // Escape ladder: app → desktop → room
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
@@ -161,22 +119,8 @@ export function DeskView(props: DeskViewProps) {
   // Return to desktop
   const goDesktop = useCallback(() => {
     setScreenMode('desktop')
-    setIframeLoaded(false)
     activeIconRef.current?.focus()
   }, [])
-
-  // Expand to full page in new tab
-  const goExpand = useCallback(() => {
-    window.open(browserPath || '/home', '_blank')
-  }, [browserPath])
-
-  // Focus iframe on enter browser mode
-  useEffect(() => {
-    if (screenMode === 'browser' && iframeRef.current) {
-      const id = setTimeout(() => iframeRef.current?.focus(), 100)
-      return () => clearTimeout(id)
-    }
-  }, [screenMode])
 
   // Idle screensaver: reset timer on any activity, trigger after 15s
   useEffect(() => {
@@ -194,8 +138,7 @@ export function DeskView(props: DeskViewProps) {
     }
   }, [])
 
-  // Mouse follower rAF loop with visibility guard: pauses when the tab is
-  // backgrounded so the animation doesn't burn CPU unseen.
+  // Mouse follower rAF loop with visibility guard
   useEffect(() => {
     if (reduce) return
     if (!matchMedia('(pointer: fine)').matches) return
@@ -204,12 +147,10 @@ export function DeskView(props: DeskViewProps) {
     const onMove = (e: PointerEvent) => {
       mouseTarget.current.x = MOUSE_X_MIN + (e.clientX / window.innerWidth) * (MOUSE_X_MAX - MOUSE_X_MIN)
       mouseTarget.current.y = MOUSE_Y_MIN + (e.clientY / window.innerHeight) * (MOUSE_Y_MAX - MOUSE_Y_MIN)
-      // Resume rAF loop if paused
       if (!running) {
         running = true
         rafRef.current = requestAnimationFrame(loop)
       }
-      // Reset idle timeout
       if (idleTimeout) clearTimeout(idleTimeout)
       idleTimeout = setTimeout(() => {
         running = false
@@ -264,14 +205,12 @@ export function DeskView(props: DeskViewProps) {
     <div className="relative" style={{ width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: '#000', cursor: 'default' }}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('[data-screen-area]')) return
-        // Dismiss screensaver on first click; ignore the click otherwise
         if (screensaver) {
           setScreensaver(false)
           return
         }
         setMouseJitter(true)
         setTimeout(() => setMouseJitter(false), 300)
-        // Two-click confirmation: first click shows a prompt, second navigates
         if (!backPending) {
           setBackPending(true)
           if (backPendingTimer.current) clearTimeout(backPendingTimer.current)
@@ -286,16 +225,16 @@ export function DeskView(props: DeskViewProps) {
         width: STAGE_W, height: STAGE_H, position: 'absolute', top: '50%', left: '50%',
         transform: `translate(-50%, -50%) scale(${scale})`, transformOrigin: 'center center',
       }} initial={reduce ? undefined : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-        {/* Lamp-off close-up (always present, behind the lit version) */}
+        {/* Lamp-off close-up */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/room/desk-closeup-lamp-off.png" alt="" draggable={false} className="absolute inset-0 w-full h-full" style={{ imageRendering: 'pixelated' }} />
-        {/* Lamp-on close-up (fades out when the lamp is off, flickers on toggle) */}
+        {/* Lamp-on close-up */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/room/desk-closeup.png" alt="" draggable={false}
           className={`absolute inset-0 w-full h-full ${lampFlicker && !reduce ? 'animate-[lamp-flicker_0.5s_ease-out]' : ''}`}
           style={{ imageRendering: 'pixelated', opacity: lampOn ? 1 : 0, transition: reduce ? 'none' : 'opacity 0.4s ease' }} />
 
-        {/* Desk lamp toggle (left edge of the close-up) */}
+        {/* Desk lamp toggle */}
         <button onClick={(e) => { e.stopPropagation(); onToggleLamp() }} aria-label={lampLabel}
           className="absolute cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(200,184,154,0.7)] focus-visible:outline-offset-2"
           style={{ left: 8, top: 88, width: 160, height: 480 }} />
@@ -317,7 +256,7 @@ export function DeskView(props: DeskViewProps) {
         <MusicNotes holes={DESK_SPEAKER_HOLES_LEFT} startDelay={0} />
         <MusicNotes holes={DESK_SPEAKER_HOLES_RIGHT} startDelay={550} />
 
-        {/* "Click again to return" indicator when back is pending */}
+        {/* "Click again to return" indicator */}
         <AnimatePresence>
           {backPending && (
             <motion.div
@@ -371,7 +310,7 @@ export function DeskView(props: DeskViewProps) {
                   time={time}
                   backLabel={backLabel}
                   screenLabel={screenLabel}
-                  shortcuts={isMobile ? shortcuts.filter((s) => s.kind === 'site') : shortcuts}
+                  shortcuts={shortcuts}
                   screensaver={screensaver}
                   reduce={reduce}
                   screenW={SCREEN_W}
@@ -383,39 +322,15 @@ export function DeskView(props: DeskViewProps) {
             )}
 
             {screenMode === 'browser' && (
-              <motion.div key="browser" className="absolute inset-0 flex flex-col"
-                style={{ backgroundColor: '#faf8f5' }}
+              <motion.div key="browser" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <ScreenStrip time={time}>
-                  <StripButton onClick={goDesktop}>{desktopLabel}</StripButton>
-                  <StripButton onClick={goExpand}>{expandLabel}</StripButton>
-                  <StripButton onClick={(e) => { e.stopPropagation(); onBack() }} ariaLabel={backLabel}>← {backLabel}</StripButton>
-                </ScreenStrip>
-                {/* Iframe area — zoomed out 25% so site content appears smaller */}
-                <div className="flex-1 relative overflow-hidden">
-                  {!iframeLoaded && (
-                    <div className="absolute inset-0 flex items-center justify-center"
-                      style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace', fontSize: '10px', color: '#3a3028', backgroundColor: '#faf8f5' }}>
-                      LOADING…
-                    </div>
-                  )}
-                  <iframe
-                    ref={iframeRef}
-                    src={browserPath}
-                    title={browserTitle}
-                    className="border-0 absolute top-0 left-0"
-                    style={{
-                      backgroundColor: '#faf8f5',
-                      width: `${SCREEN_W / 0.75}px`,
-                      height: `${(SCREEN_H - 28) / 0.75}px`,
-                      transform: 'scale(0.75)',
-                      transformOrigin: 'top left',
-                    }}
-                    onLoad={() => setIframeLoaded(true)}
-                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                  />
-                </div>
+                <DeskBrowser
+                  time={time}
+                  desktopLabel={desktopLabel}
+                  labels={browserLabels}
+                  onDesktop={goDesktop}
+                />
               </motion.div>
             )}
 
@@ -436,6 +351,19 @@ export function DeskView(props: DeskViewProps) {
                 <DeskMinesweeper time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={minesLabels} onDesktop={goDesktop}
                   onBack={(e) => { e.stopPropagation(); onBack() }} />
+              </motion.div>
+            )}
+
+            {screenMode === 'readme' && (
+              <motion.div key="readme" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskReadme
+                  content={readmeContent}
+                  labels={readmeLabels}
+                  desktopLabel={desktopLabel}
+                  onDesktop={goDesktop}
+                />
               </motion.div>
             )}
           </AnimatePresence>

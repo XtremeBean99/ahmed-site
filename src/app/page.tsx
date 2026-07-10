@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { getDictionary } from '@/lib/i18n/server'
 import { Room } from '@/components/room/Room'
 import { JsonLd } from '@/components/seo/JsonLd'
@@ -42,6 +44,7 @@ const personSchema = {
 
 export default async function RoomPage() {
   const dict = await getDictionary()
+  const readmeContent = await readFile(join(process.cwd(), 'assets', 'site-text.txt'), 'utf-8')
 
   return (
     <>
@@ -51,6 +54,7 @@ export default async function RoomPage() {
           room: dict.room,
           desk: dict.desk,
         }}
+        readmeContent={readmeContent}
       />
     </>
   )

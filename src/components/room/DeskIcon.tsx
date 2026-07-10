@@ -180,3 +180,63 @@ export const ICON_MINESWEEPER = (
     <rect x="6" y="6" width="2" height="2" fill="#faf8f5" />
   </>
 )
+
+export const ICON_LINKEDIN = (
+  <>
+    {/* "in" lettering */}
+    <rect x="2" y="2" width="11" height="11" fill="#0a66c2" />
+    <rect x="4" y="4" width="1" height="7" fill="#ffffff" />
+    <rect x="6" y="8" width="1" height="3" fill="#ffffff" />
+    <rect x="6" y="6" width="1" height="1" fill="#ffffff" />
+    <rect x="7" y="5" width="1" height="5" fill="#ffffff" />
+    <rect x="8" y="4" width="1" height="7" fill="#ffffff" />
+  </>
+)
+
+export const ICON_GITHUB = (
+  <>
+    {/* Octocat silhouette — dark circle with inner cutout */}
+    <circle cx="8" cy="8" r="6" fill="#24292f" />
+    {/* Eyes */}
+    <circle cx="6" cy="7" r="1.5" fill="#ffffff" />
+    <circle cx="10" cy="7" r="1.5" fill="#ffffff" />
+    {/* Mouth arc */}
+    <rect x="6" y="10" width="4" height="1" fill="#ffffff" />
+    {/* Ear nubs */}
+    <rect x="2" y="5" width="2" height="1" fill="#24292f" />
+    <rect x="12" y="5" width="2" height="1" fill="#24292f" />
+    {/* Body */}
+    <rect x="5" y="11" width="6" height="3" fill="#24292f" />
+  </>
+)
+
+export const ICON_BROWSER = (
+  <>
+    {/* Compass/globe */}
+    <circle cx="8" cy="8" r="5" fill="none" stroke="#3a3028" strokeWidth="2" />
+    {/* Meridian */}
+    <ellipse cx="8" cy="8" rx="2" ry="5" fill="none" stroke="#3a3028" strokeWidth="1" />
+    {/* Equator */}
+    <rect x="3" y="7" width="10" height="2" fill="none" stroke="#3a3028" strokeWidth="1" />
+    {/* Stand */}
+    <rect x="6" y="13" width="4" height="1" fill="#3a3028" />
+    <rect x="7" y="14" width="2" height="1" fill="#3a3028" />
+  </>
+)
+
+export const ICON_README = (
+  <>
+    {/* Notepad / text file */}
+    <rect x="3" y="1" width="10" height="13" fill="#faf8f5" />
+    <rect x="2" y="1" width="1" height="13" fill="#5a4a3a" />
+    <rect x="3" y="14" width="10" height="1" fill="#5a4a3a" />
+    {/* Top fold/dog-ear */}
+    <polygon points="13,1 9,1 9,5 13,5" fill="#e8e0d8" />
+    <rect x="9" y="1" width="1" height="1" fill="#5a4a3a" />
+    {/* Text lines */}
+    <rect x="5" y="4" width="5" height="1" fill="#3a3028" />
+    <rect x="5" y="6" width="6" height="1" fill="#3a3028" />
+    <rect x="5" y="8" width="4" height="1" fill="#3a3028" />
+    <rect x="5" y="10" width="7" height="1" fill="#3a3028" />
+  </>
+)

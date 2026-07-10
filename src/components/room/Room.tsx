@@ -25,7 +25,10 @@ import { DeskView } from './DeskView'
 import { SideTableClock } from './SideTableClock'
 import { RoomObject } from './RoomObject'
 import {
-  ICON_HOME,
+  ICON_LINKEDIN,
+  ICON_GITHUB,
+  ICON_BROWSER,
+  ICON_README,
   ICON_PAINT,
   ICON_MINESWEEPER,
 } from './DeskIcon'
@@ -61,24 +64,34 @@ interface RoomProps {
       }
     }
     desk: {
-      home: string
-      paint: string
-      minesweeper: string
-      homeTip: string
-      paintTip: string
-      minesweeperTip: string
       back: string
       desktop: string
       expand: string
       browserTitle: string
       screenLabel: string
+      linkedin: string
+      github: string
+      browser: string
+      readme: string
+      linkedinTip: string
+      githubTip: string
+      browserTip: string
+      readmeTip: string
+      paint: string
+      minesweeper: string
+      paintTip: string
+      minesweeperTip: string
       paintApp: { pencil: string; eraser: string; fill: string; clear: string; download: string; color: string; canvas: string }
       mines: { board: string; cell: string; minesLeft: string; time: string; best: string; reset: string; won: string; lost: string }
+      browserApp: { back: string; forward: string; home: string; reload: string; search: string; urlPlaceholder: string }
+      readmeApp: { title: string; close: string }
+      readmePopup: string
     }
   }
+  readmeContent: string
 }
 
-export function Room({ dict }: RoomProps) {
+export function Room({ dict, readmeContent }: RoomProps) {
   const t = dict
   const reduce = useReducedMotion()
   const scale = useStageScale()
@@ -119,6 +132,20 @@ export function Room({ dict }: RoomProps) {
 
   // Load lamp pref on mount
   useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
+
+  // First-visit README popup: shown once, persisted in localStorage.
+  const [showReadmePopup, setShowReadmePopup] = useState(false)
+  useEffect(() => {
+    const KEY = 'room-readme-seen'
+    try {
+      if (localStorage.getItem(KEY)) return
+    } catch { return }
+    const id = setTimeout(() => {
+      setShowReadmePopup(true)
+      try { localStorage.setItem(KEY, '1') } catch {}
+    }, 2000)
+    return () => clearTimeout(id)
+  }, [])
 
   // Timeout refs
   const safetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -254,11 +281,14 @@ export function Room({ dict }: RoomProps) {
   const glowX = (screenCenterX / STAGE_W) * 100
   const glowY = (screenCenterY / STAGE_H) * 100
 
-  // Desktop launcher. Future friends' links: append { kind: 'external', target: 'https://…' } entries.
+  // Desktop launcher with external profile links, browser, apps, and readme.
   const deskShortcuts: DesktopShortcut[] = [
-    { id: 'home', kind: 'site', target: '/home', label: t.desk.home, tooltip: t.desk.homeTip, icon: ICON_HOME },
+    { id: 'linkedin', kind: 'external', target: 'https://www.linkedin.com/in/ahmed-hussain-0880ba25a/', label: t.desk.linkedin, tooltip: t.desk.linkedinTip, icon: ICON_LINKEDIN },
+    { id: 'github', kind: 'external', target: 'https://github.com/XtremeBean99', label: t.desk.github, tooltip: t.desk.githubTip, icon: ICON_GITHUB },
+    { id: 'browser', kind: 'app', target: 'browser', label: t.desk.browser, tooltip: t.desk.browserTip, icon: ICON_BROWSER },
     { id: 'paint', kind: 'app', target: 'paint', label: t.desk.paint, tooltip: t.desk.paintTip, icon: ICON_PAINT },
     { id: 'minesweeper', kind: 'app', target: 'minesweeper', label: t.desk.minesweeper, tooltip: t.desk.minesweeperTip, icon: ICON_MINESWEEPER },
+    { id: 'readme', kind: 'app', target: 'readme', label: t.desk.readme, tooltip: t.desk.readmeTip, icon: ICON_README },
   ]
 
   // Desk view
@@ -278,6 +308,9 @@ export function Room({ dict }: RoomProps) {
           lampLabel={t.room.lampLabel}
           paintLabels={t.desk.paintApp}
           minesLabels={t.desk.mines}
+          browserLabels={t.desk.browserApp}
+          readmeLabels={t.desk.readmeApp}
+          readmeContent={readmeContent}
           onToggleLamp={toggleLamp}
           onBack={handleDeskBack}
         />
@@ -607,6 +640,52 @@ export function Room({ dict }: RoomProps) {
           }}
         />
       )}
+
+      {/* First-visit README popup — styled like room tooltips */}
+      <AnimatePresence>
+        {showReadmePopup && view === 'room' && (
+          <motion.div
+            className="fixed z-50"
+            style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div
+              className="relative px-6 py-5 border-2 max-w-[420px]"
+              style={{
+                backgroundColor: '#3d2e1e',
+                borderColor: '#5a4430',
+                borderRadius: '3px',
+                fontFamily: 'var(--font-pixel), "Courier New", monospace',
+                fontSize: '11px',
+                color: '#e8d5b0',
+                lineHeight: '1.6',
+                textShadow: '1px 1px 0 #1a0e04',
+                maxHeight: '60vh',
+                overflowY: 'auto',
+              }}
+            >
+              <button
+                onClick={() => setShowReadmePopup(false)}
+                className="absolute top-1 right-2 text-[#a09080] hover:text-[#e8d5b0] transition-colors"
+                style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace', fontSize: '12px' }}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+              <p className="text-center text-[#c8b89a] mb-2" style={{ fontSize: '12px' }}>README</p>
+              <div className="text-[10px] leading-relaxed whitespace-pre-wrap">
+                {readmeContent}
+              </div>
+              <p className="mt-3 text-[9px] text-[#a09080] text-center">
+                {t.desk.readmePopup}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
     </RoomAudioProvider>

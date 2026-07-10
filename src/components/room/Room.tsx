@@ -34,6 +34,7 @@ import {
   ICON_README,
   ICON_MUSIC,
   ICON_LEGAL,
+  ICON_SETTINGS,
 } from './DeskIcon'
 import type { DesktopShortcut } from './DeskDesktop'
 import { DURATION } from '@/lib/motion'
@@ -80,6 +81,8 @@ interface RoomProps {
       githubTip: string
       legal: string
       legalTip: string
+      settings: string
+      settingsTip: string
       paint: string
       minesweeper: string
       paintTip: string
@@ -91,6 +94,7 @@ interface RoomProps {
       musicApp: { title: string; nowPlaying: string; select: string }
       readmeApp: { title: string; close: string }
       legalApp: { title: string; privacyTab: string; termsTab: string; close: string }
+      settingsApp: { title: string; sfx: string; sfxVolume: string; musicVolume: string; clock: string; clock12: string; clock24: string; calm: string; calmHint: string; on: string; off: string; close: string }
       readmePopup: string
     }
     legal: Dictionary['legal']
@@ -110,6 +114,9 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const [sideTableOpen, setSideTableOpen] = useState(false)
   const [sideTableHovered, setSideTableHovered] = useState(false)
   const [lampHovered, setLampHovered] = useState(false)
+  const [sfxEnabled, setSfxEnabled] = useState(true)
+  const [sfxVolume, setSfxVolumeState] = useState(0.5)
+  const [calmMode, setCalmMode] = useState(false)
 
   const sfx = useSfx()
   // Lighting: target follows the visitor's local clock; `light` is what is
@@ -139,7 +146,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
   }, [targetLight, light, reduce])
 
   // Load lamp pref on mount
-  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
+  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); setSfxEnabled(p.sfx); setSfxVolumeState(p.sfxVolume); setCalmMode(p.calmMode); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
 
   // First-visit README popup: shown once, persisted in localStorage.
   const [showReadmePopup, setShowReadmePopup] = useState(false)
@@ -267,6 +274,30 @@ export function Room({ dict, readmeContent }: RoomProps) {
     })
   }, [sfx])
 
+  // Settings app callbacks
+  const handleSfxToggle = useCallback((v: boolean) => {
+    setSfxEnabled(v)
+    sfx.setEnabled(v)
+  }, [sfx])
+  const handleSfxVolume = useCallback((v: number) => {
+    setSfxVolumeState(v)
+    sfx.setVolume(v)
+  }, [sfx])
+  const handleMusicVolume = useCallback((v: number) => {
+    savePrefs({ volume: v })
+    const audio = document.querySelector('audio')
+    if (audio) audio.volume = v
+  }, [])
+  const handleClockToggle = useCallback((_v: boolean) => {
+    toggleClockFormat()
+  }, [toggleClockFormat])
+  const handleCalmToggle = useCallback((v: boolean) => {
+    setCalmMode(v)
+    savePrefs({ calmMode: v })
+    window.dispatchEvent(new Event('room:calm-changed'))
+  }, [])
+
+
   const monitorObj = ROOM_OBJECTS.find((o) => o.id === 'monitor')!
   const posterObj = ROOM_OBJECTS.find((o) => o.id === 'poster')!
   const saitamaObj = ROOM_OBJECTS.find((o) => o.id === 'saitama')!
@@ -288,6 +319,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const deskShortcuts: DesktopShortcut[] = [
     { id: 'linkedin', kind: 'external', target: 'https://www.linkedin.com/in/ahmed-hussain-0880ba25a/', label: t.desk.linkedin, tooltip: t.desk.linkedinTip, icon: ICON_LINKEDIN },
     { id: 'github', kind: 'external', target: 'https://github.com/XtremeBean99', label: t.desk.github, tooltip: t.desk.githubTip, icon: ICON_GITHUB },
+    { id: 'settings', kind: 'app', target: 'settings', label: t.desk.settings, tooltip: t.desk.settingsTip, icon: ICON_SETTINGS },
     { id: 'music', kind: 'app', target: 'music', label: t.desk.music, tooltip: t.desk.musicTip, icon: ICON_MUSIC },
     { id: 'paint', kind: 'app', target: 'paint', label: t.desk.paint, tooltip: t.desk.paintTip, icon: ICON_PAINT },
     { id: 'minesweeper', kind: 'app', target: 'minesweeper', label: t.desk.minesweeper, tooltip: t.desk.minesweeperTip, icon: ICON_MINESWEEPER },
@@ -319,6 +351,17 @@ export function Room({ dict, readmeContent }: RoomProps) {
           readmeContent={readmeContent}
           onToggleLamp={toggleLamp}
           onBack={handleDeskBack}
+          settingsLabels={t.desk.settingsApp}
+          sfxOn={sfxEnabled}
+          onSfx={handleSfxToggle}
+          sfxVolume={sfxVolume}
+          onSfxVolume={handleSfxVolume}
+          musicVolume={0.3}
+          onMusicVolume={handleMusicVolume}
+          is24h={clock24h}
+          onClock={handleClockToggle}
+          calm={calmMode}
+          onCalm={handleCalmToggle}
         />
         <NowPlaying labels={t.room.audio} />
       </RoomAudioProvider>

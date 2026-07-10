@@ -8,7 +8,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react'
-import { loadPrefs } from '@/lib/room/storage'
+import { loadPrefs, savePrefs } from '@/lib/room/storage'
 
 /**
  * Interaction sound effects. Owns a small pool of preloaded <audio> elements
@@ -19,9 +19,6 @@ import { loadPrefs } from '@/lib/room/storage'
  * Also installs a document-level listener so *every* click on the site plays
  * the click sound. Because playback is always triggered by a user gesture,
  * there is no autoplay-policy problem.
- *
- * `useSfx().play(name)` is exposed for future per-interaction sounds
- * (lamp/drawer/clock/poster/pc-start) — only 'click' is wired today.
  */
 
 const SFX_SRC = {
@@ -39,6 +36,8 @@ const POOL_SIZE = 4
 
 interface SfxState {
   play: (name: SfxName) => void
+  setEnabled: (v: boolean) => void
+  setVolume: (v: number) => void
 }
 
 const SfxCtx = createContext<SfxState | null>(null)
@@ -93,6 +92,19 @@ export function RoomSfxProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const setEnabled = useCallback((v: boolean) => {
+    enabledRef.current = v
+    savePrefs({ sfx: v })
+  }, [])
+
+  const setVolume = useCallback((v: number) => {
+    volumeRef.current = v
+    savePrefs({ sfxVolume: v })
+    for (const pool of Object.values(poolsRef.current)) {
+      for (const a of pool) { a.volume = v }
+    }
+  }, [])
+
   // Global click sound: any primary-button click anywhere on the site.
   useEffect(() => {
     const onDown = (e: PointerEvent) => {
@@ -103,5 +115,5 @@ export function RoomSfxProvider({ children }: { children: ReactNode }) {
     return () => document.removeEventListener('pointerdown', onDown)
   }, [play])
 
-  return <SfxCtx.Provider value={{ play }}>{children}</SfxCtx.Provider>
+  return <SfxCtx.Provider value={{ play, setEnabled, setVolume }}>{children}</SfxCtx.Provider>
 }

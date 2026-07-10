@@ -13,9 +13,11 @@ interface RoomSave {
   sfx: boolean
   /** SFX volume 0–1 */
   sfxVolume: number
+  /** Calm mode: enables OS reduced-motion for opted-in users */
+  calmMode: boolean
 }
 
-const DEFAULTS: RoomSave = { audio: true, lampOn: true, visitCount: 0, volume: 0.3, clock24h: true, sideTableOpen: false, sfx: true, sfxVolume: 0.5 }
+const DEFAULTS: RoomSave = { audio: true, lampOn: true, visitCount: 0, volume: 0.3, clock24h: true, sideTableOpen: false, sfx: true, sfxVolume: 0.5, calmMode: false }
 
 export function loadPrefs(): RoomSave {
   try {
@@ -37,6 +39,7 @@ export function loadPrefs(): RoomSave {
         typeof parsed.sfxVolume === 'number' && parsed.sfxVolume >= 0 && parsed.sfxVolume <= 1
           ? parsed.sfxVolume
           : DEFAULTS.sfxVolume,
+      calmMode: typeof parsed.calmMode === 'boolean' ? parsed.calmMode : DEFAULTS.calmMode,
     }
   } catch {
     return { ...DEFAULTS }

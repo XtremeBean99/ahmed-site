@@ -255,3 +255,12 @@ export const ICON_MUSIC = (
     <rect x="2" y="4" width="5" height="1" fill="#3a3028" />
   </>
 )
+
+export const ICON_SETTINGS = (
+  <>
+    <rect x="6" y="1" width="4" height="14" fill="#3a3028" />
+    <rect x="1" y="6" width="14" height="4" fill="#3a3028" />
+    <rect x="3" y="3" width="10" height="10" fill="#5a4a3a" />
+    <rect x="6" y="6" width="4" height="4" fill="#faf8f5" />
+  </>
+)

@@ -10,6 +10,7 @@ import { DeskMinesweeper, type MinesLabels } from './DeskMinesweeper'
 import { DeskReadme } from './DeskReadme'
 import { DeskMusic } from './DeskMusic'
 import { DeskLegal, type LegalLabels } from './DeskLegal'
+import { DeskSettings, type SettingsLabels } from './DeskSettings'
 import { MusicNotes } from './MusicNotes'
 
 const SCREEN_X = 436; const SCREEN_Y = 152; const SCREEN_W = 536; const SCREEN_H = 308
@@ -27,7 +28,7 @@ const DESK_SPEAKER_HOLES_RIGHT = [
 const MOUSE_X_MIN = 975; const MOUSE_X_MAX = 1140
 const MOUSE_Y_MIN = 572; const MOUSE_Y_MAX = 635
 const MOUSE_REST_X = 1007; const MOUSE_REST_Y = 608
-type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'readme' | 'music' | 'legal'
+type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'readme' | 'music' | 'legal' | 'settings'
 
 interface DeskViewProps {
   shortcuts: DesktopShortcut[]
@@ -51,6 +52,18 @@ interface DeskViewProps {
   /** Structured terms content */
   legalTerms: Record<string, unknown>
   /** "Effective date" label from the dictionary */
+  /** Labels for the Settings app */
+  settingsLabels: SettingsLabels
+  /** Settings: SFX on/off */
+  sfxOn: boolean; onSfx: (v: boolean) => void
+  /** Settings: SFX volume 0-1 */
+  sfxVolume: number; onSfxVolume: (v: number) => void
+  /** Settings: music volume 0-1 */
+  musicVolume: number; onMusicVolume: (v: number) => void
+  /** Settings: 24h clock toggle */
+  is24h: boolean; onClock: (v: boolean) => void
+  /** Settings: calm mode toggle */
+  calm: boolean; onCalm: (v: boolean) => void
   legalEffectiveDate: string
   /** site-text.txt content for the readme popup */
   readmeContent: string
@@ -59,7 +72,7 @@ interface DeskViewProps {
 }
 
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, readmeContent, onToggleLamp, onBack } = props
+  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, calm, onCalm, readmeContent, onToggleLamp, onBack } = props
   const scale = useStageScale()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
@@ -382,6 +395,28 @@ export function DeskView(props: DeskViewProps) {
                   effectiveDate={legalEffectiveDate}
                   labels={legalLabels}
                   desktopLabel={desktopLabel}
+                  onDesktop={goDesktop}
+                />
+              </motion.div>
+            )}
+
+            {screenMode === 'settings' && (
+              <motion.div key="settings" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskSettings
+                  labels={settingsLabels}
+                  desktopLabel={desktopLabel}
+                  sfxOn={sfxOn}
+                  onSfx={onSfx}
+                  sfxVolume={sfxVolume}
+                  onSfxVolume={onSfxVolume}
+                  musicVolume={musicVolume}
+                  onMusicVolume={onMusicVolume}
+                  is24h={is24h}
+                  onClock={onClock}
+                  calm={calm}
+                  onCalm={onCalm}
                   onDesktop={goDesktop}
                 />
               </motion.div>

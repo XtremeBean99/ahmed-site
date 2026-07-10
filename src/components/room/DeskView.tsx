@@ -9,6 +9,7 @@ import { DeskPaint, type PaintLabels } from './DeskPaint'
 import { DeskMinesweeper, type MinesLabels } from './DeskMinesweeper'
 import { DeskBrowser } from './DeskBrowser'
 import { DeskReadme } from './DeskReadme'
+import { DeskMusic } from './DeskMusic'
 import { MusicNotes } from './MusicNotes'
 
 const SCREEN_X = 436; const SCREEN_Y = 152; const SCREEN_W = 536; const SCREEN_H = 308
@@ -27,7 +28,7 @@ const MOUSE_X_MIN = 975; const MOUSE_X_MAX = 1140
 const MOUSE_Y_MIN = 572; const MOUSE_Y_MAX = 635
 const MOUSE_REST_X = 1007; const MOUSE_REST_Y = 608
 
-type ScreenMode = 'desktop' | 'browser' | 'paint' | 'minesweeper' | 'readme'
+type ScreenMode = 'desktop' | 'browser' | 'paint' | 'minesweeper' | 'readme' | 'music'
 
 interface DeskViewProps {
   shortcuts: DesktopShortcut[]
@@ -46,6 +47,8 @@ interface DeskViewProps {
   browserLabels: { back: string; forward: string; home: string; reload: string; search: string; urlPlaceholder: string }
   /** Labels for the readme popup */
   readmeLabels: { title: string; close: string }
+  /** Labels for the music player */
+  musicLabels: { title: string; nowPlaying: string; select: string }
   /** site-text.txt content for the readme popup */
   readmeContent: string
   onToggleLamp: () => void
@@ -53,7 +56,7 @@ interface DeskViewProps {
 }
 
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, browserLabels, readmeLabels, readmeContent, onToggleLamp, onBack } = props
+  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, browserLabels, readmeLabels, musicLabels, readmeContent, onToggleLamp, onBack } = props
   const scale = useStageScale()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
@@ -362,6 +365,19 @@ export function DeskView(props: DeskViewProps) {
                   content={readmeContent}
                   labels={readmeLabels}
                   desktopLabel={desktopLabel}
+                  onDesktop={goDesktop}
+                />
+              </motion.div>
+            )}
+
+            {screenMode === 'music' && (
+              <motion.div key="music" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskMusic
+                  time={time}
+                  desktopLabel={desktopLabel}
+                  labels={musicLabels}
                   onDesktop={goDesktop}
                 />
               </motion.div>

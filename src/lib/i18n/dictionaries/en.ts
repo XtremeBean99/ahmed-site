@@ -494,6 +494,8 @@ export const en = {
     browserTip: 'Browse the web',
     readmeTip: 'About this site',
     paint: 'Paint',
+    music: 'Music',
+    musicTip: 'Playlist — pick a track',
     minesweeper: 'Minesweeper',
     paintTip: 'Doodle on a pixel canvas — it saves itself',
     minesweeperTip: 'Classic mines, room edition',
@@ -527,6 +529,11 @@ export const en = {
     readmeApp: {
       title: 'README.txt',
       close: 'Close',
+    },
+    musicApp: {
+      title: 'Room Jams',
+      nowPlaying: 'Now playing',
+      select: 'Play track',
     },
     readmePopup: 'Click the README icon on the desktop to learn more about this site.',
   },

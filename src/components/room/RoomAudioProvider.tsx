@@ -18,6 +18,7 @@ interface AudioState {
   volume: number
   toggle: () => void
   nextTrack: () => void
+  selectTrack: (index: number) => void
   setVolume: (v: number) => void
 }
 
@@ -121,7 +122,6 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
       }).catch(() => {})
     }
   }, [])
-
   const nextTrack = useCallback(() => {
     const audio = audioRef.current
     if (!audio) return
@@ -129,6 +129,19 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
     setTrackIndex(trackIdxRef.current)
     loadTrack(audio, trackIdxRef.current)
     if (playingRef.current) audio.play().catch(() => {})
+  }, [])
+
+  const selectTrack = useCallback((index: number) => {
+    const audio = audioRef.current
+    if (!audio || index < 0 || index >= PLAYLIST.length) return
+    trackIdxRef.current = index
+    setTrackIndex(index)
+    loadTrack(audio, index)
+    audio.play().then(() => {
+      setPlaying(true)
+      playingRef.current = true
+      savePrefs({ audio: true })
+    }).catch(() => {})
   }, [])
 
   const setVolume = useCallback((v: number) => {
@@ -139,7 +152,7 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AudioCtx.Provider value={{ playing, trackIndex, volume, toggle, nextTrack, setVolume }}>
+    <AudioCtx.Provider value={{ playing, trackIndex, volume, toggle, nextTrack, selectTrack, setVolume }}>
       {children}
     </AudioCtx.Provider>
   )

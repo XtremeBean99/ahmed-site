@@ -42,8 +42,6 @@ export function Monitor({
   const reduce = useReducedMotion()
   const lighting = useLighting()
   const { tick, tickRef, advanceTo, clearTimer, start, stop } = useAnimationTimer(SPRITE_FRAME_MS.monitor, reduce)
-  // Touch devices: skip the hover animation and navigate directly on tap
-  const [isTouchDevice] = useState(() => typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches)
 
   useEffect(() => {
     router.prefetch(href)
@@ -76,15 +74,10 @@ export function Monitor({
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
-      if (reduce || isTouchDevice) {
-        e.preventDefault()
-        if (onEnter) onEnter()
-        return
-      }
-      // On desktop, clicking navigates directly
+      e.preventDefault()
       if (onEnter) onEnter()
     },
-    [reduce, isTouchDevice, onEnter],
+    [onEnter],
   )
 
   const frameSrc = lightingSrc(frames[Math.min(tick, frames.length - 1)], lighting)

@@ -240,3 +240,18 @@ export const ICON_README = (
     <rect x="5" y="10" width="7" height="1" fill="#3a3028" />
   </>
 )
+
+export const ICON_MUSIC = (
+  <>
+    {/* Note head + stem */}
+    <rect x="9" y="4" width="3" height="2" fill="#1db954" />
+    <rect x="8" y="1" width="1" height="9" fill="#1db954" />
+    {/* Flag */}
+    <rect x="8" y="1" width="5" height="1" fill="#1db954" />
+    <rect x="12" y="2" width="1" height="5" fill="#1db954" />
+    {/* Second note */}
+    <rect x="3" y="7" width="3" height="2" fill="#3a3028" />
+    <rect x="2" y="4" width="1" height="9" fill="#3a3028" />
+    <rect x="2" y="4" width="5" height="1" fill="#3a3028" />
+  </>
+)

@@ -28,9 +28,10 @@ import {
   ICON_LINKEDIN,
   ICON_GITHUB,
   ICON_BROWSER,
-  ICON_README,
   ICON_PAINT,
   ICON_MINESWEEPER,
+  ICON_README,
+  ICON_MUSIC,
 } from './DeskIcon'
 import type { DesktopShortcut } from './DeskDesktop'
 import { DURATION } from '@/lib/motion'
@@ -84,6 +85,9 @@ interface RoomProps {
       paintApp: { pencil: string; eraser: string; fill: string; clear: string; download: string; color: string; canvas: string }
       mines: { board: string; cell: string; minesLeft: string; time: string; best: string; reset: string; won: string; lost: string }
       browserApp: { back: string; forward: string; home: string; reload: string; search: string; urlPlaceholder: string }
+      music: string
+      musicTip: string
+      musicApp: { title: string; nowPlaying: string; select: string }
       readmeApp: { title: string; close: string }
       readmePopup: string
     }
@@ -286,6 +290,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
     { id: 'linkedin', kind: 'external', target: 'https://www.linkedin.com/in/ahmed-hussain-0880ba25a/', label: t.desk.linkedin, tooltip: t.desk.linkedinTip, icon: ICON_LINKEDIN },
     { id: 'github', kind: 'external', target: 'https://github.com/XtremeBean99', label: t.desk.github, tooltip: t.desk.githubTip, icon: ICON_GITHUB },
     { id: 'browser', kind: 'app', target: 'browser', label: t.desk.browser, tooltip: t.desk.browserTip, icon: ICON_BROWSER },
+    { id: 'music', kind: 'app', target: 'music', label: t.desk.music, tooltip: t.desk.musicTip, icon: ICON_MUSIC },
     { id: 'paint', kind: 'app', target: 'paint', label: t.desk.paint, tooltip: t.desk.paintTip, icon: ICON_PAINT },
     { id: 'minesweeper', kind: 'app', target: 'minesweeper', label: t.desk.minesweeper, tooltip: t.desk.minesweeperTip, icon: ICON_MINESWEEPER },
     { id: 'readme', kind: 'app', target: 'readme', label: t.desk.readme, tooltip: t.desk.readmeTip, icon: ICON_README },
@@ -310,6 +315,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
           minesLabels={t.desk.mines}
           browserLabels={t.desk.browserApp}
           readmeLabels={t.desk.readmeApp}
+          musicLabels={t.desk.musicApp}
           readmeContent={readmeContent}
           onToggleLamp={toggleLamp}
           onBack={handleDeskBack}

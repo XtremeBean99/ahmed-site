@@ -490,6 +490,8 @@ export const fr: Dictionary = {
     githubTip: 'Mon profil GitHub',
     browserTip: 'Naviguer sur le web',
     readmeTip: 'À propos de ce site',
+    music: 'Musique',
+    musicTip: 'Playlist — choisir un titre',
     paint: 'Dessin',
     minesweeper: 'Démineur',
     paintTip: 'Dessinez sur une toile pixel — sauvegarde automatique',
@@ -524,6 +526,11 @@ export const fr: Dictionary = {
     readmeApp: {
       title: 'LISEZ-MOI.txt',
       close: 'Fermer',
+    },
+    musicApp: {
+      title: 'Musique d\'ambiance',
+      nowPlaying: 'En cours',
+      select: 'Lire le titre',
     },
     readmePopup: 'Cliquez sur l\'icône LISEZ-MOI sur le bureau pour en savoir plus sur ce site.',
   },

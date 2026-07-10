@@ -300,6 +300,14 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   SFX/music volume sliders, clock toggle, calm mode. Calm mode restores OS reduced-motion
   when enabled. Desktop icons: LinkedIn, GitHub, Settings, Music, Paint, Minesweeper,
   README, Legal. Screen modes: `desktop | paint | minesweeper | readme | music | legal | settings`.
+- **v13** `11 July 2026`: Plan B (discoverability): achievements/discoveries system
+  with toasts, DiscoveriesBadge (found/locked popup), first-visit hint pulses,
+  konami code terminal easter egg (DeskTerminal with green-on-dark CLI). All
+  highlight/pickup animations now forced always (MotionProvider reducedMotion="never",
+  calm mode no longer affects motion). Screen modes: `desktop | paint | minesweeper |
+  readme | music | legal | settings | terminal`. Desktop icons unchanged (terminal
+  is hidden, konami-only).
+
 
 
 - **v6 (security hardening)** `7 July 2026`: Deleted live Vercel OIDC token from

@@ -40,6 +40,10 @@ export function AnimatedSprite({
   const reduce = useReducedMotion()
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const idxRef = useRef(0)
+  // Touch devices: track whether a tap-triggered animation is running
+  const touchActiveRef = useRef(false)
+  const touchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const isTouchDevice = typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches
 
   const clearTimer = useCallback(() => {
     if (intervalRef.current !== null) {
@@ -95,19 +99,46 @@ export function AnimatedSprite({
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => clearTimer()
+    return () => {
+      clearTimer()
+      if (touchTimerRef.current) clearTimeout(touchTimerRef.current)
+    }
   }, [clearTimer])
 
-  const handleActivate = useCallback(() => {
+  // Touch tap handler: on coarse-pointer devices, a tap starts the animation
+  // and auto-stops after the full sequence completes (or on a second tap).
+  const handleTouch = useCallback(() => {
+    if (!isTouchDevice || reduce) return
+    if (touchActiveRef.current) {
+      // Second tap: stop early
+      stopAnimation()
+      touchActiveRef.current = false
+      if (touchTimerRef.current) clearTimeout(touchTimerRef.current)
+      return
+    }
+    touchActiveRef.current = true
     startAnimation()
-  }, [startAnimation])
+    if (onClick) onClick()
+    // Auto-stop after the full animation plays through
+    const totalMs = frames.length * frameDuration + 200
+    touchTimerRef.current = setTimeout(() => {
+      stopAnimation()
+      touchActiveRef.current = false
+    }, totalMs)
+  }, [isTouchDevice, reduce, startAnimation, stopAnimation, onClick, frames.length, frameDuration])
 
-  const handleDeactivate = useCallback(() => {
-    stopAnimation()
-  }, [stopAnimation])
-
+  // Aligned with Monitor: events are registered ONLY on RoomObject (no outer
+  // div with duplicate handlers), and the hover lift is on a motion.div
+  // wrapper around a plain <img> so the transform never displaces the hit area.
   return (
-    <div
+    <RoomObject
+      label={label}
+      showTooltip={hovered}
+      onActivate={startAnimation}
+      onDeactivate={stopAnimation}
+      onClick={isTouchDevice ? handleTouch : onClick}
+      tabIndex={0}
+      tooltipAlign={tooltipAlign}
       style={{
         position: 'absolute',
         left: x,
@@ -115,30 +146,21 @@ export function AnimatedSprite({
         width: w,
         height: h,
       }}
-      onMouseEnter={handleActivate}
-      onMouseLeave={handleDeactivate}
-      onFocus={handleActivate}
-      onBlur={handleDeactivate}
     >
-      <RoomObject
-        label={label}
-        showTooltip={hovered}
-        onActivate={handleActivate}
-        onDeactivate={handleDeactivate}
-        onClick={onClick}
-        tabIndex={0}
-        tooltipAlign={tooltipAlign}
+      <motion.div
+        className="w-full h-full"
+        animate={hovered && !reduce ? { y: -2 } : { y: 0 }}
+        transition={{ duration: DURATION.fast }}
       >
-        <motion.img
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={lightingSrc(frames[frameIndex], lighting)}
           alt=""
           draggable={false}
           className="block w-full h-full"
           style={{ imageRendering: 'pixelated' }}
-          animate={hovered && !reduce ? { y: -2 } : { y: 0 }}
-          transition={{ duration: DURATION.fast }}
         />
-      </RoomObject>
-    </div>
+      </motion.div>
+    </RoomObject>
   )
 }

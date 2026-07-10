@@ -1,6 +1,6 @@
 'use client'
 
-import { type ReactNode, useState, useRef, useCallback } from 'react'
+import { type ReactNode, useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useReducedMotion } from 'framer-motion'
 import { DURATION } from '@/lib/motion'
@@ -54,6 +54,13 @@ export function RoomObject({
     if (timerRef.current) clearTimeout(timerRef.current)
     setTooltipReady(false)
   }, [onDeactivate])
+
+  // Clear the tooltip delay timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
 
   const sharedHandlers = {
     onMouseEnter: handleActivate,

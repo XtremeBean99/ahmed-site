@@ -28,15 +28,20 @@ export function NowPlaying({ labels }: NowPlayingProps) {
     prevTrackRef.current = track.src
     setEmbeddedCover(null)
 
+    let revoked = false
+    let blobUrl: string | null = null
+
     extractCoverFromMp3(track.src).then((cover) => {
-      if (cover) {
+      if (cover && !revoked) {
         const blob = new Blob([new Uint8Array(cover.data)], { type: cover.mime })
-        setEmbeddedCover(URL.createObjectURL(blob))
+        blobUrl = URL.createObjectURL(blob)
+        setEmbeddedCover(blobUrl)
       }
     }).catch(() => {})
 
     return () => {
-      // Clean up old blob URL on next run
+      revoked = true
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
     }
   }, [track.src, track.cover])
 

@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from 'react'
+import { useId, useRef, useState, useCallback, useEffect, type ReactNode } from 'react'
 
 interface DeskIconProps {
   label: string
@@ -12,16 +12,40 @@ interface DeskIconProps {
 
 export function DeskIcon({ label, tooltip, href, icon, onClick }: DeskIconProps) {
   const tipId = useId()
+  const [showTooltip, setShowTooltip] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  const activate = useCallback(() => {
+    timerRef.current = setTimeout(() => setShowTooltip(true), 200)
+  }, [])
+
+  const deactivate = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    setShowTooltip(false)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
+
   const className =
     'relative flex flex-col items-center gap-1 group outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(0,0,0,0.4)] focus-visible:outline-offset-1'
   const style = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as React.CSSProperties
+  const sharedHandlers = {
+    onMouseEnter: activate,
+    onMouseLeave: deactivate,
+    onFocus: activate,
+    onBlur: deactivate,
+  }
   const inner = (
     <>
       {tooltip && (
         <span
           id={tipId}
           role="tooltip"
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 border whitespace-nowrap opacity-0 pointer-events-none transition-opacity duration-100 group-hover:opacity-100 group-focus-visible:opacity-100 z-10"
+          className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 border whitespace-nowrap z-10 transition-opacity duration-100 ${showTooltip ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
           style={{ backgroundColor: '#3d2e1e', borderColor: '#5a4430', borderRadius: '2px', fontSize: '9px', color: '#e8d5b0' }}
         >
           {tooltip}
@@ -41,11 +65,11 @@ export function DeskIcon({ label, tooltip, href, icon, onClick }: DeskIconProps)
     </>
   )
   return href ? (
-    <a href={href} onClick={onClick} className={className} aria-label={label} aria-describedby={tooltip ? tipId : undefined} style={style}>
+    <a href={href} onClick={onClick} className={className} aria-label={label} aria-describedby={tooltip ? tipId : undefined} style={style} {...sharedHandlers}>
       {inner}
     </a>
   ) : (
-    <button type="button" onClick={onClick} className={className} aria-label={label} aria-describedby={tooltip ? tipId : undefined} style={style}>
+    <button type="button" onClick={onClick} className={className} aria-label={label} aria-describedby={tooltip ? tipId : undefined} style={style} {...sharedHandlers}>
       {inner}
     </button>
   )

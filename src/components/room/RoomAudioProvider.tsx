@@ -73,6 +73,8 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
     const prefs = loadPrefs()
     if (!prefs.audio || !audioRef.current) return
 
+    let cleanup: (() => void) | undefined
+
     audioRef.current.play().then(() => {
       setPlaying(true)
       playingRef.current = true
@@ -82,9 +84,9 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
           setPlaying(true)
           playingRef.current = true
         }).catch(() => {})
-        cleanup()
+        cleanup?.()
       }
-      const cleanup = () => {
+      cleanup = () => {
         document.removeEventListener('click', onGesture)
         document.removeEventListener('keydown', onGesture)
         document.removeEventListener('touchstart', onGesture)
@@ -93,12 +95,18 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
       document.addEventListener('keydown', onGesture)
       document.addEventListener('touchstart', onGesture)
     })
+
+    return () => {
+      cleanup?.()
+    }
   }, [])
 
   const toggle = useCallback(() => {
     const audio = audioRef.current
     if (!audio) return
-    if (playing) {
+    // Use the ref for the current playing state so rapid toggles never
+    // act on a stale closure (the `playing` state lags one render behind).
+    if (playingRef.current) {
       audio.pause()
       setPlaying(false)
       playingRef.current = false
@@ -110,7 +118,7 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
         savePrefs({ audio: true })
       }).catch(() => {})
     }
-  }, [playing])
+  }, [])
 
   const nextTrack = useCallback(() => {
     const audio = audioRef.current

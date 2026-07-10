@@ -60,21 +60,15 @@ export function SideTableClock({
   }, [is24h])
 
   return (
-    <div
+    <RoomObject
+      label={label}
+      showTooltip={hovered}
+      onActivate={activate}
+      onDeactivate={deactivate}
+      onClick={onToggle}
+      tabIndex={0}
       style={{ position: 'absolute', left: x, top: y, width: w, height: h }}
-      onMouseEnter={activate}
-      onMouseLeave={deactivate}
-      onFocus={activate}
-      onBlur={deactivate}
     >
-      <RoomObject
-        label={label}
-        showTooltip={hovered}
-        onActivate={activate}
-        onDeactivate={deactivate}
-        onClick={onToggle}
-        tabIndex={0}
-      >
         {/* Plain <img>, NOT motion.img — the clock must not lift on hover. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -117,6 +111,5 @@ export function SideTableClock({
           {time.suffix && <span style={{ fontSize: '6px', marginLeft: '2px' }}>{time.suffix}</span>}
         </div>
       </RoomObject>
-    </div>
   )
 }

@@ -66,6 +66,8 @@ export function DeskView(props: DeskViewProps) {
   const [iframeLoaded, setIframeLoaded] = useState(false)
   const [mouseJitter, setMouseJitter] = useState(false)
   const [screensaver, setScreensaver] = useState(false)
+  const [backPending, setBackPending] = useState(false)
+  const backPendingTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const activeIconRef = useRef<HTMLAnchorElement>(null)
   const mouseRef = useRef<HTMLDivElement>(null)
@@ -74,7 +76,13 @@ export function DeskView(props: DeskViewProps) {
   const rafRef = useRef(0)
   const pathTimerRef = useRef<ReturnType<typeof setInterval>>(undefined)
   const idleTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < MOBILE_CUTOFF
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < MOBILE_CUTOFF)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   // Prefetch
   useEffect(() => {
@@ -165,7 +173,8 @@ export function DeskView(props: DeskViewProps) {
   // Focus iframe on enter browser mode
   useEffect(() => {
     if (screenMode === 'browser' && iframeRef.current) {
-      setTimeout(() => iframeRef.current?.focus(), 100)
+      const id = setTimeout(() => iframeRef.current?.focus(), 100)
+      return () => clearTimeout(id)
     }
   }, [screenMode])
 
@@ -189,9 +198,22 @@ export function DeskView(props: DeskViewProps) {
   useEffect(() => {
     if (reduce) return
     if (!matchMedia('(pointer: fine)').matches) return
+    let idleTimeout: ReturnType<typeof setTimeout> | undefined
+    let running = true
     const onMove = (e: PointerEvent) => {
       mouseTarget.current.x = MOUSE_X_MIN + (e.clientX / window.innerWidth) * (MOUSE_X_MAX - MOUSE_X_MIN)
       mouseTarget.current.y = MOUSE_Y_MIN + (e.clientY / window.innerHeight) * (MOUSE_Y_MAX - MOUSE_Y_MIN)
+      // Resume rAF loop if paused
+      if (!running) {
+        running = true
+        rafRef.current = requestAnimationFrame(loop)
+      }
+      // Reset idle timeout
+      if (idleTimeout) clearTimeout(idleTimeout)
+      idleTimeout = setTimeout(() => {
+        running = false
+        cancelAnimationFrame(rafRef.current)
+      }, 3000)
     }
     const onLeave = () => { mouseTarget.current.x = MOUSE_REST_X; mouseTarget.current.y = MOUSE_REST_Y }
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t
@@ -207,7 +229,13 @@ export function DeskView(props: DeskViewProps) {
     window.addEventListener('pointermove', onMove)
     document.documentElement.addEventListener('mouseleave', onLeave)
     rafRef.current = requestAnimationFrame(loop)
+    idleTimeout = setTimeout(() => {
+      running = false
+      cancelAnimationFrame(rafRef.current)
+    }, 3000)
     return () => {
+      running = false
+      if (idleTimeout) clearTimeout(idleTimeout)
       window.removeEventListener('pointermove', onMove)
       document.documentElement.removeEventListener('mouseleave', onLeave)
       cancelAnimationFrame(rafRef.current)
@@ -223,7 +251,22 @@ export function DeskView(props: DeskViewProps) {
     <div className="relative" style={{ width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: '#000', cursor: 'default' }}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('[data-screen-area]')) return
-        setMouseJitter(true); setTimeout(() => setMouseJitter(false), 300)
+        // Dismiss screensaver on first click; ignore the click otherwise
+        if (screensaver) {
+          setScreensaver(false)
+          return
+        }
+        setMouseJitter(true)
+        setTimeout(() => setMouseJitter(false), 300)
+        // Two-click confirmation: first click shows a prompt, second navigates
+        if (!backPending) {
+          setBackPending(true)
+          if (backPendingTimer.current) clearTimeout(backPendingTimer.current)
+          backPendingTimer.current = setTimeout(() => setBackPending(false), 2000)
+          return
+        }
+        if (backPendingTimer.current) clearTimeout(backPendingTimer.current)
+        setBackPending(false)
         onBack()
       }}>
       <motion.div style={{
@@ -261,6 +304,36 @@ export function DeskView(props: DeskViewProps) {
         {/* Music notes emanating from the speaker driver holes */}
         <MusicNotes holes={HOLES_LEFT} startDelay={0} />
         <MusicNotes holes={HOLES_RIGHT} startDelay={550} />
+
+        {/* "Click again to return" indicator when back is pending */}
+        <AnimatePresence>
+          {backPending && (
+            <motion.div
+              className="absolute pointer-events-none z-30"
+              style={{ left: '50%', top: '8px', transform: 'translateX(-50%)' }}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: reduce ? 0 : 0.2 }}
+            >
+              <div
+                className="px-3 py-1.5 border-2"
+                style={{
+                  backgroundColor: '#3d2e1e',
+                  borderColor: '#5a4430',
+                  borderRadius: '3px',
+                  fontFamily: 'var(--font-pixel), "Courier New", monospace',
+                  fontSize: '11px',
+                  color: '#e8d5b0',
+                  whiteSpace: 'nowrap',
+                  textShadow: '1px 1px 0 #1a0e04',
+                }}
+              >
+                Click again to return to room
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Decorative mouse */}
         <div

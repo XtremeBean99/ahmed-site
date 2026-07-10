@@ -45,6 +45,8 @@ export function Monitor({
   const lighting = useLighting()
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const tickRef = useRef(0)
+  // Touch devices: skip the hover animation and navigate directly on tap
+  const isTouchDevice = typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches
 
   useEffect(() => {
     router.prefetch(href)
@@ -99,15 +101,15 @@ export function Monitor({
       // Middle-click, ctrl+click, etc. — let the browser handle natively
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
 
-      if (reduce) {
-        // Reduced motion: navigate immediately (the <a> handles it natively)
+      if (reduce || isTouchDevice) {
+        // Reduced motion / touch: navigate immediately (the <a> handles it natively)
         return
       }
 
       e.preventDefault()
       onEnter?.()
     },
-    [reduce, onEnter],
+    [reduce, isTouchDevice, onEnter],
   )
 
   const frameSrc = lightingSrc(frames[Math.min(tick, frames.length - 1)], lighting)

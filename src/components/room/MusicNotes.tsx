@@ -40,6 +40,13 @@ export function MusicNotes({ holes, startDelay = 0 }: MusicNotesProps) {
   useEffect(() => {
     if (reduce || !playing) {
       if (timerRef.current) clearTimeout(timerRef.current)
+      // Hide any in-flight notes when playback stops
+      const pool = poolRef.current
+      if (pool) {
+        for (const img of pool.querySelectorAll<HTMLImageElement>('img')) {
+          img.classList.remove('note-float')
+        }
+      }
       return
     }
 

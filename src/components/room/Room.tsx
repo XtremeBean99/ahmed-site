@@ -28,6 +28,7 @@ import {
   ICON_MINESWEEPER,
 } from './DeskIcon'
 import type { DesktopShortcut } from './DeskDesktop'
+import { DURATION } from '@/lib/motion'
 import { useLightingClock, LightingProvider, lightingSrc, type LightingState } from '@/lib/room/lighting'
 
 type View = 'room' | 'zooming' | 'desk' | 'leaving'
@@ -43,6 +44,7 @@ interface RoomProps {
       lampLabel: string
       coffeeLabel: string
       sideTableClockLabel: string
+      sideTableDrawerLabel: string
       posterClickHint: string
       enterSite: string
       hint: string
@@ -82,8 +84,9 @@ export function Room({ dict }: RoomProps) {
   const [lampOn, setLampOn] = useState(true)
   const [lampFlicker, setLampFlicker] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
-  const [visitCount, setVisitCount] = useState(0)
   const [clock24h, setClock24h] = useState(true)
+  const [sideTableOpen, setSideTableOpen] = useState(false)
+  const [sideTableHovered, setSideTableHovered] = useState(false)
   const [lampHovered, setLampHovered] = useState(false)
 
   // Lighting: target follows the visitor's local clock; `light` is what is
@@ -113,7 +116,7 @@ export function Room({ dict }: RoomProps) {
   }, [targetLight, light, reduce])
 
   // Load lamp pref on mount
-  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setVisitCount(p.visitCount + 1); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
+  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
 
   // Timeout refs
   const safetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -218,6 +221,15 @@ export function Room({ dict }: RoomProps) {
     setClock24h((v) => {
       const n = !v
       savePrefs({ clock24h: n })
+      return n
+    })
+  }, [])
+
+  // Side table drawer: click toggles open/closed, persisted.
+  const toggleSideTable = useCallback(() => {
+    setSideTableOpen((v) => {
+      const n = !v
+      savePrefs({ sideTableOpen: n })
       return n
     })
   }, [])
@@ -351,23 +363,55 @@ export function Room({ dict }: RoomProps) {
             speakersLabel={t.room.audio.speakersLabel}
           />
 
-          {/* Side table — decorative, no hotspot, no hover lift. Dims with the lamp. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={lightingSrc('/room/side-table.png', light)}
-            alt=""
-            draggable={false}
-            className="absolute"
-            style={{
-              left: SIDE_TABLE_RECT.x,
-              top: SIDE_TABLE_RECT.y,
-              width: SIDE_TABLE_RECT.w,
-              height: SIDE_TABLE_RECT.h,
-              imageRendering: 'pixelated',
-              filter: lampOn ? 'none' : 'brightness(0.72)',
-              transition: reduce ? 'none' : 'filter 0.4s ease',
-            }}
-          />
+          {/* Side table — clickable: toggles the drawer open/closed. Dims with the lamp. */}
+          <div
+            style={{ position: 'absolute', left: SIDE_TABLE_RECT.x, top: SIDE_TABLE_RECT.y, width: SIDE_TABLE_RECT.w, height: SIDE_TABLE_RECT.h }}
+            onMouseEnter={() => setSideTableHovered(true)}
+            onMouseLeave={() => setSideTableHovered(false)}
+            onFocus={() => setSideTableHovered(true)}
+            onBlur={() => setSideTableHovered(false)}
+          >
+            <RoomObject
+              label={t.room.sideTableDrawerLabel}
+              showTooltip={sideTableHovered}
+              onActivate={() => setSideTableHovered(true)}
+              onDeactivate={() => setSideTableHovered(false)}
+              onClick={toggleSideTable}
+              tabIndex={0}
+            >
+              <motion.img
+                src={lightingSrc('/room/side-table-1.png', light)}
+                alt=""
+                draggable={false}
+                className="absolute inset-0"
+                style={{
+                  width: SIDE_TABLE_RECT.w,
+                  height: SIDE_TABLE_RECT.h,
+                  imageRendering: 'pixelated',
+                  filter: lampOn ? 'none' : 'brightness(0.72)',
+                  transition: reduce ? 'none' : 'filter 0.4s ease',
+                  opacity: sideTableOpen ? 0 : 1,
+                }}
+                animate={{ y: sideTableHovered && !reduce ? -2 : 0 }}
+              />
+              <motion.img
+                src={lightingSrc('/room/side-table-2.png', light)}
+                alt=""
+                draggable={false}
+                className="absolute inset-0"
+                style={{
+                  width: SIDE_TABLE_RECT.w,
+                  height: SIDE_TABLE_RECT.h,
+                  imageRendering: 'pixelated',
+                  filter: lampOn ? 'none' : 'brightness(0.72)',
+                  transition: reduce ? 'none' : 'filter 0.4s ease',
+                  opacity: sideTableOpen ? 1 : 0,
+                }}
+                animate={{ y: sideTableHovered && !reduce ? -2 : 0 }}
+                transition={{ duration: DURATION.fast }}
+              />
+            </RoomObject>
+          </div>
 
           {/* Digital clock on the side table — click toggles 12/24 h. No hover lift. */}
           <SideTableClock

@@ -461,6 +461,7 @@ export const en = {
     lampLabel: 'Desk lamp',
     coffeeLabel: 'Coffee mug',
     sideTableClockLabel: 'Digital clock toggle 24-hour time',
+    sideTableDrawerLabel: 'Side table drawer — click to open/close',
     posterClickHint: 'Nice poster!',
     clockTip: "It's {time}",
     enterSite: 'Enter website',

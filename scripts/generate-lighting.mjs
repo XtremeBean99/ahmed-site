@@ -35,7 +35,7 @@ const FILES = [
   'room-speakers-lamp-off.png',
   ...range('coffee', 6),
   'coffee-steam.png',
-  'side-table.png',
+  ...range('side-table', 2),
   'side-table-clock.png',
 ]
 

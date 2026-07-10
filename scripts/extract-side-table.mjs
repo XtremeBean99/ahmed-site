@@ -25,34 +25,63 @@ async function getBounds(imagePath) {
   return { left, top, right, bottom }
 }
 
-const JOBS = [
-  { src: 'side-table.png', out: 'side-table.png' },
-  { src: 'side-table-digital-clock-no-numbers.png', out: 'side-table-clock.png' },
-]
+const SIDE_TABLE_FRAMES = ['side-table1.png', 'side-table2.png']
+const CLOCK_JOB = { src: 'side-table-digital-clock-no-numbers.png', out: 'side-table-clock.png' }
 
 async function main() {
   await mkdir(outDir, { recursive: true })
   const pad = 2
   const imgW = 1408, imgH = 768
-  for (const job of JOBS) {
-    const srcPath = join(bgDir, job.src)
-    const b = await getBounds(srcPath)
+
+  // Multi-frame side table: union bbox across both frames.
+  const bounds = []
+  for (const src of SIDE_TABLE_FRAMES) {
+    const b = await getBounds(join(bgDir, src))
     if (!b) {
-      console.error('No opaque pixels in', job.src)
+      console.error('No opaque pixels in', src)
       process.exitCode = 1
       continue
     }
-    const left = Math.max(0, b.left - pad)
-    const top = Math.max(0, b.top - pad)
-    const right = Math.min(imgW - 1, b.right + pad)
-    const bottom = Math.min(imgH - 1, b.bottom + pad)
-    const w = right - left + 1
-    const h = bottom - top + 1
-    await sharp(srcPath)
+    bounds.push(b)
+  }
+  const union = {
+    left: Math.min(...bounds.map((b) => b.left)),
+    top: Math.min(...bounds.map((b) => b.top)),
+    right: Math.max(...bounds.map((b) => b.right)),
+    bottom: Math.max(...bounds.map((b) => b.bottom)),
+  }
+  const left = Math.max(0, union.left - pad)
+  const top = Math.max(0, union.top - pad)
+  const right = Math.min(imgW - 1, union.right + pad)
+  const bottom = Math.min(imgH - 1, union.bottom + pad)
+  const w = right - left + 1
+  const h = bottom - top + 1
+
+  for (let i = 0; i < SIDE_TABLE_FRAMES.length; i++) {
+    await sharp(join(bgDir, SIDE_TABLE_FRAMES[i]))
       .extract({ left, top, width: w, height: h })
       .png()
-      .toFile(join(outDir, job.out))
-    console.log(`${job.out}: ${w}x${h} at stage (${left},${top})`)
+      .toFile(join(outDir, `side-table-${i + 1}.png`))
+    console.log(`side-table-${i + 1}.png: ${w}x${h} at stage (${left},${top})`)
+  }
+
+  // Clock face (single frame, unchanged)
+  const cb = await getBounds(join(bgDir, CLOCK_JOB.src))
+  if (!cb) {
+    console.error('No opaque pixels in', CLOCK_JOB.src)
+    process.exitCode = 1
+  } else {
+    const cleft = Math.max(0, cb.left - pad)
+    const ctop = Math.max(0, cb.top - pad)
+    const cright = Math.min(imgW - 1, cb.right + pad)
+    const cbottom = Math.min(imgH - 1, cb.bottom + pad)
+    const cw = cright - cleft + 1
+    const ch = cbottom - ctop + 1
+    await sharp(join(bgDir, CLOCK_JOB.src))
+      .extract({ left: cleft, top: ctop, width: cw, height: ch })
+      .png()
+      .toFile(join(outDir, CLOCK_JOB.out))
+    console.log(`${CLOCK_JOB.out}: ${cw}x${ch} at stage (${cleft},${ctop})`)
   }
 }
 

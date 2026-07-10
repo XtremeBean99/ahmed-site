@@ -458,6 +458,7 @@ export const fr: Dictionary = {
     lampLabel: 'Lampe de bureau',
     coffeeLabel: 'Tasse de café',
     sideTableClockLabel: 'Horloge numérique basculer l\'affichage 24 h',
+    sideTableDrawerLabel: 'Tiroir de la table de chevet — cliquer pour ouvrir/fermer',
     posterClickHint: 'Jolie affiche !',
     clockTip: 'Il est {time}',
     enterSite: 'Entrer dans le site',

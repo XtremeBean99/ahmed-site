@@ -156,10 +156,10 @@ export const MONITOR_LOADING_FRAMES = Array.from(
 )
 
 /**
- * Decorative side table between the desk and the bed. No hotspot, no hover
- * lift — rendered as a plain background layer in Room.tsx.
+ * Side table between the desk and the bed. Clickable — toggles the drawer
+ * open/closed (two frames: closed, open). Dims with the lamp.
  */
-export const SIDE_TABLE_RECT = { x: 641, y: 409, w: 173, h: 215 }
+export const SIDE_TABLE_RECT = { x: 641, y: 409, w: 232, h: 210 }
 
 /**
  * The clock's dark face plane in stage coords. Left/right edges are vertical;

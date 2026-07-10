@@ -24,7 +24,6 @@ If you change a string here, its French translation must be updated too.
 Covered here: all page & section copy, navigation, footer, SEO descriptions.
 NOT yet pulled in (data-driven, lives in code - ask if you want these too):
   • Typing-test phrases  → src/lib/games/phrases.ts
-  • Contract game scenarios & clauses → src/lib/games/contract-data.ts
   • AGLC4 field labels / examples → src/lib/aglc4/fields.ts
 ================================================================================
 -->
@@ -272,7 +271,7 @@ Every question of AI governance, every cybersecurity regulation, every dispute o
 
 ### Games hub  ·  src/app/games/page.tsx
 - meta_title: Games
-- meta_description: Browser games by Ahmed Hussain: a live WPM typing speed test on law and technology phrases, a monochrome Breakout with power-ups, and the Clause Game — a contract negotiation strategy game.
+- meta_description: Browser games by Ahmed Hussain: a live WPM typing speed test on law and technology phrases, and a monochrome Breakout with power-ups.
 - eyebrow: Games
 - heading: A break from the brief.
 - intro: A few small things built for fun and to keep the canvas and animation muscles warm. They run entirely in your browser and keep your best score on your device.
@@ -285,9 +284,6 @@ Every question of AI governance, every cybersecurity regulation, every dispute o
 - card_breakout_label: Arcade
 - card_breakout_title: Breakout
 - card_breakout_desc: A monochrome take on the Atari classic: clear the wall, catch falling power-ups, and chase a personal best.
-- card_contract_label: Strategy
-- card_contract_title: The Clause Game
-- card_contract_desc: Sit at the negotiating table and draft the deal: pick clauses across real scenarios and win by landing a balanced, enforceable contract - too greedy or too generous and it falls apart.
 
 
 ### Typing test page  ·  src/app/games/typing-test/page.tsx
@@ -341,16 +337,6 @@ Every question of AI governance, every cybersecurity regulation, every dispute o
 - bugs_heading: Report a bug
 - bugs_intro: Found something wrong? Send a description of what happened (and which level you were on) and I will fix it.
   (Bug report form uses the same /api/contact endpoint with a pre-filled subject.)
-
-### The Clause Game page  ·  src/app/games/contract/page.tsx
-- meta_title: The Clause Game
-- meta_description: A contract-drafting game: pick clauses across real negotiation scenarios and win by landing a balanced, enforceable deal - too greedy or too generous and it falls apart.
-- eyebrow: Strategy
-- heading: The Clause Game
-- intro: You are counsel at the negotiating table. Choose a clause in every category, then lock in the deal. Land it in the balanced, enforceable zone to win the round - push too hard for your client and the other side walks; give too much away and you have failed them. Your best run stays on this device.
-
-(NOTE: the scenario briefs, clause wording and explanations live in
- src/lib/games/contract-data.ts - ask if you want those pulled in here too.)
 
 
 ================================================================================
@@ -553,6 +539,5 @@ Files: src/app/**/opengraph-image.tsx (twitter-image.tsx re-exports them).
 - projects: Projects / Selected work / Open-source code, an interactive look at silicon, and law-and-computing tools.
 - aglc4: Legal tool / AGLC4 citation generator / Footnote and bibliography citations in the Australian Guide to Legal Citation style.
 - base-converter: Computing tool / Base converter / Decimal, binary, hex, octal and text - plus a bitwise playground, all in the browser.
-- contract: Strategy / The Clause Game / Pick clauses and win by landing a balanced, enforceable deal - too greedy and it falls apart.
 - breakout: Arcade / Breakout / Clear the wall, catch falling power-ups, and chase a personal best.
 - typing-test / tutoring: see their opengraph-image.tsx files.

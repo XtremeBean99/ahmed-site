@@ -30,7 +30,6 @@ export async function getRepos(): Promise<Repo[]> {
     },
   )
   if (!res.ok) return [] // degrade gracefully; page still renders
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GitHub REST response shape is loosely typed
   const data = (await res.json()) as Record<string, unknown>[]
   return data
     .filter((r) => !r.fork && !r.private && !r.archived)

@@ -1,5 +1,4 @@
 const KEY = 'room-save-v1'
-
 interface RoomSave {
   audio: boolean
   lampOn: boolean
@@ -8,9 +7,11 @@ interface RoomSave {
   volume: number
   /** Digital clock shows 24-hour time (false = 12-hour) */
   clock24h: boolean
+  /** Side table drawer open */
+  sideTableOpen: boolean
 }
 
-const DEFAULTS: RoomSave = { audio: true, lampOn: true, visitCount: 0, volume: 0.3, clock24h: true }
+const DEFAULTS: RoomSave = { audio: true, lampOn: true, visitCount: 0, volume: 0.3, clock24h: true, sideTableOpen: false }
 
 export function loadPrefs(): RoomSave {
   try {
@@ -26,6 +27,7 @@ export function loadPrefs(): RoomSave {
           ? parsed.volume
           : DEFAULTS.volume,
       clock24h: typeof parsed.clock24h === 'boolean' ? parsed.clock24h : DEFAULTS.clock24h,
+      sideTableOpen: typeof parsed.sideTableOpen === 'boolean' ? parsed.sideTableOpen : DEFAULTS.sideTableOpen,
     }
   } catch {
     return { ...DEFAULTS }

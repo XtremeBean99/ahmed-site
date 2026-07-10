@@ -32,15 +32,16 @@ Side table + digital alarm clock on it (live user time in green LED digits skewY
 the face plane; click toggles 12/24 h, persisted as `clock24h`; deliberately no hover lift),
 Monitor hover highlight (4-frame yellow outline + simultaneous 18-frame Win98 boot-screen
 overlay, both play-once-hold), −2px hover lifts on all room objects (monitor, poster, bonsai,
-coffee), clickable room-view speakers with mute/unmute + music notes, clickable lamp in
-desk close-up with lamp-off art crossfade, desk close-up respects persisted lamp state.
-Continuing: room scene with monitor/poster/bonsai/lamp/coffee hotspots, zoom transition into
-a desk close-up, in-monitor browsing of the real site via same-origin iframe (site content
-zoomed out 25% for readability), six-track music player with now-playing widget (with
-embedded ID3 cover art extraction) and speaker mute, pointer-following desk mouse, music
-notes from the speaker drivers, three-wisp coffee steam, lamp-off art crossfade with
-flicker, warm lamp glow overlay, idle screensaver (15 s), "My room" CTA on /home linking back to /,
-EN/FR throughout. No pending actions remain.
+coffee, side table), clickable room-view speakers with mute/unmute + music notes, clickable
+lamp in desk close-up with lamp-off art crossfade, clickable side table with 2-frame drawer
+open/close toggle (persisted to localStorage), desk close-up respects persisted lamp state.
+Continuing: room scene with monitor/poster/bonsai/lamp/coffee/side-table hotspots, zoom
+transition into a desk close-up, in-monitor browsing of the real site via same-origin iframe
+(site content zoomed out 25% for readability), six-track music player with now-playing widget
+(with embedded ID3 cover art extraction) and speaker mute, pointer-following desk mouse,
+music notes from the speaker drivers, three-wisp coffee steam, lamp-off art crossfade with
+flicker, warm lamp glow overlay, idle screensaver (15 s), "My room" CTA on /home linking
+back to /, EN/FR throughout. No pending actions remain.
 
 ---
 
@@ -188,7 +189,7 @@ centred bubble overflowed the right edge) · lamp (60,300 110×220, hover toolti
 crossfade + flicker, persisted) · coffee (160,475 83×83, 6 frames: rest + 5-frame hover
 highlight, play-once-hold) with three staggered CSS steam wisps (`steam-rise` keyframes,
 per-wisp `--sway`/`--dur`, negative delays, rendered behind the mug) ·
-side table (641,409 173×215, decorative layer, no hotspot, dims with the lamp) ·
+side table (641,409 232×210, clickable, 2 frames: drawer closed/open, click toggles with tooltip, −2px hover lift, dims with the lamp, persisted in `sideTableOpen` pref) ·
 digital clock (658,386 71×55, single frame, no hover lift; SideTableClock renders live user
 time in LED green #35e65c on the blank face — digit plane (679,409) 43×22, skewY(−11°),
 1 Hz colon blink gated by reduced motion, updates every 10 s; click toggles 12/24 h via
@@ -246,7 +247,7 @@ bonsai-1..5 (1241,291 99×131) · desk-closeup (full canvas) ·
 desk-closeup-lamp-off (full canvas) · background / background-lamp-off
 (full canvas) · mouse (1007,608 110×80) · speaker-left/right (speaker rects) · note-1..3
 (~16–21×22) · coffee-1..6 (160,475 83×83) · coffee-steam (187,460 25×45) ·
-side-table (641,409 173×215) · side-table-clock (658,386 71×55) — both extracted by
+side-table-1..2 (641,409 232×210) · side-table-clock (658,386 71×55) — both extracted by
 scripts/extract-side-table.mjs from assets/pixel-art/background/.
 Background (`background.png`, ~55 KB) loads `fetchpriority="high"` as the LCP element.
 
@@ -289,6 +290,11 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   `desktop | browser | paint | minesweeper`; Escape ladder app → desktop → room.
 - **v9b** (7 July 2026): removed ambient dust motes; bumped night lighting brightness to
   0.93 (1.5×); restored lamp glow overlay (warm radial gradient near the lamp).
+- **v10** (10 July 2026): side table is now clickable with a 2-frame drawer open/close
+  animation (side-table-1.png: closed, side-table-2.png: open); click toggles the drawer
+  with a tooltip, persisted in `sideTableOpen` pref in `room-save-v1`; −2px hover lift like
+  other room objects; extraction script updated for union-bbox multi-frame output
+  (232×210, up from 173×215). No other room invariants changed.
 - **v6 (security hardening)** `7 July 2026`: Deleted live Vercel OIDC token from
   `.vercel/.env.production.local` (never committed, now removed). Tightened contact CSRF
   check: absent Origin is now rejected in production (previously skipped). Escaped `<` and

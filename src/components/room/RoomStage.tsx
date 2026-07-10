@@ -7,22 +7,23 @@ import { STAGE_W, STAGE_H } from '@/lib/room/useStageScale'
 
 interface RoomStageProps {
   children: ReactNode
-  /** Fit scale factor (letterbox) */
   scale: number
-  /** Zoom scale (1 = none, >1 = zooming into monitor) */
   zoomScale?: number
-  /** Zoom origin in stage coordinates */
   zoomOriginX?: number
   zoomOriginY?: number
+  panX?: number
+  panY?: number
 }
 
-/** Two-element transform: outer centres + fit-scales about centre, inner zooms about monitor point. */
+/** Two-element transform: outer centres + fit-scales + pans, inner zooms about monitor point. */
 export function RoomStage({
   children,
   scale,
   zoomScale = 1,
   zoomOriginX = STAGE_W / 2,
   zoomOriginY = STAGE_H / 2,
+  panX = 0,
+  panY = 0,
 }: RoomStageProps) {
   return (
     <div
@@ -36,15 +37,14 @@ export function RoomStage({
         backgroundColor: '#000000',
       }}
     >
-      {/* Outer: fit-scale about centre (never shifts off-centre) */}
       <div
+        id="room-stage-outer"
         style={{
-          transform: `scale(${scale})`,
+          transform: `translate(${panX}px, ${panY}px) scale(${scale})`,
           transformOrigin: 'center center',
           flexShrink: 0,
         }}
       >
-        {/* Inner: zoom about monitor point (stage coords valid here) */}
         <motion.div
           style={{
             width: STAGE_W,

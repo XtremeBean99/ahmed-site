@@ -111,7 +111,7 @@ interface RoomProps {
 export function Room({ dict, readmeContent }: RoomProps) {
   const t = dict
   const reduce = useReducedMotion()
-  const scale = useStageScale()
+  const { scale, mobile } = useStageScale()
   const [view, setView] = useState<View>('room')
   const [lampOn, setLampOn] = useState(true)
   const [lampFlicker, setLampFlicker] = useState(false)
@@ -136,6 +136,66 @@ export function Room({ dict, readmeContent }: RoomProps) {
   }, [])
 
   const sfx = useSfx()
+
+  // Mobile drag-to-pan
+  const panXRef = useRef(0)
+  const panYRef = useRef(0)
+  const dragStartRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null)
+  const panRafRef = useRef(0)
+  useEffect(() => {
+    if (!mobile) return
+    const STAGE_W = 1408, STAGE_H = 768
+    const onDown = (e: PointerEvent) => {
+      if ((e.target as HTMLElement).closest('a,button')) return
+      dragStartRef.current = { x: e.clientX, y: e.clientY, px: panXRef.current, py: panYRef.current }
+    }
+    const onMove = (e: PointerEvent) => {
+      if (!dragStartRef.current) return
+      panXRef.current = dragStartRef.current.px + (e.clientX - dragStartRef.current.x)
+      panYRef.current = dragStartRef.current.py + (e.clientY - dragStartRef.current.y)
+      // Clamp: stage edges stay in viewport
+      const maxX = Math.max(0, (window.innerWidth - STAGE_W * (window.innerHeight / STAGE_H)) / 2)
+      panXRef.current = Math.max(-maxX, Math.min(maxX, panXRef.current))
+      cancelAnimationFrame(panRafRef.current)
+      panRafRef.current = requestAnimationFrame(() => {
+        const el = document.getElementById('room-stage-outer')
+        if (el) el.style.transform = `translate(${panXRef.current}px, ${panYRef.current}px) scale(${window.innerHeight / STAGE_H})`
+      })
+    }
+    const onUp = () => { dragStartRef.current = null }
+    window.addEventListener('pointerdown', onDown)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    return () => {
+      window.removeEventListener('pointerdown', onDown)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      cancelAnimationFrame(panRafRef.current)
+    }
+  }, [mobile])
+
+  // Preload desk close-up art on idle so entering the desk is instant
+  useEffect(() => {
+    const preload = () => {
+      for (const src of MONITOR_LOADING_FRAMES) {
+        const img = new window.Image()
+        img.src = src
+      }
+      const deskArts = ['/room/desk-closeup.png', '/room/desk-closeup-lamp-off.png']
+      for (const src of deskArts) {
+        const img = new window.Image()
+        img.src = src
+      }
+    }
+    if (typeof requestIdleCallback !== 'undefined') {
+      const id = requestIdleCallback(preload)
+      return () => cancelIdleCallback(id)
+    }
+    const id = setTimeout(preload, 1000)
+    return () => clearTimeout(id)
+  }, [])
+
+
   // Lighting: target follows the visitor's local clock; `light` is what is
   // rendered; `prevLight` keeps the outgoing background pair mounted during
   // the 1.5s crossfade. The swap waits for the target backgrounds to load.

@@ -9,7 +9,11 @@ export async function addEntry(input: { name: string; message: string }): Promis
   const redis = getRedis()
   const entry: GuestbookEntry = { id: crypto.randomUUID(), name: input.name, message: input.message, at: Date.now() }
   await redis.zadd(KEY, { score: entry.at, member: JSON.stringify(entry) })
-  await redis.zremrangebyrank(KEY, 0, -(MAX_STORED + 1)) // drop oldest beyond the cap
+  // Only trim if we've exceeded the cap (avoid zremrangebyrank clamping on small sets)
+  const count = await redis.zcard(KEY)
+  if (count > MAX_STORED) {
+    await redis.zremrangebyrank(KEY, 0, count - MAX_STORED - 1)
+  }
   return entry
 }
 

@@ -62,9 +62,7 @@ interface DeskViewProps {
   /** Settings: music volume 0-1 */
   musicVolume: number; onMusicVolume: (v: number) => void
   /** Settings: 24h clock toggle */
-  is24h: boolean; onClock: (v: boolean) => void
-  /** Settings: calm mode toggle */
-  calm: boolean; onCalm: (v: boolean) => void
+  is24h: boolean; onClock: () => void
   legalEffectiveDate: string
   /** site-text.txt content for the readme popup */
   readmeContent: string
@@ -79,7 +77,7 @@ interface DeskViewProps {
 }
 
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, calm, onCalm, readmeContent, terminalLabels, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
+  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
   const { scale } = useStageScale()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
@@ -430,8 +428,6 @@ export function DeskView(props: DeskViewProps) {
                   onMusicVolume={onMusicVolume}
                   is24h={is24h}
                   onClock={onClock}
-                  calm={calm}
-                  onCalm={onCalm}
                   onDesktop={goDesktop}
                 />
               </motion.div>

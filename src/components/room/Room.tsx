@@ -94,15 +94,15 @@ interface RoomProps {
       paint: string
       minesweeper: string
       paintTip: string
-      music: string
       minesweeperTip: string
+      music: string
+      settingsApp: { title: string; sfx: string; sfxVolume: string; musicVolume: string; clock: string; clock12: string; clock24: string; on: string; off: string; close: string }
       paintApp: { pencil: string; eraser: string; fill: string; clear: string; download: string; color: string; canvas: string }
       mines: { board: string; cell: string; minesLeft: string; time: string; best: string; reset: string; won: string; lost: string }
       musicTip: string
       musicApp: { title: string; nowPlaying: string; select: string }
       readmeApp: { title: string; close: string }
       legalApp: { title: string; privacyTab: string; termsTab: string; close: string }
-      settingsApp: { title: string; sfx: string; sfxVolume: string; musicVolume: string; clock: string; clock12: string; clock24: string; calm: string; calmHint: string; on: string; off: string; close: string }
       readmePopup: string
     }
     legal: Dictionary['legal']
@@ -124,7 +124,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const [lampHovered, setLampHovered] = useState(false)
   const [sfxEnabled, setSfxEnabled] = useState(true)
   const [sfxVolume, setSfxVolumeState] = useState(0.5)
-  const [calmMode, setCalmMode] = useState(false)
   const [konamiOpen, setKonamiOpen] = useState(false)
   const [discoveryToast, setDiscoveryToast] = useState<string | null>(null)
   const [hintPulses, setHintPulses] = useState(false)
@@ -228,7 +227,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
     return () => { cancelled = true }
   }, [targetLight, light, reduce])
 
-  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); setSfxEnabled(p.sfx); setSfxVolumeState(p.sfxVolume); setCalmMode(p.calmMode); setHintPulses(p.visitCount <= 1); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
+  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); setSfxEnabled(p.sfx); setSfxVolumeState(p.sfxVolume); setHintPulses(p.visitCount <= 1); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
 
   // First-visit README popup: shown once, persisted in localStorage.
   const [showReadmePopup, setShowReadmePopup] = useState(false)
@@ -443,11 +442,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const handleClockToggle = useCallback(() => {
     toggleClockFormat()
   }, [toggleClockFormat])
-  const handleCalmToggle = useCallback((v: boolean) => {
-    setCalmMode(v)
-    savePrefs({ calmMode: v })
-    window.dispatchEvent(new Event('room:calm-changed'))
-  }, [])
 
 
   const monitorObj = ROOM_OBJECTS.find((o) => o.id === 'monitor')!
@@ -512,8 +506,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
           onMusicVolume={handleMusicVolume}
           is24h={clock24h}
           onClock={handleClockToggle}
-          calm={calmMode}
-          onCalm={handleCalmToggle}
           terminalLabels={{ title: "Terminal" }}
           konamiOpen={konamiOpen}
           onKonamiHandled={() => setKonamiOpen(false)}

@@ -6,7 +6,7 @@ const PIXEL = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as c
 
 export interface SettingsLabels {
   title: string; sfx: string; sfxVolume: string; musicVolume: string
-  clock: string; clock12: string; clock24: string; calm: string; calmHint: string
+  clock: string; clock12: string; clock24: string
   on: string; off: string; close: string
 }
 
@@ -16,8 +16,7 @@ interface DeskSettingsProps {
   sfxOn: boolean; onSfx: (v: boolean) => void
   sfxVolume: number; onSfxVolume: (v: number) => void
   musicVolume: number; onMusicVolume: (v: number) => void
-  is24h: boolean; onClock: (v: boolean) => void
-  calm: boolean; onCalm: (v: boolean) => void
+  is24h: boolean; onClock: () => void
   onDesktop: () => void
 }
 
@@ -46,13 +45,7 @@ export function DeskSettings(p: DeskSettingsProps) {
         <div style={row}><span>{p.labels.sfx}</span><Toggle on={p.sfxOn} onChange={p.onSfx} aria={p.labels.sfx} /></div>
         <div style={row}><span>{p.labels.sfxVolume}</span>{slider(p.sfxVolume, p.onSfxVolume, p.labels.sfxVolume)}</div>
         <div style={row}><span>{p.labels.musicVolume}</span>{slider(p.musicVolume, p.onMusicVolume, p.labels.musicVolume)}</div>
-        <div style={row}><span>{p.labels.clock}</span><Toggle on={p.is24h} onChange={p.onClock} aria={p.labels.clock} /></div>
-        <div style={{ ...row, borderBottom: 'none', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-          <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
-            <span>{p.labels.calm}</span><Toggle on={p.calm} onChange={p.onCalm} aria={p.labels.calm} />
-          </div>
-          <span style={{ fontSize: '9px', color: '#8a8078' }}>{p.labels.calmHint}</span>
-        </div>
+        <div style={row}><span>{p.labels.clock}</span><Toggle on={p.is24h} onChange={() => p.onClock()} aria={p.labels.clock} /></div>
       </div>
     </div>
   )

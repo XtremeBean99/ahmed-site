@@ -276,9 +276,11 @@ export function Room({ dict, readmeContent }: RoomProps) {
     if (navRef.current) { clearTimeout(navRef.current); navRef.current = null }
   }, [])
 
-  // Shared helper: enter desk view, clearing both timers
+  // Shared helper: enter desk view, clearing both timers + pan state
   const enterDesk = useCallback(() => {
     clearTimeouts()
+    panXRef.current = 0
+    panYRef.current = 0
     setView('desk')
     window.history.pushState({ view: 'desk' }, '', '#desk')
     navigatingRef.current = false

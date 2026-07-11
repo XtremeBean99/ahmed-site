@@ -5,20 +5,28 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { ReactNode } from 'react'
 
 const TOTAL_FRAMES = 28
-const FRAME_MS = 120 // ~8.3 fps — fast enough to read as motion, slow enough for pixel art
-const HOLD_MS = 3000
-const DISPLAY_SIZE = 512 // 4x the 128x128 source
+const FRAME_MS = 120
+const FIRST_HOLD_MS = 1500
+const LAST_HOLD_MS = 1500
+const DISPLAY_SIZE = 512
 
 const FRAMES = Array.from({ length: TOTAL_FRAMES }, (_, i) => `/room/xtreme-${i + 1}.png`)
 
 interface Props { children: ReactNode }
 
 export function XtremeSplash({ children }: Props) {
-  const [phase, setPhase] = useState<'playing' | 'holding' | 'done'>('playing')
+  const [phase, setPhase] = useState<'firstFrame' | 'playing' | 'holding' | 'done'>('firstFrame')
   const [frame, setFrame] = useState(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Play through frames
+  // Hold first frame for FIRST_HOLD_MS before playing
+  useEffect(() => {
+    if (phase !== 'firstFrame') return
+    timerRef.current = setTimeout(() => setPhase('playing'), FIRST_HOLD_MS)
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [phase])
+
+  // Play through frames 1..N-1
   useEffect(() => {
     if (phase !== 'playing') return
     timerRef.current = setTimeout(() => {
@@ -31,10 +39,10 @@ export function XtremeSplash({ children }: Props) {
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [phase, frame])
 
-  // Hold last frame for HOLD_MS, then finish
+  // Hold last frame for LAST_HOLD_MS, then finish
   useEffect(() => {
     if (phase !== 'holding') return
-    timerRef.current = setTimeout(() => setPhase('done'), HOLD_MS)
+    timerRef.current = setTimeout(() => setPhase('done'), LAST_HOLD_MS)
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [phase])
 

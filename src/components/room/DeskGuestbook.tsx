@@ -25,8 +25,8 @@ export function DeskGuestbook({ labels, desktopLabel, onDesktop }: Props) {
       const r = await fetch('/api/guestbook', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, message, website }) })
       const d = await r.json()
       if (!r.ok || !d.success) { setErr(d.error || labels.error); return }
-      if (d.entry) setEntries((prev) => [d.entry, ...(prev ?? [])])
-      setName(''); setMessage('')
+      if (d.entry) { setEntries((prev) => [d.entry, ...(prev ?? [])]); setName(''); setMessage('') }
+      else { setErr(labels.error) }
     } catch { setErr(labels.error) } finally { setBusy(false) }
   }
 

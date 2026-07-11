@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { guestbookSchema } from '@/lib/validations'
 import { addEntry, listEntries, deleteEntry } from '@/services/guestbook'
 import { checkRateLimit, getClientIp } from '@/lib/ratelimit'
+import { getRedis } from '@/lib/redis'
 
 // Drop ASCII control characters (codes 0-31 and DEL 127) and any HTML tags; keep normal text.
 const stripUnsafe = (s: string) =>
@@ -12,9 +13,19 @@ const stripUnsafe = (s: string) =>
     .trim()
 const BAD = /\b(fuck|shit|cunt|nigg|faggot)\b/i // minimal; expand as needed
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Health check: GET /api/guestbook?health=1 tests Redis connectivity
+  if (request.nextUrl.searchParams.get('health') === '1') {
+    try {
+      const redis = getRedis()
+      await redis.ping()
+      return NextResponse.json({ ok: true, redis: 'connected' })
+    } catch (e) {
+      return NextResponse.json({ ok: false, error: String(e) }, { status: 500 })
+    }
+  }
   try { return NextResponse.json({ entries: await listEntries(50) }) }
-  catch { return NextResponse.json({ entries: [] }) } // fail soft (e.g. env unset)
+  catch (e) { console.error('[guestbook] GET failed', e); return NextResponse.json({ entries: [] }) }
 }
 
 export async function POST(request: NextRequest) {
@@ -43,7 +54,7 @@ export async function POST(request: NextRequest) {
   try {
     const entry = await addEntry({ name: cleanName, message: cleanMsg })
     return NextResponse.json({ success: true, entry })
-  } catch { return NextResponse.json({ error: 'Could not save right now.' }, { status: 500 }) }
+  } catch (e) { console.error('[guestbook] POST failed', e); return NextResponse.json({ error: 'Could not save right now.' }, { status: 500 }) }
 }
 
 export async function DELETE(request: NextRequest) {

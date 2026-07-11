@@ -484,6 +484,7 @@ export const en = {
       settings: 'Settings',
       terminal: 'Terminal',
       screensaver: 'Screensaver',
+      night: 'Night sky',
     },
 
   },

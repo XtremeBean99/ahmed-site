@@ -188,4 +188,22 @@
   50%      { outline-color: rgba(200,184,154,0.7); }
 }
 
+/* Room window weather (RoomWeather) + night sky (RoomNightSky). Translate values
+   span the window glass height (~300px) plus a little margin. */
+@keyframes room-rain {
+  0%   { transform: translate(0, -12px); opacity: 0; }
+  10%  { opacity: 1; }
+  100% { transform: translate(10px, 320px); opacity: 0; }
+}
+@keyframes room-snow {
+  0%   { transform: translate(0, -6px); opacity: 0; }
+  10%  { opacity: 0.85; }
+  50%  { transform: translate(9px, 160px); }
+  100% { transform: translate(-5px, 320px); opacity: 0; }
+}
+@keyframes room-twinkle {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 1; }
+}
+
 

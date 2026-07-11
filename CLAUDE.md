@@ -54,10 +54,11 @@ References: Vercel, Linear, Stripe aesthetic.
 scoped to `/` only. Do NOT add colour to any `(site)` page.
 
 ### 2. All user input is hostile
-Spec 1 archived the contact form and every API route/service — the room-only site currently has
-**no forms and no API routes** (except the optional Open-Meteo weather route planned in `todo.md`).
-If any form/API is re-added, follow the archived pattern: server-side Zod validation + honeypot
-(`_archive/services/contact.ts`). Never skip server-side validation.
+Spec 1 archived the contact form and every API route/service. The room-only site has **no forms**
+and exactly **one read-only API route**: `src/app/api/weather/route.ts` (Open-Meteo, fixed
+Canberra, hourly-cached, fail-soft, no key, no secrets, aggregate data — added in Spec E). If any
+form/API that takes user input is re-added, follow the archived pattern: server-side Zod
+validation + honeypot (`_archive/services/contact.ts`). Never skip server-side validation.
 
 ### 3. Persistence is localStorage-only (no database, no server state)
 Spec 1 archived the contact/Resend flow and the ninja leaderboard (Upstash Redis), so the site
@@ -318,6 +319,13 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   no-op** — `MotionProvider` is hardcoded `reducedMotion="never"` and `prefersReducedMotion()`
   returns false, yet `DeskSettings` still renders a Calm-mode toggle. Either restore the pref
   wiring (see the v12 Settings commit) or remove the dead control.
+- **v15** `11 July 2026`: Spec E (life & atmosphere, part 1). Window atmosphere — `RoomWeather`
+  (real Canberra precipitation via the new `/api/weather` route → CSS rain/snow clipped to the
+  window glass, always visible) and `RoomNightSky` (emissive moon + twinkling stars, `night`
+  state only). `WINDOW_GLASS` rect in `objects.ts`; both render before the bonsai; `'night'`
+  discovery added. Also: animated sprites are hover/tap-only again (mount-autoplay removed) and
+  the sprite preload now warms the current lighting state's frames. (Deferred, needs art:
+  record player, cat.)
 
 
 

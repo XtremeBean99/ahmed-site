@@ -25,6 +25,8 @@ import { DeskView } from './DeskView'
 import { SideTableClock } from './SideTableClock'
 import { RoomObject } from './RoomObject'
 import { RoomIpod } from './RoomIpod'
+import { RoomWeather } from './RoomWeather'
+import { RoomNightSky } from './RoomNightSky'
 import { useSfx } from './RoomSfxProvider'
 import { addDiscovery, DISCOVERY_IDS } from '@/lib/room/discoveries'
 import { DiscoveriesBadge } from './DiscoveriesBadge'
@@ -362,6 +364,11 @@ export function Room({ dict, readmeContent }: RoomProps) {
     return () => window.removeEventListener('room:app-open', handler)
   }, [discover, t.room.discoveryLabels])
 
+  // Night sky is a discovery once the visitor is in the room after dark.
+  useEffect(() => {
+    if (light === 'night') discover('night', t.room.discoveryLabels.night)
+  }, [light, discover, t.room.discoveryLabels])
+
   // '?' key re-triggers first-visit hint pulses
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -572,6 +579,11 @@ export function Room({ dict, readmeContent }: RoomProps) {
                 style={{ imageRendering: 'pixelated', opacity: lampOn ? 1 : 0 }} />
             </div>
           )}
+
+          {/* Window atmosphere: night sky (moon+stars) + weather, clipped to the
+              glass and rendered behind the bonsai on the sill. */}
+          <RoomNightSky light={light} />
+          <RoomWeather />
 
           <Monitor
             label={t.room.monitorLabel}

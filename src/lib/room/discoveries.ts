@@ -17,6 +17,7 @@ export const DISCOVERY_IDS = [
   'settings',
   'terminal',
   'screensaver',
+  'night',
 ] as const
 
 export type DiscoveryId = (typeof DISCOVERY_IDS)[number]

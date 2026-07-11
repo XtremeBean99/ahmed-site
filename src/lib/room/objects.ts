@@ -200,3 +200,10 @@ export const SIDE_TABLE_RECT = { x: 641, y: 409, w: 232, h: 210 }
  */
 export const CLOCK_FACE_RECT = { x: 679, y: 409, w: 43, h: 22 }
 export const CLOCK_FACE_SKEW_DEG = -11
+
+/**
+ * Visible glass of the upper-right window (stage coords), used to clip the
+ * decorative weather (RoomWeather) and night-sky (RoomNightSky) overlays. The
+ * bonsai sits on this window's sill, so both overlays render BEFORE the bonsai.
+ */
+export const WINDOW_GLASS = { x: 1185, y: 52, w: 223, h: 300 }

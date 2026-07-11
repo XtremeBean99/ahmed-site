@@ -80,7 +80,7 @@ interface DeskViewProps {
 
 export function DeskView(props: DeskViewProps) {
   const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, calm, onCalm, readmeContent, terminalLabels, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
-  const scale = useStageScale()
+  const { scale } = useStageScale()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
   const [showDesktop, setShowDesktop] = useState(false)

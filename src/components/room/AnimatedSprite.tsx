@@ -45,8 +45,12 @@ export function AnimatedSprite({
   const touchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const [isTouchDevice] = useState(() => typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches)
 
-  const startAnimation = useCallback(() => {
-    setHovered(true)
+  // Continuous modes (loop, play-all-loop-last-two) run on their own from mount;
+  // play-once-hold plays on hover/tap only. `runAnimation` starts the timer per
+  // mode WITHOUT touching hover state (hover only drives the -2px lift + tooltip).
+  const isAutoplay = mode !== 'play-once-hold'
+
+  const runAnimation = useCallback(() => {
     if (reduce || frames.length <= 1) return
 
     if (mode === 'play-once-hold') {
@@ -73,10 +77,26 @@ export function AnimatedSprite({
     }
   }, [reduce, frames.length, mode, start, advanceTo, clearTimer, tickRef])
 
+  const startAnimation = useCallback(() => {
+    setHovered(true)
+    if (isAutoplay) return // already running from mount; hover only lifts
+    runAnimation()
+  }, [isAutoplay, runAnimation])
+
   const stopAnimation = useCallback(() => {
     setHovered(false)
+    if (isAutoplay) return // keep looping when the pointer leaves
     stop()
-  }, [stop])
+  }, [isAutoplay, stop])
+
+  // Autoplay continuous modes on mount (saitama's play-all-loop-last-two, bonsai's
+  // loop). This mount-autoplay was dropped in the Spec 1 refactor, which is why
+  // saitama stopped animating.
+  useEffect(() => {
+    if (!isAutoplay) return
+    runAnimation()
+    return () => stop()
+  }, [isAutoplay, runAnimation, stop])
 
   // Cleanup touch timer on unmount (interval is handled by useAnimationTimer)
   useEffect(() => {
@@ -84,15 +104,18 @@ export function AnimatedSprite({
       if (touchTimerRef.current) clearTimeout(touchTimerRef.current)
     }
   }, [])
-  // Warm the browser cache for the hover frames so the first play-once
-  // hover does not skip frames while images stream in (matches Monitor).
+
+  // Warm the browser cache for the frames AT THE CURRENT LIGHTING STATE so the
+  // first play does not skip while images stream in. Preloading only the base
+  // (dusk) paths missed the graded dawn/day/night variants (lightingSrc) — that
+  // was the "delayed on first play" bug. Re-runs when the lighting state changes.
   useEffect(() => {
     if (frames.length <= 1) return
-    for (const src of frames.slice(1)) {
+    for (const src of frames) {
       const img = new window.Image()
-      img.src = src
+      img.src = lightingSrc(src, lighting)
     }
-  }, [frames])
+  }, [frames, lighting])
 
   // Touch tap handler: on coarse-pointer devices, a tap starts the animation
   // and auto-stops after the full sequence completes (or on a second tap).

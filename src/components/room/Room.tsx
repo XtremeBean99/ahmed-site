@@ -76,7 +76,6 @@ interface RoomProps {
       discoveryFound: string
       discoveryLocked: string
       discoveryLabels: Record<string, string>
-      statusNote: string
     }
     desk: {
       back: string
@@ -491,7 +490,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
           backLabel={t.desk.back}
           screenLabel={t.desk.screenLabel}
           desktopLabel={t.desk.desktop}
-          statusNote={t.room.statusNote}
           speakersLabel={t.room.audio.speakersLabel}
           lampOn={lampOn}
           lampFlicker={lampFlicker}

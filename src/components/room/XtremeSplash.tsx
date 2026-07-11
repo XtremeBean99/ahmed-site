@@ -55,7 +55,7 @@ export function XtremeSplash({ children }: Props) {
           <motion.div
             key="splash"
             className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ backgroundColor: '#1a1210' }}
+            style={{ backgroundColor: '#e8d5b0' }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
           >

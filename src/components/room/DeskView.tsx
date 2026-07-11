@@ -38,7 +38,6 @@ interface DeskViewProps {
   backLabel: string
   screenLabel: string
   desktopLabel: string
-  statusNote: string
   speakersLabel: string
   lampOn: boolean
   lampFlicker: boolean
@@ -83,7 +82,7 @@ interface DeskViewProps {
   onBack: () => void
 }
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, statusNote, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, linksLabels, guestbookLabels, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
+  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, linksLabels, guestbookLabels, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
   const { scale } = useStageScale()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
@@ -348,7 +347,6 @@ export function DeskView(props: DeskViewProps) {
                   time={time}
                   backLabel={backLabel}
                   screenLabel={screenLabel}
-                  statusNote={statusNote}
                   shortcuts={shortcuts}
                   screensaver={screensaver}
                   reduce={reduce}

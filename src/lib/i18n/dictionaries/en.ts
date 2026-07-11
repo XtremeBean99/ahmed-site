@@ -485,11 +485,9 @@ export const en = {
       terminal: 'Terminal',
       screensaver: 'Screensaver',
       night: 'Night sky',
-      status: 'Sticky note',
       links: 'Links',
       guestbook: 'Guestbook',
     },
-    statusNote: 'currently: reading about AI liability, drinking too much coffee',
 
   },
   desk: {

@@ -8,9 +8,14 @@ const MAX_STORED = 500
 export async function addEntry(input: { name: string; message: string }): Promise<GuestbookEntry> {
   const redis = getRedis()
   const entry: GuestbookEntry = { id: crypto.randomUUID(), name: input.name, message: input.message, at: Date.now() }
-  await redis.zadd(KEY, { score: entry.at, member: JSON.stringify(entry) })
-  // Only trim if we've exceeded the cap (avoid zremrangebyrank clamping on small sets)
+  const member = JSON.stringify(entry)
+  const added = await redis.zadd(KEY, { score: entry.at, member })
+  console.error('[guestbook] zadd returned:', added, 'key:', KEY, 'score:', entry.at)
+  // Verify the write by reading the member back by score
+  const rangeCheck = await redis.zrange<string[]>(KEY, 0, 0, { rev: true })
+  console.error('[guestbook] zrange top-1 after write:', JSON.stringify(rangeCheck))
   const count = await redis.zcard(KEY)
+  console.error('[guestbook] zcard after write:', count)
   if (count > MAX_STORED) {
     await redis.zremrangebyrank(KEY, 0, count - MAX_STORED - 1)
   }

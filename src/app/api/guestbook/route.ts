@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { guestbookSchema } from '@/lib/validations'
-import { addEntry, listEntries, deleteEntry } from '@/services/guestbook'
+import { addEntry, listEntries, deleteEntry, trimEntries } from '@/services/guestbook'
 import { checkRateLimit, getClientIp } from '@/lib/ratelimit'
 import { getRedis } from '@/lib/redis'
 
@@ -59,10 +59,22 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const id = searchParams.get('id'); const key = searchParams.get('key')
+  const key = searchParams.get('key')
   const admin = process.env.GUESTBOOK_ADMIN_KEY
   if (!admin || key !== admin) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
-  if (!id) return NextResponse.json({ error: 'Missing id.' }, { status: 400 })
+
+  // Bulk: DELETE /api/guestbook?key=...&trim=N  — keep only the N most recent entries
+  const trim = searchParams.get('trim')
+  if (trim !== null) {
+    const n = parseInt(trim, 10)
+    if (isNaN(n) || n < 0) return NextResponse.json({ error: 'trim must be a non-negative integer.' }, { status: 400 })
+    const removed = await trimEntries(n)
+    return NextResponse.json({ success: true, removed })
+  }
+
+  // Single: DELETE /api/guestbook?key=...&id=<uuid>
+  const id = searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'Missing id or trim parameter.' }, { status: 400 })
   await deleteEntry(id)
   return NextResponse.json({ success: true })
 }

@@ -52,7 +52,13 @@ for (const name of ['room-speakers.png', 'room-speakers-lamp-off.png']) {
 
 // Lamp-off desk close-up is used at full canvas size; pass through sharp to
 // normalise the PNG encoding.
-await sharp(join(srcDir, 'close-up-desk', 'desk-closeup-lamp-off.png'))
+await sharp(join(dirname(srcDir), 'close-up-desk', 'desk-closeup-lamp-off.png'))
   .png()
   .toFile(join(outDir, 'desk-closeup-lamp-off.png'))
 console.log('desk-closeup-lamp-off.png (full canvas)')
+
+// Lamp-on desk close-up, same full-canvas passthrough as lamp-off above.
+await sharp(join(dirname(srcDir), 'close-up-desk', 'desk-closeup.png'))
+  .png()
+  .toFile(join(outDir, 'desk-closeup.png'))
+console.log('desk-closeup.png (full canvas)')

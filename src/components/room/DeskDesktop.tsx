@@ -1,6 +1,5 @@
 // src/components/room/DeskDesktop.tsx
-'use client'
-
+import { useEffect } from 'react'
 import { DeskIcon } from './DeskIcon'
 import { ScreenStrip, StripButton } from './ScreenStrip'
 
@@ -17,6 +16,7 @@ interface DeskDesktopProps {
   time: string
   backLabel: string
   screenLabel: string
+  statusNote: string
   shortcuts: DesktopShortcut[]
   screensaver: boolean
   reduce: boolean | null
@@ -25,11 +25,11 @@ interface DeskDesktopProps {
   onBack: (e: React.MouseEvent) => void
   onShortcutClick: (e: React.MouseEvent, s: DesktopShortcut) => void
 }
-
 export function DeskDesktop({
   time,
   backLabel,
   screenLabel,
+  statusNote,
   shortcuts,
   screensaver,
   reduce,
@@ -38,6 +38,7 @@ export function DeskDesktop({
   onBack,
   onShortcutClick,
 }: DeskDesktopProps) {
+  useEffect(() => { window.dispatchEvent(new CustomEvent('room:app-open', { detail: 'status' })) }, [])
   return (
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#faf8f5' }}>
       <ScreenStrip time={time}>
@@ -57,6 +58,13 @@ export function DeskDesktop({
           ))}
         </div>
       </nav>
+
+      {/* Currently status note */}
+      <div className="absolute left-2 bottom-2 max-w-[52%] px-2 py-1" style={{
+        backgroundColor: '#3d2e1e', border: '2px solid #5a4430', borderRadius: 2,
+        fontFamily: 'var(--font-pixel), "Courier New", monospace', fontSize: 9, lineHeight: 1.4,
+        color: '#e8d5b0', transform: 'rotate(-2deg)', textShadow: '1px 1px 0 #1a0e04',
+      }}>{statusNote}</div>
 
       {/* Idle screensaver overlay (moved verbatim from DeskView) */}
       {screensaver && !reduce && (

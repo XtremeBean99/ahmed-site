@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { getDictionary } from '@/lib/i18n/server'
 import { Room } from '@/components/room/Room'
 import { RoomSfxProvider } from '@/components/room/RoomSfxProvider'
+import { XtremeSplash } from '@/components/room/XtremeSplash'
 import { JsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
@@ -45,20 +46,21 @@ const personSchema = {
 export default async function RoomPage() {
   const dict = await getDictionary()
   const readmeContent = await readFile(join(process.cwd(), 'assets', 'site-text.txt'), 'utf-8')
-
   return (
     <>
       <JsonLd data={personSchema} />
-      <RoomSfxProvider>
-        <Room
-          dict={{
-            room: dict.room,
-            desk: dict.desk,
-            legal: dict.legal,
-          }}
-          readmeContent={readmeContent}
-        />
-      </RoomSfxProvider>
+      <XtremeSplash>
+        <RoomSfxProvider>
+          <Room
+            dict={{
+              room: dict.room,
+              desk: dict.desk,
+              legal: dict.legal,
+            }}
+            readmeContent={readmeContent}
+          />
+        </RoomSfxProvider>
+      </XtremeSplash>
     </>
   )
 }

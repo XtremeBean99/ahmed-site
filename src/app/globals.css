@@ -207,3 +207,9 @@
 }
 
 
+
+/* ---- Custom pixel cursor (room only, pointer-device only) ---- */
+@media (pointer: fine) {
+  .room-cursor { cursor: url('/room/cursor/pointer.png') 2 2, auto; }
+  .room-cursor a, .room-cursor button, .room-cursor [role="button"] { cursor: url('/room/cursor/grab.png') 8 4, pointer; }
+}

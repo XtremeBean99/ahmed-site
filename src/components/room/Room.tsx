@@ -76,6 +76,7 @@ interface RoomProps {
       discoveryFound: string
       discoveryLocked: string
       discoveryLabels: Record<string, string>
+      statusNote: string
     }
     desk: {
       back: string
@@ -104,6 +105,12 @@ interface RoomProps {
       readmeApp: { title: string; close: string }
       legalApp: { title: string; privacyTab: string; termsTab: string; close: string }
       readmePopup: string
+      links: string
+      linksTip: string
+      linksApp: { title: string; close: string }
+      guestbook: string
+      guestbookTip: string
+      guestbookApp: { title: string; close: string; namePh: string; messagePh: string; sign: string; empty: string; posting: string; error: string }
     }
     legal: Dictionary['legal']
   }
@@ -470,6 +477,8 @@ export function Room({ dict, readmeContent }: RoomProps) {
     { id: 'paint', kind: 'app', target: 'paint', label: t.desk.paint, tooltip: t.desk.paintTip, icon: ICON_PAINT },
     { id: 'minesweeper', kind: 'app', target: 'minesweeper', label: t.desk.minesweeper, tooltip: t.desk.minesweeperTip, icon: ICON_MINESWEEPER },
     { id: 'readme', kind: 'app', target: 'readme', label: t.desk.readme, tooltip: t.desk.readmeTip, icon: ICON_README },
+    { id: 'links', kind: 'app', target: 'links', label: t.desk.links, tooltip: t.desk.linksTip, icon: ICON_README },
+    { id: 'guestbook', kind: 'app', target: 'guestbook', label: t.desk.guestbook, tooltip: t.desk.guestbookTip, icon: ICON_README },
     { id: 'legal', kind: 'app', target: 'legal', label: t.desk.legal, tooltip: t.desk.legalTip, icon: ICON_LEGAL },
   ]
 
@@ -482,6 +491,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
           backLabel={t.desk.back}
           screenLabel={t.desk.screenLabel}
           desktopLabel={t.desk.desktop}
+          statusNote={t.room.statusNote}
           speakersLabel={t.room.audio.speakersLabel}
           lampOn={lampOn}
           lampFlicker={lampFlicker}
@@ -507,6 +517,8 @@ export function Room({ dict, readmeContent }: RoomProps) {
           is24h={clock24h}
           onClock={handleClockToggle}
           terminalLabels={{ title: "Terminal" }}
+          linksLabels={t.desk.linksApp}
+          guestbookLabels={t.desk.guestbookApp}
           konamiOpen={konamiOpen}
           onKonamiHandled={() => setKonamiOpen(false)}
         />
@@ -517,7 +529,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
 
   return (
     <RoomAudioProvider>
-    <div className="relative w-full h-screen overflow-hidden bg-[#1a1210]">
+    <div className="relative w-full h-screen overflow-hidden bg-[#1a1210] room-cursor">
       <RoomHud
         enterLabel={t.room.enterSite}
         hintLabel={t.room.hint}

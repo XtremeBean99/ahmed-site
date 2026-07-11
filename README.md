@@ -94,7 +94,8 @@ POST /api/contact
   → 200 / 400 / 429 / 500
 ```
 
-The site uses no database. Contact submissions are emailed via Resend and not persisted.
+The only server-side store is the in-room guestbook (Upstash Redis, name + message + timestamp
+only). Everything else — room preferences, game scores — is browser `localStorage`.
 
 ## Project Tools
 
@@ -125,7 +126,7 @@ Game logic lives in `src/lib/games/` as side-effect-free modules (`wpm.ts`, `bre
 - Terms of Use explicitly prohibit scraping and AI training
 - All form data validated server-side with Zod + honeypot anti-spam
 - Email subject sanitised before transmission
-- No database = no stored personal data, no SQL injection surface
+- Guestbook is the only server store (Upstash Redis, no SQL); it holds only a name, message, and timestamp
 - Secrets via environment variables only - never hardcoded
 - Centralised contact email constant in `src/lib/resend.ts`
 
@@ -223,7 +224,8 @@ The desk view renders the close-up art at full 1408x768 with the same stage scal
 
 **In-monitor browsing**: Clicking a desktop shortcut opens a same-origin `<iframe>` displaying the real site page, scaled to 75 percent for readability within the screen rect. The iframe uses `sandbox="allow-same-origin allow-scripts allow-forms allow-popups"`. Navigation between pages happens via `contentWindow.location.replace()` to avoid building up joint browser history. The current path is tracked by a 500ms same-origin polling interval. A top strip provides Desktop and Expand buttons; Expand opens the current URL in a new tab via `window.open`. The Escape key acts as a ladder: browser to desktop to room.
 
-The desktop uses no database and no server state; all interactions are client-side only.
+Desktop interactions are client-side only, except the Guestbook app, which reads and writes entries
+via `/api/guestbook` (Upstash Redis). All other state is client-side.
 
 ### Sprite Pipeline
 
@@ -273,7 +275,7 @@ Every user-facing string in the room, desk view, games, projects, and all chrome
 
 **sharp (indirect dependency)**: Used exclusively in build-time extraction scripts (`scripts/*.mjs`). Available through Next.js's transitive dependency tree; not listed in `package.json`. Converts and crops source PNGs to web sprites with precise pixel control.
 
-**localStorage**: Persists user preferences (`room-save-v1`: lamp state, audio preference, visit count) and game high scores. No server-side storage exists; contact form submissions are emailed via Resend and not retained.
+**localStorage**: Persists user preferences (`room-save-v1`: lamp state, audio preference, visit count), the Paint canvas, discoveries, and game high scores. The one server-side store is the guestbook (Upstash Redis: name, message, timestamp).
 
 **Resend**: Handles contact form email delivery. The client is lazily initialised only when the API route is invoked. The `From` address must match a verified Resend domain.
 

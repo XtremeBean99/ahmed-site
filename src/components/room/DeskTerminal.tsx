@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSfx } from './RoomSfxProvider'
 import { ScreenStrip, StripButton } from './ScreenStrip'
-
+import { CHANGELOG } from '@/lib/room/changelog'
 interface TerminalLabels {
   title: string
 }
@@ -55,6 +55,7 @@ export function DeskTerminal({ labels, desktopLabel, onDesktop, readmeContent }:
         '  whoami        Who am I?',
         '  ls            List files',
         '  cat <file>    Read a file',
+        '  changelog     Recent updates',
         '  clock         Show current time',
         '  sfx on|off    Toggle sound effects',
         '  clear         Clear the screen',
@@ -63,7 +64,7 @@ export function DeskTerminal({ labels, desktopLabel, onDesktop, readmeContent }:
     } else if (command === 'whoami') {
       addLines('guest')
     } else if (command === 'ls') {
-      addLines('readme.txt   secrets.txt')
+      addLines('readme.txt   changelog.txt   secrets.txt')
     } else if (command === 'cat readme.txt') {
       for (const line of readmeContent.split('\n')) {
         addLines(line)
@@ -78,6 +79,8 @@ export function DeskTerminal({ labels, desktopLabel, onDesktop, readmeContent }:
     } else if (command === 'sfx off') {
       sfx.setEnabled(false)
       addLines('SFX: off')
+    } else if (command === 'changelog' || command === 'cat changelog.txt') {
+      for (const e of CHANGELOG) addLines(e.date + '  ' + e.line)
     } else if (command === 'clear') {
       setLines([])
     } else if (command === 'exit') {

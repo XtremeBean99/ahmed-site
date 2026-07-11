@@ -12,6 +12,8 @@ import { DeskMusic } from './DeskMusic'
 import { DeskLegal, type LegalLabels } from './DeskLegal'
 import { DeskSettings, type SettingsLabels } from './DeskSettings'
 import { DeskTerminal } from './DeskTerminal'
+import { DeskLinks } from './DeskLinks'
+import { DeskGuestbook, type GuestbookLabels } from './DeskGuestbook'
 import { MusicNotes } from './MusicNotes'
 
 const SCREEN_X = 436; const SCREEN_Y = 152; const SCREEN_W = 536; const SCREEN_H = 308
@@ -29,13 +31,14 @@ const DESK_SPEAKER_HOLES_RIGHT = [
 const MOUSE_X_MIN = 975; const MOUSE_X_MAX = 1140
 const MOUSE_Y_MIN = 572; const MOUSE_Y_MAX = 635
 const MOUSE_REST_X = 1007; const MOUSE_REST_Y = 608
-type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'readme' | 'music' | 'legal' | 'settings' | 'terminal'
+type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'readme' | 'music' | 'legal' | 'links' | 'guestbook' | 'settings' | 'terminal'
 
 interface DeskViewProps {
   shortcuts: DesktopShortcut[]
   backLabel: string
   screenLabel: string
   desktopLabel: string
+  statusNote: string
   speakersLabel: string
   lampOn: boolean
   lampFlicker: boolean
@@ -68,6 +71,10 @@ interface DeskViewProps {
   readmeContent: string
   /** Labels for the Terminal app */
   terminalLabels: { title: string }
+  /** Labels for the Links app */
+  linksLabels: { title: string; close: string }
+  /** Labels for the Guestbook app */
+  guestbookLabels: GuestbookLabels
   /** Konami code easter egg trigger */
   konamiOpen: boolean
   /** Called after the terminal has been opened so the parent can reset the flag */
@@ -75,9 +82,8 @@ interface DeskViewProps {
   onToggleLamp: () => void
   onBack: () => void
 }
-
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
+  const { shortcuts, backLabel, screenLabel, desktopLabel, statusNote, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, linksLabels, guestbookLabels, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
   const { scale } = useStageScale()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
@@ -234,7 +240,7 @@ export function DeskView(props: DeskViewProps) {
   }
 
   return (
-    <div className="relative" style={{ width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: '#000', cursor: 'default' }}
+    <div className="relative room-cursor" style={{ width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('[data-screen-area]')) return
         if (screensaver) {
@@ -342,6 +348,7 @@ export function DeskView(props: DeskViewProps) {
                   time={time}
                   backLabel={backLabel}
                   screenLabel={screenLabel}
+                  statusNote={statusNote}
                   shortcuts={shortcuts}
                   screensaver={screensaver}
                   reduce={reduce}
@@ -407,6 +414,30 @@ export function DeskView(props: DeskViewProps) {
                   terms={legalTerms}
                   effectiveDate={legalEffectiveDate}
                   labels={legalLabels}
+                  desktopLabel={desktopLabel}
+                  onDesktop={goDesktop}
+                />
+              </motion.div>
+            )}
+
+            {screenMode === 'links' && (
+              <motion.div key="links" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskLinks
+                  labels={linksLabels}
+                  desktopLabel={desktopLabel}
+                  onDesktop={goDesktop}
+                />
+              </motion.div>
+            )}
+
+            {screenMode === 'guestbook' && (
+              <motion.div key="guestbook" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskGuestbook
+                  labels={guestbookLabels}
                   desktopLabel={desktopLabel}
                   onDesktop={goDesktop}
                 />

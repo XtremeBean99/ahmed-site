@@ -54,23 +54,30 @@ References: Vercel, Linear, Stripe aesthetic.
 scoped to `/` only. Do NOT add colour to any `(site)` page.
 
 ### 2. All user input is hostile
-Spec 1 archived the contact form and every API route/service. The room-only site has **no forms**
-and exactly **one read-only API route**: `src/app/api/weather/route.ts` (Open-Meteo, fixed
-Canberra, hourly-cached, fail-soft, no key, no secrets, aggregate data — added in Spec E). If any
-form/API that takes user input is re-added, follow the archived pattern: server-side Zod
-validation + honeypot (`_archive/services/contact.ts`). Never skip server-side validation.
+Two API routes exist. `src/app/api/weather/route.ts` is read-only (Open-Meteo, fixed Canberra,
+hourly-cached, fail-soft, no key, no secrets — added in Spec E). `src/app/api/guestbook/route.ts`
+**accepts user input** (Spec F, v17): its `POST` runs CSRF (Origin/Referer must match the prod
+domain), IP rate-limiting (`src/lib/ratelimit.ts`, 5/hr, Upstash + in-memory fallback), a honeypot
+(`website` must be empty), Zod validation (`guestbookSchema` in `src/lib/validations.ts`, name ≤ 32,
+message ≤ 280), and control-char/HTML/profanity stripping before storing. `DELETE` requires
+`GUESTBOOK_ADMIN_KEY`. Never skip server-side validation; if another input route is added, follow
+this same pattern (mirrors the archived `_archive/services/contact.ts`).
 
-### 3. Persistence is localStorage-only (no database, no server state)
-Spec 1 archived the contact/Resend flow and the ninja leaderboard (Upstash Redis), so the site
-stores nothing server-side. Room preferences live in `localStorage`, client-side only:
+### 3. Persistence is localStorage-first; the one server store is the guestbook
+Room preferences live in `localStorage`, client-side only:
 `room-save-v1` = `{ audio, lampOn, visitCount, volume, clock24h, sideTableOpen, sfx, sfxVolume, calmMode }`;
-plus `room-paint-v1` (Paint canvas) and `room-discoveries-v1` (Plan B discoveries set). Any future
+plus `room-paint-v1` (Paint canvas) and `room-discoveries-v1` (discoveries set). The **only**
+server-side store is the guestbook (Spec F, v17): an Upstash Redis sorted set `guestbook:entries`
+(newest 500, scored by timestamp) behind `src/services/guestbook.ts`, storing **name + message +
+timestamp only** — no email, no persisted IP (rate-limit keys expire after one hour). Any further
 server persistence goes behind `src/services/` with env-var credentials (see `_archive/services/`).
 
 ### 4. Secrets via environment variables only
-No secrets are currently required — the contact/Resend and leaderboard/Upstash flows were archived
-in Spec 1, so `RESEND_*`, `CONTACT_*`, and `UPSTASH_*`/`KV_*` are retired. If server integrations
-return, keep credentials in env vars only, never hardcoded. See `.env.example`.
+The guestbook (Spec F, v17) requires `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and
+`GUESTBOOK_ADMIN_KEY` (for the `DELETE` escape hatch). Without the Upstash vars the guestbook
+fails soft (GET returns `[]`, POST 500s) rather than crashing the build — `getRedis()` is lazy.
+`RESEND_*`/`CONTACT_*` remain retired (contact form archived in Spec 1). Keep all credentials in
+env vars only, never hardcoded. See `.env.example`.
 
 ### 5. The site is English-only
 All French was removed in July 2026. Single source of truth: `src/lib/i18n/dictionaries/en.ts`.
@@ -331,6 +338,26 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   with no opt-out). The `calmMode` pref remains in `storage.ts` as a harmless orphan (nothing
   reads/writes it). **Global click SFX: final decision off** — re-added then removed again
   (`f9e1dd6`→`cd3a463`); the click sound plays only on explicit interactions, not on every click.
+- **v17 (Spec F)** `11 July 2026`: Personal-web features ported from the `./reference` neocities
+  site. **Phase 1 (client-only):** custom pixel cursor scoped to `/` via `.room-cursor`
+  (`globals.css`, pointer-devices only, `public/room/cursor/{pointer,grab}.png` from
+  `scripts/generate-cursors.mjs`); "currently" status sticky note on the desktop
+  (`room.statusNote`, `DeskDesktop.tsx`, fires the `status` discovery on mount); `changelog`
+  terminal command (`src/lib/room/changelog.ts`, `DeskTerminal.tsx`); Links/webring app
+  (`DeskLinks.tsx` + `src/lib/room/links.ts`, 88×31 buttons from `public/buttons/`).
+  **Phase 2 (server guestbook):** Upstash Redis restored from `_archive` (`src/lib/redis.ts`,
+  `src/lib/ratelimit.ts`, `src/services/guestbook.ts`, `src/lib/validations.ts`); write API
+  `src/app/api/guestbook/route.ts` (GET latest 50 / POST instant-publish with CSRF + rate-limit +
+  honeypot + Zod + sanitise / DELETE admin-key); `DeskGuestbook.tsx` desktop app. Privacy policy
+  (`en.ts` `legal.privacy`) updated to disclose stored name/message/timestamp + transient
+  rate-limit IPs. **F0:** desk close-up art refreshed with konami-code sticky notes
+  (`extract-monitor-hover.mjs` now re-emits both lamp states). **Also (unplanned):** `XtremeSplash`
+  intro animation wrapping the room (`XtremeSplash.tsx`, 28 frames `public/room/xtreme-*.png` from
+  `scripts/extract-xtreme.mjs`, plays once per load then reveals the room). Screen modes:
+  `desktop | paint | minesweeper | readme | music | legal | links | guestbook | settings |
+  terminal`. Desk icons gained Links + Guestbook. `DISCOVERY_IDS` gained `status`, `links`,
+  `guestbook` (now 20; a review fix restored `settings`/`terminal`/`screensaver`, which an initial
+  edit had dropped). Build green (`type-check && lint && build`).
 
 
 
@@ -496,7 +523,8 @@ CCBot, Bytespider, etc.; Terms prohibit scraping/AI training. Do not remove.
 | `RESEND_API_KEY` | Retired | Contact form removed (Spec 1) |
 | `CONTACT_TO_EMAIL` | Retired | Contact form removed (Spec 1) |
 | `CONTACT_FROM_EMAIL` | Retired | Contact form removed (Spec 1) |
-| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Retired | Ninja leaderboard archived (Spec 1) |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Guestbook | Upstash Redis store for the guestbook (Spec F). Absent → guestbook fails soft. |
+| `GUESTBOOK_ADMIN_KEY` | Guestbook | Secret for `DELETE /api/guestbook?id=&key=` (moderation escape hatch). |
 
 Never commit `.env.local` / `.env`. (June audit flagged a stray `VERCEL_OIDC_TOKEN` in
 `.env.local` — confirm never committed, then delete; see Roadmap item 15.)

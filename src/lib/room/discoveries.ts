@@ -17,6 +17,9 @@ export const DISCOVERY_IDS = [
   'settings',
   'terminal',
   'screensaver',
+  'status',
+  'links',
+  'guestbook',
   'night',
 ] as const
 

@@ -8,17 +8,6 @@ export interface Track {
 
 export const PLAYLIST: Track[] = [
   {
-    id: 'lo-fi-beat',
-    title: 'Lo‑Fi Beat',
-    src: '/audio/lo-fi-beat.mp3',
-  },
-  {
-    id: 'saffron',
-    title: 'Saffron',
-    src: '/audio/saffron.mp3',
-    cover: '/audio/covers/saffron.jpg',
-  },
-  {
     id: 'cant-look-in-my-eyes',
     title: "Can't Look In My Eyes",
     src: '/audio/cant-look-in-my-eyes.mp3',

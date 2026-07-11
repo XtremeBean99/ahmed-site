@@ -255,7 +255,7 @@ Background (`background.png`, ~55 KB) loads `fetchpriority="high"` as the LCP el
 Owner direction 6 July 2026: deployment treated as private/testing; commercial recordings ship
 at the owner's informed risk; revisit before public promotion. The domain is publicly
 reachable. (General information, not legal advice.) Tracks in `public/audio/`:
-lo-fi-beat (TBC) · saffron (TBC) · cant-look-in-my-eyes ⚠ commercial ·
+cant-look-in-my-eyes ⚠ commercial ·
 big-poppa-habaytak-remix ⚠ commercial remix · remember-summer-days ⚠ commercial ·
 sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-days.jpg.
 

@@ -79,11 +79,22 @@ Three independently shippable sub-phases.
       stretch then resettle). Rest pose varies by `visitCount`. `discover('cat')` (add to the
       Plan B `DISCOVERY_IDS`). ⟨if purr⟩ via `RoomSfxProvider`. `room.catLabel` in `en.ts`.
 
-## E-b. Real-weather window  ⟨API — plannable now⟩
-**LOCKED:** fixed **Canberra** (no geolocation, no consent).
-- [ ] `src/app/api/weather/route.ts` (re-adds one read-only route): fetch Open-Meteo
-      (lat -35.28, lon 149.13, `current=weather_code,precipitation`), `export const revalidate = 3600`,
-      fail-soft to `{ code: 0, precip: 0 }`. No key, no secrets.
+### DESIGN DECISIONS (locked 11 Jul 2026)
+- Weather is **always visible** (not gated by time of day).
+- Night addition is **moon + stars only** — no car-headlight sweep.
+- Window glass rect (stage coords, verify against `background.png`): approx
+  **`WINDOW_GLASS = { x: 1185, y: 52, w: 223, h: 300 }`** (upper-right two-pane window;
+  the bonsai sits on its sill, so both overlays render BEFORE the bonsai in z-order).
+- Both overlays live inside `RoomStage` (stage coords), are `aria-hidden` + `pointer-events:none`,
+  and are **emissive** (not passed through `lightingSrc`). Motion always on (site rule).
+
+## E-a. Cat on the bed  ⟨ART-BLOCKED — deferred⟩
+(unchanged; needs cat sprites — see above.)
+
+## E-b. Real-weather window  ⟨buildable now⟩
+
+### Task E1: weather API route
+- [ ] Create `src/app/api/weather/route.ts`:
 ```ts
 export const revalidate = 3600
 export async function GET() {
@@ -94,16 +105,58 @@ export async function GET() {
   } catch { return Response.json({ code: 0, precip: 0 }) }
 }
 ```
-- [ ] `RoomWeather.tsx`: fetch `/api/weather` on mount; map code → none/rain/snow; cheap CSS
-      particle overlay clipped to the window rect (⟨ART optional⟩ swap for sprite frames later).
-- [ ] Update CLAUDE.md (weather route re-added — note it re-introduces one API route after the
-      Spec-1 purge); privacy policy needs no change (aggregate, fixed location, no personal data).
+- [ ] Verify: `npm run dev`, `curl localhost:3000/api/weather` → `{ "code": <n>, "precip": <n> }`.
 
-## E-c. Night sky + car-light sweeps  ⟨CSS — plannable now⟩
-- [ ] At lighting state `night`, render moon + a few stars behind the window (emissive, never
-      lighting-graded) and an occasional headlight sweep across the wall (soft moving gradient
-      band ~every 20–40 s). `discover('night')`.
-- [ ] Verify each sub-phase with `?light=night`. Commit per sub-phase.
+### Task E2: pure weather-code mapping
+- [ ] Create `src/lib/room/weather.ts` (pure, testable — WMO codes):
+```ts
+export type WeatherKind = 'clear' | 'rain' | 'snow'
+export interface Weather { kind: WeatherKind; heavy: boolean }
+
+const SNOW = new Set([71, 73, 75, 77, 85, 86])
+const RAIN = new Set([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99])
+
+export function mapWeather(code: number, precip: number): Weather {
+  if (SNOW.has(code)) return { kind: 'snow', heavy: [75, 86].includes(code) }
+  if (RAIN.has(code)) return { kind: 'rain', heavy: precip > 2 || [65, 82, 95, 96, 99].includes(code) }
+  return { kind: 'clear', heavy: false }
+}
+```
+
+### Task E3: `RoomWeather.tsx` (rain/snow overlay)
+- [ ] Create `src/components/room/RoomWeather.tsx` (`'use client'`): fetch `/api/weather` on mount,
+      `mapWeather(...)`, and render an absolute overlay at `WINDOW_GLASS` (`overflow:hidden`,
+      `aria-hidden`, `pointer-events:none`). Render pooled particle divs:
+      rain = thin diagonal streaks via `@keyframes room-rain` (translateY + slight X); snow = dots
+      via `@keyframes room-snow` (translateY + gentle sway). Count = `heavy ? ~40 : ~18`; random
+      left%, delay, duration. `clear` → render nothing. Fail-soft: on fetch error stay `clear`.
+- [ ] Add `@keyframes room-rain` / `room-snow` to `src/app/globals.css` (translate from above the
+      glass to below; opacity fade). Colours: rain `rgba(200,210,230,.35)`, snow `rgba(240,240,250,.8)`.
+
+### Task E4: verify weather
+- [ ] Temporarily hardcode `code=61` (rain) then `71` (snow) in the route to eyeball both, then
+      revert. Confirm streaks/dots fall inside the window glass only and sit behind the bonsai.
+
+## E-c. Night sky (moon + stars)  ⟨buildable now⟩
+
+### Task E5: `RoomNightSky.tsx`
+- [ ] Create `src/components/room/RoomNightSky.tsx` (`'use client'`): prop `light: LightingState`.
+      Render only when `light === 'night'`. A **moon** (soft radial-gradient circle) in the upper
+      pane (approx stage `(1330, 80)`) and **~6 stars** (tiny bright dots) scattered in the upper
+      glass, each with a subtle `@keyframes room-twinkle` opacity pulse (staggered). Emissive:
+      plain positioned divs, NOT `lightingSrc`. `aria-hidden`, `pointer-events:none`.
+- [ ] Add `@keyframes room-twinkle` to `globals.css`.
+
+### Task E6: wire into `Room.tsx` + docs
+- [ ] In `Room.tsx`, inside `RoomStage` and BEFORE the bonsai `AnimatedSprite`, render
+      `<RoomNightSky light={light} />` then `<RoomWeather />` (both above the background, below the
+      bonsai/sill). Weather always mounted; night sky self-gates on `light`.
+- [ ] `discover('night')` when `light === 'night'` is first seen (add `'night'` to `DISCOVERY_IDS`).
+- [ ] Update `CLAUDE.md`: new **weather API route** (re-introduces one read-only route after the
+      Spec-1 purge — privacy policy unchanged: aggregate, fixed Canberra, no personal data),
+      `RoomWeather`/`RoomNightSky`, the `WINDOW_GLASS` rect, and a v15 session note.
+- [ ] `npm run type-check && lint && build`; drive with `?light=night` (moon + stars) and the
+      hardcoded-weather check. Commit.
 
 ---
 

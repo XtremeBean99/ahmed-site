@@ -146,25 +146,30 @@ export function Room({ dict, readmeContent }: RoomProps) {
     if (!mobile) return
     const STAGE_W = 1408, STAGE_H = 768
     const onDown = (e: PointerEvent) => {
-      if ((e.target as HTMLElement).closest('a,button')) return
+      const el = e.target as HTMLElement
+      if (el.closest('a,button,[tabindex],[role="button"]')) return
+      if (el.closest('#room-stage-outer') === null) return
       dragStartRef.current = { x: e.clientX, y: e.clientY, px: panXRef.current, py: panYRef.current }
     }
     const onMove = (e: PointerEvent) => {
       if (!dragStartRef.current) return
+      const fillScale = window.innerHeight / STAGE_H
+      const stageWidth = STAGE_W * fillScale
       panXRef.current = dragStartRef.current.px + (e.clientX - dragStartRef.current.x)
       panYRef.current = dragStartRef.current.py + (e.clientY - dragStartRef.current.y)
-      // Clamp: stage edges stay in viewport
-      const maxX = Math.max(0, (window.innerWidth - STAGE_W * (window.innerHeight / STAGE_H)) / 2)
+      // Clamp so stage edges stay in viewport (fill-height: Y is always flush)
+      const maxX = Math.max(0, (stageWidth - window.innerWidth) / 2)
       panXRef.current = Math.max(-maxX, Math.min(maxX, panXRef.current))
+      panYRef.current = 0
       cancelAnimationFrame(panRafRef.current)
       panRafRef.current = requestAnimationFrame(() => {
         const el = document.getElementById('room-stage-outer')
-        if (el) el.style.transform = `translate(${panXRef.current}px, ${panYRef.current}px) scale(${window.innerHeight / STAGE_H})`
+        if (el) el.style.transform = `translate(${panXRef.current}px, ${panYRef.current}px) scale(${fillScale})`
       })
     }
     const onUp = () => { dragStartRef.current = null }
-    window.addEventListener('pointerdown', onDown)
-    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerdown', onDown, { passive: true })
+    window.addEventListener('pointermove', onMove, { passive: true })
     window.addEventListener('pointerup', onUp)
     return () => {
       window.removeEventListener('pointerdown', onDown)

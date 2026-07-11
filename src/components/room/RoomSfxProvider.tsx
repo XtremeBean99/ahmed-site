@@ -16,8 +16,7 @@ import { loadPrefs, savePrefs } from '@/lib/room/storage'
  * room-save-v1 (independent of the music `audio` pref; muting music never
  * mutes SFX). Reduced motion does NOT disable sound.
  *
- * Also installs a document-level listener so every primary click on the
- * site plays the click sound. Explicit `play()` calls layer on top.
+ * There is no global click listener; each interaction calls `play()` explicitly.
  */
 
 const SFX_SRC = {
@@ -104,15 +103,6 @@ export function RoomSfxProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Global click sound: any primary-button click anywhere on the site.
-  useEffect(() => {
-    const onDown = (e: PointerEvent) => {
-      if (e.button !== 0) return
-      play('click')
-    }
-    document.addEventListener('pointerdown', onDown)
-    return () => document.removeEventListener('pointerdown', onDown)
-  }, [play])
 
   return <SfxCtx.Provider value={{ play, setEnabled, setVolume }}>{children}</SfxCtx.Provider>
 }

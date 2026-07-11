@@ -45,12 +45,10 @@ export function AnimatedSprite({
   const touchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const [isTouchDevice] = useState(() => typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches)
 
-  // Continuous modes (loop, play-all-loop-last-two) run on their own from mount;
-  // play-once-hold plays on hover/tap only. `runAnimation` starts the timer per
-  // mode WITHOUT touching hover state (hover only drives the -2px lift + tooltip).
-  const isAutoplay = mode !== 'play-once-hold'
-
-  const runAnimation = useCallback(() => {
+  // All sprites (poster, saitama, bonsai, coffee) animate ON HOVER/TAP ONLY — never
+  // autoplay on mount. Hover starts the sequence per mode; leaving stops it.
+  const startAnimation = useCallback(() => {
+    setHovered(true)
     if (reduce || frames.length <= 1) return
 
     if (mode === 'play-once-hold') {
@@ -70,33 +68,17 @@ export function AnimatedSprite({
         advanceTo(next)
       })
     } else {
-      // Loop continuously
+      // Loop continuously while hovered
       start(() => {
         advanceTo((tickRef.current + 1) % frames.length)
       })
     }
   }, [reduce, frames.length, mode, start, advanceTo, clearTimer, tickRef])
 
-  const startAnimation = useCallback(() => {
-    setHovered(true)
-    if (isAutoplay) return // already running from mount; hover only lifts
-    runAnimation()
-  }, [isAutoplay, runAnimation])
-
   const stopAnimation = useCallback(() => {
     setHovered(false)
-    if (isAutoplay) return // keep looping when the pointer leaves
     stop()
-  }, [isAutoplay, stop])
-
-  // Autoplay continuous modes on mount (saitama's play-all-loop-last-two, bonsai's
-  // loop). This mount-autoplay was dropped in the Spec 1 refactor, which is why
-  // saitama stopped animating.
-  useEffect(() => {
-    if (!isAutoplay) return
-    runAnimation()
-    return () => stop()
-  }, [isAutoplay, runAnimation, stop])
+  }, [stop])
 
   // Cleanup touch timer on unmount (interval is handled by useAnimationTimer)
   useEffect(() => {

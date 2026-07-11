@@ -14,13 +14,6 @@ export const PLAYLIST: Track[] = [
     cover: '/audio/covers/cant-look-in-my-eyes.jpg',
   },
   {
-    id: 'big-poppa-habaytak',
-    title: 'Big Poppa x حبيتك بالصيف',
-    artist: 'Biggie X Fairuz (Abuzeid Remix)',
-    src: '/audio/big-poppa-habaytak-remix.mp3',
-    cover: '/audio/covers/fayrouz.jpg',
-  },
-  {
     id: 'remember-summer-days',
     title: 'Remember Summer Days',
     src: '/audio/remember-summer-days.mp3',

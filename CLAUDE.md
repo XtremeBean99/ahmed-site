@@ -256,8 +256,8 @@ Owner direction 6 July 2026: deployment treated as private/testing; commercial r
 at the owner's informed risk; revisit before public promotion. The domain is publicly
 reachable. (General information, not legal advice.) Tracks in `public/audio/`:
 cant-look-in-my-eyes ⚠ commercial ·
-big-poppa-habaytak-remix ⚠ commercial remix · remember-summer-days ⚠ commercial ·
-sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-days.jpg.
+remember-summer-days ⚠ commercial ·
+sky-restaurant ⚠ commercial. Covers: sky-restaurant.jpg, summer-days.jpg.
 
 ### Session history (condensed from the retired PLAN.md specs)
 - **v1** `b70857e`–`a109482`: `(site)` restructure, room v1 (monitor→/home, poster, bonsai).

@@ -40,6 +40,7 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
   const triedRef = useRef(false)
   const playingRef = useRef(false)
   const trackIdxRef = useRef(0)
+  const playedRef = useRef(new Set<number>())
 
   // Initialise audio, always; reduced motion does not affect sound
   useEffect(() => {
@@ -57,7 +58,7 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
     loadTrack(audio, idx)
 
     const onEnded = () => {
-      trackIdxRef.current = pickNextIndex(trackIdxRef.current)
+      trackIdxRef.current = pickNextIndex(trackIdxRef.current, playedRef.current)
       setTrackIndex(trackIdxRef.current)
       loadTrack(audio, trackIdxRef.current)
       if (playingRef.current) audio.play().catch(() => {})
@@ -127,17 +128,16 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
   const nextTrack = useCallback(() => {
     const audio = audioRef.current
     if (!audio) return
-    trackIdxRef.current = pickNextIndex(trackIdxRef.current)
+    trackIdxRef.current = pickNextIndex(trackIdxRef.current, playedRef.current)
     setTrackIndex(trackIdxRef.current)
     loadTrack(audio, trackIdxRef.current)
     if (playingRef.current) audio.play().catch(() => {})
   }, [])
 
-  // iPod: skip to a fresh track and always end up playing (starts if stopped).
   const skip = useCallback(() => {
     const audio = audioRef.current
     if (!audio) return
-    trackIdxRef.current = pickNextIndex(trackIdxRef.current)
+    trackIdxRef.current = pickNextIndex(trackIdxRef.current, playedRef.current)
     setTrackIndex(trackIdxRef.current)
     loadTrack(audio, trackIdxRef.current)
     audio.play().then(() => {
@@ -150,6 +150,7 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
   const selectTrack = useCallback((index: number) => {
     const audio = audioRef.current
     if (!audio || index < 0 || index >= PLAYLIST.length) return
+    playedRef.current.add(trackIdxRef.current)
     trackIdxRef.current = index
     setTrackIndex(index)
     loadTrack(audio, index)
@@ -174,14 +175,15 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
   )
 }
 
-/** Random next index, never the current one (unless the playlist has 1 track). */
-function pickNextIndex(current: number): number {
-  if (PLAYLIST.length <= 1) return current
-  let next = current
-  while (next === current) {
-    next = Math.floor(Math.random() * PLAYLIST.length)
+/** Random next index, never repeating in the same session. Exhausts the playlist, then reshuffles. */
+function pickNextIndex(current: number, played: Set<number>): number {
+  played.add(current)
+  const remaining = PLAYLIST.map((_, i) => i).filter((i) => !played.has(i))
+  if (remaining.length === 0) {
+    played.clear()
+    return pickNextIndex(current, played)
   }
-  return next
+  return remaining[Math.floor(Math.random() * remaining.length)]
 }
 
 function loadTrack(audio: HTMLAudioElement, index: number) {

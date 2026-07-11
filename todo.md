@@ -17,15 +17,14 @@ phases are summarised in the log below with commit hashes.
 - **Spec E (part 1) — Weather window + night sky** — `/api/weather` (Open-Meteo), `RoomWeather`
   (rain/snow), `RoomNightSky` (moon + stars), `WINDOW_GLASS`, `'night'` discovery (`30233e1`).
 
-Build is green (`type-check && lint && build`). CLAUDE.md current through the **v15** note.
+Build is green (`type-check && lint && build`). CLAUDE.md current through the **v16** note.
 
-## ⚠ Two follow-ups from the agent's v12/v13 work (owner chose to leave for now)
-1. **Global click SFX was removed** (v12) — the click no longer plays on every click (an
-   explicit earlier request). `'click'` is registered in `RoomSfxProvider` but never triggered.
-   Re-add a `pointerdown → play('click')` listener if you still want it.
-2. **Calm mode is a dead toggle** — `MotionProvider` is hardcoded `reducedMotion="never"` and
-   `prefersReducedMotion()` returns false, but `DeskSettings` still shows a Calm-mode switch.
-   Either restore the pref wiring or remove the control.
+## Resolved (v16) — the two earlier follow-ups are closed
+1. **Global click SFX** — final decision: **off** (`f9e1dd6`→`cd3a463`). The click sound plays
+   only on explicit interactions, not on every click.
+2. **Calm mode** — the inert toggle was **removed** from Settings. Motion is always on, no opt-out.
+   Minor leftover: the `calmMode` pref is orphaned in `storage.ts` (harmless; nothing reads it).
+   Optional cleanup if you ever touch `storage.ts`.
 
 ## Project constraints (current)
 - **English-only:** user-facing strings live in `src/lib/i18n/dictionaries/en.ts` only.
@@ -36,7 +35,7 @@ Build is green (`type-check && lint && build`). CLAUDE.md current through the **
   `scripts/generate-lighting.mjs` → `npm run lighting`.
 - **localStorage only** (`room-save-v1`, `room-paint-v1`, `room-discoveries-v1`), no DB. The one
   server route is read-only `/api/weather` (no secrets, aggregate, fixed Canberra).
-- **Reduced motion forced on** site-wide (calm-mode opt-out is currently inert — see follow-up 2).
+- **Reduced motion forced on** site-wide (`MotionProvider reducedMotion="never"`); no opt-out.
 - No unit-test runner: verify with `type-check && lint && build` + driving `npm run dev`
   (kill stale servers with `taskkill //F //IM node.exe` — Git Bash has no `pkill`).
 - Escape ladder for every desk app: app → desktop → room.

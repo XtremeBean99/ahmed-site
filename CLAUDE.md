@@ -326,6 +326,11 @@ sky-restaurant ⚠ commercial. Covers: fayrouz.jpg, sky-restaurant.jpg, summer-d
   discovery added. Also: animated sprites are hover/tap-only again (mount-autoplay removed) and
   the sprite preload now warms the current lighting state's frames. (Deferred, needs art:
   record player, cat.)
+- **v16** `11 July 2026`: Resolved the two v14 follow-ups. **Calm-mode toggle removed** from
+  Settings (it was inert; `MotionProvider` stays `reducedMotion="never"` so motion is always on
+  with no opt-out). The `calmMode` pref remains in `storage.ts` as a harmless orphan (nothing
+  reads/writes it). **Global click SFX: final decision off** — re-added then removed again
+  (`f9e1dd6`→`cd3a463`); the click sound plays only on explicit interactions, not on every click.
 
 
 

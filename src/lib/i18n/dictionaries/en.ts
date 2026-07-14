@@ -34,7 +34,7 @@ export const en = {
 
   hero: {
     eyebrow: 'Canberra, Australia',
-    descriptor1: 'BCom\u2009/\u2009LLB(Hons) student at the Australian National University.',
+    descriptor1: 'BComp\u2009/\u2009LLB(Hons) student at the Australian National University.',
     descriptor2: 'Working toward a future in tech law',
     ctaPrimary: 'Connect on LinkedIn',
     ctaSecondary: 'Get in touch',

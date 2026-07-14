@@ -21,18 +21,10 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
     min-height: 100dvh;
     margin: 0;
     padding: 0;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5 {
-    @apply font-serif;
   }
 
   ::selection {
@@ -53,50 +45,6 @@
      prefersReducedMotion() in @/lib/motion. */
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  /* Label/eyebrow text style */
-  .label-text {
-    @apply font-sans text-xs tracking-[0.2em] uppercase text-muted-foreground;
-  }
-
-  /* Emphasis inside translated rich-text prose (rendered from dictionary HTML).
-     Keeps the monochrome "foreground + medium weight" treatment used for inline
-     <strong> across the silicon explainer. */
-  .rich strong {
-    @apply text-foreground font-medium;
-  }
-}
-
-/* ---- Circuit backdrop (static SVGs, 30% reduced from original) ---- */
-.sigil-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-/* Source art is black; invert to white for the dark theme. */
-.sigil-circuit {
-  position: absolute;
-  width: clamp(266px, 38.5vw, 700px);
-  height: auto;
-  filter: invert(1);
-  opacity: 0.032;
-  will-change: opacity;
-}
-
-.sigil-circuit-br { bottom: 0; right: 0; animation: sigil-pulse 40s ease-in-out infinite; }
-.sigil-circuit-tl { top: 0; left: 0; transform: scale(-1, -1); animation: sigil-pulse 46s ease-in-out infinite; }
-
-@keyframes sigil-pulse {
-  0%, 100% { opacity: 0.025; }
-  50%      { opacity: 0.042; }
-}
 
 /* ---- Room page ambient animations ---- */
 @keyframes lamp-glow {

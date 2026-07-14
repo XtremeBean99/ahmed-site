@@ -63,13 +63,13 @@ NOT yet pulled in (data-driven, lives in code - ask if you want these too):
 
 ### SEO  ·  src/app/page.tsx
 - meta_title: Ahmed Hussain · Law, Computing & Technology
-- meta_description: Personal website of Ahmed Hussain, a BCom / LLB(Hons) candidate at ANU in Canberra, working where law meets computing and the governance of artificial intelligence.
+- meta_description: Personal website of Ahmed Hussain, a BComp / LLB(Hons) candidate at ANU in Canberra, working where law meets computing and the governance of artificial intelligence.
 
 
 ### Hero  ·  src/components/sections/Hero.tsx
 - eyebrow: Canberra, Australia
 - name: Ahmed Hussain
-- descriptor_1: BCom / LLB(Hons) student at the Australian National University.
+- descriptor_1: BComp / LLB(Hons) student at the Australian National University.
 - descriptor_2: Working toward a future in tech law
 - cta_primary: Connect on LinkedIn
 - cta_secondary: Get in touch
@@ -125,7 +125,7 @@ Outside of study I tutor senior secondary students in mathematics, physics, Engl
 - status_badge: Expected 2031
 - degree_1: Bachelor of Computing
 - degree_1_desc: Software engineering, algorithms, systems, and security
-- degree_1_abbr: BCom
+- degree_1_abbr: BComp
 - degree_2: Bachelor of Laws (Honours)
 - degree_2_desc: Common law, statutory interpretation, and emerging legal frameworks
 - degree_2_abbr: LLB(Hons)
@@ -534,7 +534,7 @@ Files: src/app/**/opengraph-image.tsx (twitter-image.tsx re-exports them).
     eyebrow: Canberra, Australia
     title: Ahmed Hussain
     subtitle: Law, computing, and the governance of artificial intelligence.
-    footer_left: BCom / LLB(Hons), Australian National University
+    footer_left: BComp / LLB(Hons), Australian National University
     footer_right: ahmedyhussain.com
 - projects: Projects / Selected work / Open-source code, an interactive look at silicon, and law-and-computing tools.
 - aglc4: Legal tool / AGLC4 citation generator / Footnote and bibliography citations in the Australian Guide to Legal Citation style.

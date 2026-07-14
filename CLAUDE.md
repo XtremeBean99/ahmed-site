@@ -9,7 +9,7 @@ all of which have been retired. Last consolidated: 6 July 2026.
 
 ## What This Project Is
 
-A production personal website for **Ahmed Hussain** — BCom/LLB(Hons) candidate at ANU, Canberra.
+A production personal website for **Ahmed Hussain** \u2014 BComp/LLB(Hons) candidate at ANU, Canberra.
 Domain: `ahmedyhussain.com`
 Repo: `https://github.com/XtremeBean99/ahmed-site`
 Vercel project: `ahmed-site` (ID: `prj_lF32Zp1qlFEKH7XzEW3yUdddQm61`)

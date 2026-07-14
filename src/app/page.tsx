@@ -18,7 +18,7 @@ const personSchema = {
   '@type': 'Person',
   name: 'Ahmed Hussain',
   url: 'https://ahmedyhussain.com',
-  jobTitle: 'BCom / LLB(Hons) candidate',
+  jobTitle: 'BComp / LLB(Hons) candidate',
   description:
     'Working where law meets computing and the governance of artificial intelligence.',
   alumniOf: {

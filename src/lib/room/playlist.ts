@@ -45,4 +45,18 @@ export const PLAYLIST: Track[] = [
     src: '/audio/hako-is-alive.mp3',
     cover: '/audio/covers/hako-is-alive.jpg',
   },
+  {
+    id: 'always',
+    title: 'Always',
+    artist: 'Daniel Caesar',
+    src: '/audio/always.mp3',
+    cover: '/audio/covers/always.jpg',
+  },
+  {
+    id: 'sukoshidake-mawarimichi',
+    title: 'Sukoshidake Mawarimichi',
+    artist: 'Hi-Fi Set',
+    src: '/audio/sukoshidake-mawarimichi.mp3',
+    cover: '/audio/covers/sukoshidake-mawarimichi.jpg',
+  },
 ]

@@ -8,6 +8,7 @@ export const SPRITE_FRAME_MS = {
   saitama: 100,
   poster: 130,
   bonsai: 165,
+  catan: 150,
 } as const
 
 /**
@@ -112,6 +113,22 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
       '/room/bonsai-3.png',
       '/room/bonsai-4.png',
       '/room/bonsai-5.png',
+    ],
+    href: null,
+  },
+  {
+    id: 'catan',
+    // Stack of Catan boxes on the shelf, extracted from pixel-art/shelf/.
+    // 3 frames: rest, then a 2-step lift+glow "pickup" sequence (play-once-hold).
+    x: 75,
+    y: 151,
+    w: 142,
+    h: 122,
+    labelKey: 'room.catanLabel',
+    frames: [
+      '/room/catan-1.png',
+      '/room/catan-2.png',
+      '/room/catan-3.png',
     ],
     href: null,
   },

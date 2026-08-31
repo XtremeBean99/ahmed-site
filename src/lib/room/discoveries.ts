@@ -8,6 +8,7 @@ export const DISCOVERY_IDS = [
   'poster',
   'saitama',
   'bonsai',
+  'catan',
   'coffee',
   'ipod',
   'paint',

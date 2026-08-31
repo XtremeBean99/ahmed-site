@@ -55,6 +55,7 @@ interface RoomProps {
       posterLabel: string
       saitamaLabel: string
       bonsaiLabel: string
+      catanLabel: string
       lampLabel: string
       coffeeLabel: string
       ipodLabel: string
@@ -454,6 +455,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const posterObj = ROOM_OBJECTS.find((o) => o.id === 'poster')!
   const saitamaObj = ROOM_OBJECTS.find((o) => o.id === 'saitama')!
   const bonsaiObj = ROOM_OBJECTS.find((o) => o.id === 'bonsai')!
+  const catanObj = ROOM_OBJECTS.find((o) => o.id === 'catan')!
   const coffeeObj = ROOM_OBJECTS.find((o) => o.id === 'coffee')!
   const clockObj = ROOM_OBJECTS.find((o) => o.id === 'clock')!
   const ipodObj = ROOM_OBJECTS.find((o) => o.id === 'ipod')!
@@ -714,6 +716,18 @@ export function Room({ dict, readmeContent }: RoomProps) {
             mode="loop"
             tooltipAlign="right"
             onClick={() => { discover('bonsai', t.room.discoveryLabels.bonsai) }}
+          />
+
+          <AnimatedSprite
+            label={t.room.catanLabel}
+            x={catanObj.x}
+            y={catanObj.y}
+            w={catanObj.w}
+            h={catanObj.h}
+            frames={catanObj.frames}
+            frameDuration={SPRITE_FRAME_MS.catan}
+            mode="play-once-hold"
+            onClick={() => { discover('catan', t.room.discoveryLabels.catan) }}
           />
 
           {/* Lamp toggle hotspot */}

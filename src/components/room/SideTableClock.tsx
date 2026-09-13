@@ -46,7 +46,10 @@ export function SideTableClock({
   onToggle,
 }: SideTableClockProps) {
   const [hovered, setHovered] = useState(false)
-  const [time, setTime] = useState(() => getTimeParts(is24h))
+  // SSR and the first client render always show '00:00' (deterministic, no
+  // hydration mismatch); the real time applies in the effect below, same
+  // pattern as useLightingClock.
+  const [time, setTime] = useState({ hh: '00', mm: '00', suffix: '' })
   const reduce = useReducedMotion()
 
   const activate = useCallback(() => setHovered(true), [])

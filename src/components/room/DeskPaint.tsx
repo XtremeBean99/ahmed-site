@@ -11,11 +11,11 @@ const KEY = 'room-paint-v1'
 // Room-adjacent palette; index 1 (paper) is the blank colour. The custom
 // colour-wheel slot is appended at CUSTOM_IDX, so the total slot count
 // (PALETTE_SIZE) stays fixed even though its colour is picked at runtime.
-const FIXED_PALETTE = ['#1a1210', '#faf8f5', '#6b4d3a', '#3d2e1e', '#e8d5b0', '#c8a064', '#8a4a3a', '#4a6a8a', '#5a8a4a', '#35e65c']
+const FIXED_PALETTE = ['#000000', '#ffffff', '#888888', '#8b5a2b', '#e63946', '#f4a340', '#f5d90a', '#2ecc71', '#3b82f6', '#8b5cf6']
 const BLANK = 1
 const CUSTOM_IDX = FIXED_PALETTE.length
 const PALETTE_SIZE = FIXED_PALETTE.length + 1
-const DEFAULT_CUSTOM_COLOR = '#e63946'
+const DEFAULT_CUSTOM_COLOR = '#ff69b4'
 
 type Tool = 'pencil' | 'eraser' | 'fill'
 
@@ -185,7 +185,7 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
       {/* Toolbar */}
       <div
         className="flex items-center gap-2 px-2 border-b flex-shrink-0"
-        style={{ height: 24, backgroundColor: '#e8e0d8', borderColor: '#c8b8a8', fontSize: '10px' }}
+        style={{ height: 24, backgroundColor: '#e8e0d8', borderColor: '#c8b8a8', fontSize: '10px', color: '#3a3028' }}
       >
         <StripButton pressed={tool === 'pencil'} onClick={() => setTool('pencil')}>{labels.pencil}</StripButton>
         <StripButton pressed={tool === 'eraser'} onClick={() => setTool('eraser')}>{labels.eraser}</StripButton>

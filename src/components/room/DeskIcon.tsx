@@ -197,20 +197,7 @@ export const ICON_LINKEDIN = (
 )
 
 export const ICON_GITHUB = (
-  <>
-    {/* Octocat bust: rounded head with pointed cat ears */}
-    <circle cx="8" cy="8" r="6" fill="#24292f" />
-    <polygon points="3,5 4.5,1.5 6,5" fill="#24292f" />
-    <polygon points="10,5 11.5,1.5 13,5" fill="#24292f" />
-    {/* Eyes */}
-    <ellipse cx="6" cy="7.5" rx="1.3" ry="1.6" fill="#ffffff" />
-    <ellipse cx="10" cy="7.5" rx="1.3" ry="1.6" fill="#ffffff" />
-    {/* Muzzle */}
-    <rect x="7" y="10" width="2" height="1" fill="#ffffff" />
-    {/* Tapered body */}
-    <rect x="4" y="12" width="8" height="2" fill="#24292f" />
-    <rect x="5" y="14" width="6" height="1" fill="#24292f" />
-  </>
+  <image href="/icons/github-logo.png" x="0" y="0" width="16" height="16" preserveAspectRatio="xMidYMid meet" />
 )
 
 export const ICON_BROWSER = (
@@ -245,14 +232,7 @@ export const ICON_README = (
 )
 
 export const ICON_MUSIC = (
-  <>
-    {/* Beamed eighth notes (♫): beam, two stems, two note heads */}
-    <rect x="3" y="2" width="10" height="1.8" fill="#1db954" />
-    <rect x="3" y="2" width="1.8" height="9.5" fill="#1db954" />
-    <rect x="11.2" y="2" width="1.8" height="9.5" fill="#1db954" />
-    <ellipse cx="3.4" cy="12.5" rx="2.4" ry="1.8" fill="#1db954" />
-    <ellipse cx="11.6" cy="12.5" rx="2.4" ry="1.8" fill="#1db954" />
-  </>
+  <image href="/room/note-1.png" x="0" y="0" width="16" height="16" preserveAspectRatio="xMidYMid meet" />
 )
 
 export const ICON_MOVIE = (

@@ -56,7 +56,18 @@ export function ShelfBooks({ x, y, w, h, frames, frameDuration, books, labels, o
   }, [stop])
 
   return (
-    <div className="absolute" style={{ left: x, top: y, width: w, height: h }}>
+    <div
+      className="absolute"
+      style={{
+        left: x,
+        top: y,
+        width: w,
+        height: h,
+        // Forward while hovered, behind its neighbours otherwise, so the catan
+        // highlight is not clipped by this sprite's (transparent) box.
+        zIndex: hoveredId ? 20 : undefined,
+      }}
+    >
       <motion.img
         src={lightingSrc(frames[tick], lighting)}
         alt=""

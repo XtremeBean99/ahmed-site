@@ -144,6 +144,9 @@ export function AnimatedSprite({
         top: y,
         width: w,
         height: h,
+        // Shelf sprites overlap. The hovered one comes forward so its
+        // highlight outline is never clipped by the neighbour painted after it.
+        zIndex: hovered ? 20 : undefined,
       }}
     >
       <motion.div

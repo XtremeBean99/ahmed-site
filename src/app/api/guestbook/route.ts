@@ -3,6 +3,24 @@ import { guestbookSchema } from '@/lib/validations'
 import { addEntry, listEntries, deleteEntry, trimEntries } from '@/services/guestbook'
 import { checkRateLimit, getClientIp } from '@/lib/ratelimit'
 import { getRedis } from '@/lib/redis'
+import { createHash, timingSafeEqual } from 'node:crypto'
+
+/**
+ * Constant-time secret comparison. Both sides are hashed first so the compare
+ * is over fixed-length buffers and the secret's length does not leak.
+ */
+function secretMatches(provided: string, expected: string): boolean {
+  const a = createHash('sha256').update(provided).digest()
+  const b = createHash('sha256').update(expected).digest()
+  return timingSafeEqual(a, b)
+}
+
+/** Admin key from `Authorization: Bearer <key>` or `X-Admin-Key`. Never a query param. */
+function adminKeyFrom(request: NextRequest): string | null {
+  const auth = request.headers.get('authorization')
+  if (auth?.toLowerCase().startsWith('bearer ')) return auth.slice(7).trim()
+  return request.headers.get('x-admin-key')?.trim() || null
+}
 
 // Drop ASCII control characters (codes 0-31 and DEL 127) and any HTML tags; keep normal text.
 const stripUnsafe = (s: string) =>
@@ -21,7 +39,10 @@ export async function GET(request: NextRequest) {
       await redis.ping()
       return NextResponse.json({ ok: true, redis: 'connected' })
     } catch (e) {
-      return NextResponse.json({ ok: false, error: String(e) }, { status: 500 })
+      // Never return the error text: an Upstash client error can carry the REST
+      // URL and token material. Log it server-side instead.
+      console.error('[guestbook] health check failed', e)
+      return NextResponse.json({ ok: false }, { status: 500 })
     }
   }
   try { return NextResponse.json({ entries: await listEntries(50) }) }
@@ -59,11 +80,20 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const key = searchParams.get('key')
-  const admin = process.env.GUESTBOOK_ADMIN_KEY
-  if (!admin || key !== admin) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
 
-  // Bulk: DELETE /api/guestbook?key=...&trim=N  — keep only the N most recent entries
+  // Rate-limit BEFORE the auth check so the admin key cannot be brute-forced.
+  const ip = getClientIp(request.headers)
+  if (!(await checkRateLimit(`guestbook-admin:${ip}`, 30)).allowed)
+    return NextResponse.json({ error: 'Too many requests.' }, { status: 429 })
+
+  // The key travels in a header, never the query string: query strings end up
+  // in platform access logs, proxy logs and browser history.
+  const key = adminKeyFrom(request)
+  const admin = process.env.GUESTBOOK_ADMIN_KEY
+  if (!admin || !key || !secretMatches(key, admin))
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
+
+  // Bulk: DELETE /api/guestbook?trim=N  — keep only the N most recent entries
   const trim = searchParams.get('trim')
   if (trim !== null) {
     const n = parseInt(trim, 10)
@@ -72,7 +102,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true, removed })
   }
 
-  // Single: DELETE /api/guestbook?key=...&id=<uuid>
+  // Single: DELETE /api/guestbook?id=<uuid>
   const id = searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'Missing id or trim parameter.' }, { status: 400 })
   await deleteEntry(id)

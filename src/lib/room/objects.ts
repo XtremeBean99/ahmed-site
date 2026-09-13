@@ -191,6 +191,13 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
 ]
 
 /**
+ * Alternate poster art shown while the poster is toggled (click to swap, click
+ * again to swap back). Cropped to the SAME union box as poster-1..5 by
+ * scripts/extract-posters.mjs, so it drops onto the hotspot pixel-for-pixel.
+ */
+export const POSTER_ALT_FRAME = '/room/poster-alt.png'
+
+/**
  * Windows-98-style boot sequence drawn on the monitor glass while the PC is
  * hovered. Decorative overlay (aria-hidden). Rect is in stage coordinates,
  * the loading source canvases are top-left aligned with the stage, and the

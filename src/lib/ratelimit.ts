@@ -1,7 +1,8 @@
 import { getRedis } from '@/lib/redis'
 
 /**
- * Fixed-window rate limiter: 5 requests per hour per key.
+ * Fixed-window rate limiter: 5 requests per hour per key by default; pass
+ * `max` to raise the ceiling for a specific route (admin deletes).
  *
  * Primary store is Upstash Redis (INCR + EXPIRE), so limits survive
  * serverless cold starts and apply across concurrent instances. When the
@@ -27,25 +28,26 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000).unref?.()
 
-function checkMemory(key: string): { allowed: boolean; remaining: number } {
+function checkMemory(key: string, max: number): { allowed: boolean; remaining: number } {
   const now = Date.now()
   const entry = memoryStore.get(key)
 
   if (!entry || now > entry.resetAt) {
     memoryStore.set(key, { count: 1, resetAt: now + WINDOW_MS })
-    return { allowed: true, remaining: MAX_REQUESTS - 1 }
+    return { allowed: true, remaining: max - 1 }
   }
 
-  if (entry.count >= MAX_REQUESTS) {
+  if (entry.count >= max) {
     return { allowed: false, remaining: 0 }
   }
 
   entry.count++
-  return { allowed: true, remaining: MAX_REQUESTS - entry.count }
+  return { allowed: true, remaining: max - entry.count }
 }
 
 export async function checkRateLimit(
   key: string,
+  max: number = MAX_REQUESTS,
 ): Promise<{ allowed: boolean; remaining: number }> {
   const url = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN
@@ -56,14 +58,14 @@ export async function checkRateLimit(
       const count = await redis.incr(redisKey)
       if (count === 1) await redis.expire(redisKey, WINDOW_S)
       return {
-        allowed: count <= MAX_REQUESTS,
-        remaining: Math.max(0, MAX_REQUESTS - count),
+        allowed: count <= max,
+        remaining: Math.max(0, max - count),
       }
     } catch {
       // Redis outage — degrade to per-instance limiting rather than 500ing
     }
   }
-  return checkMemory(key)
+  return checkMemory(key, max)
 }
 
 /**

@@ -1,5 +1,6 @@
 import sharp from 'sharp'
 import { readdir, mkdir } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -97,6 +98,18 @@ async function main() {
       .png()
       .toFile(outPath)
     console.log(`Saved ${outPath}`)
+  }
+
+  // Alternate poster art (click-to-swap), cropped to the SAME box so it lands
+  // exactly on the kitagawa hotspot.
+  const altSrc = join(sourceDir, 'hypergamy.png')
+  if (existsSync(altSrc)) {
+    const altOut = join(outputDir, 'poster-alt.png')
+    await sharp(altSrc)
+      .extract({ left: unionBox.left, top: unionBox.top, width: cropW, height: cropH })
+      .png()
+      .toFile(altOut)
+    console.log(`Saved ${altOut}`)
   }
 
   // Also output the registry entry data

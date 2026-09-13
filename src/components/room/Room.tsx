@@ -11,6 +11,7 @@ import {
   CLOCK_FACE_SKEW_DEG,
   SPRITE_FRAME_MS,
   LIGHTING_FADE_MS,
+  POSTER_ALT_FRAME,
 } from '@/lib/room/objects'
 import { useStageScale } from '@/lib/room/useStageScale'
 import { loadPrefs, savePrefs } from '@/lib/room/storage'
@@ -451,6 +452,10 @@ export function Room({ dict, readmeContent }: RoomProps) {
   }, [toggleClockFormat])
 
 
+  // Poster swap: a click flips the kitagawa art to the alternate poster and a
+  // second click flips it back. Hover animation is unaffected.
+  const [posterAlt, setPosterAlt] = useState(false)
+
   const monitorObj = ROOM_OBJECTS.find((o) => o.id === 'monitor')!
   const posterObj = ROOM_OBJECTS.find((o) => o.id === 'poster')!
   const saitamaObj = ROOM_OBJECTS.find((o) => o.id === 'saitama')!
@@ -685,7 +690,10 @@ export function Room({ dict, readmeContent }: RoomProps) {
             frames={posterObj.frames}
             frameDuration={SPRITE_FRAME_MS.poster}
             mode="play-once-hold"
+            altFrame={POSTER_ALT_FRAME}
+            altActive={posterAlt}
             onClick={() => {
+              setPosterAlt((v) => !v)
               sfx.play('poster')
               discover('poster', t.room.discoveryLabels.poster)
               setToast(t.room.posterClickHint)

@@ -60,7 +60,11 @@ hourly-cached, fail-soft, no key, no secrets — added in Spec E). `src/app/api/
 domain), IP rate-limiting (`src/lib/ratelimit.ts`, 5/hr, Upstash + in-memory fallback), a honeypot
 (`website` must be empty), Zod validation (`guestbookSchema` in `src/lib/validations.ts`, name ≤ 32,
 message ≤ 280), and control-char/HTML/profanity stripping before storing. `DELETE` requires
-`GUESTBOOK_ADMIN_KEY`. Never skip server-side validation; if another input route is added, follow
+`GUESTBOOK_ADMIN_KEY` sent as `Authorization: Bearer <key>` or `X-Admin-Key` — never as a query
+param (query strings land in access logs) — rate-limited (30/hr per IP) BEFORE the auth check so
+the key cannot be brute-forced, and compared in constant time over SHA-256 digests. The
+`?health=1` probe returns `{ ok: false }` only; error text stays in the server log because an
+Upstash client error can carry the REST URL and token. Never skip server-side validation; if another input route is added, follow
 this same pattern (mirrors the archived `_archive/services/contact.ts`).
 
 ### 3. Persistence is localStorage-first; the one server store is the guestbook

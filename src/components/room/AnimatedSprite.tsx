@@ -21,6 +21,13 @@ interface AnimatedSpriteProps {
   onClick?: () => void
   /** Tooltip alignment, forwarded to RoomObject (use 'right' near the stage edge) */
   tooltipAlign?: 'center' | 'right'
+  /**
+   * Alternate static art for a click-to-swap sprite (the poster). Always
+   * preloaded so the first swap does not flash; only rendered while
+   * `altActive` is true. Lighting grading and the hover lift still apply.
+   */
+  altFrame?: string | null
+  altActive?: boolean
 }
 
 export function AnimatedSprite({
@@ -34,6 +41,8 @@ export function AnimatedSprite({
   mode,
   onClick,
   tooltipAlign,
+  altFrame = null,
+  altActive = false,
 }: AnimatedSpriteProps) {
   const [hovered, setHovered] = useState(false)
   const lighting = useLighting()
@@ -92,12 +101,13 @@ export function AnimatedSprite({
   // (dusk) paths missed the graded dawn/day/night variants (lightingSrc) — that
   // was the "delayed on first play" bug. Re-runs when the lighting state changes.
   useEffect(() => {
-    if (frames.length <= 1) return
-    for (const src of frames) {
+    const sources = altFrame ? [...frames, altFrame] : frames
+    if (sources.length <= 1) return
+    for (const src of sources) {
       const img = new window.Image()
       img.src = lightingSrc(src, lighting)
     }
-  }, [frames, lighting])
+  }, [frames, lighting, altFrame])
 
   // Touch tap handler: on coarse-pointer devices, a tap starts the animation
   // and auto-stops after the full sequence completes (or on a second tap).
@@ -143,7 +153,7 @@ export function AnimatedSprite({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={lightingSrc(frames[tick], lighting)}
+          src={lightingSrc(altActive && altFrame ? altFrame : frames[tick], lighting)}
           alt=""
           draggable={false}
           className="block w-full h-full"

@@ -175,7 +175,7 @@ Four visitor-local lighting states (dawn, day, dusk, night), cycled via build-ti
 
 - **GET**: Returns the 50 most recent guestbook entries.
 - **POST**: Creates an entry after CSRF check (Origin/Referer must match the production domain), IP rate-limiting (5/hr, Upstash + in-memory fallback), honeypot check (`website` must be empty), Zod validation (name max 32 chars, message max 280 chars), and control-character/HTML/profanity stripping.
-- **DELETE**: Clears entries (requires `GUESTBOOK_ADMIN_KEY` header).
+- **DELETE**: Removes one entry (`?id=<uuid>`) or trims to the N most recent (`?trim=N`). The admin key goes in a header, never the query string: `Authorization: Bearer $GUESTBOOK_ADMIN_KEY` (or `X-Admin-Key`). Rate-limited to 30/hr per IP and compared in constant time.
 
 Without Upstash credentials, the guestbook fails soft: GET returns `[]`, POST returns 500.
 

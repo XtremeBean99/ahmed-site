@@ -183,30 +183,33 @@ export const ICON_MINESWEEPER = (
 
 export const ICON_LINKEDIN = (
   <>
-    {/* "in" lettering */}
-    <rect x="2" y="2" width="11" height="11" fill="#0a66c2" />
-    <rect x="4" y="4" width="1" height="7" fill="#ffffff" />
-    <rect x="6" y="8" width="1" height="3" fill="#ffffff" />
-    <rect x="6" y="6" width="1" height="1" fill="#ffffff" />
-    <rect x="7" y="5" width="1" height="5" fill="#ffffff" />
-    <rect x="8" y="4" width="1" height="7" fill="#ffffff" />
+    {/* Rounded-square badge (cross of two rects cuts the corners) */}
+    <rect x="4" y="2" width="8" height="12" fill="#0a66c2" />
+    <rect x="2" y="4" width="12" height="8" fill="#0a66c2" />
+    {/* "i" */}
+    <rect x="4.5" y="4.5" width="2" height="2" fill="#ffffff" />
+    <rect x="4.5" y="7.5" width="2" height="4.5" fill="#ffffff" />
+    {/* "n" */}
+    <rect x="8" y="7.5" width="1.8" height="4.5" fill="#ffffff" />
+    <rect x="8" y="7.5" width="4" height="1.8" fill="#ffffff" />
+    <rect x="10.2" y="7.5" width="1.8" height="4.5" fill="#ffffff" />
   </>
 )
 
 export const ICON_GITHUB = (
   <>
-    {/* Octocat silhouette, dark circle with inner cutout */}
+    {/* Octocat bust: rounded head with pointed cat ears */}
     <circle cx="8" cy="8" r="6" fill="#24292f" />
+    <polygon points="3,5 4.5,1.5 6,5" fill="#24292f" />
+    <polygon points="10,5 11.5,1.5 13,5" fill="#24292f" />
     {/* Eyes */}
-    <circle cx="6" cy="7" r="1.5" fill="#ffffff" />
-    <circle cx="10" cy="7" r="1.5" fill="#ffffff" />
-    {/* Mouth arc */}
-    <rect x="6" y="10" width="4" height="1" fill="#ffffff" />
-    {/* Ear nubs */}
-    <rect x="2" y="5" width="2" height="1" fill="#24292f" />
-    <rect x="12" y="5" width="2" height="1" fill="#24292f" />
-    {/* Body */}
-    <rect x="5" y="11" width="6" height="3" fill="#24292f" />
+    <ellipse cx="6" cy="7.5" rx="1.3" ry="1.6" fill="#ffffff" />
+    <ellipse cx="10" cy="7.5" rx="1.3" ry="1.6" fill="#ffffff" />
+    {/* Muzzle */}
+    <rect x="7" y="10" width="2" height="1" fill="#ffffff" />
+    {/* Tapered body */}
+    <rect x="4" y="12" width="8" height="2" fill="#24292f" />
+    <rect x="5" y="14" width="6" height="1" fill="#24292f" />
   </>
 )
 
@@ -243,16 +246,12 @@ export const ICON_README = (
 
 export const ICON_MUSIC = (
   <>
-    {/* Note head + stem */}
-    <rect x="9" y="4" width="3" height="2" fill="#1db954" />
-    <rect x="8" y="1" width="1" height="9" fill="#1db954" />
-    {/* Flag */}
-    <rect x="8" y="1" width="5" height="1" fill="#1db954" />
-    <rect x="12" y="2" width="1" height="5" fill="#1db954" />
-    {/* Second note */}
-    <rect x="3" y="7" width="3" height="2" fill="#3a3028" />
-    <rect x="2" y="4" width="1" height="9" fill="#3a3028" />
-    <rect x="2" y="4" width="5" height="1" fill="#3a3028" />
+    {/* Beamed eighth notes (♫): beam, two stems, two note heads */}
+    <rect x="3" y="2" width="10" height="1.8" fill="#1db954" />
+    <rect x="3" y="2" width="1.8" height="9.5" fill="#1db954" />
+    <rect x="11.2" y="2" width="1.8" height="9.5" fill="#1db954" />
+    <ellipse cx="3.4" cy="12.5" rx="2.4" ry="1.8" fill="#1db954" />
+    <ellipse cx="11.6" cy="12.5" rx="2.4" ry="1.8" fill="#1db954" />
   </>
 )
 

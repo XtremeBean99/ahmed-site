@@ -1,27 +1,33 @@
 # Security Review — ahmedyhussain.com
 
-**Date:** 7 July 2026
+**Date:** 7 July 2026 (updated 13 September 2026)
 **Scope:** `website/ahmed-site` (Next.js 15 App Router, deployed on Vercel)
 **Reviewer:** automated assessment (source-level)
-**Status:** Items 1, 2, 4, 6 resolved (same day). Items 3 & 5 tracked in roadmap.
+**Status:** Items 1, 2, 4, 6 resolved (7 July). Items 3 & 5 resolved (Upstash rate limiter
+shipped in Spec F, v17). See the 13 September 2026 addendum below for current findings —
+**item 9 is critical and needs action.**
 
 ## Summary
 
 The site is in good shape. All user input flows through server-side Zod validation,
-security headers are strong, the contact email path is injection-safe, and no secrets are
-committed to git. There are **no critical or high-severity issues**. The findings below are
-mostly low-severity hardening items and one local hygiene issue worth fixing now.
+security headers are strong, the guestbook write path is injection-safe (React auto-escapes,
+control chars/HTML stripped server-side), and no secrets are committed to git. The rate
+limiter now runs on Upstash Redis in production (fixed serverless statefulness, findings 3 & 5
+below). The one **critical** issue is an outdated Next.js dependency (finding 9) — patch
+immediately.
 
 | # | Finding | Severity | Type | Status |
 |---|---------|----------|------|--------|
 | 1 | Live Vercel OIDC token present in working tree | Low–Medium | Secret hygiene | ✅ Resolved |
-| 2 | Leaderboard scores are client-trusted (spoofable) | Low | Integrity | ✅ Documented |
-| 3 | In-memory rate limiter is ineffective on serverless | Low | Abuse / DoS | → Roadmap #15 |
-| 4 | Contact CSRF check skipped when `Origin` header absent | Low | CSRF | ✅ Resolved |
-| 5 | Rate-limit key trusts leftmost `X-Forwarded-For` | Info | Abuse | → Roadmap #15 |
-| 6 | `dangerouslySetInnerHTML` on translation/JSON-LD strings | Low | Latent XSS | ✅ Resolved |
+| 2 | Leaderboard scores are client-trusted (spoofable) | Low | Integrity | N/A — ninja game removed from build |
+| 3 | In-memory rate limiter is ineffective on serverless | Low | Abuse / DoS | ✅ Resolved (Upstash primary store) |
+| 4 | Contact CSRF check skipped when `Origin` header absent | Low | CSRF | N/A — contact form removed; guestbook requires Origin/Referer match in production |
+| 5 | Rate-limit key trusts leftmost `X-Forwarded-For` | Info | Abuse | ✅ Resolved (`getClientIp` now uses `x-real-ip`/rightmost XFF) |
+| 6 | `dangerouslySetInnerHTML` on translation/JSON-LD strings | Low | Latent XSS | ✅ Resolved (silicon page removed; `JsonLd` escapes `<` and `-->`) |
 | 7 | CSP keeps `script-src 'unsafe-inline'` | Low (accepted) | Hardening | Accepted |
-| 8 | Dependencies: 2 moderate (build-time only) | Info | Dependencies | Monitor |
+| 8 | Dependencies: 2 moderate (build-time only, July review) | Info | Dependencies | Superseded by #9 |
+| **9** | **`next@15.5.20` — unauthenticated RCE in Image Optimization API (AVIF)** | **Critical** | **Dependency / RCE** | **Open — patch now** |
+| 10 | Unused live credentials sitting in the Vercel project (Postgres/Neon, session secret, admin password hash) | Medium | Attack-surface / blast radius | Open — recommend deletion |
 
 ---
 
@@ -96,12 +102,70 @@ This weakens the XSS mitigation value of the CSP. Roadmap already notes CSP nonc
 work. `unsafe-eval` has correctly been removed for production. No action required unless you
 want to invest in nonce-based CSP.
 
-### 8. Dependencies — Informational
-- `next@15.5.19` (current; includes fixes for the 2025 middleware auth-bypass and cache CVEs),
-  `react@19.2.7`, `zod@3.25.76` — all current.
-- `npm audit` reports **2 moderate** advisories, both the build-time PostCSS `</style>`
-  stringify issue. PostCSS runs only at build, not at runtime, so there is no runtime exposure.
-- Keep dependencies patched; nothing urgent.
+### 8. Dependencies — Informational (superseded by #9)
+- `react@19.x`, `zod@3.x` current as of July.
+- July's "2 moderate PostCSS" note is now superseded by the critical Next.js advisory below.
+
+---
+
+## Addendum — 13 September 2026
+
+### 9. `next@15.5.20` — unauthenticated RCE in the Image Optimization API (AVIF) — Critical
+`npm audit` on the installed tree flags [GHSA-2xp9-vwfh-vxw4](https://github.com/advisories/GHSA-2xp9-vwfh-vxw4):
+a critical (CVSS 9.5) unauthenticated remote-code-execution vulnerability in Next.js's built-in
+`/_next/image` optimizer, triggered by a flaw in `libheif`/`sharp` when processing AVIF input.
+
+- **Affected:** Next.js 10.0.0–15.5.23 and 16.0.0–16.3.2. **Installed: 15.5.20** (confirmed via
+  `npm list next` and the dev server banner) — squarely in the vulnerable range.
+- **Fixed in:** 15.5.24 (also 16.3.3). `package.json` pins `^15.1.0`, so a plain
+  `npm install` today should already resolve to a patched 15.x once available — the lockfile
+  simply predates the fix release.
+- **Why this project is exposed:** `next.config.ts` explicitly enables
+  `images: { formats: ['image/avif', 'image/webp'] }`. The `/_next/image` route is part of the
+  Next.js server itself — reachable regardless of whether `next/image` is used in room
+  components (it deliberately isn't, per Critical Constraint 6 — pixel art uses raw `<img>`).
+  Any Vercel deployment on an unpatched build is exposed to unauthenticated attackers on the
+  open internet.
+- **Fix:**
+  ```bash
+  npm install next@latest   # within ^15.1.0, resolves to the patched 15.5.x
+  npm run type-check && npm run lint && npm run build
+  git add package.json package-lock.json
+  git commit -m "fix: patch Next.js RCE (GHSA-2xp9-vwfh-vxw4)"
+  git push   # redeploy on Vercel
+  ```
+  There is no code-level workaround short of upgrading — Vercel's own patched builds disable
+  AVIF optimization internally until the upstream `libheif` fix lands, so upgrading is both
+  the fix and the mitigation.
+- A related critical advisory, [GHSA-p293-qw3h-jr36](https://github.com/advisories/GHSA-p293-qw3h-jr36)
+  (path-traversal RCE on Windows-hosted Next.js servers, same affected/fixed range), does not
+  apply to the Linux-based Vercel deployment but is resolved by the same upgrade.
+
+### 10. Unused live credentials in the Vercel project — Medium
+`vercel env ls` shows ~28 environment variables on the `ahmed-site` project. Cross-referencing
+against every `process.env.*` reference in `src/` and `scripts/` (both `master` and the stale
+`assessment-cleanup` branch) and `package.json`'s dependencies (no `pg`/`postgres`/`neon`/`prisma`
+package is installed) shows only three variables are actually read by any code path:
+`GUESTBOOK_ADMIN_KEY`, and `KV_REST_API_URL`/`KV_REST_API_TOKEN` (read as a fallback alias for
+`UPSTASH_REDIS_REST_URL`/`_TOKEN` in `src/lib/redis.ts` and `src/lib/ratelimit.ts`).
+
+Everything else — a full Postgres/Neon credential set (`DATABASE_URL` in four environments,
+20 `Vercel_Storage_*` vars), `SESSION_SECRET`, `ADMIN_PASSWORD_HASH`, `CONTACT_TO_EMAIL`,
+`RESEND_API_KEY` (confirmed retired, Spec 1), `KV_REST_API_READ_ONLY_TOKEN`, `REDIS_URL`, and
+`KV_URL` — is unreferenced by this codebase in any branch.
+
+- **Impact:** not itself an active exploit path (Vercel encrypts these at rest and the app never
+  reads or logs them), but it's unnecessary blast radius: a real database connection string, a
+  password hash, and a session-signing secret sit exposed to anyone with project/team access for
+  no functional reason, and nothing in this repo would notice or care if they were rotated,
+  leaked, or misused elsewhere. `SESSION_SECRET`/`ADMIN_PASSWORD_HASH`/`DATABASE_URL` don't match
+  any feature this codebase has ever had (no DB client dependency, no session auth — the
+  guestbook's only auth is `GUESTBOOK_ADMIN_KEY`), so they most likely belong to an abandoned
+  experiment or a different project that got connected to this one by mistake.
+- **Fix:** delete the unused variables from the Vercel project (see the step-by-step below).
+  Removing a project's env var only unlinks it from that project — it does not delete the
+  underlying Neon database or any other resource, so this is safe even if that storage is still
+  used elsewhere in the Vercel team.
 
 ---
 
@@ -122,8 +186,10 @@ want to invest in nonce-based CSP.
 
 ## Recommended next steps (priority order)
 
-1. ~~Delete `.vercel/.env.production.local`~~ ✅ Done 7 July 2026.
-2. Move rate limiting to Upstash Redis (findings 3 & 5) — tracked as roadmap item #15.
-3. ~~Decide and document the leaderboard trust model~~ ✅ Documented in route source, 7 July 2026.
-4. ~~Escape `<` in `JsonLd`, and require Origin/Referer in the contact route~~ ✅ Done 7 July 2026.
+1. **Upgrade `next` to 15.5.24+ and redeploy (finding 9) — do this first, today.**
+2. Delete the unused Vercel env vars (finding 10) — see step-by-step below.
+3. ~~Delete `.vercel/.env.production.local`~~ ✅ Done 7 July 2026.
+4. ~~Move rate limiting to Upstash Redis~~ ✅ Done (Spec F, v17).
+5. ~~Decide and document the leaderboard trust model~~ N/A — ninja game removed.
+6. ~~Escape `<` in `JsonLd`, and require Origin/Referer~~ ✅ Done 7 July 2026.
 5. Keep dependencies patched; consider nonce-based CSP later (findings 7 & 8).

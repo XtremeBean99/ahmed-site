@@ -14,6 +14,7 @@ import { DeskSettings, type SettingsLabels } from './DeskSettings'
 import { DeskTerminal } from './DeskTerminal'
 import { DeskLinks } from './DeskLinks'
 import { DeskGuestbook, type GuestbookLabels } from './DeskGuestbook'
+import { DeskMovie, type MovieLabels } from './DeskMovie'
 import { MusicNotes } from './MusicNotes'
 
 const SCREEN_X = 436; const SCREEN_Y = 152; const SCREEN_W = 536; const SCREEN_H = 308
@@ -31,7 +32,7 @@ const DESK_SPEAKER_HOLES_RIGHT = [
 const MOUSE_X_MIN = 975; const MOUSE_X_MAX = 1140
 const MOUSE_Y_MIN = 572; const MOUSE_Y_MAX = 635
 const MOUSE_REST_X = 1007; const MOUSE_REST_Y = 608
-type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'readme' | 'music' | 'legal' | 'links' | 'guestbook' | 'settings' | 'terminal'
+type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'readme' | 'music' | 'legal' | 'links' | 'guestbook' | 'settings' | 'terminal' | 'movie'
 
 interface DeskViewProps {
   shortcuts: DesktopShortcut[]
@@ -74,6 +75,14 @@ interface DeskViewProps {
   linksLabels: { title: string; close: string }
   /** Labels for the Guestbook app */
   guestbookLabels: GuestbookLabels
+  /** Labels for the VHS player */
+  movieLabels: MovieLabels
+  /**
+   * App to open instead of the desktop on arrival (the shelf VHS walks the
+   * visitor straight into the player). Cleared through onInitialAppHandled.
+   */
+  initialApp?: string | null
+  onInitialAppHandled?: () => void
   /** Konami code easter egg trigger */
   konamiOpen: boolean
   /** Called after the terminal has been opened so the parent can reset the flag */
@@ -82,7 +91,7 @@ interface DeskViewProps {
   onBack: () => void
 }
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, linksLabels, guestbookLabels, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
+  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, linksLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
   const { scale } = useStageScale()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
@@ -145,6 +154,14 @@ export function DeskView(props: DeskViewProps) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [screenMode, onBack])
+
+  // Arrived from an object in the room that opens an app directly.
+  useEffect(() => {
+    if (!initialApp) return
+    setScreenMode(initialApp as ScreenMode)
+    window.dispatchEvent(new CustomEvent('room:app-open', { detail: initialApp }))
+    onInitialAppHandled?.()
+  }, [initialApp, onInitialAppHandled])
 
   // Konami code: open terminal when triggered from Room
   useEffect(() => {
@@ -457,6 +474,19 @@ export function DeskView(props: DeskViewProps) {
                   onMusicVolume={onMusicVolume}
                   is24h={is24h}
                   onClock={onClock}
+                  onDesktop={goDesktop}
+                />
+              </motion.div>
+            )}
+
+            {screenMode === 'movie' && (
+              <motion.div key="movie" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskMovie
+                  time={time}
+                  desktopLabel={desktopLabel}
+                  labels={movieLabels}
                   onDesktop={goDesktop}
                 />
               </motion.div>

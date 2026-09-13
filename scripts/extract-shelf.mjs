@@ -32,14 +32,17 @@ async function getNonTransparentBounds(imagePath) {
   return { left, top, right, bottom }
 }
 
-async function main() {
-  await mkdir(outputDir, { recursive: true })
+// Each group is a rest frame plus hover-highlight frames, all drawn on the
+// full 1408x768 stage canvas. Output is `<out>-1.png`, `-2.png`, ... cropped to
+// the group's union bounding box.
+const GROUPS = [
+  { out: 'catan', sources: ['catan.png', 'catan2.png', 'catan3.png'] },
+  { out: 'books', sources: ['books1.png', 'books2.png', 'books3.png'] },
+  { out: 'vhs', sources: ['vhs1.png', 'vhs2.png', 'vhs3.png'] },
+]
 
-  const files = [
-    join(sourceDir, 'catan.png'),
-    join(sourceDir, 'catan2.png'),
-    join(sourceDir, 'catan3.png'),
-  ]
+async function extractGroup(group) {
+  const files = group.sources.map((f) => join(sourceDir, f))
 
   let unionBox = null
   for (const file of files) {
@@ -78,7 +81,7 @@ async function main() {
   console.log(`Crop dimensions: ${cropW} x ${cropH}`)
 
   for (let i = 0; i < files.length; i++) {
-    const outPath = join(outputDir, `catan-${i + 1}.png`)
+    const outPath = join(outputDir, `${group.out}-${i + 1}.png`)
     await sharp(files[i])
       .extract({
         left: unionBox.left,
@@ -92,7 +95,12 @@ async function main() {
   }
 
   console.log(`\n--- object registry data ---`)
-  console.log(`catan: { x: ${unionBox.left}, y: ${unionBox.top}, w: ${cropW}, h: ${cropH} }`)
+  console.log(`${group.out}: { x: ${unionBox.left}, y: ${unionBox.top}, w: ${cropW}, h: ${cropH} }\n`)
+}
+
+async function main() {
+  await mkdir(outputDir, { recursive: true })
+  for (const group of GROUPS) await extractGroup(group)
 }
 
 main().catch((err) => {

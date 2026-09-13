@@ -9,6 +9,8 @@ export const SPRITE_FRAME_MS = {
   poster: 130,
   bonsai: 165,
   catan: 150,
+  books: 120,
+  vhs: 120,
 } as const
 
 /**
@@ -129,6 +131,39 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
       '/room/catan-1.png',
       '/room/catan-2.png',
       '/room/catan-3.png',
+    ],
+    href: null,
+  },
+  {
+    id: 'books',
+    // Three books on the shelf, extracted from pixel-art/shelf/books1-3.png.
+    // Frame 1 = rest, frames 2-3 = the highlight outline. Each spine is its
+    // own hotspot (SHELF_BOOKS in src/lib/room/books.ts) and opens the reader.
+    x: 164,
+    y: 152,
+    w: 96,
+    h: 97,
+    labelKey: 'room.booksLabel',
+    frames: [
+      '/room/books-1.png',
+      '/room/books-2.png',
+      '/room/books-3.png',
+    ],
+    href: null,
+  },
+  {
+    id: 'vhs',
+    // VHS tapes on the shelf, extracted from pixel-art/shelf/vhs1-3.png.
+    // Click plays the film on the desk monitor.
+    x: 239,
+    y: 188,
+    w: 53,
+    h: 53,
+    labelKey: 'room.vhsLabel',
+    frames: [
+      '/room/vhs-1.png',
+      '/room/vhs-2.png',
+      '/room/vhs-3.png',
     ],
     href: null,
   },

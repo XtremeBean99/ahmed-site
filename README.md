@@ -98,6 +98,8 @@ Interactive hotspots on the main room stage:
 - **Side table**: Click toggles a 2-frame drawer open/close animation, persisted to `localStorage`.
 - **Digital alarm clock**: Green LED digits skewY'd onto the table face plane. Click toggles 12/24h format.
 - **Bonsai tree**: Looping animated sprite.
+- **Bookshelf**: Three spines (Moby-Dick, Nineteen Eighty-Four, The Odyssey), each its own hotspot under one highlight animation. Clicking a spine opens the e-reader: a pixel-framed device with a two-page spread on wide screens, a single page on phones, a contents list, type sizing, and a bookmark per book in `localStorage`. Text is public domain, converted page by page from the source scans by `scripts/extract-books.mjs` into `public/books/*.json`.
+- **VHS tape**: Zooms to the desk and plays `public/video/shrek.mp4` on the monitor, letterboxed, with pixel transport controls and a fullscreen handoff. Also reachable from the desktop as the **Movie** shortcut.
 - **Coffee mug**: Animated hover highlight with three-wisp steam animation.
 - **Weather window**: Rain or snow particles via Open-Meteo API, rendered inside the window glass area.
 - **Night sky**: Moon and stars rendered when the room is in night mode.

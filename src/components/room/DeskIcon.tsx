@@ -256,6 +256,21 @@ export const ICON_MUSIC = (
   </>
 )
 
+export const ICON_MOVIE = (
+  <>
+    {/* VHS cassette shell */}
+    <rect x="1" y="3" width="14" height="10" fill="#3a3028" />
+    <rect x="2" y="4" width="12" height="8" fill="#5a5048" />
+    {/* Label */}
+    <rect x="3" y="5" width="10" height="3" fill="#e8e0d8" />
+    {/* Reel windows */}
+    <rect x="4" y="9" width="3" height="2" fill="#2a2520" />
+    <rect x="9" y="9" width="3" height="2" fill="#2a2520" />
+    {/* Spine stripe */}
+    <rect x="1" y="12" width="14" height="1" fill="#8a3a2a" />
+  </>
+)
+
 export const ICON_SETTINGS = (
   <>
     <rect x="6" y="1" width="4" height="14" fill="#3a3028" />

@@ -33,6 +33,8 @@ const FILES = [
   'poster-alt.png',
   ...range('bonsai', 5),
   ...range('catan', 3),
+  ...range('books', 3),
+  ...range('vhs', 3),
   'room-speakers.png',
   'room-speakers-lamp-off.png',
   ...range('coffee', 6),

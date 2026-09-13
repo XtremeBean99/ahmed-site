@@ -22,6 +22,10 @@ import { NowPlaying } from './NowPlaying'
 import { Monitor } from './Monitor'
 import { RoomSpeakers } from './RoomSpeakers'
 import { AnimatedSprite } from './AnimatedSprite'
+import { ShelfBooks } from './ShelfBooks'
+import { RoomReader, type ReaderLabels } from './RoomReader'
+import type { MovieLabels } from './DeskMovie'
+import { SHELF_BOOKS } from '@/lib/room/books'
 import { DeskView } from './DeskView'
 import { SideTableClock } from './SideTableClock'
 import { RoomObject } from './RoomObject'
@@ -40,6 +44,7 @@ import {
   ICON_MUSIC,
   ICON_LEGAL,
   ICON_SETTINGS,
+  ICON_MOVIE,
 } from './DeskIcon'
 import type { DesktopShortcut } from './DeskDesktop'
 import { DURATION } from '@/lib/motion'
@@ -57,6 +62,10 @@ interface RoomProps {
       saitamaLabel: string
       bonsaiLabel: string
       catanLabel: string
+      booksLabel: string
+      vhsLabel: string
+      bookLabels: Record<string, string>
+      reader: ReaderLabels
       lampLabel: string
       coffeeLabel: string
       ipodLabel: string
@@ -112,6 +121,9 @@ interface RoomProps {
       guestbook: string
       guestbookTip: string
       guestbookApp: { title: string; close: string; namePh: string; messagePh: string; sign: string; empty: string; posting: string; error: string }
+      movie: string
+      movieTip: string
+      movieApp: MovieLabels
     }
     legal: Dictionary['legal']
   }
@@ -133,6 +145,8 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const [sfxEnabled, setSfxEnabled] = useState(true)
   const [sfxVolume, setSfxVolumeState] = useState(0.5)
   const [konamiOpen, setKonamiOpen] = useState(false)
+  // App the desk view should open on arrival (set by the shelf VHS).
+  const [pendingApp, setPendingApp] = useState<string | null>(null)
   const [discoveryToast, setDiscoveryToast] = useState<string | null>(null)
   const [hintPulses, setHintPulses] = useState(false)
 
@@ -456,11 +470,29 @@ export function Room({ dict, readmeContent }: RoomProps) {
   // second click flips it back. Hover animation is unaffected.
   const [posterAlt, setPosterAlt] = useState(false)
 
+  // Shelf books: the id of the book open in the reader, or null.
+  const [readerBook, setReaderBook] = useState<string | null>(null)
+
+  const openBook = useCallback((id: string) => {
+    sfx.play('poster')
+    setReaderBook(id)
+    discover('books', t.room.discoveryLabels.books)
+  }, [sfx, discover, t.room.discoveryLabels.books])
+
+  // Shelf VHS: zoom to the desk and land straight in the player.
+  const playTape = useCallback(() => {
+    discover('movie', t.room.discoveryLabels.movie)
+    setPendingApp('movie')
+    handleEnter()
+  }, [discover, handleEnter, t.room.discoveryLabels.movie])
+
   const monitorObj = ROOM_OBJECTS.find((o) => o.id === 'monitor')!
   const posterObj = ROOM_OBJECTS.find((o) => o.id === 'poster')!
   const saitamaObj = ROOM_OBJECTS.find((o) => o.id === 'saitama')!
   const bonsaiObj = ROOM_OBJECTS.find((o) => o.id === 'bonsai')!
   const catanObj = ROOM_OBJECTS.find((o) => o.id === 'catan')!
+  const booksObj = ROOM_OBJECTS.find((o) => o.id === 'books')!
+  const vhsObj = ROOM_OBJECTS.find((o) => o.id === 'vhs')!
   const coffeeObj = ROOM_OBJECTS.find((o) => o.id === 'coffee')!
   const clockObj = ROOM_OBJECTS.find((o) => o.id === 'clock')!
   const ipodObj = ROOM_OBJECTS.find((o) => o.id === 'ipod')!
@@ -485,6 +517,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
     { id: 'readme', kind: 'app', target: 'readme', label: t.desk.readme, tooltip: t.desk.readmeTip, icon: ICON_README },
     { id: 'links', kind: 'app', target: 'links', label: t.desk.links, tooltip: t.desk.linksTip, icon: ICON_README },
     { id: 'guestbook', kind: 'app', target: 'guestbook', label: t.desk.guestbook, tooltip: t.desk.guestbookTip, icon: ICON_README },
+    { id: 'movie', kind: 'app', target: 'movie', label: t.desk.movie, tooltip: t.desk.movieTip, icon: ICON_MOVIE },
     { id: 'legal', kind: 'app', target: 'legal', label: t.desk.legal, tooltip: t.desk.legalTip, icon: ICON_LEGAL },
   ]
 
@@ -524,6 +557,9 @@ export function Room({ dict, readmeContent }: RoomProps) {
           terminalLabels={{ title: "Terminal" }}
           linksLabels={t.desk.linksApp}
           guestbookLabels={t.desk.guestbookApp}
+          movieLabels={t.desk.movieApp}
+          initialApp={pendingApp}
+          onInitialAppHandled={() => setPendingApp(null)}
           konamiOpen={konamiOpen}
           onKonamiHandled={() => setKonamiOpen(false)}
         />
@@ -736,6 +772,32 @@ export function Room({ dict, readmeContent }: RoomProps) {
             frameDuration={SPRITE_FRAME_MS.catan}
             mode="play-once-hold"
             onClick={() => { discover('catan', t.room.discoveryLabels.catan) }}
+          />
+
+          {/* Shelf books: one sprite, a hotspot per spine, each opens the reader */}
+          <ShelfBooks
+            x={booksObj.x}
+            y={booksObj.y}
+            w={booksObj.w}
+            h={booksObj.h}
+            frames={booksObj.frames}
+            frameDuration={SPRITE_FRAME_MS.books}
+            books={SHELF_BOOKS}
+            labels={t.room.bookLabels}
+            onOpen={openBook}
+          />
+
+          {/* Shelf VHS: plays the film on the desk monitor */}
+          <AnimatedSprite
+            label={t.room.vhsLabel}
+            x={vhsObj.x}
+            y={vhsObj.y}
+            w={vhsObj.w}
+            h={vhsObj.h}
+            frames={vhsObj.frames}
+            frameDuration={SPRITE_FRAME_MS.vhs}
+            mode="play-once-hold"
+            onClick={playTape}
           />
 
           {/* Lamp toggle hotspot */}
@@ -977,6 +1039,18 @@ export function Room({ dict, readmeContent }: RoomProps) {
           >
             {'\u2726'} {discoveryToast}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* E-reader, opened from a book on the shelf */}
+      <AnimatePresence>
+        {readerBook && (
+          <RoomReader
+            key={readerBook}
+            book={SHELF_BOOKS.find((b) => b.id === readerBook)!}
+            labels={t.room.reader}
+            onClose={() => setReaderBook(null)}
+          />
         )}
       </AnimatePresence>
 

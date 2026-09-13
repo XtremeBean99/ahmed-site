@@ -67,10 +67,21 @@ the key cannot be brute-forced, and compared in constant time over SHA-256 diges
 Upstash client error can carry the REST URL and token. Never skip server-side validation; if another input route is added, follow
 this same pattern (mirrors the archived `_archive/services/contact.ts`).
 
+### 2b. Books and the film are static assets, not services
+The shelf books are public-domain texts converted once from the PDFs in `assets/books/`
+(gitignored, too large to commit) into `public/books/<id>.json` by
+`scripts/extract-books.mjs`, which needs `npm i --no-save pdfjs-dist` — deliberately NOT a
+site dependency. One JSON page per printed page, so the reader (`RoomReader`) turns pages
+where the book does; prose reflows into paragraphs, verse keeps its lines. The book list and
+each spine's hotspot live in `src/lib/room/books.ts`. The film is `public/video/shrek.mp4`
+(~42 MB, committed), played by `DeskMovie` on the desk monitor; it is reachable from the
+shelf VHS (which zooms to the desk via `initialApp`) and from the desktop Movie shortcut.
+
 ### 3. Persistence is localStorage-first; the one server store is the guestbook
 Room preferences live in `localStorage`, client-side only:
 `room-save-v1` = `{ audio, lampOn, visitCount, volume, clock24h, sideTableOpen, sfx, sfxVolume, calmMode }`;
-plus `room-paint-v1` (Paint canvas) and `room-discoveries-v1` (discoveries set). The **only**
+plus `room-paint-v1` (Paint canvas), `room-discoveries-v1` (discoveries set) and
+`room-reader-v1` (`{ size, pages: { <bookId>: pageIndex } }`, the e-reader's bookmarks). The **only**
 server-side store is the guestbook (Spec F, v17): an Upstash Redis sorted set `guestbook:entries`
 (newest 500, scored by timestamp) behind `src/services/guestbook.ts`, storing **name + message +
 timestamp only** — no email, no persisted IP (rate-limit keys expire after one hour). Any further
@@ -230,7 +241,9 @@ Source art is organised by category under `assets/pixel-art/`:
 - `close-up-desk/` — desk close-up art + mouse-only-closeup
 - `coffee/` — coffee mug + steam source frames
 - `music-sfx/` — music-note sprite art
-- `poster/` — kitagawa poster frames (`kitagawa-1..5.png`)
+- `poster/` — kitagawa poster frames (`kitagawa-1..5.png`) + `hypergamy.png` (click-swap art)
+- `shelf/` — catan boxes, `books1..3.png` (three book spines) and `vhs1..3.png`, each a rest
+  frame plus two highlight frames; cropped by `scripts/extract-shelf.mjs`
 - `room-view-monitor/` — monitor+keyboard+mouse base + highlight frames,
   `room-view-monitor/monitor-loading/` — Win98 boot-screen frames,
   room-speakers lamp-on/off art

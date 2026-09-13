@@ -21,6 +21,8 @@ export const DISCOVERY_IDS = [
   'links',
   'guestbook',
   'night',
+  'books',
+  'movie',
 ] as const
 
 export type DiscoveryId = (typeof DISCOVERY_IDS)[number]

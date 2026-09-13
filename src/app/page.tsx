@@ -8,7 +8,7 @@ import { XtremeSplash } from '@/components/room/XtremeSplash'
 import { JsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
-  title: "Ahmed's Room",
+  title: "Ahmed's website",
   description:
     'Step into my digital room, a cosy pixel-art space and the front door to my personal website.',
 }

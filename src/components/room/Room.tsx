@@ -14,6 +14,7 @@ import {
   POSTER_ALT_FRAME,
 } from '@/lib/room/objects'
 import { useStageScale } from '@/lib/room/useStageScale'
+import { MobileGate } from './MobileGate'
 import { loadPrefs, savePrefs } from '@/lib/room/storage'
 import { RoomStage } from './RoomStage'
 import { RoomHud } from './RoomHud'
@@ -520,6 +521,12 @@ export function Room({ dict, readmeContent }: RoomProps) {
     { id: 'movie', kind: 'app', target: 'movie', label: t.desk.movie, tooltip: t.desk.movieTip, icon: ICON_MOVIE },
     { id: 'legal', kind: 'app', target: 'legal', label: t.desk.legal, tooltip: t.desk.legalTip, icon: ICON_LEGAL },
   ]
+
+  // Mobile: the pixel-art room needs a mouse, not a touchscreen. Show a static
+  // gate instead of the interactive experience.
+  if (mobile) {
+    return <MobileGate />
+  }
 
   // Desk view
   if (view === 'desk') {

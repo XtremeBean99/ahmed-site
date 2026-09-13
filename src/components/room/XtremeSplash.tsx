@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { ReactNode } from 'react'
+import { isMobileViewport } from '@/lib/room/useStageScale'
 
 const TOTAL_FRAMES = 28
 const FRAME_MS = 120
@@ -18,6 +19,12 @@ export function XtremeSplash({ children }: Props) {
   const [phase, setPhase] = useState<'firstFrame' | 'playing' | 'holding' | 'done'>('firstFrame')
   const [frame, setFrame] = useState(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Skip the splash entirely on mobile — server-rendered as 'firstFrame' (no window),
+  // so this has to happen client-side post-mount rather than in the initial state.
+  useEffect(() => {
+    if (isMobileViewport()) setPhase('done')
+  }, [])
 
   // Hold first frame for FIRST_HOLD_MS before playing
   useEffect(() => {
@@ -46,8 +53,9 @@ export function XtremeSplash({ children }: Props) {
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [phase])
 
-  // Preload all frames
+  // Preload all frames (skipped on mobile — the splash never plays there)
   useEffect(() => {
+    if (isMobileViewport()) return
     for (const src of FRAMES) {
       const img = new window.Image()
       img.src = src

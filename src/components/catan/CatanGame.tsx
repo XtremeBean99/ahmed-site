@@ -1,51 +1,42 @@
 'use client'
 
-import { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
-import Link from 'next/link'
+import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import { useT } from '@/lib/i18n/client'
-import { isMobileViewport } from '@/lib/room/useStageScale'
 import { MobileGate } from '@/components/room/MobileGate'
-import { BoardCanvas, type BoardTargets } from '@/components/catan/BoardCanvas'
-import { chooseBotAction, fallbackAction } from '@/lib/games/catan/ai'
-import { createGame } from '@/lib/games/catan/board'
-import { COSTS, RESOURCES } from '@/lib/games/catan/constants'
-import { applyAction, humanPlayer, playersToAct } from '@/lib/games/catan/engine'
-import { HEXES } from '@/lib/games/catan/geometry'
-import {
-  hasResources,
-  legalCities,
-  legalRoads,
-  legalSettlements,
-  legalSetupRoads,
-  legalSetupSettlements,
-  totalCards,
-  victoryPoints,
-} from '@/lib/games/catan/helpers'
-import { clearGame, loadGame, saveGame } from '@/lib/games/catan/save'
-import type { Action, GameState, PlayerColor } from '@/lib/games/catan/types'
-import { actionBlockReason, formatActionBlockReason } from './action-reasons'
-import { Dice } from './Dice'
-import { DiceHistoryPanel } from './DiceHistoryPanel'
+import { isMobileViewport } from '@/lib/room/useStageScale'
+import { BoardCanvas } from '@/components/catan/BoardCanvas'
+import { clearGame } from '@/lib/games/catan/save'
+import { applyAction } from '@/lib/games/catan/engine'
+import { applyStepPrepare, createTutorialGame, isStepComplete, isTutorialActionLegal, TUTORIAL_STEPS } from '@/lib/games/catan/tutorial'
+import type { Action, GameState } from '@/lib/games/catan/types'
+import { BOARD_WIDTH, edgePoint, hexCenter, vertexPoint } from './board-layout'
+import { ActionBar } from './ActionBar'
+import { BoardKeyPanel } from './BoardKeyPanel'
+import { DevCardsPanel } from './DevCardsPanel'
+import { DiceViewer } from './DiceViewer'
 import { DiscardDialog } from './DiscardDialog'
+import { fill } from './event-text'
+import { GameLog } from './GameLog'
 import { GameOverOverlay } from './GameOverOverlay'
+import { HandPanel } from './HandPanel'
+import { describeHint } from './hint'
 import { NewGameDialog } from './NewGameDialog'
-import { PlayCardDialog, playableDevCards } from './PlayCardDialog'
-import { getCatanPrefsStorage, readPrefs, writePrefs, type BotSpeed } from './prefs'
-import { ResourceIcon } from './ResourceIcon'
+import { type PlayableDevCard, PlayCardDialog } from './PlayCardDialog'
+import { PlayersPanel } from './PlayersPanel'
 import { RulesPanel } from './RulesPanel'
 import { StealDialog } from './StealDialog'
+import { TooltipsProvider } from './Tooltip'
+import { TopBar } from './TopBar'
 import { TradeDialog } from './TradeDialog'
-import { fill, formatEvent, playerSubject } from './event-text'
-import { COLORS, FOCUS_CLASS, Muted, PIXEL_FONT, Panel, PixelButton, SectionTitle } from './ui'
-import { vertexDescription } from './vertex-info'
+import { TutorialCoach, TutorialSpotlight } from './TutorialCoach'
+import type { TutorialHighlight } from '@/lib/games/catan/tutorial'
+import { COLORS, PIXEL_FONT, PixelButton } from './ui'
+import { useCatanController } from './useCatanController'
 
-const PLAYER_COLORS: Record<PlayerColor, string> = {
-  red: '#c0392b',
-  blue: '#2e6fb7',
-  white: '#e8e0d0',
-  orange: '#e07b2a',
-}
+const TUTORIAL_SAVE_KEY = 'catan-tutorial-v1'
+
+type CatanMode = 'normal' | 'tutorial'
 
 interface CatanErrorBoundaryProps {
   children: ReactNode
@@ -81,907 +72,483 @@ class CatanErrorBoundary extends Component<CatanErrorBoundaryProps, CatanErrorBo
   }
 }
 
+function StatusLine({ statusText, isError }: { statusText: string; isError: boolean }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      data-tutorial="status"
+      style={{
+        minHeight: 30,
+        padding: '6px 10px',
+        display: 'flex',
+        alignItems: 'center',
+        borderTop: `2px solid ${COLORS.panelBorder}`,
+      }}
+    >
+      <span style={{ ...PIXEL_FONT, fontSize: 10, color: isError ? COLORS.danger : COLORS.text }}>{statusText}</span>
+    </div>
+  )
+}
+
+function HintBoardHighlight({
+  highlight,
+  wrapperRef,
+}: {
+  highlight: TutorialHighlight
+  wrapperRef: RefObject<HTMLDivElement | null>
+}) {
+  const [marks, setMarks] = useState<{ left: number; top: number }[]>([])
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const wrapper = wrapperRef.current
+      const canvas = wrapper?.querySelector('canvas')
+      if (!wrapper || !canvas) return
+      const wrapperRect = wrapper.getBoundingClientRect()
+      const canvasRect = canvas.getBoundingClientRect()
+      if (canvasRect.width === 0 || canvasRect.height === 0) return
+      const scale = canvasRect.width / BOARD_WIDTH
+      const offsetX = canvasRect.left - wrapperRect.left
+      const offsetY = canvasRect.top - wrapperRect.top
+      const points: { x: number; y: number }[] = []
+      for (const vertex of highlight.vertices ?? []) points.push(vertexPoint(vertex))
+      for (const edge of highlight.edges ?? []) points.push(edgePoint(edge))
+      for (const hex of highlight.hexes ?? []) points.push(hexCenter(hex))
+      setMarks(points.map((p) => ({ left: offsetX + p.x * scale, top: offsetY + p.y * scale })))
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('scroll', measure, true)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', measure, true)
+    }
+  }, [highlight, wrapperRef])
+
+  return (
+    <>
+      {marks.map((mark, i) => (
+        <div
+          key={i}
+          aria-hidden
+          style={{
+            position: 'absolute',
+            left: mark.left,
+            top: mark.top,
+            width: 16,
+            height: 16,
+            transform: 'translate(-50%, -50%)',
+            border: '2px solid rgba(245, 184, 61, 0.95)',
+            backgroundColor: 'rgba(245, 184, 61, 0.25)',
+            boxShadow: '0 0 0 1px #1a1410',
+            pointerEvents: 'none',
+            zIndex: 25,
+          }}
+        />
+      ))}
+    </>
+  )
+}
+
 export function CatanGame() {
-  const t = useT()
-  const [mounted, setMounted] = useState(false)
-  const [game, setGame] = useState<GameState | null>(null)
-  const [showNewGame, setShowNewGame] = useState(false)
-  const [dialog, setDialog] = useState<'trade' | 'playCard' | 'rules' | null>(null)
-  const [buildMode, setBuildMode] = useState<'road' | 'settlement' | 'city' | null>(null)
-  const [status, setStatus] = useState<string | null>(null)
-  const [resetKey, setResetKey] = useState(0)
-  const [botSpeed, setBotSpeed] = useState<BotSpeed>(450)
-  const [botStalled, setBotStalled] = useState(false)
-  const gameRef = useRef<GameState | null>(null)
-  const logRef = useRef<HTMLDivElement | null>(null)
+  const [mode, setMode] = useState<CatanMode>('normal')
+  const [session, setSession] = useState(0)
 
-  useEffect(() => {
-    setMounted(true)
-    const saved = loadGame()
-    if (saved) {
-      gameRef.current = saved
-      setGame(saved)
-    } else {
-      setShowNewGame(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    setBotSpeed(readPrefs(getCatanPrefsStorage()).botSpeed)
-  }, [])
-
-  useEffect(() => {
-    gameRef.current = game
-    if (game) saveGame(game)
-  }, [game])
-
-  const apply = useCallback((action: Action): boolean => {
-    const prev = gameRef.current
-    if (!prev) return false
+  const startTutorial = useCallback(() => {
     try {
-      const next = applyAction(prev, action)
-      gameRef.current = next
-      setGame(next)
-      setStatus(null)
-      setBotStalled(false)
-      return true
-    } catch (err) {
-      console.error('Catan action rejected', err)
-      setStatus(err instanceof Error ? err.message : String(err))
-      return false
+      window.localStorage.removeItem(TUTORIAL_SAVE_KEY)
+    } catch {
+      // ignore storage failures
     }
+    setMode('tutorial')
+    setSession((s) => s + 1)
   }, [])
 
-  const startNewGame = useCallback((count: 3 | 4, name: string) => {
+  const exitTutorial = useCallback(() => {
     clearGame()
-    const seed = crypto.getRandomValues(new Uint32Array(1))[0]
-    const fresh = createGame({ seed, playerCount: count, humanName: name || 'You' })
-    gameRef.current = fresh
-    setGame(fresh)
-    setShowNewGame(false)
-    setDialog(null)
-    setBuildMode(null)
-    setStatus(null)
-    setBotStalled(false)
+    try {
+      window.localStorage.removeItem(TUTORIAL_SAVE_KEY)
+    } catch {
+      // ignore storage failures
+    }
+    setMode('normal')
+    setSession((s) => s + 1)
   }, [])
 
-  const startNewFromGameOver = useCallback(() => {
-    clearGame()
-    gameRef.current = null
-    setGame(null)
-    setShowNewGame(true)
-    setDialog(null)
-    setBuildMode(null)
-    setStatus(null)
-    setBotStalled(false)
-  }, [])
+  return <CatanGameSession key={session} mode={mode} onStartTutorial={startTutorial} onExitTutorial={exitTutorial} />
+}
 
-  const human = game ? humanPlayer(game) : -1
-  const actors = game ? playersToAct(game) : []
-  const humanActing = game !== null && human >= 0 && actors.includes(human)
-  const humanSteal = game !== null && human >= 0 && game.phase.kind === 'steal' && game.current === human
-  const humanDiscard =
-    game !== null && human >= 0 && game.phase.kind === 'discard' && game.phase.discards[human] > 0
-  const mustAnswer = showNewGame || dialog === 'trade' || dialog === 'playCard' || humanSteal || humanDiscard
-  const modalOpen = showNewGame || dialog !== null || humanSteal || humanDiscard || game?.phase.kind === 'gameOver'
-  const pauseBots = !game || mustAnswer || botStalled
+function CatanGameSession({
+  mode,
+  onStartTutorial,
+  onExitTutorial,
+}: {
+  mode: CatanMode
+  onStartTutorial: () => void
+  onExitTutorial: () => void
+}) {
+  const t = useT()
+  const tutorialActive = mode === 'tutorial'
+  const [stepIndex, setStepIndex] = useState(0)
+  const [tutorialFinished, setTutorialFinished] = useState(false)
+  const [hintVisible, setHintVisible] = useState(false)
+  const [playPreselect, setPlayPreselect] = useState<PlayableDevCard | null>(null)
+  const preparedRef = useRef(false)
+  const boardWrapRef = useRef<HTMLDivElement | null>(null)
 
-  const runBotAction = useCallback(
-    (state: GameState, bot: number): boolean => {
-      try {
-        const action = chooseBotAction(state, bot)
-        if (apply(action)) return true
-        console.error('Bot action failed validation', action)
-      } catch (err) {
-        console.error('Bot could not choose an action', err)
-      }
-      try {
-        const fallback = fallbackAction(state, bot)
-        if (apply(fallback)) return true
-        console.error('Bot fallback action failed validation', fallback)
-      } catch (err) {
-        console.error('Bot fallback action failed', err)
-      }
-      setStatus(t.catan.status.botStalled)
-      setBotStalled(true)
-      return false
+  const step = TUTORIAL_STEPS[stepIndex]
+  const tutorialInitial = useMemo(() => (tutorialActive ? createTutorialGame() : null), [tutorialActive])
+
+  const canHumanApply = useCallback(
+    (state: GameState, action: Action): boolean => {
+      if (!tutorialActive || tutorialFinished) return true
+      return isTutorialActionLegal(state, TUTORIAL_STEPS[stepIndex], action)
     },
-    [apply, t],
+    [tutorialActive, tutorialFinished, stepIndex],
   )
+
+  const c = useCatanController({
+    saveKey: tutorialActive ? TUTORIAL_SAVE_KEY : undefined,
+    initialState: tutorialInitial,
+    canHumanApply: tutorialActive ? canHumanApply : undefined,
+    botsPaused: tutorialActive && !tutorialFinished && step.completeWhen === 'next',
+    statusOverride: tutorialActive && !tutorialFinished ? step.title : null,
+  })
+
+  const gameRef = useRef<GameState | null>(null)
+  gameRef.current = c.game
 
   useEffect(() => {
-    if (!game || pauseBots) return
-    const bot = playersToAct(game).find((p) => game.players[p].isBot)
-    if (bot === undefined) return
-    const delay = game.phase.kind === 'setup' ? Math.min(botSpeed, 200) : botSpeed
-    const timer = setTimeout(() => {
-      const state = gameRef.current
-      if (!state) return
-      runBotAction(state, bot)
-    }, delay)
-    return () => clearTimeout(timer)
-  }, [game, pauseBots, botSpeed, runBotAction])
+    preparedRef.current = false
+  }, [stepIndex, tutorialActive, tutorialFinished])
 
-  const skipToMyTurn = useCallback(() => {
-    const initial = gameRef.current
-    if (!initial) return
-    let state: GameState = initial
-    let steps = 0
-    while (steps < 500) {
-      if (state.phase.kind === 'gameOver') break
-      const actors = playersToAct(state)
-      if (actors.length === 0 || actors.includes(humanPlayer(state))) break
-      const bot = actors.find((p) => state.players[p].isBot)
-      if (bot === undefined) break
-      let action: Action | null = null
-      try {
-        action = chooseBotAction(state, bot)
-      } catch (err) {
-        console.error('Bot could not choose an action while skipping', err)
-      }
-      if (action) {
-        try {
-          state = applyAction(state, action)
-          steps += 1
-          continue
-        } catch (err) {
-          console.error('Bot action failed validation while skipping', err)
-        }
-      }
-      try {
-        state = applyAction(state, fallbackAction(state, bot))
-        steps += 1
-      } catch (err) {
-        console.error('Bot fallback action failed while skipping', err)
-        setStatus(t.catan.status.botStalled)
-        setBotStalled(true)
-        return
-      }
-    }
-    gameRef.current = state
-    setGame(state)
-    saveGame(state)
-  }, [t])
+  const hint = useMemo(() => {
+    if ((tutorialActive && !tutorialFinished) || !c.game || c.human < 0) return null
+    return describeHint(c.game, c.human)
+  }, [tutorialActive, tutorialFinished, c.game, c.human])
 
-  useEffect(() => {
-    if (!mounted) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setBuildMode(null)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [mounted])
-
-  useEffect(() => {
-    if (!game || game.phase.kind === 'main') return
-    setBuildMode(null)
-  }, [game])
-
-  useEffect(() => {
-    const el = logRef.current
-    if (el) el.scrollTop = el.scrollHeight
-  }, [game?.events.length])
-
-  const targets = useMemo<BoardTargets>(() => {
-    if (!game || human < 0 || !humanActing) return { kind: null, vertices: [], edges: [], hexes: [] }
-    const phase = game.phase
-    switch (phase.kind) {
-      case 'setup':
-        if (phase.step === 'settlement') {
-          return { kind: 'setupSettlement', vertices: legalSetupSettlements(game), edges: [], hexes: [] }
-        }
-        return { kind: 'setupRoad', vertices: [], edges: legalSetupRoads(game), hexes: [] }
-      case 'moveRobber':
-        return {
-          kind: 'robber',
-          vertices: [],
-          edges: [],
-          hexes: HEXES.map((h) => h.id).filter((id) => id !== game.robber),
-        }
-      case 'roadBuilding':
-        return { kind: 'road', vertices: [], edges: legalRoads(game, human), hexes: [] }
-      case 'main':
-        if (buildMode === 'road') return { kind: 'road', vertices: [], edges: legalRoads(game, human), hexes: [] }
-        if (buildMode === 'settlement') {
-          return { kind: 'settlement', vertices: legalSettlements(game, human), edges: [], hexes: [] }
-        }
-        if (buildMode === 'city') {
-          return { kind: 'city', vertices: legalCities(game, human), edges: [], hexes: [] }
-        }
-        return { kind: null, vertices: [], edges: [], hexes: [] }
-      default:
-        return { kind: null, vertices: [], edges: [], hexes: [] }
-    }
-  }, [game, human, buildMode, humanActing])
-
-  const lastPlaced = useMemo(() => {
-    if (!game) return null
-    for (let i = game.events.length - 1; i >= 0; i--) {
-      const e = game.events[i]
-      if (e.type === 'built') {
-        return e.kind === 'road' ? { kind: 'edge' as const, id: e.at } : { kind: 'vertex' as const, id: e.at }
-      }
-      if (e.type === 'setupSettlement') return { kind: 'vertex' as const, id: e.vertex }
-      if (e.type === 'setupRoad') return { kind: 'edge' as const, id: e.edge }
-    }
-    return null
-  }, [game])
-
-  const statusText = useMemo(() => {
-    if (!game) return t.catan.newGame
-    if (status) return status
-    const phase = game.phase
-    const player = playerSubject(game, game.current)
-    switch (phase.kind) {
-      case 'setup':
-        return fill(phase.step === 'settlement' ? t.catan.status.setupSettlement : t.catan.status.setupRoad, {
-          player,
-        })
-      case 'preRoll':
-        return fill(t.catan.status.preRoll, { player })
-      case 'main':
-        return fill(t.catan.status.main, { player })
-      case 'roadBuilding':
-        return fill(t.catan.status.roadBuilding, { player, remaining: phase.remaining })
-      case 'moveRobber':
-        return fill(t.catan.status.moveRobber, { player })
-      case 'steal':
-        return fill(t.catan.status.steal, { player })
-      case 'discard': {
-        if (human >= 0 && phase.discards[human] > 0) {
-          return fill(t.catan.status.discard, { player: playerSubject(game, human), count: phase.discards[human] })
-        }
-        const next = phase.discards.findIndex((n) => n > 0)
-        return fill(t.catan.status.discard, { player: game.players[next]?.name ?? '', count: phase.discards[next] ?? 0 })
-      }
-      case 'gameOver':
-        if (phase.winner === human) return t.catan.status.gameOverYou
-        return fill(t.catan.status.gameOver, { player: game.players[phase.winner].name })
-    }
-  }, [game, status, t, human])
-
-  const me = game && human >= 0 ? game.players[human] : null
-  const inMain = game?.phase.kind === 'main'
-  const inPreRoll = game?.phase.kind === 'preRoll'
-
-  const roadSpots = game && inMain && me && humanActing ? legalRoads(game, human) : []
-  const settlementSpots = game && inMain && me && humanActing ? legalSettlements(game, human) : []
-  const citySpots = game && inMain && me && humanActing ? legalCities(game, human) : []
-  const canRoad = Boolean(me && humanActing && inMain && hasResources(me.resources, COSTS.road) && roadSpots.length > 0)
-  const canSettlement = Boolean(
-    me && humanActing && inMain && hasResources(me.resources, COSTS.settlement) && settlementSpots.length > 0,
-  )
-  const canCity = Boolean(me && humanActing && inMain && hasResources(me.resources, COSTS.city) && citySpots.length > 0)
-  const canBuyDev = Boolean(
-    me && humanActing && inMain && hasResources(me.resources, COSTS.devCard) && game && game.devDeck.length > 0,
-  )
-  const playableCards = game && human >= 0 && humanActing ? playableDevCards(game, human) : []
-  const canPlayCard = playableCards.length > 0
-  const canRoll = Boolean(humanActing && inPreRoll)
-  const canTrade = Boolean(humanActing && inMain)
-  const canEndTurn = Boolean(humanActing && inMain)
-
-  const reasonMessages = useMemo(
-    () => ({
-      needResources: t.catan.actionBar.needResources,
-      noSpot: t.catan.actionBar.noSpot,
-      noPieces: t.catan.actionBar.noPieces,
-      deckEmpty: t.catan.actionBar.deckEmpty,
-      rollFirst: t.catan.actionBar.rollFirst,
-      resourceNames: t.catan.resources,
-    }),
-    [t],
-  )
-
-  const blockReasons = useMemo(() => {
-    if (!game || human < 0 || !me || !humanActing) return null
-    if (!inMain && !inPreRoll) return null
-    return {
-      road: actionBlockReason(game, human, 'road'),
-      settlement: actionBlockReason(game, human, 'settlement'),
-      city: actionBlockReason(game, human, 'city'),
-      devCard: actionBlockReason(game, human, 'devCard'),
-    }
-  }, [game, human, me, humanActing, inMain, inPreRoll])
-
-  const describeVertex = useCallback(
-    (vertex: number): string | null => {
-      if (!game || human < 0) return null
-      const setupInfo = game.phase.kind === 'setup' && game.phase.step === 'settlement'
-      const buildInfo = game.phase.kind === 'main' && buildMode === 'settlement'
-      if (!setupInfo && !buildInfo) return null
-      return vertexDescription(game, vertex, {
-        pips: t.catan.vertexInfo.pips,
-        harbourAny: t.catan.vertexInfo.harbourAny,
-        harbourResource: t.catan.vertexInfo.harbourResource,
-        robberSuffix: t.catan.vertexInfo.robberSuffix,
-        terrain: t.catan.board.terrain,
-      })
-    },
-    [game, human, buildMode, t],
-  )
-
-  const canSkip = Boolean(
-    game && !pauseBots && dialog === null && playersToAct(game).some((p) => game.players[p].isBot),
-  )
-
-  const speedOptions: { value: BotSpeed; label: string }[] = [
-    { value: 0, label: t.catan.speed.instant },
-    { value: 200, label: t.catan.speed.fast },
-    { value: 450, label: t.catan.speed.normal },
-    { value: 900, label: t.catan.speed.slow },
-  ]
-
-  const lastEvents = game ? game.events.slice(-60) : []
-
-  const roadReason = blockReasons?.road ?? null
-  const settlementReason = blockReasons?.settlement ?? null
-  const cityReason = blockReasons?.city ?? null
-  const devReason = blockReasons?.devCard ?? null
-  const roadReasonText = roadReason ? formatActionBlockReason(roadReason, reasonMessages) : null
-  const settlementReasonText = settlementReason ? formatActionBlockReason(settlementReason, reasonMessages) : null
-  const cityReasonText = cityReason ? formatActionBlockReason(cityReason, reasonMessages) : null
-  const devReasonText = devReason ? formatActionBlockReason(devReason, reasonMessages) : null
-
-  if (!mounted) {
+  if (!c.mounted) {
     return <div style={{ position: 'fixed', inset: 0, backgroundColor: COLORS.bg }} />
   }
   if (isMobileViewport()) return <MobileGate />
 
-  return (
-    <CatanErrorBoundary
-      resetKey={resetKey}
-      onError={() => clearGame()}
-      fallback={
-        <NewGameDialog
-          canCancel={false}
-          onCancel={() => {}}
-          onStart={(count, name) => {
-            startNewGame(count, name)
-            setResetKey((k) => k + 1)
-          }}
-        />
+  const applyHuman = (action: Action): boolean => {
+    let before = gameRef.current
+    if (!before) return false
+    if (tutorialActive && !tutorialFinished) {
+      const currentStep = TUTORIAL_STEPS[stepIndex]
+      if (!isTutorialActionLegal(before, currentStep, action)) {
+        c.setStatus(t.catan.tutorial.notAllowed)
+        return false
       }
-    >
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: COLORS.bg,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
-      >
-      <div
-        inert={(game !== null && modalOpen) || undefined}
-        style={{
-          flex: 1,
-          minHeight: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
-      >
-        <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '8px 12px',
-          backgroundColor: COLORS.panel,
-          borderBottom: `2px solid ${COLORS.panelBorder}`,
-        }}
-      >
-        <h1 style={{ ...PIXEL_FONT, fontSize: 16, color: COLORS.accent, margin: 0, letterSpacing: 2 }}>
-          {t.catan.title}
-        </h1>
-        <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.muted }}>
-          {fill(t.catan.turn, { turn: game?.turn ?? 0 })}
-        </span>
-        <Dice dice={game?.dice ?? null} label={t.catan.diceLabel} />
-        <div role="group" aria-label={t.catan.speed.label} style={{ display: 'flex', gap: 4 }}>
-          {speedOptions.map((option) => (
-            <PixelButton
-              key={option.value}
-              selected={botSpeed === option.value}
-              aria-pressed={botSpeed === option.value}
-              onClick={() => {
-                setBotSpeed(option.value)
-                writePrefs(getCatanPrefsStorage(), { botSpeed: option.value })
-              }}
-            >
-              {option.label}
-            </PixelButton>
-          ))}
-        </div>
-        <PixelButton disabled={!canSkip} onClick={skipToMyTurn}>
-          {t.catan.skip}
-        </PixelButton>
-        <div style={{ flex: 1 }} />
-        <PixelButton onClick={() => setDialog('rules')}>{t.catan.rules}</PixelButton>
-        <PixelButton onClick={() => setShowNewGame(true)}>{t.catan.newGame}</PixelButton>
-        <Link
-          href="/"
-          className={FOCUS_CLASS}
-          style={{
-            ...PIXEL_FONT,
-            fontSize: 10,
-            padding: '6px 8px',
-            backgroundColor: COLORS.panel,
-            border: `2px solid ${COLORS.panelBorder}`,
-            color: COLORS.text,
-            textDecoration: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-          }}
-        >
-          {t.catan.back}
-        </Link>
-      </header>
+      if (currentStep.prepare && !preparedRef.current) {
+        before = applyStepPrepare(before, currentStep)
+        c.replaceGame(before)
+        preparedRef.current = true
+      }
+    }
+    const ok = c.apply(action)
+    if (ok && tutorialActive && !tutorialFinished) {
+      const currentStep = TUTORIAL_STEPS[stepIndex]
+      const after = applyAction(before, action)
+      if (isStepComplete(currentStep, before, after, action)) {
+        setStepIndex((i) => Math.min(i + 1, TUTORIAL_STEPS.length - 1))
+      }
+    }
+    return ok
+  }
 
-      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-        <main style={{ flex: 1, minWidth: 0, position: 'relative' }}>
-          {game ? (
-            <div style={{ position: 'absolute', inset: 0 }}>
-              <BoardCanvas
-                state={game}
-                targets={targets}
-                lastPlaced={lastPlaced}
-                labels={t.catan.board}
-                describeVertex={describeVertex}
-                onVertex={(v) => {
-                  if (!humanActing) return
-                  const phase = game.phase
-                  if (phase.kind === 'setup' && phase.step === 'settlement') {
-                    apply({ type: 'placeSetupSettlement', vertex: v })
-                  } else if (phase.kind === 'main') {
-                    if (buildMode === 'settlement' && apply({ type: 'buildSettlement', vertex: v })) setBuildMode(null)
-                    else if (buildMode === 'city' && apply({ type: 'buildCity', vertex: v })) setBuildMode(null)
-                  }
-                }}
-                onEdge={(e) => {
-                  if (!humanActing) return
-                  const phase = game.phase
-                  if (phase.kind === 'setup' && phase.step === 'road') {
-                    apply({ type: 'placeSetupRoad', edge: e })
-                  } else if (phase.kind === 'roadBuilding') {
-                    apply({ type: 'buildRoad', edge: e })
-                  } else if (phase.kind === 'main' && buildMode === 'road') {
-                    if (apply({ type: 'buildRoad', edge: e })) setBuildMode(null)
-                  }
-                }}
-                onHex={(h) => {
-                  if (!humanActing) return
-                  if (game.phase.kind === 'moveRobber') apply({ type: 'moveRobber', hex: h })
-                }}
-              />
-            </div>
-          ) : (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <PixelButton variant="primary" onClick={() => setShowNewGame(true)}>
-                {t.catan.newGame}
-              </PixelButton>
-            </div>
-          )}
-        </main>
+  const lastEvents = c.game ? c.game.events.slice(-60) : []
 
-        <aside
+  const openPlayCard = (card: PlayableDevCard | null) => {
+    setPlayPreselect(card)
+    c.setDialog('playCard')
+  }
+
+  const activeHint = hintVisible ? hint : null
+
+  const canGoBack =
+    stepIndex > 0 &&
+    step.completeWhen === 'next' &&
+    TUTORIAL_STEPS[stepIndex - 1].completeWhen === 'next'
+
+  const handleCoachNext = () => {
+    if (stepIndex >= TUTORIAL_STEPS.length - 1) {
+      setTutorialFinished(true)
+    } else {
+      setStepIndex((i) => i + 1)
+    }
+  }
+
+  const dialogState = c.game
+
+  return (
+    <TooltipsProvider enabled={c.tooltips}>
+      <CatanErrorBoundary
+        resetKey={c.resetKey}
+        onError={() => clearGame()}
+        fallback={
+          <NewGameDialog
+            canCancel={false}
+            onCancel={() => {}}
+            onStart={(count, name) => {
+              c.startNewGame(count, name)
+              c.setResetKey((k) => k + 1)
+            }}
+          />
+        }
+      >
+        <div
           style={{
-            width: 340,
-            minWidth: 340,
-            borderLeft: `2px solid ${COLORS.panelBorder}`,
+            position: 'fixed',
+            inset: 0,
             backgroundColor: COLORS.bg,
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
           }}
         >
-          {game ? (
-            <>
-              <Panel style={{ borderWidth: 0, padding: 8 }}>
-                <SectionTitle>{t.catan.players}</SectionTitle>
-                <div style={{ display: 'flex', gap: 4, marginTop: 4, padding: '0 6px' }}>
-                  <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.muted, flex: 1 }} />
-                  <abbr title="Victory points" aria-label="Victory points" style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.muted, width: 30, textAlign: 'right', textDecoration: 'none' }}>
-                    VP
-                  </abbr>
-                  <abbr title="Resource cards" aria-label="Resource cards" style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.muted, width: 26, textAlign: 'right', textDecoration: 'none' }}>
-                    Res
-                  </abbr>
-                  <abbr title="Development cards" aria-label="Development cards" style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.muted, width: 26, textAlign: 'right', textDecoration: 'none' }}>
-                    Dev
-                  </abbr>
-                  <abbr title="Knights played" aria-label="Knights played" style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.muted, width: 26, textAlign: 'right', textDecoration: 'none' }}>
-                    Knt
-                  </abbr>
-                  <abbr title="Longest road" aria-label="Longest road" style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.muted, width: 26, textAlign: 'right', textDecoration: 'none' }}>
-                    Rd
-                  </abbr>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
-                  {game.players.map((p) => {
-                    const isCurrent = game.current === p.id
-                    const vp = p.isBot ? victoryPoints(game, p.id, false) : victoryPoints(game, p.id, true)
-                    return (
-                      <div
-                        key={p.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          padding: '3px 6px',
-                          backgroundColor: isCurrent ? 'rgba(224,160,64,0.14)' : 'transparent',
-                          border: isCurrent ? '2px solid #e0a040' : '2px solid transparent',
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: 12,
-                            height: 12,
-                            backgroundColor: PLAYER_COLORS[p.color],
-                            border: '1px solid #1a1410',
-                            display: 'inline-block',
-                            flexShrink: 0,
-                          }}
-                          title={p.color}
-                        />
-                        <span
-                          style={{
-                            ...PIXEL_FONT,
-                            fontSize: 10,
-                            color: COLORS.text,
-                            flex: 1,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {p.name}
-                          {isCurrent ? ' \u25b8' : ''}
-                        </span>
-                        <span style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.text, width: 30, textAlign: 'right' }}>
-                          {vp}
-                        </span>
-                        <span style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.muted, width: 26, textAlign: 'right' }}>
-                          {totalCards(p.resources)}
-                        </span>
-                        <span style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.muted, width: 26, textAlign: 'right' }}>
-                          {p.devCards.length + p.newDevCards.length}
-                        </span>
-                        <span style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.muted, width: 26, textAlign: 'right' }}>
-                          {p.knightsPlayed}
-                        </span>
-                        <span style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.muted, width: 26, textAlign: 'right' }}>
-                          {p.longestRoad}
-                        </span>
-                        {game.longestRoadHolder === p.id ? (
-                          <span
-                            title={t.catan.longestRoad}
-                            style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.accent, width: 22, textAlign: 'center' }}
-                          >
-                            LR
-                          </span>
-                        ) : (
-                          <span style={{ width: 22 }} />
-                        )}
-                        {game.largestArmyHolder === p.id ? (
-                          <span
-                            title={t.catan.largestArmy}
-                            style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.accent, width: 22, textAlign: 'center' }}
-                          >
-                            LA
-                          </span>
-                        ) : (
-                          <span style={{ width: 22 }} />
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </Panel>
+          <div
+            inert={(c.game !== null && c.modalOpen) || undefined}
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            <TopBar
+              turn={c.game?.turn ?? 0}
+              canSkip={c.canSkip}
+              onSkip={c.skipToMyTurn}
+              onRules={() => c.setDialog('rules')}
+              onNewGame={tutorialActive ? onExitTutorial : () => c.setShowNewGame(true)}
+              botSpeed={c.botSpeed}
+              tooltips={c.tooltips}
+              showBoardKey={c.showBoardKey}
+              onBotSpeedChange={c.setBotSpeed}
+              onTooltipsChange={c.setTooltips}
+              onShowBoardKeyChange={c.setShowBoardKey}
+            />
 
-              {me ? (
-                <>
-                  <Panel style={{ borderWidth: '2px 0 0 0', padding: 8 }}>
-                    <SectionTitle>{t.catan.hand}</SectionTitle>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4 }}>
-                      {RESOURCES.map((r) => (
-                        <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <ResourceIcon resource={r} size={16} />
-                          <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.text, width: 52 }}>
-                            {t.catan.resources[r]}
-                          </span>
-                          <span style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.text }}>{me.resources[r]}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </Panel>
-
-                  <Panel style={{ borderWidth: '2px 0 0 0', padding: 8 }}>
-                    <SectionTitle>{t.catan.devCards}</SectionTitle>
-                    <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
-                      <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.muted }}>
-                        {t.catan.playable}: {playableCards.length}
-                      </span>
-                      <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.muted }}>
-                        {t.catan.newCard}: {me.newDevCards.length}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
-                      {playableCards.map((c, i) => (
-                        <span
-                          key={`${c}-${i}`}
-                          style={{
-                            ...PIXEL_FONT,
-                            fontSize: 10,
-                            color: COLORS.text,
-                            border: `1px solid ${COLORS.panelBorder}`,
-                            padding: '2px 4px',
-                          }}
-                        >
-                          {t.catan.playCard.cards[c].name}
-                        </span>
-                      ))}
-                    </div>
-                  </Panel>
-
-                  <div
-                    role="status"
-                    aria-live="polite"
-                    style={{
-                      minHeight: 30,
-                      padding: '6px 10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      borderTop: `2px solid ${COLORS.panelBorder}`,
-                    }}
-                  >
-                    <span style={{ ...PIXEL_FONT, fontSize: 10, color: status ? COLORS.danger : COLORS.text }}>
-                      {statusText}
-                    </span>
+            <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+              <main style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+                {c.game ? (
+                  <div ref={boardWrapRef} data-tutorial="board" style={{ position: 'absolute', inset: 0 }}>
+                    <BoardCanvas
+                      state={c.game}
+                      targets={c.targets}
+                      lastPlaced={c.lastPlaced}
+                      labels={t.catan.board}
+                      describeVertex={c.describeVertex}
+                      describeHover={c.describeHoverTarget}
+                      onVertex={(v) => {
+                        if (!c.humanActing) return
+                        const phase = c.game!.phase
+                        if (phase.kind === 'setup' && phase.step === 'settlement') {
+                          applyHuman({ type: 'placeSetupSettlement', vertex: v })
+                        } else if (phase.kind === 'main') {
+                          if (c.buildMode === 'settlement' && applyHuman({ type: 'buildSettlement', vertex: v })) {
+                            c.setBuildMode(null)
+                          } else if (c.buildMode === 'city' && applyHuman({ type: 'buildCity', vertex: v })) {
+                            c.setBuildMode(null)
+                          }
+                        }
+                      }}
+                      onEdge={(e) => {
+                        if (!c.humanActing) return
+                        const phase = c.game!.phase
+                        if (phase.kind === 'setup' && phase.step === 'road') {
+                          applyHuman({ type: 'placeSetupRoad', edge: e })
+                        } else if (phase.kind === 'roadBuilding') {
+                          applyHuman({ type: 'buildRoad', edge: e })
+                        } else if (phase.kind === 'main' && c.buildMode === 'road') {
+                          if (applyHuman({ type: 'buildRoad', edge: e })) c.setBuildMode(null)
+                        }
+                      }}
+                      onHex={(h) => {
+                        if (!c.humanActing) return
+                        if (c.game!.phase.kind === 'moveRobber') applyHuman({ type: 'moveRobber', hex: h })
+                      }}
+                    />
+                    {activeHint ? <HintBoardHighlight highlight={activeHint.highlight} wrapperRef={boardWrapRef} /> : null}
                   </div>
+                ) : (
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <PixelButton variant="primary" onClick={() => c.setShowNewGame(true)}>
+                      {t.catan.newGame}
+                    </PixelButton>
+                  </div>
+                )}
+                {tutorialActive && !tutorialFinished && c.game ? (
+                  <TutorialCoach
+                    stepLabel={fill(t.catan.tutorial.step, {
+                      current: stepIndex + 1,
+                      total: TUTORIAL_STEPS.length,
+                    })}
+                    title={step.title}
+                    body={step.body}
+                    highlight={step.highlight}
+                    canGoBack={canGoBack}
+                    isLast={stepIndex === TUTORIAL_STEPS.length - 1}
+                    nextLabel={t.catan.tutorial.next}
+                    backLabel={t.catan.tutorial.back}
+                    exitLabel={t.catan.tutorial.exit}
+                    finishLabel={t.catan.tutorial.finish}
+                    onNext={handleCoachNext}
+                    onBack={() => setStepIndex((i) => Math.max(i - 1, 0))}
+                    onExit={onExitTutorial}
+                    canAdvance={step.completeWhen === 'next'}
+                    actionPrompt={t.catan.tutorial.doAction}
+                  />
+                ) : null}
+              </main>
 
-                  <Panel style={{ borderWidth: '2px 0 0 0', padding: 8 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {inPreRoll && humanActing ? (
-                        <PixelButton
-                          variant="primary"
-                          disabled={!canRoll}
-                          onClick={() => apply({ type: 'rollDice' })}
-                          style={{ width: '100%' }}
-                        >
-                          {t.catan.actionBar.roll}
-                        </PixelButton>
-                      ) : null}
-                      {inMain || (inPreRoll && humanActing) ? (
+              <aside
+                style={{
+                  width: 340,
+                  minWidth: 340,
+                  borderLeft: `2px solid ${COLORS.panelBorder}`,
+                  backgroundColor: COLORS.bg,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                }}
+              >
+                {c.game ? (
+                  <>
+                    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                      <DiceViewer state={c.game} />
+                      <PlayersPanel state={c.game} />
+                      {c.me ? (
                         <>
-                          <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                              <PixelButton
-                                selected={buildMode === 'road'}
-                                disabled={!canRoad}
-                                onClick={() => setBuildMode((prev) => (prev === 'road' ? null : 'road'))}
-                                aria-pressed={buildMode === 'road'}
-                                aria-label={t.catan.actionBar.roadAria}
-                                aria-describedby={roadReason ? 'catan-cost-road catan-reason-road' : 'catan-cost-road'}
-                                style={{ width: '100%', flexDirection: 'column', gap: 2 }}
-                                title={t.catan.cost.road}
-                              >
-                                <span>{t.catan.actionBar.road}</span>
-                                <span style={{ display: 'inline-flex', gap: 2 }}>
-                                  <ResourceIcon resource="brick" size={12} />
-                                  <ResourceIcon resource="lumber" size={12} />
-                                </span>
-                              </PixelButton>
-                              {roadReasonText ? (
-                                <span id="catan-reason-road" style={{ ...PIXEL_FONT, fontSize: 9, color: COLORS.muted, lineHeight: 1.2 }}>
-                                  {roadReasonText}
-                                </span>
-                              ) : null}
-                            </div>
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                              <PixelButton
-                                selected={buildMode === 'settlement'}
-                                disabled={!canSettlement}
-                                onClick={() => setBuildMode((prev) => (prev === 'settlement' ? null : 'settlement'))}
-                                aria-pressed={buildMode === 'settlement'}
-                                aria-label={t.catan.actionBar.settlementAria}
-                                aria-describedby={
-                                  settlementReason ? 'catan-cost-settlement catan-reason-settlement' : 'catan-cost-settlement'
-                                }
-                                style={{ width: '100%', flexDirection: 'column', gap: 2 }}
-                                title={t.catan.cost.settlement}
-                              >
-                                <span>{t.catan.actionBar.settlement}</span>
-                                <span style={{ display: 'inline-flex', gap: 2 }}>
-                                  <ResourceIcon resource="brick" size={12} />
-                                  <ResourceIcon resource="lumber" size={12} />
-                                  <ResourceIcon resource="wool" size={12} />
-                                  <ResourceIcon resource="grain" size={12} />
-                                </span>
-                              </PixelButton>
-                              {settlementReasonText ? (
-                                <span
-                                  id="catan-reason-settlement"
-                                  style={{ ...PIXEL_FONT, fontSize: 9, color: COLORS.muted, lineHeight: 1.2 }}
-                                >
-                                  {settlementReasonText}
-                                </span>
-                              ) : null}
-                            </div>
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                              <PixelButton
-                                selected={buildMode === 'city'}
-                                disabled={!canCity}
-                                onClick={() => setBuildMode((prev) => (prev === 'city' ? null : 'city'))}
-                                aria-pressed={buildMode === 'city'}
-                                aria-label={t.catan.actionBar.cityAria}
-                                aria-describedby={cityReason ? 'catan-cost-city catan-reason-city' : 'catan-cost-city'}
-                                style={{ width: '100%', flexDirection: 'column', gap: 2 }}
-                                title={t.catan.cost.city}
-                              >
-                                <span>{t.catan.actionBar.city}</span>
-                                <span style={{ display: 'inline-flex', gap: 2 }}>
-                                  <ResourceIcon resource="grain" size={12} />
-                                  <ResourceIcon resource="grain" size={12} />
-                                  <ResourceIcon resource="ore" size={12} />
-                                  <ResourceIcon resource="ore" size={12} />
-                                  <ResourceIcon resource="ore" size={12} />
-                                </span>
-                              </PixelButton>
-                              {cityReasonText ? (
-                                <span id="catan-reason-city" style={{ ...PIXEL_FONT, fontSize: 9, color: COLORS.muted, lineHeight: 1.2 }}>
-                                  {cityReasonText}
-                                </span>
-                              ) : null}
-                            </div>
-                          </div>
-                          <span id="catan-cost-road" hidden>
-                            {t.catan.cost.road}
-                          </span>
-                          <span id="catan-cost-settlement" hidden>
-                            {t.catan.cost.settlement}
-                          </span>
-                          <span id="catan-cost-city" hidden>
-                            {t.catan.cost.city}
-                          </span>
-                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <PixelButton
-                                disabled={!canBuyDev}
-                                onClick={() => apply({ type: 'buyDevCard' })}
-                                aria-label={t.catan.actionBar.buyDevCardAria}
-                                aria-describedby={
-                                  devReason ? 'catan-cost-dev-card catan-reason-dev-card' : 'catan-cost-dev-card'
-                                }
-                                title={t.catan.cost.devCard}
-                              >
-                                {t.catan.actionBar.buyDevCard}
-                              </PixelButton>
-                              {devReasonText ? (
-                                <span id="catan-reason-dev-card" style={{ ...PIXEL_FONT, fontSize: 9, color: COLORS.muted, lineHeight: 1.2 }}>
-                                  {devReasonText}
-                                </span>
-                              ) : null}
-                            </div>
-                            <span id="catan-cost-dev-card" hidden>
-                              {t.catan.cost.devCard}
-                            </span>
-                            <PixelButton disabled={!canTrade} onClick={() => setDialog('trade')}>
-                              {t.catan.actionBar.trade}
-                            </PixelButton>
-                            <PixelButton disabled={!canPlayCard} onClick={() => setDialog('playCard')}>
-                              {t.catan.actionBar.playCard}
-                            </PixelButton>
-                            <PixelButton
-                              variant="danger"
-                              disabled={!canEndTurn}
-                              onClick={() => apply({ type: 'endTurn' })}
-                            >
-                              {t.catan.actionBar.endTurn}
-                            </PixelButton>
-                          </div>
-                          {buildMode ? <Muted>{t.catan.cancelHint}</Muted> : null}
+                          <HandPanel state={c.game} human={c.human} />
+                          <DevCardsPanel state={c.game} human={c.human} onPlayCard={openPlayCard} />
                         </>
                       ) : null}
-                      {humanActing && game.phase.kind === 'roadBuilding' ? (
-                        <Muted>{fill(t.catan.status.roadBuilding, { player: playerSubject(game, human), remaining: game.phase.remaining })}</Muted>
-                      ) : null}
-                      {!humanActing && game.phase.kind !== 'gameOver' ? (
-                        <Muted>{statusText}</Muted>
-                      ) : null}
+                      <BoardKeyPanel open={c.showBoardKey} onToggle={() => c.setShowBoardKey(!c.showBoardKey)} />
+                      <div style={{ height: 240, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+                        <GameLog state={c.game} events={lastEvents} scrollRef={c.logRef} />
+                      </div>
                     </div>
-                  </Panel>
+                    {c.me ? (
+                      <div style={{ flexShrink: 0 }}>
+                        <StatusLine statusText={c.statusText} isError={c.status !== null} />
+                        <ActionBar
+                          game={c.game}
+                          human={c.human}
+                          humanActing={c.humanActing}
+                          inPreRoll={c.inPreRoll}
+                          inMain={c.inMain}
+                          buildMode={c.buildMode}
+                          onBuildModeChange={c.setBuildMode}
+                          canRoll={c.canRoll}
+                          canRoad={c.canRoad}
+                          canSettlement={c.canSettlement}
+                          canCity={c.canCity}
+                          canBuyDev={c.canBuyDev}
+                          canTrade={c.canTrade}
+                          canPlayCard={c.canPlayCard}
+                          canEndTurn={c.canEndTurn}
+                          roadReasonText={c.roadReasonText}
+                          settlementReasonText={c.settlementReasonText}
+                          cityReasonText={c.cityReasonText}
+                          devReasonText={c.devReasonText}
+                          onRoll={() => applyHuman({ type: 'rollDice' })}
+                          onBuyDev={() => applyHuman({ type: 'buyDevCard' })}
+                          onTrade={() => c.setDialog('trade')}
+                          onPlayCard={() => openPlayCard(null)}
+                          onEndTurn={() => applyHuman({ type: 'endTurn' })}
+                          hintText={activeHint?.text ?? null}
+                          onHint={tutorialActive && !tutorialFinished ? undefined : () => setHintVisible((v) => !v)}
+                        />
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div style={{ padding: 8 }}>
+                    <SectionTitleFallback />
+                  </div>
+                )}
+              </aside>
+            </div>
+          </div>
 
-                  <DiceHistoryPanel state={game} />
+          {activeHint ? <TutorialSpotlight ids={activeHint.highlight.ui ?? []} /> : null}
 
-                  <Panel style={{ borderWidth: '2px 0 0 0', padding: 8, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-                    <SectionTitle>{t.catan.eventLog}</SectionTitle>
-                    <div
-                      ref={logRef}
-                      aria-live="polite"
-                      style={{ flex: 1, overflowY: 'auto', marginTop: 4, paddingRight: 4, minHeight: 0 }}
-                    >
-                      {lastEvents.map((e) => (
-                        <div
-                          key={e.seq}
-                          style={{
-                            ...PIXEL_FONT,
-                            fontSize: 10,
-                            color: COLORS.muted,
-                            padding: '2px 0',
-                            borderBottom: `1px solid ${COLORS.panelDark}`,
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          {formatEvent(game, e, t)}
-                        </div>
-                      ))}
-                    </div>
-                  </Panel>
-                </>
-              ) : null}
-            </>
-          ) : (
-            <Panel style={{ borderWidth: 0, padding: 8 }}>
-              <SectionTitle>{t.catan.title}</SectionTitle>
-              <Muted>{t.catan.newGame}</Muted>
-            </Panel>
-          )}
-        </aside>
-      </div>
-      </div>
+          {c.showNewGame ? (
+            <NewGameDialog
+              canCancel={c.game !== null}
+              onCancel={() => c.setShowNewGame(false)}
+              onStart={c.startNewGame}
+              onTutorial={tutorialActive ? undefined : onStartTutorial}
+            />
+          ) : null}
+          {c.dialog === 'trade' && dialogState ? (
+            <TradeDialog
+              state={dialogState}
+              human={c.human}
+              onTrade={(action) => {
+                if (applyHuman(action)) c.setDialog(null)
+              }}
+              onClose={() => c.setDialog(null)}
+            />
+          ) : null}
+          {c.dialog === 'playCard' && c.game ? (
+            <PlayCardDialog
+              state={c.game}
+              human={c.human}
+              preselect={playPreselect}
+              onPlay={(action) => {
+                if (applyHuman(action)) {
+                  c.setDialog(null)
+                  setPlayPreselect(null)
+                }
+              }}
+              onClose={() => {
+                c.setDialog(null)
+                setPlayPreselect(null)
+              }}
+            />
+          ) : null}
+          {c.dialog === 'rules' ? <RulesPanel onClose={() => c.setDialog(null)} /> : null}
+          {c.humanDiscard && c.game ? (
+            <DiscardDialog
+              state={dialogState ?? c.game}
+              human={c.human}
+              onConfirm={(resources) => {
+                applyHuman({ type: 'discard', player: c.human, resources })
+              }}
+            />
+          ) : null}
+          {c.humanSteal && c.game ? (
+            <StealDialog
+              state={dialogState ?? c.game}
+              onSteal={(victim) => {
+                applyHuman({ type: 'steal', victim })
+              }}
+            />
+          ) : null}
+          {c.game?.phase.kind === 'gameOver' && c.dialog !== 'rules' ? (
+            <GameOverOverlay
+              state={c.game}
+              onNewGame={tutorialActive ? onExitTutorial : c.startNewFromGameOver}
+              onRules={() => c.setDialog('rules')}
+            />
+          ) : null}
+        </div>
+      </CatanErrorBoundary>
+    </TooltipsProvider>
+  )
+}
 
-      {showNewGame ? (
-        <NewGameDialog
-          canCancel={game !== null}
-          onCancel={() => setShowNewGame(false)}
-          onStart={startNewGame}
-        />
-      ) : null}
-      {dialog === 'trade' && game ? (
-        <TradeDialog
-          state={game}
-          human={human}
-          onTrade={(action) => {
-            if (apply(action)) setDialog(null)
-          }}
-          onClose={() => setDialog(null)}
-        />
-      ) : null}
-      {dialog === 'playCard' && game ? (
-        <PlayCardDialog
-          state={game}
-          human={human}
-          onPlay={(action) => {
-            if (apply(action)) setDialog(null)
-          }}
-          onClose={() => setDialog(null)}
-        />
-      ) : null}
-      {dialog === 'rules' ? <RulesPanel onClose={() => setDialog(null)} /> : null}
-      {humanDiscard && game ? (
-        <DiscardDialog
-          state={game}
-          human={human}
-          onConfirm={(resources) => {
-            apply({ type: 'discard', player: human, resources })
-          }}
-        />
-      ) : null}
-      {humanSteal && game ? (
-        <StealDialog
-          state={game}
-          onSteal={(victim) => {
-            apply({ type: 'steal', victim })
-          }}
-        />
-      ) : null}
-      {game?.phase.kind === 'gameOver' && dialog !== 'rules' ? (
-        <GameOverOverlay state={game} onNewGame={startNewFromGameOver} onRules={() => setDialog('rules')} />
-      ) : null}
-      </div>
-    </CatanErrorBoundary>
+function SectionTitleFallback() {
+  const t = useT()
+  return (
+    <div style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.text }}>
+      {t.catan.title}: {t.catan.newGame}
+    </div>
   )
 }

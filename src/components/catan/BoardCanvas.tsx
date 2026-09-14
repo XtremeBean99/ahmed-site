@@ -1,14 +1,18 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { JSX } from 'react'
+import type { JSX, PointerEvent as ReactPointerEvent, ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useReducedMotion } from 'framer-motion'
 import { EDGES, VERTICES } from '@/lib/games/catan/geometry'
 import type { GameState, Terrain } from '@/lib/games/catan/types'
+import { hoverTargetAt } from './board-hover'
+import type { HoverTarget } from './board-hover'
 import { BOARD_HEIGHT, BOARD_WIDTH, edgePoint, hexCenter, vertexPoint } from './board-layout'
 import { clearBuffer, createBuffer, drawBoard, drawGhost, drawLastPlaced, drawTargets } from './pixel-art'
 import type { GhostPiece, SpriteSet } from './pixel-art'
 import { SPRITES, SPRITE_NAMES } from './sprites'
+import { useTooltipsEnabled } from './Tooltip'
 
 export type TargetKind = 'setupSettlement' | 'setupRoad' | 'settlement' | 'city' | 'road' | 'robber'
 
@@ -42,6 +46,8 @@ export interface BoardCanvasProps {
   onHex: (hex: number) => void
   /** Extra text appended to a vertex target's accessible name and tooltip. */
   describeVertex?: (vertex: number) => string | null
+  /** Rich hover description for a board feature, shown in a floating tooltip. */
+  describeHover?: (target: HoverTarget) => ReactNode
 }
 
 const PULSE_CSS = `
@@ -88,16 +94,19 @@ function fillTemplate(template: string, vars: Record<string, string>): string {
 }
 
 export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
-  const { state, targets, lastPlaced, labels, onVertex, onEdge, onHex, describeVertex } = props
+  const { state, targets, lastPlaced, labels, onVertex, onEdge, onHex, describeVertex, describeHover } = props
   const fillRef = useRef<HTMLDivElement>(null)
   const mainCanvasRef = useRef<HTMLCanvasElement>(null)
   const ghostCanvasRef = useRef<HTMLCanvasElement>(null)
+  const hoverTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const [scale, setScale] = useState(1)
   const [ghost, setGhost] = useState<GhostPiece | null>(null)
   const [liveLabel, setLiveLabel] = useState('')
   const [blinkOn, setBlinkOn] = useState(false)
   const [sprites, setSprites] = useState<SpriteSet>({})
+  const [hoverTip, setHoverTip] = useState<{ left: number; top: number; transform: string; content: ReactNode } | null>(null)
   const reduceMotion = useReducedMotion()
+  const tooltipsEnabled = useTooltipsEnabled()
 
   const sceneKey = useMemo(
     () =>
@@ -216,6 +225,51 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
     image.data.set(buffer.data)
     ctx.putImageData(image, 0, 0)
   }, [ghost, sprites])
+
+  useEffect(() => () => clearTimeout(hoverTimer.current), [])
+
+  useEffect(() => {
+    if (!tooltipsEnabled) {
+      clearTimeout(hoverTimer.current)
+      setHoverTip(null)
+    }
+  }, [tooltipsEnabled])
+
+  useEffect(() => {
+    if (!hoverTip) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setHoverTip(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [hoverTip])
+
+  const hideHoverTip = () => {
+    clearTimeout(hoverTimer.current)
+    setHoverTip(null)
+  }
+
+  const handleHoverMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!tooltipsEnabled || !describeHover) return
+    const canvas = mainCanvasRef.current
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) return
+    const x = Math.floor((event.clientX - rect.left) / scale)
+    const y = Math.floor((event.clientY - rect.top) / scale)
+    const target = hoverTargetAt(state, x, y)
+    const content = target ? describeHover(target) : null
+    if (!content) {
+      hideHoverTip()
+      return
+    }
+    clearTimeout(hoverTimer.current)
+    const below = event.clientY < window.innerHeight - 160
+    const left = Math.min(Math.max(event.clientX, 128), window.innerWidth - 128)
+    const top = below ? event.clientY + 12 : event.clientY - 12
+    const transform = below ? 'translateX(-50%)' : 'translate(-50%, -100%)'
+    hoverTimer.current = setTimeout(() => setHoverTip({ left, top, transform, content }), 300)
+  }
 
   const describeHex = (hex: number): string => {
     const tile = state.tiles[hex]
@@ -375,6 +429,8 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
         aria-label={labels.board}
         className="absolute left-1/2 top-1/2"
         style={{ width: cssW, height: cssH, transform: 'translate(-50%, -50%)' }}
+        onPointerMove={handleHoverMove}
+        onPointerLeave={hideHoverTip}
       >
         <canvas
           ref={mainCanvasRef}
@@ -420,6 +476,35 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
           {liveLabel}
         </span>
       </div>
+      {hoverTip && typeof document !== 'undefined'
+        ? createPortal(
+            <span
+              role="tooltip"
+              style={{
+                position: 'fixed',
+                left: hoverTip.left,
+                top: hoverTip.top,
+                transform: hoverTip.transform,
+                maxWidth: 240,
+                width: 'max-content',
+                padding: '4px 6px',
+                backgroundColor: '#3d2e1e',
+                border: '2px solid #5a4430',
+                boxShadow: '2px 2px 0 #1a0e04',
+                color: '#e8d5b0',
+                fontFamily: 'var(--font-pixel), "Courier New", monospace',
+                fontSize: 10,
+                lineHeight: 1.4,
+                pointerEvents: 'none',
+                zIndex: 1000,
+                whiteSpace: 'normal',
+              }}
+            >
+              {hoverTip.content}
+            </span>,
+            document.body,
+          )
+        : null}
     </div>
   )
 }

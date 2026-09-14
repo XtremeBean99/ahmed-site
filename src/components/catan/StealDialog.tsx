@@ -5,6 +5,7 @@ import { useT } from '@/lib/i18n/client'
 import { totalCards } from '@/lib/games/catan/helpers'
 import type { GameState, PlayerId } from '@/lib/games/catan/types'
 import { fill, playerSubject } from './event-text'
+import { Tooltip } from './Tooltip'
 import { ModalDialog, Muted, PIXEL_FONT, PixelButton, SectionTitle } from './ui'
 
 export function StealDialog({
@@ -30,11 +31,8 @@ export function StealDialog({
           {candidates.map((victim) => {
             const p = state.players[victim]
             return (
-              <PixelButton
-                key={victim}
-                onClick={() => onSteal(victim)}
-                style={{ justifyContent: 'flex-start' }}
-              >
+              <Tooltip key={victim} content={fill(d.choose, { name: p.name })}>
+                <PixelButton onClick={() => onSteal(victim)} style={{ justifyContent: 'flex-start' }}>
                 <span
                   style={{
                     width: 12,
@@ -54,9 +52,10 @@ export function StealDialog({
                   {fill(d.choose, { name: p.name })}
                 </span>
                 <Muted>
-                  {totalCards(p.resources)} {t.catan.cards}
+                  {totalCards(p.resources)} {totalCards(p.resources) === 1 ? t.catan.card : t.catan.cards}
                 </Muted>
               </PixelButton>
+              </Tooltip>
             )
           })}
         </div>

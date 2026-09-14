@@ -5,7 +5,7 @@ import { useT } from '@/lib/i18n/client'
 import type { GameState } from '@/lib/games/catan/types'
 import { diceStats } from './dice-stats'
 import { fill } from './event-text'
-import { COLORS, Muted, PIXEL_FONT, Panel, PixelButton } from './ui'
+import { COLORS, Muted, PIXEL_FONT, PixelButton } from './ui'
 
 const TOTALS = Array.from({ length: 11 }, (_, i) => i + 2)
 const PANEL_ID = 'catan-dice-panel'
@@ -18,7 +18,7 @@ export function DiceHistoryPanel({ state }: { state: GameState }) {
   const max = Math.max(1, ...stats.counts.slice(2), ...stats.expected.slice(2).map((n) => Math.ceil(n)))
 
   return (
-    <Panel style={{ borderWidth: '2px 0 0 0', padding: 8 }}>
+    <div style={{ borderTop: `2px solid ${COLORS.panelBorder}`, marginTop: 6, paddingTop: 6 }}>
       <PixelButton
         aria-expanded={open}
         aria-controls={PANEL_ID}
@@ -78,6 +78,6 @@ export function DiceHistoryPanel({ state }: { state: GameState }) {
           </table>
         </div>
       ) : null}
-    </Panel>
+    </div>
   )
 }

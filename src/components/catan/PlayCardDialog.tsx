@@ -8,6 +8,7 @@ import { emptyResources, hasResources, totalCards } from '@/lib/games/catan/help
 import type { Action, DevCardType, GameState, PlayerId, Resource, ResourceCounts } from '@/lib/games/catan/types'
 import { ResourceIcon } from './ResourceIcon'
 import { ResourceStepper } from './ResourceStepper'
+import { Tooltip } from './Tooltip'
 import { ModalDialog, Muted, PIXEL_FONT, PixelButton, SectionTitle } from './ui'
 
 export type PlayableDevCard = Exclude<DevCardType, 'victoryPoint'>
@@ -42,16 +43,19 @@ export function PlayCardDialog({
   human,
   onPlay,
   onClose,
+  preselect = null,
 }: {
   state: GameState
   human: PlayerId
   onPlay: (action: Action) => void
   onClose: () => void
+  /** Opens with this card already chosen (from the DevCardsPanel Play button). */
+  preselect?: PlayableDevCard | null
 }) {
   const t = useT()
   const d = t.catan.playCard
   const titleId = useId()
-  const [selected, setSelected] = useState<Exclude<DevCardType, 'victoryPoint'> | null>(null)
+  const [selected, setSelected] = useState<Exclude<DevCardType, 'victoryPoint'> | null>(preselect)
   const [yop, setYop] = useState<ResourceCounts>(emptyResources())
   const [mono, setMono] = useState<Resource | null>(null)
 
@@ -88,22 +92,23 @@ export function PlayCardDialog({
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
             {playable.map((card) => (
-              <PixelButton
-                key={card}
-                selected={selected === card}
-                onClick={() => {
-                  setSelected(card)
-                  setYop(emptyResources())
-                  setMono(null)
-                }}
-                aria-pressed={selected === card}
-                style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2, width: '100%' }}
-              >
-                <span style={{ fontSize: 12, color: '#e8d5b0' }}>{d.cards[card].name}</span>
-                <span style={{ fontSize: 10, color: '#a09080', whiteSpace: 'normal', textAlign: 'left' }}>
-                  {d.cards[card].desc}
-                </span>
-              </PixelButton>
+              <Tooltip key={card} content={d.cards[card].desc}>
+                <PixelButton
+                  selected={selected === card}
+                  onClick={() => {
+                    setSelected(card)
+                    setYop(emptyResources())
+                    setMono(null)
+                  }}
+                  aria-pressed={selected === card}
+                  style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2, width: '100%' }}
+                >
+                  <span style={{ fontSize: 12, color: '#e8d5b0' }}>{d.cards[card].name}</span>
+                  <span style={{ fontSize: 10, color: '#a09080', whiteSpace: 'normal', textAlign: 'left' }}>
+                    {d.cards[card].desc}
+                  </span>
+                </PixelButton>
+              </Tooltip>
             ))}
 
             {selected === 'yearOfPlenty' ? (
@@ -150,10 +155,14 @@ export function PlayCardDialog({
         )}
 
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-          <PixelButton onClick={onClose}>{d.close}</PixelButton>
-          <PixelButton variant="primary" disabled={!valid} onClick={doPlay}>
-            {d.play}
-          </PixelButton>
+          <Tooltip content={d.close}>
+            <PixelButton onClick={onClose}>{d.close}</PixelButton>
+          </Tooltip>
+          <Tooltip content={d.play}>
+            <PixelButton variant="primary" disabled={!valid} onClick={doPlay}>
+              {d.play}
+            </PixelButton>
+          </Tooltip>
         </div>
     </ModalDialog>
   )

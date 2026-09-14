@@ -53,8 +53,45 @@ All files are PNG RGBA at 1x; one image pixel equals one logical board pixel. Al
 
 Recolor sprites use exactly #FF00FF (base), #FF80FF (highlight) and #800080 (shade). The renderer replaces them with the player's base colour, mix(base, white, 0.4) and mix(base, black, 0.55). Every other colour is drawn as-is.
 
+## UI sprites
+
+UI sprites are PNG RGBA at 1x with a 1 px dark outline (#1a1410) and the same warm room palette. They are never tinted by the renderer; red/blue player colours shown in the UI are baked into the art where needed.
+
+| File | Size | Where it appears | UI integer scales |
+|---|---|---|---|
+| card-brick.png | 24 x 34 | player hand card | 1x, 2x |
+| card-lumber.png | 24 x 34 | player hand card | 1x, 2x |
+| card-wool.png | 24 x 34 | player hand card | 1x, 2x |
+| card-grain.png | 24 x 34 | player hand card | 1x, 2x |
+| card-ore.png | 24 x 34 | player hand card | 1x, 2x |
+| card-knight.png | 24 x 34 | player hand card | 1x, 2x |
+| card-road-building.png | 24 x 34 | player hand card | 1x, 2x |
+| card-year-of-plenty.png | 24 x 34 | player hand card | 1x, 2x |
+| card-monopoly.png | 24 x 34 | player hand card | 1x, 2x |
+| card-victory-point.png | 24 x 34 | player hand card | 1x, 2x |
+| card-longest-road.png | 24 x 34 | Longest Road award (victory display) | 1x, 2x |
+| card-largest-army.png | 24 x 34 | Largest Army award (victory display) | 1x, 2x |
+| card-back-resource.png | 24 x 34 | resource deck back | 1x, 2x |
+| card-back-development.png | 24 x 34 | development deck back | 1x, 2x |
+| die-1.png | 16 x 16 | dice (roll and dice history) | 1x, 2x |
+| die-2.png | 16 x 16 | dice (roll and dice history) | 1x, 2x |
+| die-3.png | 16 x 16 | dice (roll and dice history) | 1x, 2x |
+| die-4.png | 16 x 16 | dice (roll and dice history) | 1x, 2x |
+| die-5.png | 16 x 16 | dice (roll and dice history) | 1x, 2x |
+| die-6.png | 16 x 16 | dice (roll and dice history) | 1x, 2x |
+| icon-brick.png | 8 x 8 | resource icons (costs, rates, bank) | 1x, 2x |
+| icon-lumber.png | 8 x 8 | resource icons (costs, rates, bank) | 1x, 2x |
+| icon-wool.png | 8 x 8 | resource icons (costs, rates, bank) | 1x, 2x |
+| icon-grain.png | 8 x 8 | resource icons (costs, rates, bank) | 1x, 2x |
+| icon-ore.png | 8 x 8 | resource icons (costs, rates, bank) | 1x, 2x |
+| icon-vp.png | 8 x 8 | victory point totals | 1x, 2x |
+| icon-knight.png | 8 x 8 | knight and army counts | 1x, 2x |
+| icon-road.png | 8 x 8 | road costs and counts | 1x, 2x |
+| icon-cards.png | 8 x 8 | development card deck | 1x, 2x |
+| icon-dev.png | 8 x 8 | development card counts | 1x, 2x |
+
 ## Workflow
 
 1. Edit the PNG in `assets/pixel-art/catan/` at exactly the listed size (do not change the canvas size or anchor).
 2. Run `npm run catan-sprites` to validate and copy the art to `public/catan/`.
-3. Rebuild. To regenerate the procedural templates, run `npm run catan-sprites:export -- --force`.
+3. Rebuild. To regenerate the procedural templates, run `npm run catan-sprites:export` (add `--force` to overwrite art that already exists).

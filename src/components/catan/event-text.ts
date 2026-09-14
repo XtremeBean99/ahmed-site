@@ -2,7 +2,7 @@ import type { Dictionary } from '@/lib/i18n/dictionaries/en'
 import { RESOURCES } from '@/lib/games/catan/constants'
 import { humanPlayer } from '@/lib/games/catan/engine'
 import { totalCards } from '@/lib/games/catan/helpers'
-import type { GameEvent, GameState, PlayerId, ResourceCounts } from '@/lib/games/catan/types'
+import type { GameEvent, GameState, PlayerId, Resource, ResourceCounts } from '@/lib/games/catan/types'
 
 /** Tiny {placeholder} interpolation used by the log and status lines. */
 export function fill(template: string, vars: Record<string, string | number>): string {
@@ -12,9 +12,18 @@ export function fill(template: string, vars: Record<string, string | number>): s
   })
 }
 
-function formatResources(counts: ResourceCounts, t: Dictionary): string {
-  const parts = RESOURCES.filter((r) => counts[r] > 0).map((r) => `${counts[r]} ${t.catan.resources[r]}`)
-  return parts.length > 0 ? parts.join(', ') : 'nothing'
+export type EventSegmentKind = 'player' | 'dice' | 'resource' | 'count' | 'card' | 'robber' | 'vp' | 'plain'
+
+export interface EventSegment {
+  text: string
+  kind: EventSegmentKind
+  player?: PlayerId
+  resource?: Resource
+  value?: number
+}
+
+function seg(text: string, kind: EventSegmentKind = 'plain'): EventSegment {
+  return { text, kind }
 }
 
 function isHuman(state: GameState, player: PlayerId): boolean {
@@ -39,6 +48,40 @@ export function playerPossessive(state: GameState, player: PlayerId | null): str
   return isHuman(state, player) ? 'Your' : `${state.players[player]?.name ?? '?'}'s`
 }
 
+function playerSeg(state: GameState, player: PlayerId | null): EventSegment {
+  return { kind: 'player', text: playerSubject(state, player), player: player ?? undefined }
+}
+
+function playerObjectSeg(state: GameState, player: PlayerId | null): EventSegment {
+  return { kind: 'player', text: playerObject(state, player), player: player ?? undefined }
+}
+
+function resourceSeg(t: Dictionary, resource: Resource): EventSegment {
+  return { kind: 'resource', text: t.catan.resources[resource], resource }
+}
+
+/** "2 brick, 1 lumber": count segments bold, resource segments with icons. */
+function formatResourceSegments(counts: ResourceCounts, t: Dictionary): EventSegment[] {
+  const parts: EventSegment[] = []
+  RESOURCES.filter((r) => counts[r] > 0).forEach((r, index) => {
+    if (index > 0) parts.push(seg(', '))
+    parts.push({ kind: 'count', text: String(counts[r]), value: counts[r] })
+    parts.push(seg(' '))
+    parts.push(resourceSeg(t, r))
+  })
+  return parts.length > 0 ? parts : [seg('nothing')]
+}
+
+/** "brick, lumber": resource names only. */
+function formatResourceNames(resources: readonly Resource[], t: Dictionary): EventSegment[] {
+  return resources.flatMap((r, index) => {
+    const parts: EventSegment[] = []
+    if (index > 0) parts.push(seg(', '))
+    parts.push(resourceSeg(t, r))
+    return parts
+  })
+}
+
 /** Robber log destination: "Grain 9" or "the desert". */
 function robberDestination(state: GameState, hex: number, t: Dictionary): string {
   const tile = state.tiles[hex]
@@ -48,81 +91,146 @@ function robberDestination(state: GameState, hex: number, t: Dictionary): string
   return `${terrain} ${tile.number}`
 }
 
-/** Turns a GameEvent into a sentence. Hidden info stays hidden:
+/** Interpolate {placeholders} with segment arrays, tagging literal runs with `literalKind`. */
+function compose(
+  template: string,
+  values: Record<string, EventSegment[]>,
+  literalKind: EventSegmentKind = 'plain',
+): EventSegment[] {
+  const out: EventSegment[] = []
+  let last = 0
+  for (const match of template.matchAll(/\{(\w+)\}/g)) {
+    const index = match.index ?? 0
+    if (index > last) out.push(seg(template.slice(last, index), literalKind))
+    out.push(...(values[match[1]] ?? [seg(match[0])]))
+    last = index + match[0].length
+  }
+  if (last < template.length) out.push(seg(template.slice(last), literalKind))
+  return out
+}
+
+/** Turns a GameEvent into styled segments. Hidden info stays hidden:
  *  a bought dev card's identity, and the resource in a bot-vs-bot steal, are never shown. */
-export function formatEvent(state: GameState, event: GameEvent, t: Dictionary): string {
+export function formatEvent(state: GameState, event: GameEvent, t: Dictionary): EventSegment[] {
   const log = t.catan.log
-  const player = 'player' in event ? playerSubject(state, event.player) : ''
 
   switch (event.type) {
     case 'setupSettlement':
-      return fill(log.setupSettlement, { player })
+      return compose(log.setupSettlement, { player: [playerSeg(state, event.player)] })
     case 'setupRoad':
-      return fill(log.setupRoad, { player })
+      return compose(log.setupRoad, { player: [playerSeg(state, event.player)] })
     case 'setupResources':
-      return fill(log.setupResources, { player, resources: formatResources(event.resources, t) })
+      return compose(log.setupResources, {
+        player: [playerSeg(state, event.player)],
+        resources: formatResourceSegments(event.resources, t),
+      })
     case 'roll':
-      return fill(log.roll, { player, dice: event.dice[0] + event.dice[1] })
-    case 'produce':
-      return event.gains
-        .flatMap((gains, p) =>
-          totalCards(gains) > 0
-            ? [fill(log.produce, { player: playerSubject(state, p), resources: formatResources(gains, t) })]
-            : [],
+      return compose(log.roll, {
+        player: [playerSeg(state, event.player)],
+        dice: [{ kind: 'dice', text: String(event.dice[0] + event.dice[1]), value: event.dice[0] + event.dice[1] }],
+      })
+    case 'produce': {
+      const parts: EventSegment[] = []
+      event.gains.forEach((gains, p) => {
+        if (totalCards(gains) === 0) return
+        if (parts.length > 0) parts.push(seg(', '))
+        parts.push(
+          ...compose(log.produce, {
+            player: [playerSeg(state, p)],
+            resources: formatResourceSegments(gains, t),
+          }),
         )
-        .join(', ')
+      })
+      return parts
+    }
     case 'discard':
-      return fill(log.discard, { player, resources: formatResources(event.resources, t) })
+      return compose(log.discard, {
+        player: [playerSeg(state, event.player)],
+        resources: formatResourceSegments(event.resources, t),
+      })
     case 'robberMoved':
-      return fill(log.robberMoved, { player, terrain: robberDestination(state, event.hex, t) })
+      return compose(log.robberMoved, {
+        player: [playerSeg(state, event.player)],
+        robber: [{ kind: 'robber', text: log.robber }],
+        terrain: [seg(robberDestination(state, event.hex, t))],
+      })
     case 'stole': {
       if (event.resource !== null && (event.player === humanPlayer(state) || event.victim === humanPlayer(state))) {
-        return fill(log.stoleResource, {
-          player,
-          victim: playerObject(state, event.victim),
-          resource: t.catan.resources[event.resource],
+        return compose(log.stoleResource, {
+          player: [playerSeg(state, event.player)],
+          victim: [playerObjectSeg(state, event.victim)],
+          resource: [resourceSeg(t, event.resource)],
         })
       }
-      return fill(log.stole, { player, victim: playerObject(state, event.victim) })
+      return compose(log.stole, {
+        player: [playerSeg(state, event.player)],
+        victim: [playerObjectSeg(state, event.victim)],
+      })
     }
     case 'built':
-      if (event.kind === 'road') return fill(log.builtRoad, { player })
-      if (event.kind === 'settlement') return fill(log.builtSettlement, { player })
-      return fill(log.builtCity, { player })
+      if (event.kind === 'road') return compose(log.builtRoad, { player: [playerSeg(state, event.player)] })
+      if (event.kind === 'settlement') return compose(log.builtSettlement, { player: [playerSeg(state, event.player)] })
+      return compose(log.builtCity, { player: [playerSeg(state, event.player)] })
     case 'boughtDevCard':
-      return fill(log.boughtDevCard, { player })
+      return compose(log.boughtDevCard, { player: [playerSeg(state, event.player)] })
     case 'playedDevCard':
-      if (event.card === 'knight') return fill(log.playedKnight, { player })
-      if (event.card === 'roadBuilding') return fill(log.playedRoadBuilding, { player })
-      if (event.card === 'yearOfPlenty') return fill(log.playedYearOfPlenty, { player })
-      return fill(log.playedMonopoly, { player })
-    case 'yearOfPlenty': {
-      const resources = event.resources.map((r) => t.catan.resources[r]).join(', ')
-      return fill(log.yearOfPlenty, { player, resources })
-    }
+      if (event.card === 'knight') {
+        return compose(log.playedKnight, { player: [playerSeg(state, event.player)], card: [seg('knight', 'card')] })
+      }
+      if (event.card === 'roadBuilding') {
+        return compose(log.playedRoadBuilding, {
+          player: [playerSeg(state, event.player)],
+          card: [seg('Road Building', 'card')],
+        })
+      }
+      if (event.card === 'yearOfPlenty') {
+        return compose(log.playedYearOfPlenty, {
+          player: [playerSeg(state, event.player)],
+          card: [seg('Year of Plenty', 'card')],
+        })
+      }
+      return compose(log.playedMonopoly, {
+        player: [playerSeg(state, event.player)],
+        card: [seg('Monopoly', 'card')],
+      })
+    case 'yearOfPlenty':
+      return compose(log.yearOfPlenty, {
+        player: [playerSeg(state, event.player)],
+        resources: formatResourceNames(event.resources, t),
+      })
     case 'monopoly':
-      return fill(log.monopoly, {
-        player,
-        resource: t.catan.resources[event.resource],
-        taken: event.taken,
+      return compose(log.monopoly, {
+        player: [playerSeg(state, event.player)],
+        resource: [resourceSeg(t, event.resource)],
+        taken: [{ kind: 'count', text: String(event.taken), value: event.taken }],
       })
     case 'maritimeTrade':
-      return fill(log.maritimeTrade, {
-        player,
-        giveCount: event.giveCount,
-        give: t.catan.resources[event.give],
-        get: t.catan.resources[event.get],
+      return compose(log.maritimeTrade, {
+        player: [playerSeg(state, event.player)],
+        giveCount: [{ kind: 'count', text: String(event.giveCount), value: event.giveCount }],
+        give: [resourceSeg(t, event.give)],
+        get: [resourceSeg(t, event.get)],
       })
     case 'domesticTrade':
-      return fill(log.domesticTrade, { player, partner: playerObject(state, event.partner) })
+      return compose(log.domesticTrade, {
+        player: [playerSeg(state, event.player)],
+        partner: [playerObjectSeg(state, event.partner)],
+      })
     case 'longestRoad':
-      if (event.player === null) return log.longestRoadLost
-      return fill(log.longestRoad, { player: playerSubject(state, event.player) })
+      if (event.player === null) return [{ kind: 'vp', text: log.longestRoadLost }]
+      return [playerSeg(state, event.player), seg(' took '), { kind: 'vp', text: log.longestRoadName }]
     case 'largestArmy':
-      return fill(log.largestArmy, { player: playerSubject(state, event.player) })
+      return [playerSeg(state, event.player), seg(' took '), { kind: 'vp', text: log.largestArmyName }]
     case 'turnEnded':
-      return fill(log.turnEnded, { possessive: playerPossessive(state, event.player) })
+      return compose(log.turnEnded, { possessive: [seg(playerPossessive(state, event.player))] })
     case 'gameOver':
-      return fill(log.gameOver, { player: playerSubject(state, event.winner) })
+      return compose(log.gameOver, { player: [playerSeg(state, event.winner)] }, 'vp')
   }
+}
+
+/** Plain-text form of formatEvent, for tests and aria labels. */
+export function formatEventText(state: GameState, event: GameEvent, t: Dictionary): string {
+  return formatEvent(state, event, t)
+    .map((segment) => segment.text)
+    .join('')
 }

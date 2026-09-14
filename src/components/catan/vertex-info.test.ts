@@ -4,7 +4,9 @@ import { makeTestState } from '@/lib/games/catan/test-fixtures'
 import { vertexDescription, type VertexInfoMessages } from './vertex-info'
 
 const messages: VertexInfoMessages = {
-  pips: '{pips} pips: {hexes}',
+  pips: '{pips} {pipWord}: {hexes}',
+  pipSingular: 'pip',
+  pipPlural: 'pips',
   harbourAny: '3:1 harbour',
   harbourResource: '2:1 {resource} harbour',
   robberSuffix: '(robber)',
@@ -21,6 +23,15 @@ const messages: VertexInfoMessages = {
 test('vertexDescription lists per-hex yields and total pips', () => {
   const state = makeTestState()
   assert.equal(vertexDescription(state, 40, messages), '10 pips: Ore 3, Grain 4, Grain 6')
+})
+
+test('vertexDescription uses singular pip for a total of one', () => {
+  const state = makeTestState()
+  state.tiles[0] = { terrain: 'ore', number: 2 }
+  state.tiles[1] = { terrain: 'desert', number: null }
+  state.tiles[2] = { terrain: 'desert', number: null }
+  state.robber = 10
+  assert.equal(vertexDescription(state, 0, messages), '1 pip: Ore 2, 3:1 harbour')
 })
 
 test('vertexDescription marks the robber hex and counts it as 0 pips', () => {

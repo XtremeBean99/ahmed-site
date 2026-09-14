@@ -6,6 +6,7 @@ import { humanPlayer } from '@/lib/games/catan/engine'
 import { victoryPoints } from '@/lib/games/catan/helpers'
 import type { GameState } from '@/lib/games/catan/types'
 import { fill } from './event-text'
+import { Tooltip } from './Tooltip'
 import { ModalDialog, Muted, PIXEL_FONT, PixelButton, SectionTitle } from './ui'
 
 export function GameOverOverlay({
@@ -59,10 +60,14 @@ export function GameOverOverlay({
         ))}
       </div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-        <PixelButton onClick={onRules}>{d.rules}</PixelButton>
-        <PixelButton variant="primary" onClick={onNewGame}>
-          {d.playAgain}
-        </PixelButton>
+        <Tooltip content={d.rules}>
+          <PixelButton onClick={onRules}>{d.rules}</PixelButton>
+        </Tooltip>
+        <Tooltip content={d.playAgain}>
+          <PixelButton variant="primary" onClick={onNewGame}>
+            {d.playAgain}
+          </PixelButton>
+        </Tooltip>
       </div>
     </ModalDialog>
   )

@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
+import { forwardRef, useEffect, useRef } from 'react'
+import type { ButtonHTMLAttributes, CSSProperties, HTMLAttributes, ReactNode } from 'react'
 
 export const PIXEL_FONT = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const
 
@@ -23,18 +23,15 @@ export function pixelStyle(extra?: CSSProperties): CSSProperties {
   return { ...PIXEL_FONT, ...extra }
 }
 
-export function PixelButton({
-  children,
-  variant = 'default',
-  selected = false,
-  className = '',
-  style,
-  type = 'button',
-  ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & {
+export interface PixelButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'primary' | 'danger' | 'ghost'
   selected?: boolean
-}) {
+}
+
+export const PixelButton = forwardRef<HTMLButtonElement, PixelButtonProps>(function PixelButton(
+  { children, variant = 'default', selected = false, className = '', style, type = 'button', ...props },
+  ref,
+) {
   const palette = {
     default: { bg: COLORS.panel, border: COLORS.panelBorder, color: COLORS.text },
     primary: { bg: COLORS.accent, border: COLORS.panelDark, color: COLORS.panelDark },
@@ -44,6 +41,7 @@ export function PixelButton({
 
   return (
     <button
+      ref={ref}
       type={type}
       className={`${FOCUS_CLASS} ${className}`}
       style={{
@@ -68,19 +66,22 @@ export function PixelButton({
       {children}
     </button>
   )
-}
+})
 
 export function Panel({
   children,
   className = '',
   style,
-}: {
+  ...rest
+}: HTMLAttributes<HTMLElement> & {
   children: ReactNode
   className?: string
   style?: CSSProperties
+  'data-tutorial'?: string
 }) {
   return (
     <section
+      {...rest}
       className={className}
       style={{
         backgroundColor: COLORS.panel,

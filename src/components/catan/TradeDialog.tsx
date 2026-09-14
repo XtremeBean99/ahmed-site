@@ -9,6 +9,7 @@ import type { Action, GameState, PlayerId, Resource, ResourceCounts } from '@/li
 import { fill } from './event-text'
 import { ResourceIcon } from './ResourceIcon'
 import { ResourceStepper } from './ResourceStepper'
+import { Tooltip } from './Tooltip'
 import { ModalDialog, Muted, PIXEL_FONT, PixelButton, SectionTitle } from './ui'
 
 function ResourcePicker({
@@ -24,23 +25,25 @@ function ResourcePicker({
   onSelect: (r: Resource) => void
   rate?: (r: Resource) => number
 }) {
+  const t = useT()
   return (
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
       {RESOURCES.map((r) => (
-        <PixelButton
-          key={r}
-          selected={selected === r}
-          disabled={disabled(r)}
-          onClick={() => onSelect(r)}
-          aria-pressed={selected === r}
-          style={{ minWidth: 52 }}
-        >
-          <ResourceIcon resource={r} size={14} />
-          <span>
-            {resources[r]}
-            {rate ? ` \u00b7 ${rate(r)}:1` : ''}
-          </span>
-        </PixelButton>
+        <Tooltip key={r} content={`${t.catan.resources[r]}: ${resources[r]}`}>
+          <PixelButton
+            selected={selected === r}
+            disabled={disabled(r)}
+            onClick={() => onSelect(r)}
+            aria-pressed={selected === r}
+            style={{ minWidth: 52 }}
+          >
+            <ResourceIcon resource={r} size={16} />
+            <span>
+              {resources[r]}
+              {rate ? ` \u00b7 ${rate(r)}:1` : ''}
+            </span>
+          </PixelButton>
+        </Tooltip>
       ))}
     </div>
   )
@@ -85,14 +88,20 @@ export function TradeDialog({
     <ModalDialog labelledBy={titleId} onClose={onClose} style={{ width: 480 }}>
       <SectionTitle id={titleId}>{d.title}</SectionTitle>
         <div style={{ display: 'flex', gap: 8, margin: '12px 0' }}>
-          <PixelButton selected={tab === 'bank'} onClick={() => setTab('bank')} aria-pressed={tab === 'bank'}>
-            {d.tabBank}
-          </PixelButton>
-          <PixelButton selected={tab === 'players'} onClick={() => setTab('players')} aria-pressed={tab === 'players'}>
-            {d.tabPlayers}
-          </PixelButton>
+          <Tooltip content={d.tabBank}>
+            <PixelButton selected={tab === 'bank'} onClick={() => setTab('bank')} aria-pressed={tab === 'bank'}>
+              {d.tabBank}
+            </PixelButton>
+          </Tooltip>
+          <Tooltip content={d.tabPlayers}>
+            <PixelButton selected={tab === 'players'} onClick={() => setTab('players')} aria-pressed={tab === 'players'}>
+              {d.tabPlayers}
+            </PixelButton>
+          </Tooltip>
           <div style={{ flex: 1 }} />
-          <PixelButton onClick={onClose}>{d.close}</PixelButton>
+          <Tooltip content={d.close}>
+            <PixelButton onClick={onClose}>{d.close}</PixelButton>
+          </Tooltip>
         </div>
 
         {tab === 'bank' ? (
@@ -121,9 +130,11 @@ export function TradeDialog({
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <PixelButton variant="primary" disabled={!bankTradeValid} onClick={() => onTrade({ type: 'maritimeTrade', give: bankGive!, get: bankGet! })}>
-                {d.bankTrade}
-              </PixelButton>
+              <Tooltip content={d.bankTrade}>
+                <PixelButton variant="primary" disabled={!bankTradeValid} onClick={() => onTrade({ type: 'maritimeTrade', give: bankGive!, get: bankGet! })}>
+                  {d.bankTrade}
+                </PixelButton>
+              </Tooltip>
             </div>
           </div>
         ) : (
@@ -185,15 +196,17 @@ export function TradeDialog({
                       <span style={{ ...PIXEL_FONT, fontSize: 10, color: '#e8d5b0', flex: 1 }}>
                         {accepts ? fill(d.accepts, { name: bot.name }) : fill(d.declines, { name: bot.name })}
                       </span>
-                      <PixelButton
-                        variant="primary"
-                        disabled={!canTrade}
-                        onClick={() =>
-                          onTrade({ type: 'domesticTrade', partner: bot.id, give, get })
-                        }
-                      >
-                        {fill(d.playerTrade, { name: bot.name })}
-                      </PixelButton>
+                      <Tooltip content={fill(d.playerTrade, { name: bot.name })}>
+                        <PixelButton
+                          variant="primary"
+                          disabled={!canTrade}
+                          onClick={() =>
+                            onTrade({ type: 'domesticTrade', partner: bot.id, give, get })
+                          }
+                        >
+                          {fill(d.playerTrade, { name: bot.name })}
+                        </PixelButton>
+                      </Tooltip>
                     </div>
                   )
                 })}

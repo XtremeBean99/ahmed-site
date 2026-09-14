@@ -3,16 +3,19 @@
 import { useId, useState } from 'react'
 import Link from 'next/link'
 import { useT } from '@/lib/i18n/client'
+import { Tooltip } from './Tooltip'
 import { FOCUS_CLASS, ModalDialog, PIXEL_FONT, PixelButton, SectionTitle } from './ui'
 
 export function NewGameDialog({
   onStart,
   onCancel,
   canCancel,
+  onTutorial,
 }: {
   onStart: (count: 3 | 4, name: string) => void
   onCancel: () => void
   canCancel: boolean
+  onTutorial?: () => void
 }) {
   const t = useT()
   const d = t.catan.newGameDialog
@@ -31,15 +34,16 @@ export function NewGameDialog({
             <div style={{ ...PIXEL_FONT, fontSize: 10, color: '#a09080', marginBottom: 6 }}>{d.players}</div>
             <div style={{ display: 'flex', gap: 8 }}>
               {([3, 4] as const).map((n) => (
-                <PixelButton
-                  key={n}
-                  selected={count === n}
-                  onClick={() => setCount(n)}
-                  aria-pressed={count === n}
-                  style={{ flex: 1 }}
-                >
-                  {n === 3 ? d.three : d.four}
-                </PixelButton>
+                <Tooltip key={n} content={n === 3 ? d.three : d.four}>
+                  <PixelButton
+                    selected={count === n}
+                    onClick={() => setCount(n)}
+                    aria-pressed={count === n}
+                    style={{ flex: 1 }}
+                  >
+                    {n === 3 ? d.three : d.four}
+                  </PixelButton>
+                </Tooltip>
               ))}
             </div>
           </div>
@@ -81,10 +85,21 @@ export function NewGameDialog({
               {t.catan.back}
             </Link>
             <div style={{ flex: 1 }} />
-            {canCancel ? <PixelButton onClick={onCancel}>{d.cancel}</PixelButton> : null}
-            <PixelButton variant="primary" disabled={!valid} onClick={() => onStart(count, trimmed || 'You')}>
-              {d.start}
-            </PixelButton>
+            {onTutorial ? (
+              <Tooltip content={d.learn}>
+                <PixelButton onClick={onTutorial}>{d.learn}</PixelButton>
+              </Tooltip>
+            ) : null}
+            {canCancel ? (
+              <Tooltip content={d.cancel}>
+                <PixelButton onClick={onCancel}>{d.cancel}</PixelButton>
+              </Tooltip>
+            ) : null}
+            <Tooltip content={d.start}>
+              <PixelButton variant="primary" disabled={!valid} onClick={() => onStart(count, trimmed || 'You')}>
+                {d.start}
+              </PixelButton>
+            </Tooltip>
           </div>
         </div>
     </ModalDialog>

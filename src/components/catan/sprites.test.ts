@@ -10,6 +10,7 @@ import { createBuffer, drawBoard, renderProceduralSprite } from './pixel-art'
 import type { SpriteSet } from './pixel-art'
 import { decodePNG } from './png'
 import { SPRITES, SPRITE_NAMES, TILE_MASK_FILE, TILE_MASK_HEIGHT, TILE_MASK_WIDTH } from './sprites'
+import { UI_SPRITES, UI_SPRITE_NAMES } from './ui-sprites'
 
 const PUBLIC_CATAN = path.join(process.cwd(), 'public', 'catan')
 
@@ -43,6 +44,17 @@ test('every manifest sprite exists in public/catan with exact dimensions', () =>
   const mask = readPublicSprite(TILE_MASK_FILE)
   assert.equal(mask.width, TILE_MASK_WIDTH, `${TILE_MASK_FILE} width`)
   assert.equal(mask.height, TILE_MASK_HEIGHT, `${TILE_MASK_FILE} height`)
+})
+
+test('every UI sprite file exists in public/catan with exact dimensions', () => {
+  for (const name of UI_SPRITE_NAMES) {
+    const meta = UI_SPRITES[name]
+    const file = path.join(PUBLIC_CATAN, meta.file)
+    assert.ok(fs.existsSync(file), `${meta.file} is missing`)
+    const png = readPublicSprite(meta.file)
+    assert.equal(png.width, meta.width, `${meta.file} width`)
+    assert.equal(png.height, meta.height, `${meta.file} height`)
+  }
 })
 
 test('renderProceduralSprite produces every manifest size', () => {

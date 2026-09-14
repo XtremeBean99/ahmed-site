@@ -4,6 +4,8 @@ import type { GameState, Terrain } from '@/lib/games/catan/types'
 
 export interface VertexInfoMessages {
   pips: string
+  pipSingular: string
+  pipPlural: string
   harbourAny: string
   harbourResource: string
   robberSuffix: string
@@ -31,7 +33,11 @@ export function vertexDescription(state: GameState, vertex: number, messages: Ve
     parts.push(label)
   }
 
-  let text = fill(messages.pips, { pips: total, hexes: parts.join(', ') })
+  let text = fill(messages.pips, {
+    pips: total,
+    pipWord: total === 1 ? messages.pipSingular : messages.pipPlural,
+    hexes: parts.join(', '),
+  })
   const port = state.ports.find((p) => EDGES[p.edge].vertices.includes(vertex))
   if (port) {
     text += port.type === 'any' ? `, ${messages.harbourAny}` : `, ${fill(messages.harbourResource, { resource: messages.terrain[port.type] })}`

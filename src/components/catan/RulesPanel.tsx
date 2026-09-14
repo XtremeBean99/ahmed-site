@@ -2,6 +2,7 @@
 
 import { useId } from 'react'
 import { useT } from '@/lib/i18n/client'
+import { Tooltip } from './Tooltip'
 import { ModalDialog, Muted, PIXEL_FONT, PixelButton, SectionTitle } from './ui'
 
 export function RulesPanel({ onClose }: { onClose: () => void }) {
@@ -20,7 +21,9 @@ export function RulesPanel({ onClose }: { onClose: () => void }) {
     <ModalDialog labelledBy={titleId} onClose={onClose} style={{ width: 520 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <SectionTitle id={titleId}>{d.title}</SectionTitle>
-        <PixelButton onClick={onClose}>{t.catan.close}</PixelButton>
+        <Tooltip content={t.catan.close}>
+          <PixelButton onClick={onClose}>{t.catan.close}</PixelButton>
+        </Tooltip>
       </div>
         <p style={{ ...PIXEL_FONT, fontSize: 10, color: '#e8d5b0', margin: '0 0 10px' }}>{d.goal}</p>
         {section(d.costsTitle, d.costs.join('  '))}

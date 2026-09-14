@@ -477,10 +477,23 @@ by the room's shelf Catan box. Not under `/games` (that path 301s to `/`). Desig
   an opposing settlement still counts its full length; bots never initiate trades.
 - **Bots** `ai.ts`: `chooseBotAction` (always legal, deterministic, public information only) and
   `botAcceptsTrade` for the human's offers.
-- **UI** `src/components/catan/`: `BoardCanvas` rasterises the board per pixel into a 280x265 canvas
-  (`pixel-art.ts`, `board-layout.ts`) scaled by integer factors, with real buttons over legal targets;
-  `CatanGame` paces bots (~450 ms) and saves after every action (`save.ts`). Copy in `en.ts` `catan`.
-  Mobile shows `MobileGate`.
+- **UI** `src/components/catan/`: `BoardCanvas` composes the board from sprites on an exact integer hex grid
+  (279x265 canvas, centres 38 px apart, rows 33 px, identical 38x43 tile mask; `board-layout.ts`) scaled by
+  integer factors, with real buttons over legal targets and hover info (`board-hover.ts`). `CatanGame`
+  composes `useCatanController` (state, save, bot loop with speed/skip, tutorial hooks) with `TopBar`,
+  `SettingsMenu` (tooltips, bot speed, board key), `DiceViewer`, `PlayersPanel`, `HandPanel` (cards),
+  `DevCardsPanel`, `BoardKeyPanel`, `GameLog` (highlighted segments from `event-text.ts`) and a pinned
+  `ActionBar` (disabled reasons, Hint). Shared `Tooltip` and `PixelSprite`. Prefs in `catan-prefs-v1`.
+  Copy in `en.ts` `catan`. Mobile shows `MobileGate`.
+- **Art (owner redraws all of it later)**: every board and UI graphic is a drop-in PNG listed in `sprites.ts`
+  (board) and `ui-sprites.ts` (cards 24x34, dice 16x16, icons 8x8). Source art in `assets/pixel-art/catan/`
+  with `SPEC.md` (exact sizes and anchors); `npm run catan-sprites` validates sizes and copies to
+  `public/catan/`. `npm run catan-sprites:export` regenerates placeholder art and never overwrites existing
+  files without `--force`. Never change a sprite size or name without telling the owner.
+- **Tutorial** (`tutorial.ts`, `TutorialCoach.tsx`): "Learn to play" runs a fixed, seeded 3-player lesson
+  of 14 steps; each step restricts the human's legal actions, so the lesson replays identically
+  (`tutorial.test.ts` plays it through the engine). Saved under `catan-tutorial-v1`; reloading leaves the
+  tutorial. Hints (`hint.ts`) describe the bot's choice for the human seat.
 - **Tests**: `npm run test:catan` (unit, audit regressions, 300-game random fuzz with conservation
   invariants, bots-only simulation). Board layout tests: `npx tsx --test src/components/catan/board-layout.test.ts`.
 - **Local testing**: `next dev` renders blank because the CSP forbids `eval`; test with

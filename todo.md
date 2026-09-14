@@ -93,6 +93,26 @@ Tests: `node:test` files next to the engine, run with the existing `tsx` dev dep
 - Known follow-up (outside this feature): the site CSP blocks `eval`, so `next dev` renders blank pages; test with a
   production build until that is fixed.
 
+---
+
+## APPROVED DESIGN — Pixel Catan v2 (cards, tutorial, clarity)
+
+Requested by the owner 14 September 2026 after v1 shipped. The owner will redraw every sprite later, so all art is
+drop-in PNG at fixed sizes (`assets/pixel-art/catan/SPEC.md`).
+
+| ID | Item | Status |
+|---|---|---|
+| CAT10 | Redrawable art: integer hex grid (identical 38x43 tile mask), board sprite manifest, template export, `npm run catan-sprites` | Done, deployed |
+| CAT11 | Pacing and clarity: bot speed, skip to my turn, disabled-action reasons, pip counts on placement, dice history, per-phase bot fallback, trade offers no longer reveal bot hands | Done, deployed |
+| CAT12 | Mobile gate false positive on Firefox touch-capable desktops (`any-pointer: fine`) | Done, deployed |
+| CAT13 | UI sprite manifest (`ui-sprites.ts`): cards 24x34, dice 16x16, icons 8x8; `PixelSprite`, shared `Tooltip`, `tooltips` pref | Done |
+| CAT14 | Card and icon placeholder art, board hover information, board key/legend | Done |
+| CAT15 | Cards in the game (hand stacks, playable dev cards, opponent card backs, award cards, click-to-discard), dice viewer, aligned players table, highlighted log, settings menu with tooltip toggle, tooltips everywhere | Done |
+| CAT16 | Tutorial mode (scripted deterministic 3-player lesson with coach marks and move restrictions) and Hint button | Done |
+
+Browser verification fixes applied by the orchestrator: sidebar overflow (scrollable middle, pinned status and action bar, hand as one row of card stacks); `Panel` dropped `data-tutorial` attributes, breaking spotlights; tutorial Next could skip action steps and desync the scripted game; tutorial dialogs showed fabricated zero counts (now real counts with explicit step text); hints enabled after the lesson; "1 cards".
+Known limitation: reloading mid-tutorial returns to normal mode (the lesson restarts from New game).
+
 ### Task detail
 - **CAT0** Write the shared contract first so the rule modules can be built in parallel against it.
 - **CAT1** Tiles 4 lumber / 4 wool / 4 grain / 3 brick / 3 ore / 1 desert; tokens 2,3,3,4,4,5,5,6,6,8,8,

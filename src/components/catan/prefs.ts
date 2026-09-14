@@ -6,6 +6,8 @@ export const PREFS_KEY = 'catan-prefs-v1'
 
 export interface CatanPrefs {
   botSpeed: BotSpeed
+  tooltips: boolean
+  showBoardKey: boolean
 }
 
 export interface CatanPrefsStore {
@@ -18,7 +20,7 @@ function isBotSpeed(value: unknown): value is BotSpeed {
 }
 
 export function defaultPrefs(): CatanPrefs {
-  return { botSpeed: DEFAULT_BOT_SPEED }
+  return { botSpeed: DEFAULT_BOT_SPEED, tooltips: true, showBoardKey: true }
 }
 
 /** Reads and validates persisted prefs. Returns defaults for SSR, bad JSON, or wrong values. */
@@ -29,8 +31,13 @@ export function readPrefs(storage: Pick<CatanPrefsStore, 'getItem'> | null | und
     if (raw === null) return defaultPrefs()
     const parsed: unknown = JSON.parse(raw)
     if (typeof parsed !== 'object' || parsed === null) return defaultPrefs()
-    const speed = (parsed as Record<string, unknown>).botSpeed
-    return isBotSpeed(speed) ? { botSpeed: speed } : defaultPrefs()
+    const { botSpeed, tooltips, showBoardKey } = parsed as Record<string, unknown>
+    const defaults = defaultPrefs()
+    return {
+      botSpeed: isBotSpeed(botSpeed) ? botSpeed : defaults.botSpeed,
+      tooltips: typeof tooltips === 'boolean' ? tooltips : defaults.tooltips,
+      showBoardKey: typeof showBoardKey === 'boolean' ? showBoardKey : defaults.showBoardKey,
+    }
   } catch {
     return defaultPrefs()
   }

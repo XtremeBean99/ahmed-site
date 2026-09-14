@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { guestbookSchema } from '@/lib/validations'
 import { addEntry, listEntries, deleteEntry, trimEntries } from '@/services/guestbook'
 import { checkRateLimit, getClientIp } from '@/lib/ratelimit'
+import { isSameSiteRequest } from '@/lib/csrf'
 import { getRedis } from '@/lib/redis'
 import { createHash, timingSafeEqual } from 'node:crypto'
 
@@ -50,12 +51,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const origin = request.headers.get('origin')
-  const referer = request.headers.get('referer')
   const host = request.headers.get('host') || 'ahmedyhussain.com'
-  const allowed = [`https://${host}`, `https://www.${host}`]
   if (process.env.NODE_ENV === 'production') {
-    const ok = (origin && allowed.includes(origin)) || (referer && allowed.some((o) => referer.startsWith(o)))
+    const ok = isSameSiteRequest(request.headers.get('origin'), request.headers.get('referer'), host)
     if (!ok) return NextResponse.json({ success: true }) // silently reject cross-origin
   }
   const ip = getClientIp(request.headers)

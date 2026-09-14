@@ -16,11 +16,12 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       // unsafe-inline required by Next.js runtime; unsafe-eval removed (not needed in production)
-      "script-src 'self' 'unsafe-inline'",
+      // va.vercel-scripts.com serves both Speed Insights and Web Analytics
+      "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob:",
-      "connect-src 'self'",
+      "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com",
       // 'none': the in-monitor browser was removed (Spec 1, Jul 2026)
       "frame-ancestors 'none'",
       "base-uri 'self'",

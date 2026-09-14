@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 const PIXEL = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const
-const SITE_NAME = "Ahmed's Room"
+const SITE_NAME = "Ahmed's website"
 
 /** Shown instead of the room on mobile: the pixel-art desk experience needs a mouse
  *  and a real viewport, not a touchscreen. Offers a way to pick the site back up

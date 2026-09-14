@@ -12,6 +12,7 @@ import {
   SPRITE_FRAME_MS,
   LIGHTING_FADE_MS,
   POSTER_ALT_FRAME,
+  WINDOW_GLASS,
 } from '@/lib/room/objects'
 import { useStageScale } from '@/lib/room/useStageScale'
 import { MobileGate } from './MobileGate'
@@ -50,7 +51,7 @@ import {
 import type { DesktopShortcut } from './DeskDesktop'
 import { DURATION } from '@/lib/motion'
 import type { Dictionary } from '@/lib/i18n/dictionaries/en'
-import { useLightingClock, LightingProvider, lightingSrc, type LightingState } from '@/lib/room/lighting'
+import { useLightingClock, LightingProvider, lightingSrc, LIGHTING_STATES, type LightingState } from '@/lib/room/lighting'
 
 type View = 'room' | 'zooming' | 'desk' | 'leaving'
 
@@ -72,6 +73,7 @@ interface RoomProps {
       ipodLabel: string
       sideTableClockLabel: string
       sideTableDrawerLabel: string
+      windowLabel: string
       posterClickHint: string
       enterSite: string
       hint: string
@@ -142,6 +144,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const [clock24h, setClock24h] = useState(true)
   const [sideTableOpen, setSideTableOpen] = useState(false)
   const [sideTableHovered, setSideTableHovered] = useState(false)
+  const [windowHovered, setWindowHovered] = useState(false)
   const [lampHovered, setLampHovered] = useState(false)
   const [sfxEnabled, setSfxEnabled] = useState(true)
   const [sfxVolume, setSfxVolumeState] = useState(0.5)
@@ -225,10 +228,14 @@ export function Room({ dict, readmeContent }: RoomProps) {
   }, [])
 
 
-  // Lighting: target follows the visitor's local clock; `light` is what is
-  // rendered; `prevLight` keeps the outgoing background pair mounted during
-  // the 1.5s crossfade. The swap waits for the target backgrounds to load.
-  const targetLight = useLightingClock()
+  // Lighting: target normally follows the visitor's local clock, but clicking
+  // the window overrides it for the rest of the visit (manualLight). `light`
+  // is what is rendered; `prevLight` keeps the outgoing background pair
+  // mounted during the 1.5s crossfade. The swap waits for the target
+  // backgrounds to load.
+  const clockLight = useLightingClock()
+  const [manualLight, setManualLight] = useState<LightingState | null>(null)
+  const targetLight = manualLight ?? clockLight
   const [light, setLight] = useState<LightingState>('dusk')
   const [prevLight, setPrevLight] = useState<LightingState | null>(null)
   useEffect(() => {
@@ -249,6 +256,10 @@ export function Room({ dict, readmeContent }: RoomProps) {
     })
     return () => { cancelled = true }
   }, [targetLight, light, reduce])
+
+  const cycleLight = useCallback(() => {
+    setManualLight(LIGHTING_STATES[(LIGHTING_STATES.indexOf(light) + 1) % LIGHTING_STATES.length])
+  }, [light])
 
   useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); setSfxEnabled(p.sfx); setSfxVolumeState(p.sfxVolume); setHintPulses(p.visitCount <= 1); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
 
@@ -637,6 +648,19 @@ export function Room({ dict, readmeContent }: RoomProps) {
           <RoomNightSky light={light} />
           <RoomWeather />
 
+          {/* Window is clickable: cycles dawn -> day -> dusk -> night, overriding
+              the visitor-local clock for the rest of the visit. */}
+          <RoomObject
+            label={t.room.windowLabel}
+            showTooltip={windowHovered}
+            onActivate={() => setWindowHovered(true)}
+            onDeactivate={() => setWindowHovered(false)}
+            onClick={cycleLight}
+            style={{ position: 'absolute', left: WINDOW_GLASS.x, top: WINDOW_GLASS.y, width: WINDOW_GLASS.w, height: WINDOW_GLASS.h }}
+          >
+            <div style={{ width: WINDOW_GLASS.w, height: WINDOW_GLASS.h }} />
+          </RoomObject>
+
           <Monitor
             label={t.room.monitorLabel}
             x={monitorObj.x}
@@ -688,7 +712,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
                   transition: reduce ? 'none' : 'filter 0.4s ease',
                   opacity: sideTableOpen ? 0 : 1,
                 }}
-                animate={{ y: sideTableHovered && !reduce ? -2 : 0 }}
               />
               <motion.img
                 src={lightingSrc('/room/side-table-2.png', light)}
@@ -703,7 +726,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
                   transition: reduce ? 'none' : 'filter 0.4s ease',
                   opacity: sideTableOpen ? 1 : 0,
                 }}
-                animate={{ y: sideTableHovered && !reduce ? -2 : 0 }}
                 transition={{ duration: DURATION.fast }}
               />
             </RoomObject>

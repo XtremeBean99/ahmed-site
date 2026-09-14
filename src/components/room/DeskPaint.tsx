@@ -8,9 +8,14 @@ const COLS = 107
 const ROWS = 50
 const CELL = 5
 const KEY = 'room-paint-v1'
-// Room-adjacent palette; index 1 (paper) is the blank colour.
-const PALETTE = ['#1a1210', '#faf8f5', '#6b4d3a', '#3d2e1e', '#e8d5b0', '#c8a064', '#8a4a3a', '#4a6a8a', '#5a8a4a', '#35e65c']
+// Room-adjacent palette; index 1 (paper) is the blank colour. The custom
+// colour-wheel slot is appended at CUSTOM_IDX, so the total slot count
+// (PALETTE_SIZE) stays fixed even though its colour is picked at runtime.
+const FIXED_PALETTE = ['#1a1210', '#faf8f5', '#6b4d3a', '#3d2e1e', '#e8d5b0', '#c8a064', '#8a4a3a', '#4a6a8a', '#5a8a4a', '#35e65c']
 const BLANK = 1
+const CUSTOM_IDX = FIXED_PALETTE.length
+const PALETTE_SIZE = FIXED_PALETTE.length + 1
+const DEFAULT_CUSTOM_COLOR = '#e63946'
 
 type Tool = 'pencil' | 'eraser' | 'fill'
 
@@ -42,7 +47,7 @@ function loadCells(): Uint8Array {
       if (Array.isArray(arr) && arr.length === COLS * ROWS) {
         for (let i = 0; i < arr.length; i++) {
           const v = arr[i]
-          cells[i] = typeof v === 'number' && v >= 0 && v < PALETTE.length ? v : BLANK
+          cells[i] = typeof v === 'number' && v >= 0 && v < PALETTE_SIZE ? v : BLANK
         }
       }
     }
@@ -58,14 +63,20 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [tool, setTool] = useState<Tool>('pencil')
   const [colorIdx, setColorIdx] = useState(0)
+  const [customColor, setCustomColor] = useState(DEFAULT_CUSTOM_COLOR)
+  // Palette indices are stored per-cell, but the custom slot's colour is picked
+  // at runtime — a ref keeps repaint/setCell/flood reading the live colour
+  // without having to rebuild those callbacks on every colour change.
+  const paletteRef = useRef<string[]>([...FIXED_PALETTE, DEFAULT_CUSTOM_COLOR])
 
   const repaint = useCallback(() => {
     const ctx = canvasRef.current?.getContext('2d')
     const cells = cellsRef.current
     if (!ctx || !cells) return
+    const palette = paletteRef.current
     for (let y = 0; y < ROWS; y++) {
       for (let x = 0; x < COLS; x++) {
-        ctx.fillStyle = PALETTE[cells[y * COLS + x]]
+        ctx.fillStyle = palette[cells[y * COLS + x]]
         ctx.fillRect(x * CELL, y * CELL, CELL, CELL)
       }
     }
@@ -76,6 +87,13 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
     repaint()
     return () => clearTimeout(saveTimer.current)
   }, [repaint])
+
+  // The custom slot's colour can change after cells already used it — repaint
+  // so those cells pick up the new colour immediately.
+  useEffect(() => {
+    paletteRef.current = [...FIXED_PALETTE, customColor]
+    repaint()
+  }, [customColor, repaint])
 
   const persist = useCallback(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current)
@@ -95,7 +113,7 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
       if (!cells || !ctx || x < 0 || x >= COLS || y < 0 || y >= ROWS) return
       if (cells[y * COLS + x] === idx) return
       cells[y * COLS + x] = idx
-      ctx.fillStyle = PALETTE[idx]
+      ctx.fillStyle = paletteRef.current[idx]
       ctx.fillRect(x * CELL, y * CELL, CELL, CELL)
       persist()
     },
@@ -173,7 +191,7 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
         <StripButton pressed={tool === 'eraser'} onClick={() => setTool('eraser')}>{labels.eraser}</StripButton>
         <StripButton pressed={tool === 'fill'} onClick={() => setTool('fill')}>{labels.fill}</StripButton>
         <span className="flex items-center gap-1 ml-2">
-          {PALETTE.map((hex, i) => (
+          {FIXED_PALETTE.map((hex, i) => (
             <button
               key={hex}
               type="button"
@@ -192,6 +210,29 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
               }}
             />
           ))}
+          {/* Custom colour wheel: native picker sits over a swatch showing the current pick. */}
+          <span className="relative" style={{ width: 12, height: 12 }}>
+            <span
+              aria-hidden
+              className="absolute inset-0"
+              style={{
+                backgroundColor: customColor,
+                border: colorIdx === CUSTOM_IDX ? '2px solid #3a3028' : '1px solid #c8b8a8',
+              }}
+            />
+            <input
+              type="color"
+              value={customColor}
+              onChange={(e) => {
+                setCustomColor(e.target.value)
+                setColorIdx(CUSTOM_IDX)
+                if (tool === 'eraser') setTool('pencil')
+              }}
+              aria-label={labels.color.replace('{n}', 'wheel')}
+              className="absolute inset-0 outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028] cursor-pointer"
+              style={{ width: 12, height: 12, padding: 0, border: 'none', background: 'none' }}
+            />
+          </span>
         </span>
         <span className="ml-auto flex items-center gap-2">
           <StripButton onClick={clearAll}>{labels.clear}</StripButton>

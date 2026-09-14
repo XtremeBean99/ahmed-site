@@ -11,10 +11,11 @@ export interface StageScale {
   fillScale: number
 }
 
-/** Coarse pointer or narrow viewport — same signal used everywhere mobile is gated. */
+/** No mouse or trackpad at all, or a narrow viewport — same signal used everywhere mobile is gated.
+ *  any-pointer, not pointer: Firefox on touch-capable Windows desktops reports the primary pointer as coarse. */
 export function isMobileViewport(): boolean {
   if (typeof window === 'undefined') return false
-  return matchMedia('(pointer: coarse)').matches || window.innerWidth < 700
+  return !matchMedia('(any-pointer: fine)').matches || window.innerWidth < 700
 }
 
 /** Computes the fit scale for the 1408x768 stage in the viewport.

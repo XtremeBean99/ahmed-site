@@ -5,13 +5,15 @@ import { makeTestState, putCity, putRoad, putSettlement } from '../../lib/games/
 import {
   BOARD_HEIGHT,
   BOARD_WIDTH,
+  CORNER_OFFSETS,
   edgeEndpoints,
   edgePoint,
   hexAtPixel,
   hexCenter,
   vertexPoint,
 } from './board-layout'
-import { CITY_SIZE, SETTLEMENT_SIZE, createBuffer, drawBoard, harborPlateRect } from './pixel-art'
+import { CITY_SIZE, SETTLEMENT_SIZE, TILE_MASK_OFFSETS, createBuffer, drawBoard, harborPlateRect } from './pixel-art'
+import { TILE_ANCHOR_X, TILE_ANCHOR_Y, TILE_MASK_HEIGHT, TILE_MASK_WIDTH } from './sprites'
 import type { PixelBuffer } from './pixel-art'
 
 function changedPixels(a: PixelBuffer, b: PixelBuffer): { x: number; y: number }[] {
@@ -77,7 +79,52 @@ test('hex centres map back to their own hex via hexAtPixel', () => {
   }
 })
 
-test('every pixel is sea or exactly one hex and hex pixel areas are within 10%', () => {
+test('all hexes sharing a vertex agree on its pixel position', () => {
+  for (const vertex of VERTICES) {
+    const expected = vertexPoint(vertex.id)
+    for (const hexId of vertex.hexes) {
+      const hex = HEXES[hexId]
+      const corner = hex.vertices.indexOf(vertex.id)
+      const center = hexCenter(hexId)
+      const fromHex = { x: center.x + CORNER_OFFSETS[corner].x, y: center.y + CORNER_OFFSETS[corner].y }
+      assert.deepEqual(fromHex, expected, `vertex ${vertex.id} disagrees via hex ${hexId}`)
+    }
+  }
+})
+
+test('every island hex has the identical pixel mask', () => {
+  const masks: string[][] = []
+  for (const hex of HEXES) {
+    const center = hexCenter(hex.id)
+    const relative: string[] = []
+    for (let y = 0; y < BOARD_HEIGHT; y++) {
+      for (let x = 0; x < BOARD_WIDTH; x++) {
+        if (hexAtPixel(x, y) === hex.id) relative.push(`${x - center.x},${y - center.y}`)
+      }
+    }
+    relative.sort()
+    masks.push(relative)
+  }
+  const first = masks[0]
+  for (let i = 1; i < masks.length; i++) {
+    assert.deepEqual(masks[i], first, `hex ${i} has a different pixel mask`)
+  }
+  assert.equal(first.length, TILE_MASK_OFFSETS.length)
+  assert.ok(first.length > 0, 'the tile mask must contain pixels')
+
+  const xs = TILE_MASK_OFFSETS.map((off) => off.x)
+  const ys = TILE_MASK_OFFSETS.map((off) => off.y)
+  const minX = Math.min(...xs)
+  const minY = Math.min(...ys)
+  const width = Math.max(...xs) - minX + 1
+  const height = Math.max(...ys) - minY + 1
+  assert.equal(width, TILE_MASK_WIDTH)
+  assert.equal(height, TILE_MASK_HEIGHT)
+  assert.equal(-minX, TILE_ANCHOR_X)
+  assert.equal(-minY, TILE_ANCHOR_Y)
+})
+
+test('every pixel is sea or exactly one hex and every hex has the same area', () => {
   const areas = new Map<number, number>()
   let sea = 0
   for (let y = 0; y < BOARD_HEIGHT; y++) {
@@ -93,10 +140,8 @@ test('every pixel is sea or exactly one hex and hex pixel areas are within 10%',
   }
   assert.equal(areas.size, HEXES.length)
   const sizes = [...areas.values()]
-  const min = Math.min(...sizes)
-  const max = Math.max(...sizes)
-  assert.ok(min > 0, 'every hex should have pixels')
-  assert.ok(max <= min * 1.1, `hex pixel areas vary too much: min ${min}, max ${max}`)
+  assert.ok(sizes.every((size) => size === sizes[0]), `hex pixel areas differ: ${sizes.join(', ')}`)
+  assert.equal(sizes[0], TILE_MASK_OFFSETS.length)
   assert.ok(sea > 0, 'the canvas should include sea pixels')
 })
 

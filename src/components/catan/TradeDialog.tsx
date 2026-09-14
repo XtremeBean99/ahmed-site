@@ -152,7 +152,7 @@ export function TradeDialog({
                     resource={r}
                     label={t.catan.resources[r]}
                     value={get[r]}
-                    max={9}
+                    max={19}
                     onChange={(n) => setGet((prev) => ({ ...prev, [r]: n }))}
                   />
                 ))}
@@ -164,7 +164,7 @@ export function TradeDialog({
                 .filter((p) => p.id !== human)
                 .map((bot) => {
                   const accepts = botAcceptsTrade(state, bot.id, { from: human, give, get })
-                  const canTrade = tradeShapeValid && accepts && hasResources(bot.resources, get)
+                  const canTrade = tradeShapeValid && accepts
                   return (
                     <div key={bot.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span

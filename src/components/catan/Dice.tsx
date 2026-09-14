@@ -81,7 +81,7 @@ export function Dice({ dice, label }: { dice: [number, number] | null; label: st
     const prev = previous.current
     previous.current = dice
     if (!dice) return
-    if (!prev || (prev[0] === dice[0] && prev[1] === dice[1])) return
+    if (prev && prev[0] === dice[0] && prev[1] === dice[1]) return
     if (reduce) return
     setShake(true)
     const id = setTimeout(() => setShake(false), 480)

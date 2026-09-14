@@ -3,9 +3,9 @@
  * geometry.ts unit coordinates into integer logical pixel coordinates and
  * answers "which hex is under this pixel?" for the rasteriser.
  *
- * The board is pointy-top, centred on 0,0 in hex-size units. We scale by the
- * hex circumradius in pixels and place the island in the middle of a canvas
- * with a sea border of about one full hex (2R) on every side so harbours fit.
+ * The lattice is integer-exact so every island hex rasterises to the same
+ * pixel mask: centre (q, r) sits at (ORIGIN_X + 38q + 19r, ORIGIN_Y + 33r)
+ * and the six corners are the fixed integer offsets below.
  */
 
 import { HEXES, VERTICES, EDGES } from '@/lib/games/catan/geometry'
@@ -15,48 +15,40 @@ export interface Point {
   y: number
 }
 
-/** Logical hex circumradius in pixels. */
+/** Logical hex circumradius in pixels (kept for callers that scale by it). */
 export const HEX_RADIUS = 22
 
-/** Logical canvas size: island vertex span (191 x 176 px) plus a 2R sea border. */
-export const BOARD_WIDTH = 280
+/** Logical canvas size: island vertex span plus a 44 px sea border on all sides. */
+export const BOARD_WIDTH = 279
 export const BOARD_HEIGHT = 265
 
-/**
- * Pixel position of the unit origin (the board centre). X is half-way between
- * pixel columns so the island is horizontally symmetric; Y is the exact centre
- * column.
- */
-export const ORIGIN_X = (BOARD_WIDTH - 1) / 2
-export const ORIGIN_Y = (BOARD_HEIGHT - 1) / 2
+/** Pixel position of the axial origin (hex 0,0), the board centre. */
+export const ORIGIN_X = 139
+export const ORIGIN_Y = 132
 
-const SQRT3 = Math.sqrt(3)
+/** Corner offsets from a hex centre, in geometry.ts corner order. */
+export const CORNER_OFFSETS: readonly Point[] = [
+  { x: 19, y: -11 },
+  { x: 19, y: 11 },
+  { x: 0, y: 22 },
+  { x: -19, y: 11 },
+  { x: -19, y: -11 },
+  { x: 0, y: -22 },
+]
+
 const AXIAL_BY_ID = new Map<string, number>(HEXES.map((h) => [`${h.q},${h.r}`, h.id]))
-
-function unitToPixelX(x: number): number {
-  return Math.round(ORIGIN_X + x * HEX_RADIUS)
-}
-
-function unitToPixelY(y: number): number {
-  return Math.round(ORIGIN_Y + y * HEX_RADIUS)
-}
-
-function pixelToUnitX(px: number): number {
-  return (px - ORIGIN_X) / HEX_RADIUS
-}
-
-function pixelToUnitY(py: number): number {
-  return (py - ORIGIN_Y) / HEX_RADIUS
-}
 
 export function hexCenter(hex: number): Point {
   const h = HEXES[hex]
-  return { x: unitToPixelX(h.x), y: unitToPixelY(h.y) }
+  return { x: ORIGIN_X + 38 * h.q + 19 * h.r, y: ORIGIN_Y + 33 * h.r }
 }
 
 export function vertexPoint(vertex: number): Point {
   const v = VERTICES[vertex]
-  return { x: unitToPixelX(v.x), y: unitToPixelY(v.y) }
+  const h = HEXES[v.hexes[0]]
+  const corner = h.vertices.indexOf(vertex)
+  const c = hexCenter(h.id)
+  return { x: c.x + CORNER_OFFSETS[corner].x, y: c.y + CORNER_OFFSETS[corner].y }
 }
 
 export function edgeEndpoints(edge: number): [Point, Point] {
@@ -64,10 +56,11 @@ export function edgeEndpoints(edge: number): [Point, Point] {
   return [vertexPoint(e.vertices[0]), vertexPoint(e.vertices[1])]
 }
 
-/** Integer midpoint of an edge, used for edge markers. */
+/** Integer midpoint of an edge (the average rounded down), used for road sprites and markers. */
 export function edgePoint(edge: number): Point {
   const e = EDGES[edge]
-  return { x: unitToPixelX(e.x), y: unitToPixelY(e.y) }
+  const [a, b] = edgeEndpoints(e.id)
+  return { x: Math.floor((a.x + b.x) / 2), y: Math.floor((a.y + b.y) / 2) }
 }
 
 function axialRound(q: number, r: number): { q: number; r: number } {
@@ -87,18 +80,37 @@ function axialRound(q: number, r: number): { q: number; r: number } {
 }
 
 /**
- * Hex id under a logical pixel, or null for the sea. Uses axial hex rounding,
- * so every pixel belongs to exactly one hex of the infinite grid; pixels whose
- * rounded hex is not one of the 19 island hexes are sea.
+ * Hex id under a logical pixel, or null for the sea. Finds the nearest lattice
+ * centre by squared pixel distance; exact ties are broken by comparing the
+ * pixel's offset relative to each candidate centre (translation-invariant),
+ * so every island hex owns the identical pixel mask.
  */
 export function hexAtPixel(px: number, py: number): number | null {
-  const x = pixelToUnitX(px)
-  const y = pixelToUnitY(py)
-  // Pointy-top axial conversion (x = sqrt3*(q + r/2), y = 3/2*r).
-  const q = (SQRT3 / 3) * x - (1 / 3) * y
-  const r = (2 / 3) * y
-  const rounded = axialRound(q, r)
-  return AXIAL_BY_ID.get(`${rounded.q},${rounded.r}`) ?? null
+  const fr = (py - ORIGIN_Y) / 33
+  const fq = (px - ORIGIN_X - 19 * fr) / 38
+  const base = axialRound(fq, fr)
+  let bestQ = 0
+  let bestR = 0
+  let bestDist = Infinity
+  let bestDx = 0
+  let bestDy = 0
+  for (let dq = base.q - 2; dq <= base.q + 2; dq++) {
+    for (let dr = base.r - 2; dr <= base.r + 2; dr++) {
+      const cx = ORIGIN_X + 38 * dq + 19 * dr
+      const cy = ORIGIN_Y + 33 * dr
+      const dx = px - cx
+      const dy = py - cy
+      const dist = dx * dx + dy * dy
+      if (dist < bestDist || (dist === bestDist && (dx < bestDx || (dx === bestDx && dy < bestDy)))) {
+        bestDist = dist
+        bestDx = dx
+        bestDy = dy
+        bestQ = dq
+        bestR = dr
+      }
+    }
+  }
+  return AXIAL_BY_ID.get(`${bestQ},${bestR}`) ?? null
 }
 
 /** All logical points are inside the canvas. */

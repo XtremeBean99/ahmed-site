@@ -3,19 +3,29 @@
  * ImageData-like buffer ({ width, height, data: Uint8ClampedArray }) so the
  * whole board can be rendered and unit-tested without a DOM. All output is
  * deterministic: no randomness, no Date, only integer hashing.
+ *
+ * The board is composed from the sprite manifest (sprites.ts): each sprite is
+ * rendered procedurally here (also used to export the PNG templates) and, when
+ * a SpriteSet is provided, the same composition reads the sprite pixels from
+ * the provided buffers instead.
  */
 
 import { pips } from '@/lib/games/catan/constants'
-import { HEXES } from '@/lib/games/catan/geometry'
+import { COASTAL_EDGES, HEXES } from '@/lib/games/catan/geometry'
 import type { GameState, PlayerColor, PortType, Resource, Terrain } from '@/lib/games/catan/types'
 import {
   BOARD_HEIGHT,
   BOARD_WIDTH,
+  ORIGIN_X,
+  ORIGIN_Y,
   edgeEndpoints,
+  edgePoint,
   hexCenter,
   hexAtPixel,
   vertexPoint,
 } from './board-layout'
+import { SPRITES, TILE_SPRITES } from './sprites'
+import type { SpriteMeta, SpriteName } from './sprites'
 
 export type RGB = readonly [number, number, number]
 
@@ -39,6 +49,8 @@ export interface GhostPiece {
   color: PlayerColor
 }
 
+export type SpriteSet = Partial<Record<SpriteName, PixelBuffer>>
+
 export const PLAYER_COLORS: Record<PlayerColor, RGB> = {
   red: [192, 57, 43],
   blue: [46, 111, 183],
@@ -56,6 +68,11 @@ const PIER_DARK: RGB = [84, 58, 34]
 const SEA_BASE: RGB = [47, 93, 124]
 const SEA_DARK: RGB = [36, 74, 99]
 const COAST: RGB = [26, 20, 16]
+
+/** Player-colour key: base, highlight and shade are replaced at composition time. */
+const RECOLOR_BASE: RGB = [255, 0, 255]
+const RECOLOR_HIGHLIGHT: RGB = [255, 128, 255]
+const RECOLOR_SHADE: RGB = [128, 0, 128]
 
 const TERRAIN_BASE: Record<Terrain, RGB> = {
   lumber: [63, 107, 58],
@@ -199,32 +216,6 @@ function drawLine(buffer: PixelBuffer, a: { x: number; y: number }, b: { x: numb
   }
 }
 
-/** Bresenham line whose 1px brush is only placed on every other step (ghost road). */
-function drawDitheredLine(buffer: PixelBuffer, a: { x: number; y: number }, b: { x: number; y: number }, color: RGB): void {
-  let x0 = Math.round(a.x)
-  let y0 = Math.round(a.y)
-  const x1 = Math.round(b.x)
-  const y1 = Math.round(b.y)
-  const dx = Math.abs(x1 - x0)
-  const dy = -Math.abs(y1 - y0)
-  const sx = x0 < x1 ? 1 : -1
-  const sy = y0 < y1 ? 1 : -1
-  let err = dx + dy
-  for (;;) {
-    if (((x0 + y0) & 1) === 0) setPixel(buffer, x0, y0, color)
-    if (x0 === x1 && y0 === y1) break
-    const e2 = 2 * err
-    if (e2 >= dy) {
-      err += dy
-      x0 += sx
-    }
-    if (e2 <= dx) {
-      err += dx
-      y0 += sy
-    }
-  }
-}
-
 function drawRectFill(buffer: PixelBuffer, x0: number, y0: number, w: number, h: number, color: RGB): void {
   for (let y = y0; y < y0 + h; y++) {
     for (let x = x0; x < x0 + w; x++) setPixel(buffer, x, y, color)
@@ -331,14 +322,12 @@ const ROBBER_SPRITE = [
   '.OOOOO.',
 ]
 
-function playerPalette(color: RGB): Record<string, RGB> {
-  return {
-    O: OUTLINE,
-    P: color,
-    H: mix(color, [255, 255, 255], 0.4),
-    R: mix(color, [0, 0, 0], 0.55),
-    W: TOKEN_CREAM,
-  }
+const RECOLOR_PALETTE: Record<string, RGB> = {
+  O: OUTLINE,
+  P: RECOLOR_BASE,
+  H: RECOLOR_HIGHLIGHT,
+  R: RECOLOR_SHADE,
+  W: TOKEN_CREAM,
 }
 
 const ROBBER_PALETTE: Record<string, RGB> = {
@@ -370,9 +359,101 @@ function drawSprite(
   }
 }
 
-// --- Board pieces -------------------------------------------------------------------
+// --- Canonical tile mask -----------------------------------------------------------
 
-function drawRoad(buffer: PixelBuffer, edge: number, color: RGB): void {
+const CENTER_HEX_ID = HEXES.find((h) => h.q === 0 && h.r === 0)?.id
+if (CENTER_HEX_ID === undefined) throw new Error('board has no centre hex')
+
+export const TILE_MASK_OFFSETS: { x: number; y: number }[] = []
+const TILE_MASK_SET = new Set<string>()
+
+for (let dy = -30; dy <= 30; dy++) {
+  for (let dx = -30; dx <= 30; dx++) {
+    if (hexAtPixel(ORIGIN_X + dx, ORIGIN_Y + dy) === CENTER_HEX_ID) {
+      TILE_MASK_OFFSETS.push({ x: dx, y: dy })
+      TILE_MASK_SET.add(`${dx},${dy}`)
+    }
+  }
+}
+
+function isMaskEdge(dx: number, dy: number): boolean {
+  return (
+    !TILE_MASK_SET.has(`${dx + 1},${dy}`) ||
+    !TILE_MASK_SET.has(`${dx - 1},${dy}`) ||
+    !TILE_MASK_SET.has(`${dx},${dy + 1}`) ||
+    !TILE_MASK_SET.has(`${dx},${dy - 1}`)
+  )
+}
+
+// --- Sprite compositing -------------------------------------------------------------
+
+function recolorKey(r: number, g: number, b: number, color: RGB): RGB | null {
+  if (r === RECOLOR_BASE[0] && g === RECOLOR_BASE[1] && b === RECOLOR_BASE[2]) return color
+  if (r === RECOLOR_HIGHLIGHT[0] && g === RECOLOR_HIGHLIGHT[1] && b === RECOLOR_HIGHLIGHT[2]) return mix(color, [255, 255, 255], 0.4)
+  if (r === RECOLOR_SHADE[0] && g === RECOLOR_SHADE[1] && b === RECOLOR_SHADE[2]) return mix(color, [0, 0, 0], 0.55)
+  return null
+}
+
+function compositeSprite(
+  buffer: PixelBuffer,
+  sprite: PixelBuffer,
+  meta: SpriteMeta,
+  target: { x: number; y: number },
+  recolor?: RGB,
+  dither = false,
+): void {
+  const x0 = target.x - meta.anchorX
+  const y0 = target.y - meta.anchorY
+  for (let sy = 0; sy < sprite.height; sy++) {
+    for (let sx = 0; sx < sprite.width; sx++) {
+      const si = (sy * sprite.width + sx) * 4
+      const alpha = sprite.data[si + 3]
+      if (alpha === 0) continue
+      if (dither && ((sx + sy) & 1) !== 0) continue
+      let color: RGB = [sprite.data[si], sprite.data[si + 1], sprite.data[si + 2]]
+      if (recolor) {
+        const mapped = recolorKey(color[0], color[1], color[2], recolor)
+        if (mapped) color = mapped
+      }
+      setPixel(buffer, x0 + sx, y0 + sy, color, alpha)
+    }
+  }
+}
+
+/** Tile sprites only contribute their canonical mask pixels. */
+function compositeTileSprite(buffer: PixelBuffer, sprite: PixelBuffer, meta: SpriteMeta, center: { x: number; y: number }): void {
+  for (const off of TILE_MASK_OFFSETS) {
+    const sx = meta.anchorX + off.x
+    const sy = meta.anchorY + off.y
+    if (sx < 0 || sy < 0 || sx >= sprite.width || sy >= sprite.height) continue
+    const si = (sy * sprite.width + sx) * 4
+    const alpha = sprite.data[si + 3]
+    if (alpha === 0) continue
+    setPixel(buffer, center.x + off.x, center.y + off.y, [sprite.data[si], sprite.data[si + 1], sprite.data[si + 2]], alpha)
+  }
+}
+
+function getSprite(name: SpriteName, sprites?: SpriteSet): PixelBuffer {
+  return sprites?.[name] ?? renderProceduralSprite(name)
+}
+
+// --- Piece geometry ------------------------------------------------------------------
+
+type EdgeOrientation = 'vertical' | 'rising' | 'falling'
+
+function edgeOrientation(edge: number): EdgeOrientation {
+  const [a, b] = edgeEndpoints(edge)
+  let dx = b.x - a.x
+  let dy = b.y - a.y
+  if (dx < 0) {
+    dx = -dx
+    dy = -dy
+  }
+  if (dx === 0) return 'vertical'
+  return dy < 0 ? 'rising' : 'falling'
+}
+
+function drawRoadShape(buffer: PixelBuffer, edge: number, base: RGB): void {
   const [a, b] = edgeEndpoints(edge)
   const dx = b.x - a.x
   const dy = b.y - a.y
@@ -383,25 +464,43 @@ function drawRoad(buffer: PixelBuffer, edge: number, color: RGB): void {
   const p1 = { x: Math.round(a.x + ux * 3), y: Math.round(a.y + uy * 3) }
   const p2 = { x: Math.round(b.x - ux * 3), y: Math.round(b.y - uy * 3) }
   drawLine(buffer, p1, p2, OUTLINE, 2)
-  drawLine(buffer, p1, p2, color, 1)
+  drawLine(buffer, p1, p2, base, 1)
 }
 
-function drawSettlement(buffer: PixelBuffer, vertex: number, color: RGB): void {
-  drawSprite(buffer, SETTLEMENT_SPRITE, vertexPoint(vertex), playerPalette(color))
+function pierGeometry(edge: number): { p1: { x: number; y: number }; p2: { x: number; y: number }; target: { x: number; y: number } } {
+  const [a, b] = edgeEndpoints(edge)
+  const mx = (a.x + b.x) / 2
+  const my = (a.y + b.y) / 2
+  const cx = (BOARD_WIDTH - 1) / 2
+  const cy = (BOARD_HEIGHT - 1) / 2
+  let dx = mx - cx
+  let dy = my - cy
+  const len = Math.hypot(dx, dy)
+  if (len < 1) {
+    dx = 0
+    dy = -1
+  } else {
+    dx /= len
+    dy /= len
+  }
+  const p1 = { x: Math.round(a.x + dx * 2), y: Math.round(a.y + dy * 2) }
+  const p2 = { x: Math.round(b.x + dx * 2), y: Math.round(b.y + dy * 2) }
+  return {
+    p1,
+    p2,
+    target: { x: Math.floor((p1.x + p2.x) / 2), y: Math.floor((p1.y + p2.y) / 2) },
+  }
 }
 
-function drawCity(buffer: PixelBuffer, vertex: number, color: RGB): void {
-  drawSprite(buffer, CITY_SPRITE, vertexPoint(vertex), playerPalette(color))
+function drawPierShape(buffer: PixelBuffer, edge: number): void {
+  const { p1, p2 } = pierGeometry(edge)
+  drawLine(buffer, p1, p2, PIER_DARK, 1)
+  drawLine(buffer, p1, p2, PIER, 0)
 }
 
-function drawRobber(buffer: PixelBuffer, hex: number): void {
-  drawSprite(buffer, ROBBER_SPRITE, hexCenter(hex), ROBBER_PALETTE)
-}
-
-function drawNumberToken(buffer: PixelBuffer, hex: number, number: number): void {
-  const c = hexCenter(hex)
-  const x0 = c.x - 5
-  const y0 = c.y - 5
+function drawNumberTokenAt(buffer: PixelBuffer, center: { x: number; y: number }, number: number): void {
+  const x0 = center.x - 5
+  const y0 = center.y - 5
   for (let y = 0; y < 11; y++) {
     for (let x = 0; x < 11; x++) {
       const dist = Math.hypot(x - 5, y - 5)
@@ -411,12 +510,12 @@ function drawNumberToken(buffer: PixelBuffer, hex: number, number: number): void
   }
   const text = String(number)
   const color = number === 6 || number === 8 ? TOKEN_RED : INK
-  drawText(buffer, c.x - Math.floor(textWidth(text) / 2), c.y - 3, text, color)
+  drawText(buffer, center.x - Math.floor(textWidth(text) / 2), center.y - 3, text, color)
   const dots = pips(number)
   if (dots > 0) {
     const rowW = dots * 2 - 1
-    const startX = c.x - Math.floor(rowW / 2)
-    for (let i = 0; i < dots; i++) setPixel(buffer, startX + i * 2, c.y + 3, INK)
+    const startX = center.x - Math.floor(rowW / 2)
+    for (let i = 0; i < dots; i++) setPixel(buffer, startX + i * 2, center.y + 3, INK)
   }
 }
 
@@ -462,31 +561,7 @@ export function harborPlateRect(edge: number, type: PortType): Rect {
   return { x, y, width, height: HARBOR_LABEL_HEIGHT }
 }
 
-function drawHarbor(buffer: PixelBuffer, edge: number, type: PortType): void {
-  const [a, b] = edgeEndpoints(edge)
-  const mx = (a.x + b.x) / 2
-  const my = (a.y + b.y) / 2
-  const cx = (BOARD_WIDTH - 1) / 2
-  const cy = (BOARD_HEIGHT - 1) / 2
-  let dx = mx - cx
-  let dy = my - cy
-  const len = Math.hypot(dx, dy)
-  if (len < 1) {
-    dx = 0
-    dy = -1
-  } else {
-    dx /= len
-    dy /= len
-  }
-
-  // Pier: a plank line along the coastal edge, pushed just out to sea.
-  const p1 = { x: Math.round(a.x + dx * 2), y: Math.round(a.y + dy * 2) }
-  const p2 = { x: Math.round(b.x + dx * 2), y: Math.round(b.y + dy * 2) }
-  drawLine(buffer, p1, p2, PIER_DARK, 1)
-  drawLine(buffer, p1, p2, PIER, 0)
-
-  // Label plate, placed further out to sea so it never covers corner pieces.
-  const plate = harborPlateRect(edge, type)
+function drawHarborPlateShape(buffer: PixelBuffer, plate: Rect, type: PortType): void {
   const isAny = type === 'any'
   const text = isAny ? '3:1' : '2:1'
   drawRectFill(buffer, plate.x, plate.y, plate.width, plate.height, INK)
@@ -507,53 +582,195 @@ function drawHarbor(buffer: PixelBuffer, edge: number, type: PortType): void {
   }
 }
 
-// --- Terrain pass -------------------------------------------------------------------
+// --- Procedural sprite rendering -----------------------------------------------------
 
-function drawTerrain(buffer: PixelBuffer, state: GameState): void {
-  const { width, height } = buffer
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const hex = hexAtPixel(x, y)
-      if (hex === null) {
-        setPixel(buffer, x, y, seaColor(x, y))
-        continue
-      }
-      const terrain = state.tiles[hex].terrain
-      setPixel(buffer, x, y, terrainColor(terrain, x, y))
-      const right = x + 1 < width ? hexAtPixel(x + 1, y) : null
-      const down = y + 1 < height ? hexAtPixel(x, y + 1) : null
-      const left = x > 0 ? hexAtPixel(x - 1, y) : null
-      const up = y > 0 ? hexAtPixel(x, y - 1) : null
-      if (right === null || down === null || left === null || up === null) {
-        setPixel(buffer, x, y, COAST)
-      } else if (right !== hex || down !== hex) {
-        setPixel(buffer, x, y, TERRAIN_DARK[terrain])
+function cropBuffer(source: PixelBuffer, anchorX: number, anchorY: number): { buffer: PixelBuffer; anchorX: number; anchorY: number } {
+  let minX = source.width
+  let maxX = -1
+  let minY = source.height
+  let maxY = -1
+  for (let y = 0; y < source.height; y++) {
+    for (let x = 0; x < source.width; x++) {
+      if (source.data[(y * source.width + x) * 4 + 3] > 0) {
+        if (x < minX) minX = x
+        if (x > maxX) maxX = x
+        if (y < minY) minY = y
+        if (y > maxY) maxY = y
       }
     }
   }
+  if (maxX < minX) return { buffer: createBuffer(0, 0), anchorX: 0, anchorY: 0 }
+  const width = maxX - minX + 1
+  const height = maxY - minY + 1
+  const out = createBuffer(width, height)
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      const si = (y * source.width + x) * 4
+      if (source.data[si + 3] === 0) continue
+      const di = ((y - minY) * width + (x - minX)) * 4
+      out.data[di] = source.data[si]
+      out.data[di + 1] = source.data[si + 1]
+      out.data[di + 2] = source.data[si + 2]
+      out.data[di + 3] = source.data[si + 3]
+    }
+  }
+  return { buffer: out, anchorX: anchorX - minX, anchorY: anchorY - minY }
+}
+
+function renderCroppedLineSprite(orientation: EdgeOrientation, kind: 'road' | 'pier'): PixelBuffer {
+  const name = (kind === 'road' ? `road-${orientation}` : `pier-${orientation}`) as SpriteName
+  const meta = SPRITES[name]
+  const edge =
+    kind === 'road'
+      ? HEXES[0].edges.find((id) => edgeOrientation(id) === orientation)
+      : COASTAL_EDGES.find((id) => edgeOrientation(id) === orientation)
+  if (edge === undefined) throw new Error(`no ${orientation} edge for ${name}`)
+  const temp = createBuffer(BOARD_WIDTH, BOARD_HEIGHT)
+  const target = kind === 'road' ? edgePoint(edge) : pierGeometry(edge).target
+  if (kind === 'road') drawRoadShape(temp, edge, RECOLOR_BASE)
+  else drawPierShape(temp, edge)
+  const cropped = cropBuffer(temp, target.x, target.y)
+  if (cropped.buffer.width !== meta.width || cropped.buffer.height !== meta.height || cropped.anchorX !== meta.anchorX || cropped.anchorY !== meta.anchorY) {
+    throw new Error(`sprite ${name} crop mismatch: got ${cropped.buffer.width}x${cropped.buffer.height} anchor ${cropped.anchorX},${cropped.anchorY}`)
+  }
+  return cropped.buffer
+}
+
+const proceduralCache = new Map<SpriteName, PixelBuffer>()
+
+/** Renders one manifest sprite at its exact manifest size (recolor sprites use the key colours). */
+export function renderProceduralSprite(name: SpriteName): PixelBuffer {
+  const cached = proceduralCache.get(name)
+  if (cached) return cached
+  const meta = SPRITES[name]
+  const buffer = createBuffer(meta.width, meta.height)
+
+  if (name === 'sea') {
+    for (let y = 0; y < buffer.height; y++) {
+      for (let x = 0; x < buffer.width; x++) {
+        const hex = hexAtPixel(x, y)
+        let color = seaColor(x, y)
+        if (hex === null) {
+          const right = x + 1 < buffer.width ? hexAtPixel(x + 1, y) : null
+          const left = x > 0 ? hexAtPixel(x - 1, y) : null
+          const down = y + 1 < buffer.height ? hexAtPixel(x, y + 1) : null
+          const up = y > 0 ? hexAtPixel(x, y - 1) : null
+          if (right !== null || left !== null || down !== null || up !== null) color = COAST
+        }
+        setPixel(buffer, x, y, color)
+      }
+    }
+    proceduralCache.set(name, buffer)
+    return buffer
+  }
+
+  if (name.startsWith('tile-')) {
+    const terrain = name.slice('tile-'.length) as Terrain
+    for (const off of TILE_MASK_OFFSETS) {
+      const sx = meta.anchorX + off.x
+      const sy = meta.anchorY + off.y
+      const color = isMaskEdge(off.x, off.y) ? TERRAIN_DARK[terrain] : terrainColor(terrain, off.x, off.y)
+      setPixel(buffer, sx, sy, color)
+    }
+    proceduralCache.set(name, buffer)
+    return buffer
+  }
+
+  if (name.startsWith('token-')) {
+    const number = Number(name.slice('token-'.length))
+    drawNumberTokenAt(buffer, { x: meta.anchorX, y: meta.anchorY }, number)
+    proceduralCache.set(name, buffer)
+    return buffer
+  }
+
+  if (name === 'robber') {
+    drawSprite(buffer, ROBBER_SPRITE, { x: meta.anchorX, y: meta.anchorY }, ROBBER_PALETTE)
+    proceduralCache.set(name, buffer)
+    return buffer
+  }
+
+  if (name === 'settlement') {
+    drawSprite(buffer, SETTLEMENT_SPRITE, { x: meta.anchorX, y: meta.anchorY }, RECOLOR_PALETTE)
+    proceduralCache.set(name, buffer)
+    return buffer
+  }
+
+  if (name === 'city') {
+    drawSprite(buffer, CITY_SPRITE, { x: meta.anchorX, y: meta.anchorY }, RECOLOR_PALETTE)
+    proceduralCache.set(name, buffer)
+    return buffer
+  }
+
+  if (name.startsWith('road-')) {
+    const orientation = name.slice('road-'.length) as EdgeOrientation
+    const sprite = renderCroppedLineSprite(orientation, 'road')
+    proceduralCache.set(name, sprite)
+    return sprite
+  }
+
+  if (name.startsWith('pier-')) {
+    const orientation = name.slice('pier-'.length) as EdgeOrientation
+    const sprite = renderCroppedLineSprite(orientation, 'pier')
+    proceduralCache.set(name, sprite)
+    return sprite
+  }
+
+  if (name.startsWith('harbor-')) {
+    const type = name === 'harbor-any' ? 'any' : (name.slice('harbor-'.length) as Resource)
+    drawHarborPlateShape(buffer, { x: 0, y: 0, width: meta.width, height: meta.height }, type)
+    proceduralCache.set(name, buffer)
+    return buffer
+  }
+
+  throw new Error(`unknown sprite ${name}`)
 }
 
 // --- Public drawing functions --------------------------------------------------------
 
-export function drawBoard(buffer: PixelBuffer, state: GameState): void {
-  drawTerrain(buffer, state)
+export function drawBoard(buffer: PixelBuffer, state: GameState, sprites?: SpriteSet): void {
+  compositeSprite(buffer, getSprite('sea', sprites), SPRITES.sea, { x: 0, y: 0 })
+
+  for (let h = 0; h < HEXES.length; h++) {
+    const name = TILE_SPRITES[state.tiles[h].terrain]
+    compositeTileSprite(buffer, getSprite(name, sprites), SPRITES[name], hexCenter(h))
+  }
+
   for (let h = 0; h < HEXES.length; h++) {
     const number = state.tiles[h].number
-    if (number !== null) drawNumberToken(buffer, h, number)
+    if (number === null) continue
+    const name = `token-${number}` as SpriteName
+    compositeSprite(buffer, getSprite(name, sprites), SPRITES[name], hexCenter(h))
   }
-  for (const port of state.ports) drawHarbor(buffer, port.edge, port.type)
+
+  for (const port of state.ports) {
+    const type = port.type
+    const name = type === 'any' ? 'harbor-any' : (`harbor-${type}` as SpriteName)
+    const plate = harborPlateRect(port.edge, type)
+    compositeSprite(buffer, getSprite(name, sprites), SPRITES[name], { x: plate.x, y: plate.y })
+  }
+
+  for (const port of state.ports) {
+    const name = `pier-${edgeOrientation(port.edge)}` as SpriteName
+    compositeSprite(buffer, getSprite(name, sprites), SPRITES[name], pierGeometry(port.edge).target)
+  }
+
   for (let e = 0; e < state.roads.length; e++) {
     const owner = state.roads[e]
-    if (owner !== null) drawRoad(buffer, e, PLAYER_COLORS[state.players[owner].color])
+    if (owner === null) continue
+    const name = `road-${edgeOrientation(e)}` as SpriteName
+    const color = PLAYER_COLORS[state.players[owner].color]
+    compositeSprite(buffer, getSprite(name, sprites), SPRITES[name], edgePoint(e), color)
   }
+
   for (let v = 0; v < state.buildings.length; v++) {
     const building = state.buildings[v]
     if (building === null) continue
+    const name = building.kind === 'city' ? 'city' : 'settlement'
     const color = PLAYER_COLORS[state.players[building.owner].color]
-    if (building.kind === 'city') drawCity(buffer, v, color)
-    else drawSettlement(buffer, v, color)
+    compositeSprite(buffer, getSprite(name, sprites), SPRITES[name], vertexPoint(v), color)
   }
-  drawRobber(buffer, state.robber)
+
+  compositeSprite(buffer, getSprite('robber', sprites), SPRITES.robber, hexCenter(state.robber))
 }
 
 export function drawTargets(buffer: PixelBuffer, targets: TargetShapes): void {
@@ -604,24 +821,16 @@ export function drawLastPlaced(buffer: PixelBuffer, state: GameState, lastPlaced
   drawLine(buffer, p1, p2, PLAYER_COLORS[state.players[owner].color], 1)
 }
 
-export function drawGhost(buffer: PixelBuffer, ghost: GhostPiece): void {
+export function drawGhost(buffer: PixelBuffer, ghost: GhostPiece, sprites?: SpriteSet): void {
   const color = PLAYER_COLORS[ghost.color]
   if (ghost.kind === 'settlement' && ghost.vertex !== undefined) {
-    drawSprite(buffer, SETTLEMENT_SPRITE, vertexPoint(ghost.vertex), playerPalette(color), true)
+    compositeSprite(buffer, getSprite('settlement', sprites), SPRITES.settlement, vertexPoint(ghost.vertex), color, true)
   } else if (ghost.kind === 'city' && ghost.vertex !== undefined) {
-    drawSprite(buffer, CITY_SPRITE, vertexPoint(ghost.vertex), playerPalette(color), true)
+    compositeSprite(buffer, getSprite('city', sprites), SPRITES.city, vertexPoint(ghost.vertex), color, true)
   } else if (ghost.kind === 'road' && ghost.edge !== undefined) {
-    const [a, b] = edgeEndpoints(ghost.edge)
-    const dx = b.x - a.x
-    const dy = b.y - a.y
-    const len = Math.hypot(dx, dy)
-    if (len < 1) return
-    const ux = dx / len
-    const uy = dy / len
-    const p1 = { x: Math.round(a.x + ux * 3), y: Math.round(a.y + uy * 3) }
-    const p2 = { x: Math.round(b.x - ux * 3), y: Math.round(b.y - uy * 3) }
-    drawDitheredLine(buffer, p1, p2, color)
+    const name = `road-${edgeOrientation(ghost.edge)}` as SpriteName
+    compositeSprite(buffer, getSprite(name, sprites), SPRITES[name], edgePoint(ghost.edge), color, true)
   } else if (ghost.kind === 'robber' && ghost.hex !== undefined) {
-    drawSprite(buffer, ROBBER_SPRITE, hexCenter(ghost.hex), ROBBER_PALETTE, true)
+    compositeSprite(buffer, getSprite('robber', sprites), SPRITES.robber, hexCenter(ghost.hex), undefined, true)
   }
 }

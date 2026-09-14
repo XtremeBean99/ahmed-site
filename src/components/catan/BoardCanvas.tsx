@@ -7,7 +7,8 @@ import { EDGES, VERTICES } from '@/lib/games/catan/geometry'
 import type { GameState, Terrain } from '@/lib/games/catan/types'
 import { BOARD_HEIGHT, BOARD_WIDTH, edgePoint, hexCenter, vertexPoint } from './board-layout'
 import { clearBuffer, createBuffer, drawBoard, drawGhost, drawLastPlaced, drawTargets } from './pixel-art'
-import type { GhostPiece } from './pixel-art'
+import type { GhostPiece, SpriteSet } from './pixel-art'
+import { SPRITES, SPRITE_NAMES } from './sprites'
 
 export type TargetKind = 'setupSettlement' | 'setupRoad' | 'settlement' | 'city' | 'road' | 'robber'
 
@@ -39,6 +40,8 @@ export interface BoardCanvasProps {
   onVertex: (vertex: number) => void
   onEdge: (edge: number) => void
   onHex: (hex: number) => void
+  /** Extra text appended to a vertex target's accessible name and tooltip. */
+  describeVertex?: (vertex: number) => string | null
 }
 
 const PULSE_CSS = `
@@ -53,6 +56,26 @@ const PULSE_CSS = `
   .catan-marker-ring {
     animation: catan-ring-pulse 1.1s ease-out infinite;
   }
+  .catan-target .catan-vertex-note {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #3d2e1e;
+    border: 2px solid #5a4430;
+    color: #e8d5b0;
+    font-size: 10px;
+    line-height: 1;
+    padding: 3px 5px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .catan-target:hover .catan-vertex-note,
+  .catan-target:focus-visible .catan-vertex-note {
+    display: block;
+  }
   @media (prefers-reduced-motion: reduce) {
     .catan-marker-ring { animation: none; }
   }
@@ -65,7 +88,7 @@ function fillTemplate(template: string, vars: Record<string, string>): string {
 }
 
 export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
-  const { state, targets, lastPlaced, labels, onVertex, onEdge, onHex } = props
+  const { state, targets, lastPlaced, labels, onVertex, onEdge, onHex, describeVertex } = props
   const fillRef = useRef<HTMLDivElement>(null)
   const mainCanvasRef = useRef<HTMLCanvasElement>(null)
   const ghostCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -73,6 +96,7 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
   const [ghost, setGhost] = useState<GhostPiece | null>(null)
   const [liveLabel, setLiveLabel] = useState('')
   const [blinkOn, setBlinkOn] = useState(false)
+  const [sprites, setSprites] = useState<SpriteSet>({})
   const reduceMotion = useReducedMotion()
 
   const sceneKey = useMemo(
@@ -93,7 +117,8 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
   )
   const lastPlacedKey = lastPlaced ? `${lastPlaced.kind}:${lastPlaced.id}` : ''
   const lastPlacedDrawKey = lastPlaced && blinkOn ? lastPlacedKey : ''
-  const drawKey = `${sceneKey}|${targetsKey}|${lastPlacedDrawKey}`
+  const spritesKey = Object.keys(sprites).sort().join(',')
+  const drawKey = `${sceneKey}|${targetsKey}|${lastPlacedDrawKey}|${spritesKey}`
   const drawKeyRef = useRef('')
 
   useEffect(() => {
@@ -111,12 +136,54 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
   }, [])
 
   useEffect(() => {
+    let cancelled = false
+    const loaded: SpriteSet = {}
+    let pending = SPRITE_NAMES.length
+    for (const name of SPRITE_NAMES) {
+      const meta = SPRITES[name]
+      const image = new Image()
+      image.onload = () => {
+        if (cancelled) return
+        try {
+          const canvas = document.createElement('canvas')
+          canvas.width = image.width
+          canvas.height = image.height
+          const ctx = canvas.getContext('2d')
+          if (!ctx) throw new Error('2d context unavailable')
+          ctx.drawImage(image, 0, 0)
+          const data = ctx.getImageData(0, 0, canvas.width, canvas.height)
+          if (data.width !== meta.width || data.height !== meta.height) {
+            console.warn(
+              `Catan sprite /catan/${meta.file} is ${data.width}x${data.height}, expected ${meta.width}x${meta.height}; using procedural art`,
+            )
+          } else {
+            loaded[name] = { width: data.width, height: data.height, data: new Uint8ClampedArray(data.data) }
+          }
+        } catch {
+          // fall back to procedural art for this sprite
+        }
+        pending -= 1
+        if (pending === 0 && !cancelled) setSprites({ ...loaded })
+      }
+      image.onerror = () => {
+        if (cancelled) return
+        pending -= 1
+        if (pending === 0 && !cancelled) setSprites({ ...loaded })
+      }
+      image.src = `/catan/${meta.file}`
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
     const canvas = mainCanvasRef.current
     if (!canvas) return
     if (drawKeyRef.current === drawKey) return
     drawKeyRef.current = drawKey
     const buffer = createBuffer(BOARD_WIDTH, BOARD_HEIGHT)
-    drawBoard(buffer, state)
+    drawBoard(buffer, state, sprites)
     drawTargets(buffer, { vertices: targets.vertices, edges: targets.edges, hexes: targets.hexes })
     if (lastPlaced && blinkOn) drawLastPlaced(buffer, state, lastPlaced)
     const ctx = canvas.getContext('2d')
@@ -124,7 +191,7 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
     const image = ctx.createImageData(BOARD_WIDTH, BOARD_HEIGHT)
     image.data.set(buffer.data)
     ctx.putImageData(image, 0, 0)
-  }, [drawKey, state, targets, lastPlaced, blinkOn])
+  }, [drawKey, state, targets, lastPlaced, blinkOn, sprites])
 
   useEffect(() => {
     if (!lastPlaced) {
@@ -144,11 +211,11 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
     if (!ctx) return
     const buffer = createBuffer(BOARD_WIDTH, BOARD_HEIGHT)
     clearBuffer(buffer)
-    if (ghost) drawGhost(buffer, ghost)
+    if (ghost) drawGhost(buffer, ghost, sprites)
     const image = ctx.createImageData(BOARD_WIDTH, BOARD_HEIGHT)
     image.data.set(buffer.data)
     ctx.putImageData(image, 0, 0)
-  }, [ghost])
+  }, [ghost, sprites])
 
   const describeHex = (hex: number): string => {
     const tile = state.tiles[hex]
@@ -185,17 +252,26 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
     const ghostColor = state.players[state.current].color
     const targetLabel = (place: string) => fillTemplate(labels.targets[kind] ?? '', { place })
 
-    const pushMarker = (key: string, x: number, y: number, label: string, piece: GhostPiece, activate: () => void) => {
+    const pushMarker = (
+      key: string,
+      x: number,
+      y: number,
+      label: string,
+      piece: GhostPiece,
+      activate: () => void,
+      note?: string | null,
+    ) => {
+      const fullLabel = note ? `${label} ${note}` : label
       markers.push(
         <button
           key={key}
           type="button"
           className="catan-target"
-          aria-label={label}
+          aria-label={fullLabel}
           onClick={activate}
           onMouseEnter={() => {
             setGhost(piece)
-            setLiveLabel(label)
+            setLiveLabel(fullLabel)
           }}
           onMouseLeave={() => {
             setGhost(null)
@@ -203,7 +279,7 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
           }}
           onFocus={() => {
             setGhost(piece)
-            setLiveLabel(label)
+            setLiveLabel(fullLabel)
           }}
           onBlur={() => {
             setGhost(null)
@@ -225,6 +301,11 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
             justifyContent: 'center',
           }}
         >
+          {note ? (
+            <span aria-hidden className="catan-vertex-note">
+              {note}
+            </span>
+          ) : null}
           <span
             aria-hidden
             className="catan-marker-ring"
@@ -276,6 +357,7 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
           targetLabel(describeVertexPlace(vertex)),
           { kind: kind === 'city' ? 'city' : 'settlement', vertex, color: ghostColor },
           () => onVertex(vertex),
+          describeVertex?.(vertex),
         )
       }
     }

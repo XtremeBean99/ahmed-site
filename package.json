@@ -9,6 +9,8 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test:catan": "tsx --test \"src/lib/games/catan/**/*.test.ts\" \"src/components/catan/**/*.test.ts\"",
+    "catan-sprites:export": "tsx scripts/catan-sprites.ts export",
+    "catan-sprites": "tsx scripts/catan-sprites.ts validate",
     "lighting": "node scripts/generate-lighting.mjs"
   },
   "dependencies": {

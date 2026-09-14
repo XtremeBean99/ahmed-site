@@ -807,7 +807,7 @@ function firstNCards(hand: ResourceCounts, count: number): ResourceCounts {
   return out
 }
 
-function fallbackAction(state: GameState, bot: PlayerId): Action {
+export function fallbackAction(state: GameState, bot: PlayerId): Action {
   switch (state.phase.kind) {
     case 'setup': {
       if (state.phase.step === 'settlement') {

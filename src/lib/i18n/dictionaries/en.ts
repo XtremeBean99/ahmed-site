@@ -540,6 +540,14 @@ export const en = {
     newCard: 'new',
     diceLabel: 'Dice',
     cancelHint: 'Escape or click the button again to cancel',
+    skip: 'Skip to my turn',
+    speed: {
+      label: 'Bot speed',
+      instant: 'Instant',
+      fast: 'Fast',
+      normal: 'Normal',
+      slow: 'Slow',
+    },
     status: {
       setupSettlement: '{player}: place a starting settlement',
       setupRoad: '{player}: place a starting road',
@@ -551,6 +559,7 @@ export const en = {
       discard: '{player}: discard {count} cards',
       gameOver: '{player} wins!',
       gameOverYou: 'You win!',
+      botStalled: 'The bots stalled and the game cannot continue. Start a new game.',
     },
     board: {
       board: 'Catan board',
@@ -597,12 +606,30 @@ export const en = {
       buyDevCardAria: 'Buy development card',
       trade: 'Trade',
       endTurn: 'End turn',
+      needResources: 'Need {resources}',
+      noSpot: 'No legal spot',
+      noPieces: 'No pieces left',
+      deckEmpty: 'Deck is empty',
+      rollFirst: 'Roll first',
     },
     cost: {
       road: 'Costs 1 brick and 1 lumber',
       settlement: 'Costs 1 brick, 1 lumber, 1 wool and 1 grain',
       city: 'Costs 2 grain and 3 ore',
       devCard: 'Costs 1 wool, 1 grain and 1 ore',
+    },
+    vertexInfo: {
+      pips: '{pips} pips: {hexes}',
+      harbourAny: '3:1 harbour',
+      harbourResource: '2:1 {resource} harbour',
+      robberSuffix: '(robber)',
+    },
+    dicePanel: {
+      title: 'Dice',
+      lastRolls: 'last {n} rolls',
+      rolled: 'Rolled',
+      expected: 'Expected',
+      total: 'Total',
     },
     newGameDialog: {
       title: 'New game',

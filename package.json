@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "test:catan": "tsx --test \"src/lib/games/catan/**/*.test.ts\" \"src/components/catan/**/*.test.ts\"",
     "lighting": "node scripts/generate-lighting.mjs"
   },
   "dependencies": {

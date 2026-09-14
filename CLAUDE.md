@@ -51,7 +51,8 @@ The design uses zinc-950 (`#09090b`) background, white text, zinc-800 borders. N
 No gradients except the subtle hero vignette. If you add new UI, match this palette exactly.
 References: Vercel, Linear, Stripe aesthetic.
 **Exception:** `/` (the room) uses a warm brown/mauve pixel-art palette. This exemption is
-scoped to `/` only. Do NOT add colour to any `(site)` page.
+scoped to `/` and `/catan` (the pixel Catan game launched from the room's shelf). Do NOT add
+colour to any `(site)` page.
 
 ### 2. All user input is hostile
 Two API routes exist. `src/app/api/weather/route.ts` is read-only (Open-Meteo, fixed Canberra,
@@ -81,7 +82,8 @@ shelf VHS (which zooms to the desk via `initialApp`) and from the desktop Movie 
 Room preferences live in `localStorage`, client-side only:
 `room-save-v1` = `{ audio, lampOn, visitCount, volume, clock24h, sideTableOpen, sfx, sfxVolume, calmMode }`;
 plus `room-paint-v1` (Paint canvas), `room-discoveries-v1` (discoveries set) and
-`room-reader-v1` (`{ size, pages: { <bookId>: pageIndex } }`, the e-reader's bookmarks). The **only**
+`room-reader-v1` (`{ size, pages: { <bookId>: pageIndex } }`, the e-reader's bookmarks), and
+`catan-save-v1` (the in-progress Catan `GameState`, validated on load). The **only**
 server-side store is the guestbook (Spec F, v17): an Upstash Redis sorted set `guestbook:entries`
 (newest 500, scored by timestamp) behind `src/services/guestbook.ts`, storing **name + message +
 timestamp only** — no email, no persisted IP (rate-limit keys expire after one hour). Any further
@@ -461,6 +463,28 @@ feature is the ninja leaderboard.
 
 To add a game: card on the hub, route + shell under `(site)/games/<slug>/`, logic in
 `src/lib/games/`, URL in `sitemap.ts`, strings in both dictionaries.
+
+### Pixel Catan (`/catan`)
+Offline singleplayer Catan (full base-game rules) against 2 or 3 heuristic bots, opened in a new tab
+by the room's shelf Catan box. Not under `/games` (that path 301s to `/`). Design and task log: `todo.md`
+(CAT0-CAT9).
+- **Engine** `src/lib/games/catan/`: pure, JSON-serialisable `GameState`; `engine.ts` exposes
+  `createGame`, `validateAction`, `applyAction` (clones, never mutates), `playersToAct`. Rules live in
+  `setup.ts`, `turn.ts`, `robber.ts`, `devcards.ts`, `longest-road.ts` against the `Handler` contract in
+  `types.ts`; board topology in `geometry.ts` (19 hexes, 54 vertices, 72 edges). All randomness goes
+  through the seeded `rng.ts` stored in state, so a seed plus actions replays exactly.
+- **Rule decisions**: bank shortage gives the sole affected player the remainder; a ring road cut once by
+  an opposing settlement still counts its full length; bots never initiate trades.
+- **Bots** `ai.ts`: `chooseBotAction` (always legal, deterministic, public information only) and
+  `botAcceptsTrade` for the human's offers.
+- **UI** `src/components/catan/`: `BoardCanvas` rasterises the board per pixel into a 280x265 canvas
+  (`pixel-art.ts`, `board-layout.ts`) scaled by integer factors, with real buttons over legal targets;
+  `CatanGame` paces bots (~450 ms) and saves after every action (`save.ts`). Copy in `en.ts` `catan`.
+  Mobile shows `MobileGate`.
+- **Tests**: `npm run test:catan` (unit, audit regressions, 300-game random fuzz with conservation
+  invariants, bots-only simulation). Board layout tests: `npx tsx --test src/components/catan/board-layout.test.ts`.
+- **Local testing**: `next dev` renders blank because the CSP forbids `eval`; test with
+  `npm run build && npx next start`.
 
 ---
 

@@ -15,9 +15,10 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      // unsafe-inline required by Next.js runtime; unsafe-eval removed (not needed in production)
+      // unsafe-inline required by Next.js runtime; unsafe-eval only in `next dev`
+      // (webpack dev runtime evals modules; production doesn't need it)
       // va.vercel-scripts.com serves both Speed Insights and Web Analytics
-      "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''} https://va.vercel-scripts.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob:",

@@ -557,10 +557,13 @@ section). Do not apply the pixel font to `(site)` pages.
 
 ## Security
 
-Headers in `next.config.ts` `headers()` for all routes: HSTS, **X-Frame-Options SAMEORIGIN**,
+Headers in `next.config.ts` `headers()` for all routes: HSTS, **X-Frame-Options DENY**,
 X-Content-Type-Options, Referrer-Policy, Permissions-Policy, CSP with
-**`frame-ancestors 'self'`** (see Critical Constraint 6 — required by in-monitor browsing),
+**`frame-ancestors 'none'`** (see Critical Constraint 6),
 `X-Robots-Tag: noai, noimageai`. CSP retains `unsafe-inline` for scripts (Next.js trade-off).
+`unsafe-eval` is added **only when `NODE_ENV === 'development'`**: the webpack dev runtime
+evals modules, so without it `next dev` pages stay blank with a CSP EvalError. Production
+(`next build`) never gets `unsafe-eval`; don't drop the NODE_ENV guard.
 `vercel.json` sets COOP/COEP + game CSP for `/games/ninja/*` static files.
 
 AI crawler blocking: `robots.ts` disallows GPTBot, ClaudeBot, Google-Extended, PerplexityBot,

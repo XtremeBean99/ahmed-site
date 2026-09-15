@@ -800,7 +800,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
             frames={catanObj.frames}
             frameDuration={SPRITE_FRAME_MS.catan}
             mode="play-once-hold"
-            onClick={() => { discover('catan', t.room.discoveryLabels.catan) }}
+            onClick={() => { discover('catan', t.room.discoveryLabels.catan); window.open('/catan', '_blank', 'noopener,noreferrer') }}
           />
 
           {/* Shelf books: one sprite, a hotspot per spine, each opens the reader */}

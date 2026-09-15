@@ -52,7 +52,7 @@ export function AnimatedSprite({
   // Touch devices: track whether a tap-triggered animation is running
   const touchActiveRef = useRef(false)
   const touchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const [isTouchDevice] = useState(() => typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches)
+  const [isTouchDevice] = useState(() => typeof window !== 'undefined' && !matchMedia('(any-pointer: fine)').matches)
 
   // All sprites (poster, saitama, bonsai, coffee) animate ON HOVER/TAP ONLY — never
   // autoplay on mount. Hover starts the sequence per mode; leaving stops it.

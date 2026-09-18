@@ -7,10 +7,12 @@ interface DeskIconProps {
   /** Site links render an <a>; apps omit href and render a <button> */
   href?: string
   icon: ReactNode
+  /** Rendered icon size in px (square). Defaults to 32. */
+  iconSize?: number
   onClick: (e: React.MouseEvent) => void
 }
 
-export function DeskIcon({ label, tooltip, href, icon, onClick }: DeskIconProps) {
+export function DeskIcon({ label, tooltip, href, icon, iconSize = 32, onClick }: DeskIconProps) {
   const tipId = useId()
   const [showTooltip, setShowTooltip] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -52,7 +54,7 @@ export function DeskIcon({ label, tooltip, href, icon, onClick }: DeskIconProps)
         </span>
       )}
       <div className="w-10 h-10 flex items-center justify-center group-hover:-translate-y-px transition-transform duration-100">
-        <svg width="32" height="32" viewBox="0 0 16 16" fill="none" shapeRendering="crispEdges" aria-hidden="true">
+        <svg width={iconSize} height={iconSize} viewBox="0 0 16 16" fill="none" shapeRendering="crispEdges" aria-hidden="true">
           {icon}
         </svg>
       </div>

@@ -362,14 +362,12 @@ export function DeskView(props: DeskViewProps) {
                 transition={{ duration: reduce ? 0 : 0.3 }}>
                 <DeskDesktop
                   time={time}
-                  backLabel={backLabel}
                   screenLabel={screenLabel}
                   shortcuts={shortcuts}
                   screensaver={screensaver}
                   reduce={reduce}
                   screenW={SCREEN_W}
                   screenH={SCREEN_H}
-                  onBack={(e) => { e.stopPropagation(); onBack() }}
                   onShortcutClick={handleShortcutClick}
                 />
               </motion.div>
@@ -507,6 +505,29 @@ export function DeskView(props: DeskViewProps) {
           </AnimatePresence>
         </div>
       </motion.div>
+
+      {/* "To Room" CTA: sits outside the scaled stage so it's pinned to the
+          site's corner regardless of stage scale, not the in-monitor screen. */}
+      {screenMode === 'desktop' && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onBack() }}
+          aria-label={backLabel}
+          className="absolute top-4 left-4 z-40 flex items-center gap-2 px-4 py-2 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#3a2820] transition-transform duration-100 active:translate-y-[2px]"
+          style={{
+            fontFamily: 'var(--font-pixel), "Courier New", monospace',
+            fontSize: '15px',
+            color: '#3a2820',
+            textShadow: '1px 1px 0 rgba(255,255,255,0.4)',
+            background: 'linear-gradient(180deg, #fffaf0 0%, #f0e0c0 45%, #d8c098 100%)',
+            border: '4px solid #3a2820',
+            clipPath:
+              'polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px)',
+            boxShadow: 'inset 2px 2px 0 rgba(255,255,255,0.7), inset -3px -3px 0 rgba(0,0,0,0.25)',
+          }}
+        >
+          <span aria-hidden>&larr;</span> To {backLabel}
+        </button>
+      )}
     </div>
   )
 }

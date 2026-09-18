@@ -1,6 +1,6 @@
 // src/components/room/DeskDesktop.tsx
 import { DeskIcon } from './DeskIcon'
-import { ScreenStrip, StripButton } from './ScreenStrip'
+import { ScreenStrip } from './ScreenStrip'
 
 export interface DesktopShortcut {
   id: string
@@ -37,9 +37,25 @@ export function DeskDesktop({
 }: DeskDesktopProps) {
   return (
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#faf8f5' }}>
-      <ScreenStrip time={time}>
-        <StripButton onClick={onBack} ariaLabel={backLabel}>← {backLabel}</StripButton>
-      </ScreenStrip>
+      <ScreenStrip time={time} />
+      <button
+        onClick={onBack}
+        aria-label={backLabel}
+        className="absolute top-3 right-3 z-10 flex items-center gap-2 px-4 py-2 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0a2e33] transition-transform duration-100 active:translate-y-[2px]"
+        style={{
+          fontFamily: 'var(--font-pixel), "Courier New", monospace',
+          fontSize: '15px',
+          color: '#08343a',
+          textShadow: '1px 1px 0 rgba(255,255,255,0.35)',
+          background: 'linear-gradient(180deg, #8ff2f6 0%, #2fc3d2 45%, #0f95a2 100%)',
+          border: '4px solid #0a2e33',
+          clipPath:
+            'polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px)',
+          boxShadow: 'inset 2px 2px 0 rgba(255,255,255,0.55), inset -3px -3px 0 rgba(0,0,0,0.3)',
+        }}
+      >
+        <span aria-hidden>&larr;</span> To {backLabel}
+      </button>
       <nav aria-label={screenLabel} className="flex-1 flex items-center justify-center">
         <div className="grid grid-cols-3 gap-x-8 gap-y-5 px-4">
           {shortcuts.map((s) => (

@@ -473,7 +473,6 @@ export const en = {
     windowLabel: 'Window, click to change the time of day',
     posterClickHint: 'Nice poster!',
     clockTip: "It's {time}",
-    enterSite: 'Enter website',
     hint: 'Click around to explore',
     skip: 'Skip to the website',
     metaTitle: "Ahmed's website",

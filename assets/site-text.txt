@@ -1,6 +1,10 @@
 Hi, I'm Ahmed Hussain.
 
-Currently, I am studying a flexible double degree at the Australian National University in Law and Computing. 
-If you want to know what I am interested in, take a look around the room (work in progress). 
+Welcome to my website. I've just finished building a website for my friend Savas for his new game which you can visit at www.sypcreative.org 
+
+Almost everything on this site is interactive! And there's a whole lot of hidden things so have a look around. 
+I am in the process of coding the whole game of catan on this site too, although the graphics kind of suck right now and I do not have the copyright to it.
+
+Currently, I am studying a flexible double degree at the Australian National University in Law and Computing. I'm open to projects and requests so hit me up!
 
 If you have any feedback or want to get in touch you can reach me at ahmedyhussain07@gmail.com

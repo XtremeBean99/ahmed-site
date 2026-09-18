@@ -97,7 +97,7 @@ export function DeskView(props: DeskViewProps) {
   const { playing, toggle } = useRoomAudio()
   const [showDesktop, setShowDesktop] = useState(false)
   const [time, setTime] = useState('')
-  const [screenMode, setScreenMode] = useState<ScreenMode>('desktop')
+  const [screenMode, setScreenMode] = useState<ScreenMode>('readme')
   const [mouseJitter, setMouseJitter] = useState(false)
   const [screensaver, setScreensaver] = useState(false)
   const [backPending, setBackPending] = useState(false)

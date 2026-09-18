@@ -166,34 +166,11 @@ export const ICON_PAINT = (
 )
 
 export const ICON_MINESWEEPER = (
-  <>
-    {/* Mine body */}
-    <rect x="5" y="5" width="6" height="6" fill="#3a3028" />
-    <rect x="6" y="4" width="4" height="8" fill="#3a3028" />
-    <rect x="4" y="6" width="8" height="4" fill="#3a3028" />
-    {/* Spikes */}
-    <rect x="7" y="1" width="2" height="2" fill="#5a4a3a" />
-    <rect x="7" y="13" width="2" height="2" fill="#5a4a3a" />
-    <rect x="1" y="7" width="2" height="2" fill="#5a4a3a" />
-    <rect x="13" y="7" width="2" height="2" fill="#5a4a3a" />
-    {/* Glint */}
-    <rect x="6" y="6" width="2" height="2" fill="#faf8f5" />
-  </>
+  <image href="/icons/minesweeper-logo.png" x="0" y="0" width="16" height="16" preserveAspectRatio="xMidYMid meet" />
 )
 
 export const ICON_LINKEDIN = (
-  <>
-    {/* Rounded-square badge (cross of two rects cuts the corners) */}
-    <rect x="4" y="2" width="8" height="12" fill="#0a66c2" />
-    <rect x="2" y="4" width="12" height="8" fill="#0a66c2" />
-    {/* "i" */}
-    <rect x="4.5" y="4.5" width="2" height="2" fill="#ffffff" />
-    <rect x="4.5" y="7.5" width="2" height="4.5" fill="#ffffff" />
-    {/* "n" */}
-    <rect x="8" y="7.5" width="1.8" height="4.5" fill="#ffffff" />
-    <rect x="8" y="7.5" width="4" height="1.8" fill="#ffffff" />
-    <rect x="10.2" y="7.5" width="1.8" height="4.5" fill="#ffffff" />
-  </>
+  <image href="/icons/linkedin.png" x="0" y="0" width="16" height="16" preserveAspectRatio="xMidYMid meet" />
 )
 
 export const ICON_GITHUB = (
@@ -232,7 +209,7 @@ export const ICON_README = (
 )
 
 export const ICON_MUSIC = (
-  <image href="/room/note-1.png" x="0" y="0" width="16" height="16" preserveAspectRatio="xMidYMid meet" />
+  <image href="/icons/music-logo.png" x="0" y="0" width="16" height="16" preserveAspectRatio="xMidYMid meet" />
 )
 
 export const ICON_MOVIE = (

@@ -75,7 +75,6 @@ interface RoomProps {
       sideTableDrawerLabel: string
       windowLabel: string
       posterClickHint: string
-      enterSite: string
       hint: string
       skip: string
       audio: {
@@ -137,7 +136,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const t = dict
   const reduce = useReducedMotion()
   const { scale, mobile } = useStageScale()
-  const [view, setView] = useState<View>('room')
+  const [view, setView] = useState<View>('desk')
   const [lampOn, setLampOn] = useState(true)
   const [lampFlicker, setLampFlicker] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -590,7 +589,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
     <RoomAudioProvider>
     <div className="relative w-full h-screen overflow-hidden bg-[#1a1210] room-cursor">
       <RoomHud
-        enterLabel={t.room.enterSite}
         hintLabel={t.room.hint}
         skipLabel={t.room.skip}
       />

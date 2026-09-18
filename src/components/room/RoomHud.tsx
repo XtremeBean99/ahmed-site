@@ -4,12 +4,11 @@ import Link from 'next/link'
 import { useState, useCallback } from 'react'
 
 interface RoomHudProps {
-  enterLabel: string
   hintLabel: string
   skipLabel: string
 }
 
-export function RoomHud({ enterLabel, hintLabel, skipLabel }: RoomHudProps) {
+export function RoomHud({ hintLabel, skipLabel }: RoomHudProps) {
   const [showHint, setShowHint] = useState(true)
 
   const dismissHint = useCallback(() => {
@@ -41,13 +40,6 @@ export function RoomHud({ enterLabel, hintLabel, skipLabel }: RoomHudProps) {
             {hintLabel}
           </span>
         )}
-        <Link
-          href="/home"
-          className="text-[#c8b89a] hover:text-[#e0d0b0] transition-colors"
-          onClick={dismissHint}
-        >
-          {enterLabel} →
-        </Link>
       </div>
     </>
   )

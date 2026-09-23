@@ -12,7 +12,8 @@
     "test:snake": "tsx --test \"src/lib/games/snake-engine.test.ts\"",
     "catan-sprites:export": "tsx scripts/catan-sprites.ts export",
     "catan-sprites": "tsx scripts/catan-sprites.ts validate",
-    "lighting": "node scripts/generate-lighting.mjs"
+    "lighting": "node scripts/generate-lighting.mjs",
+    "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

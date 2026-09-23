@@ -13,7 +13,6 @@ import { DeskMusic } from './DeskMusic'
 import { DeskLegal, type LegalLabels } from './DeskLegal'
 import { DeskSettings, type SettingsLabels } from './DeskSettings'
 import { DeskTerminal } from './DeskTerminal'
-import { DeskLinks } from './DeskLinks'
 import { DeskGuestbook, type GuestbookLabels } from './DeskGuestbook'
 import { DeskMovie, type MovieLabels } from './DeskMovie'
 import { MusicNotes } from './MusicNotes'
@@ -33,7 +32,7 @@ const DESK_SPEAKER_HOLES_RIGHT = [
 const MOUSE_X_MIN = 975; const MOUSE_X_MAX = 1140
 const MOUSE_Y_MIN = 572; const MOUSE_Y_MAX = 635
 const MOUSE_REST_X = 1007; const MOUSE_REST_Y = 608
-type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'snake' | 'readme' | 'music' | 'legal' | 'links' | 'guestbook' | 'settings' | 'terminal' | 'movie'
+type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'snake' | 'readme' | 'music' | 'legal' | 'guestbook' | 'settings' | 'terminal' | 'movie'
 
 interface DeskViewProps {
   shortcuts: DesktopShortcut[]
@@ -74,7 +73,6 @@ interface DeskViewProps {
   /** Labels for the Terminal app */
   terminalLabels: { title: string }
   /** Labels for the Links app */
-  linksLabels: { title: string; close: string }
   /** Labels for the Guestbook app */
   guestbookLabels: GuestbookLabels
   /** Labels for the VHS player */
@@ -93,7 +91,7 @@ interface DeskViewProps {
   onBack: () => void
 }
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, linksLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
+  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
   const { scale } = useStageScale()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
@@ -439,18 +437,6 @@ export function DeskView(props: DeskViewProps) {
                   terms={legalTerms}
                   effectiveDate={legalEffectiveDate}
                   labels={legalLabels}
-                  desktopLabel={desktopLabel}
-                  onDesktop={goDesktop}
-                />
-              </motion.div>
-            )}
-
-            {screenMode === 'links' && (
-              <motion.div key="links" className="absolute inset-0"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskLinks
-                  labels={linksLabels}
                   desktopLabel={desktopLabel}
                   onDesktop={goDesktop}
                 />

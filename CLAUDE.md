@@ -169,8 +169,10 @@ inside its own monitor iframe (recursion guard removed — `/` is accessible fro
 ### Desk view (`DeskView.tsx`)
 Close-up art (`desk-closeup.png` and `desk-closeup-lamp-off.png`, crossfaded+flickered via
 `lampOn`/`lampFlicker` props passed from Room) with a clickable lamp toggle at (8,88 160×480)
-Screen modes: `desktop | paint | minesweeper | snake | readme | music | legal`. Desktop icons:
-LinkedIn (external), GitHub (external), Music, Paint, Minesweeper, Snake, README, Legal.
+Screen modes: `desktop | paint | minesweeper | snake | readme | music | legal | guestbook |
+settings | terminal | movie`. Desktop icons: LinkedIn (external), GitHub (external), Settings,
+Music, Paint, Minesweeper, Snake, README, Guestbook, Movie, Legal. (Links/webring was removed
+in v19; `terminal` stays konami-only and has no icon.)
 `paint` (`DeskPaint.tsx`: 107×50 pixel canvas, 10-colour palette, pencil/eraser/fill tools,
 persistent to `room-paint-v1`, PNG download), `minesweeper` (`DeskMinesweeper.tsx`: 9×9/10
 mines, pure engine in `src/lib/games/minesweeper-engine.ts`, first-click safety,
@@ -394,6 +396,20 @@ sky-restaurant ⚠ commercial. Covers: sky-restaurant.jpg, summer-days.jpg.
   enter on the tick it is vacated; `tickMs = max(70, 140 - score*4)` so the interval is rebuilt only
   on a score change; filling the board wins rather than hanging in `placeFood`. Tests:
   `npm run test:snake` (9 cases, `node:test` via tsx). Design log: `todo.md` (SNK1–SNK4).
+- **v19** `23 September 2026`: **Site icons finally work.** `public/favicon.svg` had been tracked
+  since June but referenced nowhere, and Next's App Router only auto-detects icons in `src/app/`,
+  never `public/` — so the site served no tab icon at all. Now `src/app/icon.png` (256, cropped to
+  the red X, because the full lockup is illegible at 16–32 px) and `src/app/apple-icon.png` (180,
+  full logo), both generated from `assets/site-logo.jpg` by `scripts/generate-icons.mjs`
+  (`npm run icons`, needs `sharp`). Next emits the `<link>` tags by file convention, so
+  `layout.tsx` needs no `icons` metadata. The logo source moved from the repo root to `assets/`
+  (repo-internal source art, matching `assets/pixel-art/`); `public/site-logo.jpg` is a separate,
+  lower-res copy that predates this and is untouched. `public/favicon.svg` is the retired "AH"
+  monogram from the monochrome site and is now genuinely dead: delete it when convenient.
+  **Links/webring app removed** end to end at the owner's request (`DeskLinks.tsx`,
+  `src/lib/room/links.ts`, the `links` screen mode, shortcut, copy and the `links` discovery), so
+  no dead code is left and the discoveries badge stays completable at **22**. Minesweeper's desk
+  icon went 32 → 38 px (+20%).
 
 
 

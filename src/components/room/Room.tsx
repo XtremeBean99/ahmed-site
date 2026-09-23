@@ -122,9 +122,6 @@ interface RoomProps {
       readmeApp: { title: string; close: string }
       legalApp: { title: string; privacyTab: string; termsTab: string; close: string }
       readmePopup: string
-      links: string
-      linksTip: string
-      linksApp: { title: string; close: string }
       guestbook: string
       guestbookTip: string
       guestbookApp: { title: string; close: string; namePh: string; messagePh: string; sign: string; empty: string; posting: string; error: string }
@@ -529,10 +526,9 @@ export function Room({ dict, readmeContent }: RoomProps) {
     { id: 'settings', kind: 'app', target: 'settings', label: t.desk.settings, tooltip: t.desk.settingsTip, icon: ICON_SETTINGS },
     { id: 'music', kind: 'app', target: 'music', label: t.desk.music, tooltip: t.desk.musicTip, icon: ICON_MUSIC, iconSize: 48 },
     { id: 'paint', kind: 'app', target: 'paint', label: t.desk.paint, tooltip: t.desk.paintTip, icon: ICON_PAINT },
-    { id: 'minesweeper', kind: 'app', target: 'minesweeper', label: t.desk.minesweeper, tooltip: t.desk.minesweeperTip, icon: ICON_MINESWEEPER },
+    { id: 'minesweeper', kind: 'app', target: 'minesweeper', label: t.desk.minesweeper, tooltip: t.desk.minesweeperTip, icon: ICON_MINESWEEPER, iconSize: 38 },
     { id: 'snake', kind: 'app', target: 'snake', label: t.desk.snake, tooltip: t.desk.snakeTip, icon: ICON_SNAKE },
     { id: 'readme', kind: 'app', target: 'readme', label: t.desk.readme, tooltip: t.desk.readmeTip, icon: ICON_README },
-    { id: 'links', kind: 'app', target: 'links', label: t.desk.links, tooltip: t.desk.linksTip, icon: ICON_README },
     { id: 'guestbook', kind: 'app', target: 'guestbook', label: t.desk.guestbook, tooltip: t.desk.guestbookTip, icon: ICON_README },
     { id: 'movie', kind: 'app', target: 'movie', label: t.desk.movie, tooltip: t.desk.movieTip, icon: ICON_MOVIE },
     { id: 'legal', kind: 'app', target: 'legal', label: t.desk.legal, tooltip: t.desk.legalTip, icon: ICON_LEGAL },
@@ -579,7 +575,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
           is24h={clock24h}
           onClock={handleClockToggle}
           terminalLabels={{ title: "Terminal" }}
-          linksLabels={t.desk.linksApp}
           guestbookLabels={t.desk.guestbookApp}
           movieLabels={t.desk.movieApp}
           initialApp={pendingApp}

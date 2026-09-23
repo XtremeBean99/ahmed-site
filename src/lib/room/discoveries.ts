@@ -19,7 +19,6 @@ export const DISCOVERY_IDS = [
   'settings',
   'terminal',
   'screensaver',
-  'links',
   'guestbook',
   'night',
   'books',

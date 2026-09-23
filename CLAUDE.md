@@ -175,7 +175,9 @@ LinkedIn (external), GitHub (external), Music, Paint, Minesweeper, Snake, README
 persistent to `room-paint-v1`, PNG download), `minesweeper` (`DeskMinesweeper.tsx`: 9×9/10
 mines, pure engine in `src/lib/games/minesweeper-engine.ts`, first-click safety,
 right-click/long-press/F-key flagging, roving-tabindex keyboard play, best-time
-localStorage), `snake` (`DeskSnake.tsx`: 24×14 board at 16 px cells, pure engine in
+localStorage), `snake` (`DeskSnake.tsx`: square 14×14 board at 16 px cells — the board must keep
+`box-sizing: content-box`, since the global border-box rule in `globals.css` would shrink its
+padding box by the border and knock the last row and column out of step with the grid; pure engine in
 `src/lib/games/snake-engine.ts`, walls kill, arrows/WASD read from the **window** so a desk
 click cannot break the controls, Space pauses, Enter restarts, auto-pause on tab hide,
 best score in games storage), `readme` (`DeskReadme.tsx`: renders `site-text.txt`), `music`

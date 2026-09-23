@@ -6,7 +6,7 @@ import { createGame, step, turn, tickMs, type Dir } from '@/lib/games/snake-engi
 import { getBest, setBestIfHigher, BEST_KEYS } from '@/lib/games/storage'
 import { ScreenStrip, StripButton } from './ScreenStrip'
 
-const COLS = 24
+const COLS = 14
 const ROWS = 14
 const CELL = 16
 const BOARD = '#e8e0d8'
@@ -14,6 +14,9 @@ const GRID = '#dcd2c4'
 const BODY = '#5a7a3a'
 const HEAD = '#3a5a2a'
 const FOOD = '#8a3a2a'
+const SHINE = '#b0553f'
+const STEM = '#5a4a3a'
+const LEAF = '#5a7a3a'
 
 const KEYS: Record<string, Dir> = {
   arrowup: 'up', w: 'up',
@@ -129,16 +132,34 @@ export function DeskSnake({ time, backLabel, desktopLabel, labels, onBack, onDes
           style={{
             width: COLS * CELL,
             height: ROWS * CELL,
+            // globals.css sets box-sizing: border-box globally, which would shrink
+            // the padding box by the border and throw the last row and column out
+            // of step with the grid. Cells are positioned inside it, so opt out.
+            boxSizing: 'content-box',
             backgroundColor: BOARD,
             border: '2px solid #c8b8a8',
             backgroundImage: `repeating-linear-gradient(90deg, ${GRID} 0 1px, transparent 1px ${CELL}px), repeating-linear-gradient(180deg, ${GRID} 0 1px, transparent 1px ${CELL}px)`,
           }}
         >
           {game.food && (
-            <span
+            <svg
               className="absolute"
-              style={{ left: game.food.x * CELL + 3, top: game.food.y * CELL + 3, width: CELL - 6, height: CELL - 6, backgroundColor: FOOD }}
-            />
+              style={{ left: game.food.x * CELL + 1, top: game.food.y * CELL + 1 }}
+              width={CELL - 2}
+              height={CELL - 2}
+              viewBox="0 0 7 7"
+              shapeRendering="crispEdges"
+              aria-hidden
+            >
+              <rect x="3" y="0" width="1" height="1" fill={STEM} />
+              <rect x="4" y="0" width="2" height="1" fill={LEAF} />
+              <rect x="2" y="1" width="3" height="1" fill={FOOD} />
+              <rect x="1" y="2" width="5" height="1" fill={FOOD} />
+              <rect x="0" y="3" width="7" height="2" fill={FOOD} />
+              <rect x="1" y="5" width="5" height="1" fill={FOOD} />
+              <rect x="2" y="6" width="3" height="1" fill={FOOD} />
+              <rect x="2" y="2" width="1" height="1" fill={SHINE} />
+            </svg>
           )}
           {game.snake.map((p, i) => (
             <span

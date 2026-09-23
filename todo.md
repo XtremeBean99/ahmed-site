@@ -154,12 +154,17 @@ existing Minesweeper pattern rather than a new route, so it lands as one more ap
 | ID | Item | Status |
 |---|---|---|
 | SNK1 | Pure engine `src/lib/games/snake-engine.ts`: `createGame`/`turn`/`step`/`placeFood`/`tickMs`, injectable rng, no DOM | Done |
-| SNK2 | `DeskSnake.tsx`: 24x14 board at 16 px cells, window-level key handling, pause/overlay, best score | Done |
+| SNK2 | `DeskSnake.tsx`: square 14x14 board at 16 px cells, window-level key handling, pause/overlay, best score | Done |
+| SNK5 | Owner feedback 23 Sep: board squared off (was 24x14), food redrawn as a pixel apple, and the bottom-row misalignment fixed (`box-sizing: content-box`, see below) | Done |
 | SNK3 | Desk wiring: `snake` screen mode, `ICON_SNAKE`, shortcut entry, `snake` discovery, `desk.snakeApp` copy | Done |
 | SNK4 | `npm run test:snake` (9 node:test cases) + `type-check`, `lint`, `build` clean | Done |
 
 ### Rule decisions
-- **Walls kill.** No wrap-around; the classic Nokia reading, and it keeps the board honest at 24x14.
+- **Walls kill.** No wrap-around; the classic Nokia reading, and it keeps the board honest at 14x14.
+- **The board opts out of border-box.** `globals.css` sets `box-sizing: border-box` for everything, which
+  shrinks the board's padding box by its 2 px border while the absolutely positioned cells and the grid
+  gradient still assume the full size: the bottom row and right column drift by 3 px. `content-box` on
+  the board is the fix. Do not remove it, and re-check the alignment if the border width ever changes.
 - **Turn queueing is single-slot and validated against the *applied* heading**, not the queued one, so
   two presses inside one tick (right, then up, then left) can never fold the snake back into itself.
 - **The tail cell is legal to enter** on the tick it is vacated, unless the snake is growing that tick.

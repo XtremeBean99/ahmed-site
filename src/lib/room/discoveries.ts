@@ -13,6 +13,7 @@ export const DISCOVERY_IDS = [
   'ipod',
   'paint',
   'minesweeper',
+  'snake',
   'readme',
   'legal',
   'settings',

@@ -27,6 +27,7 @@ import { AnimatedSprite } from './AnimatedSprite'
 import { ShelfBooks } from './ShelfBooks'
 import { RoomReader, type ReaderLabels } from './RoomReader'
 import type { MovieLabels } from './DeskMovie'
+import type { SnakeLabels } from './DeskSnake'
 import { SHELF_BOOKS } from '@/lib/room/books'
 import { DeskView } from './DeskView'
 import { SideTableClock } from './SideTableClock'
@@ -42,6 +43,7 @@ import {
   ICON_GITHUB,
   ICON_PAINT,
   ICON_MINESWEEPER,
+  ICON_SNAKE,
   ICON_README,
   ICON_MUSIC,
   ICON_LEGAL,
@@ -106,12 +108,15 @@ interface RoomProps {
       settingsTip: string
       paint: string
       minesweeper: string
+      snake: string
       paintTip: string
       minesweeperTip: string
+      snakeTip: string
       music: string
       settingsApp: { title: string; sfx: string; sfxVolume: string; musicVolume: string; clock: string; clock12: string; clock24: string; on: string; off: string; close: string }
       paintApp: { pencil: string; eraser: string; fill: string; clear: string; download: string; color: string; canvas: string }
       mines: { board: string; cell: string; minesLeft: string; time: string; best: string; reset: string; won: string; lost: string }
+      snakeApp: SnakeLabels
       musicTip: string
       musicApp: { title: string; nowPlaying: string; select: string }
       readmeApp: { title: string; close: string }
@@ -525,6 +530,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
     { id: 'music', kind: 'app', target: 'music', label: t.desk.music, tooltip: t.desk.musicTip, icon: ICON_MUSIC, iconSize: 48 },
     { id: 'paint', kind: 'app', target: 'paint', label: t.desk.paint, tooltip: t.desk.paintTip, icon: ICON_PAINT },
     { id: 'minesweeper', kind: 'app', target: 'minesweeper', label: t.desk.minesweeper, tooltip: t.desk.minesweeperTip, icon: ICON_MINESWEEPER },
+    { id: 'snake', kind: 'app', target: 'snake', label: t.desk.snake, tooltip: t.desk.snakeTip, icon: ICON_SNAKE },
     { id: 'readme', kind: 'app', target: 'readme', label: t.desk.readme, tooltip: t.desk.readmeTip, icon: ICON_README },
     { id: 'links', kind: 'app', target: 'links', label: t.desk.links, tooltip: t.desk.linksTip, icon: ICON_README },
     { id: 'guestbook', kind: 'app', target: 'guestbook', label: t.desk.guestbook, tooltip: t.desk.guestbookTip, icon: ICON_README },
@@ -553,6 +559,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
           lampLabel={t.room.lampLabel}
           paintLabels={t.desk.paintApp}
           minesLabels={t.desk.mines}
+          snakeLabels={t.desk.snakeApp}
           musicLabels={t.desk.musicApp}
           legalLabels={t.desk.legalApp}
           legalPrivacy={t.legal.privacy}

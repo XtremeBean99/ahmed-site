@@ -7,6 +7,7 @@ import { useRoomAudio } from './RoomAudioProvider'
 import { DeskDesktop, type DesktopShortcut } from './DeskDesktop'
 import { DeskPaint, type PaintLabels } from './DeskPaint'
 import { DeskMinesweeper, type MinesLabels } from './DeskMinesweeper'
+import { DeskSnake, type SnakeLabels } from './DeskSnake'
 import { DeskReadme } from './DeskReadme'
 import { DeskMusic } from './DeskMusic'
 import { DeskLegal, type LegalLabels } from './DeskLegal'
@@ -32,7 +33,7 @@ const DESK_SPEAKER_HOLES_RIGHT = [
 const MOUSE_X_MIN = 975; const MOUSE_X_MAX = 1140
 const MOUSE_Y_MIN = 572; const MOUSE_Y_MAX = 635
 const MOUSE_REST_X = 1007; const MOUSE_REST_Y = 608
-type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'readme' | 'music' | 'legal' | 'links' | 'guestbook' | 'settings' | 'terminal' | 'movie'
+type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'snake' | 'readme' | 'music' | 'legal' | 'links' | 'guestbook' | 'settings' | 'terminal' | 'movie'
 
 interface DeskViewProps {
   shortcuts: DesktopShortcut[]
@@ -45,6 +46,7 @@ interface DeskViewProps {
   lampLabel: string
   paintLabels: PaintLabels
   minesLabels: MinesLabels
+  snakeLabels: SnakeLabels
   /** Labels for the readme popup */
   readmeLabels: { title: string; close: string }
   /** Labels for the music player */
@@ -91,7 +93,7 @@ interface DeskViewProps {
   onBack: () => void
 }
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, linksLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
+  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, linksLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
   const { scale } = useStageScale()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
@@ -388,6 +390,16 @@ export function DeskView(props: DeskViewProps) {
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskMinesweeper time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={minesLabels} onDesktop={goDesktop}
+                  onBack={(e) => { e.stopPropagation(); onBack() }} />
+              </motion.div>
+            )}
+
+            {screenMode === 'snake' && (
+              <motion.div key="snake" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskSnake time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                  labels={snakeLabels} onDesktop={goDesktop}
                   onBack={(e) => { e.stopPropagation(); onBack() }} />
               </motion.div>
             )}

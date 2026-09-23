@@ -143,3 +143,32 @@ Known limitation: reloading mid-tutorial returns to normal mode (the lesson rest
 - **CAT9** Independent rule audit against the official base-game rules; seeded fuzz games with
   resource/piece conservation invariants; `npm run type-check && npm run lint && npm run build`;
   full game played in the browser.
+
+---
+
+## APPROVED DESIGN — Snake (desk app)
+
+Requested by the owner 23 September 2026: "add the snake game… as a desktop icon/game". Built on the
+existing Minesweeper pattern rather than a new route, so it lands as one more app on the desk monitor.
+
+| ID | Item | Status |
+|---|---|---|
+| SNK1 | Pure engine `src/lib/games/snake-engine.ts`: `createGame`/`turn`/`step`/`placeFood`/`tickMs`, injectable rng, no DOM | Done |
+| SNK2 | `DeskSnake.tsx`: 24x14 board at 16 px cells, window-level key handling, pause/overlay, best score | Done |
+| SNK3 | Desk wiring: `snake` screen mode, `ICON_SNAKE`, shortcut entry, `snake` discovery, `desk.snakeApp` copy | Done |
+| SNK4 | `npm run test:snake` (9 node:test cases) + `type-check`, `lint`, `build` clean | Done |
+
+### Rule decisions
+- **Walls kill.** No wrap-around; the classic Nokia reading, and it keeps the board honest at 24x14.
+- **Turn queueing is single-slot and validated against the *applied* heading**, not the queued one, so
+  two presses inside one tick (right, then up, then left) can never fold the snake back into itself.
+- **The tail cell is legal to enter** on the tick it is vacated, unless the snake is growing that tick.
+- **Speed is derived from score**: `tickMs = max(70, 140 - score * 4)`, so the interval is rebuilt only
+  when the score changes, never on every render.
+- **Filling the board wins** rather than hanging in `placeFood` looking for a free cell that is gone.
+- **Auto-pause when the tab hides**, so a backgrounded tab does not quietly kill the run.
+
+### Deliberately skipped
+No leaderboard (localStorage best only, like Minesweeper and Breakout), no touch D-pad (the room is
+desktop-only behind `MobileGate`), no sound (Minesweeper has none either), no new sprite art: the icon
+is inline SVG rects in `DeskIcon.tsx` like the other hand-drawn ones.

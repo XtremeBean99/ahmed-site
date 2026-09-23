@@ -8,6 +8,7 @@ export const BEST_KEYS = {
   typing: 'typing-best',
   breakout: 'breakout-best',
   minesweeper: 'minesweeper-best',
+  snake: 'snake-best',
 } as const
 
 /** Read a numeric best score. SSR-safe; returns 0 on any failure. */

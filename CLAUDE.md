@@ -19,7 +19,10 @@ The conventional site pages (`/home`, `/games`, `/projects`, `/tutoring`, `/lega
 retired in Spec 1 (July 2026) and 301-redirect to `/`. Their source code is archived under
 `_archive/` — not part of the build, recoverable via `git mv`.
 
-## Current State (7 July 2026)
+## Current State (23 September 2026)
+
+Latest: Snake is a desk app (v18 below) alongside Paint and Minesweeper.
+
 
 Pixel OS v1 desk launcher (Home/Paint/Minesweeper icons with bubble tooltips; Paint app
 with persistent localStorage canvas `room-paint-v1` + PNG download; in-monitor Minesweeper
@@ -166,13 +169,16 @@ inside its own monitor iframe (recursion guard removed — `/` is accessible fro
 ### Desk view (`DeskView.tsx`)
 Close-up art (`desk-closeup.png` and `desk-closeup-lamp-off.png`, crossfaded+flickered via
 `lampOn`/`lampFlicker` props passed from Room) with a clickable lamp toggle at (8,88 160×480)
-Screen modes: `desktop | paint | minesweeper | readme | music | legal`. Desktop icons:
-LinkedIn (external), GitHub (external), Music, Paint, Minesweeper, README, Legal.
+Screen modes: `desktop | paint | minesweeper | snake | readme | music | legal`. Desktop icons:
+LinkedIn (external), GitHub (external), Music, Paint, Minesweeper, Snake, README, Legal.
 `paint` (`DeskPaint.tsx`: 107×50 pixel canvas, 10-colour palette, pencil/eraser/fill tools,
 persistent to `room-paint-v1`, PNG download), `minesweeper` (`DeskMinesweeper.tsx`: 9×9/10
 mines, pure engine in `src/lib/games/minesweeper-engine.ts`, first-click safety,
 right-click/long-press/F-key flagging, roving-tabindex keyboard play, best-time
-localStorage), `readme` (`DeskReadme.tsx`: renders `site-text.txt`), `music`
+localStorage), `snake` (`DeskSnake.tsx`: 24×14 board at 16 px cells, pure engine in
+`src/lib/games/snake-engine.ts`, walls kill, arrows/WASD read from the **window** so a desk
+click cannot break the controls, Space pauses, Enter restarts, auto-pause on tab hide,
+best score in games storage), `readme` (`DeskReadme.tsx`: renders `site-text.txt`), `music`
 (`DeskMusic.tsx`: playlist picker), `legal` (`DeskLegal.tsx`: privacy/terms tabs, scrollable
 legal doc). The `browser` mode was removed (Spec 1, July 2026). Escape ladder app→desktop→room.
 Speakers (left 190,265 175×300; right 1005,270 215×300) are mute-toggle buttons with
@@ -377,6 +383,15 @@ sky-restaurant ⚠ commercial. Covers: sky-restaurant.jpg, summer-days.jpg.
   terminal`. Desk icons gained Links + Guestbook. `DISCOVERY_IDS` gained `status`, `links`,
   `guestbook` (now 20; a review fix restored `settings`/`terminal`/`screensaver`, which an initial
   edit had dropped). Build green (`type-check && lint && build`).
+- **v18** `23 September 2026`: Snake added as a desk app (`DeskSnake.tsx` + pure
+  `src/lib/games/snake-engine.ts`), following the Minesweeper pattern exactly: new `snake` screen
+  mode, `ICON_SNAKE` (inline SVG rects), a twelfth desktop shortcut (the icon grid is now an even
+  4×3), `snake` discovery (now 23), `BEST_KEYS.snake`, `desk.snake`/`snakeTip`/`snakeApp` copy.
+  Engine decisions: walls kill; turns are queued one slot deep and validated against the *applied*
+  heading so two presses in one tick cannot reverse the snake into itself; the tail cell is legal to
+  enter on the tick it is vacated; `tickMs = max(70, 140 - score*4)` so the interval is rebuilt only
+  on a score change; filling the board wins rather than hanging in `placeFood`. Tests:
+  `npm run test:snake` (9 cases, `node:test` via tsx). Design log: `todo.md` (SNK1–SNK4).
 
 
 

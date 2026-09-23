@@ -171,6 +171,24 @@ export const ICON_MINESWEEPER = (
   <image href="/icons/minesweeper-logo.png" x="0" y="0" width="16" height="16" preserveAspectRatio="xMidYMid meet" />
 )
 
+export const ICON_SNAKE = (
+  <>
+    {/* Apple */}
+    <rect x="13" y="1" width="1" height="1" fill="#5a4a3a" />
+    <rect x="12" y="2" width="3" height="3" fill="#8a3a2a" />
+    {/* Body, tail at the top left winding down to the head */}
+    <rect x="2" y="3" width="1" height="2" fill="#6a8a3a" />
+    <rect x="3" y="3" width="7" height="2" fill="#5a7a3a" />
+    <rect x="8" y="5" width="2" height="2" fill="#5a7a3a" />
+    <rect x="4" y="7" width="6" height="2" fill="#5a7a3a" />
+    <rect x="4" y="9" width="2" height="2" fill="#5a7a3a" />
+    <rect x="5" y="11" width="6" height="2" fill="#5a7a3a" />
+    {/* Head */}
+    <rect x="10" y="10" width="4" height="4" fill="#3a5a2a" />
+    <rect x="12" y="11" width="1" height="1" fill="#faf8f5" />
+  </>
+)
+
 export const ICON_LINKEDIN = (
   <image href="/icons/linkedin.png" x="0" y="0" width="16" height="16" preserveAspectRatio="xMidYMid meet" />
 )

@@ -1,7 +1,8 @@
 /** Deterministic hand-built states for unit tests. Independent of board.ts so modules test in isolation. */
-import { BANK_PER_RESOURCE, DEV_DECK_COUNTS, PIECES, PLAYER_COLORS, PORT_TYPES, RESOURCES } from './constants'
+import { BANK_PER_RESOURCE, DEFAULT_SETTINGS, DEV_DECK_COUNTS, PIECES, PLAYER_COLORS, PORT_TYPES, RESOURCES } from './constants'
 import { EDGES, PORT_EDGES } from './geometry'
 import { emptyResources } from './helpers'
+import { emptyStats } from './stats'
 import type { DevCardType, GameState, Phase, PlayerId, ResourceCounts, Terrain } from './types'
 
 const TERRAINS: Terrain[] = [
@@ -27,7 +28,11 @@ export function makeTestState(options: { playerCount?: 3 | 4; phase?: Phase; cur
     for (let i = 0; i < count; i++) devDeck.push(card)
   }
   return {
-    version: 1,
+    version: 2,
+    settings: { ...DEFAULT_SETTINGS, board: 'starter' },
+    stats: emptyStats(playerCount),
+    offersThisTurn: 0,
+    tradeSeq: 0,
     rng: 12345,
     tiles: TERRAINS.map((terrain, i) => ({ terrain, number: NUMBERS[i] })),
     ports: PORT_EDGES.map((edge, i) => ({ edge, type: PORT_TYPES[i] })),
@@ -39,6 +44,7 @@ export function makeTestState(options: { playerCount?: 3 | 4; phase?: Phase; cur
       name: id === 0 ? 'You' : `Bot ${id}`,
       color: PLAYER_COLORS[id],
       isBot: id !== 0,
+      level: 'normal',
       resources: emptyResources(),
       devCards: [],
       newDevCards: [],

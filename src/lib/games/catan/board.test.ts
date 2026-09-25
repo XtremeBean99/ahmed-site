@@ -4,6 +4,7 @@ import { createGame, generateBoard } from './board'
 import {
   BANK_PER_RESOURCE,
   BOT_NAMES,
+  DEFAULT_SETTINGS,
   DEV_DECK_COUNTS,
   NUMBER_TOKENS,
   PIECES,
@@ -109,7 +110,11 @@ test('createGame initializes pieces, bank, deck and phase', () => {
   assert.equal(game.devCardPlayedThisTurn, false)
   assert.deepEqual(game.events, [])
   assert.equal(game.eventSeq, 0)
-  assert.equal(game.version, 1)
+  assert.equal(game.version, 2)
+  assert.deepEqual(game.settings, DEFAULT_SETTINGS)
+  assert.equal(game.offersThisTurn, 0)
+  assert.equal(game.stats.players.length, 4)
+  assert.ok(game.players.every((p) => p.level === 'normal'))
   assert.equal(game.buildings.length, 54)
   assert.equal(game.roads.length, 72)
   assert.ok(game.buildings.every((b) => b === null))

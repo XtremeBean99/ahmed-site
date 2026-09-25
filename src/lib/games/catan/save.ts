@@ -245,7 +245,7 @@ export function loadGame(): GameState | null {
       storage.removeItem(SAVE_KEY)
       return null
     }
-    return result.data as GameState
+    return result.data as unknown as GameState // CAT31: v2 schema and migration
   } catch {
     try {
       storage.removeItem(SAVE_KEY)

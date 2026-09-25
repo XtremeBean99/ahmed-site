@@ -423,6 +423,8 @@ export function useCatanController(options: CatanControllerOptions = {}) {
         const next = phase.discards.findIndex((n) => n > 0)
         return fill(t.catan.status.discard, { player: game.players[next]?.name ?? '', count: phase.discards[next] ?? 0 })
       }
+      case 'trade':
+        return fill(t.catan.status.main, { player })
       case 'gameOver':
         if (phase.winner === human) return t.catan.status.gameOverYou
         return fill(t.catan.status.gameOver, { player: game.players[phase.winner].name })

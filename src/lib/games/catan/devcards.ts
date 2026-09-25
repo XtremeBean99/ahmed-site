@@ -83,6 +83,7 @@ export const devCardHandlers: HandlerMap<'playKnight' | 'playRoadBuilding' | 'pl
       sharedApply(state, 'monopoly')
       const resource = action.resource
       let taken = 0
+      const takenFrom = state.players.map(() => 0)
       for (let p = 0; p < state.players.length; p++) {
         if (p === state.current) continue
         const n = state.players[p].resources[resource]
@@ -90,9 +91,10 @@ export const devCardHandlers: HandlerMap<'playKnight' | 'playRoadBuilding' | 'pl
           state.players[p].resources[resource] = 0
           state.players[state.current].resources[resource] += n
           taken += n
+          takenFrom[p] = n
         }
       }
-      pushEvent(state, { type: 'monopoly', player: state.current, resource, taken })
+      pushEvent(state, { type: 'monopoly', player: state.current, resource, taken, takenFrom })
     },
   },
 }

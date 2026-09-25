@@ -1,6 +1,7 @@
 import {
   BANK_PER_RESOURCE,
   BOT_NAMES,
+  DEFAULT_SETTINGS,
   DEV_DECK_COUNTS,
   NUMBER_TOKENS,
   PIECES,
@@ -12,7 +13,8 @@ import {
 import { EDGES, HEXES, PORT_EDGES, VERTICES } from './geometry'
 import { emptyResources } from './helpers'
 import { shuffle } from './rng'
-import type { DevCardType, GameState, NewGameOptions, Player, PlayerColor, Port, Terrain, Tile } from './types'
+import { emptyStats } from './stats'
+import type { BotLevel, DevCardType, GameState, NewGameOptions, Player, PlayerColor, Port, Terrain, Tile } from './types'
 
 export function generateBoard(holder: { rng: number }): { tiles: Tile[]; ports: Port[]; robber: number } {
   const terrains: Terrain[] = []
@@ -46,12 +48,13 @@ export function generateBoard(holder: { rng: number }): { tiles: Tile[]; ports: 
   return { tiles, ports, robber }
 }
 
-function makePlayer(name: string, color: PlayerColor, isBot: boolean): Player {
+export function makePlayer(name: string, color: PlayerColor, isBot: boolean, level: BotLevel = 'normal'): Player {
   return {
     id: 0,
     name,
     color,
     isBot,
+    level,
     resources: emptyResources(),
     devCards: [],
     newDevCards: [],
@@ -68,7 +71,11 @@ export function createGame(opts: NewGameOptions): GameState {
     throw new Error('playerCount must be 3 or 4')
   }
   const state: GameState = {
-    version: 1,
+    version: 2,
+    settings: { ...DEFAULT_SETTINGS, ...opts.settings },
+    stats: emptyStats(opts.playerCount),
+    offersThisTurn: 0,
+    tradeSeq: 0,
     rng: opts.seed | 0,
     tiles: [],
     ports: [],
@@ -95,9 +102,11 @@ export function createGame(opts: NewGameOptions): GameState {
   state.ports = board.ports
   state.robber = board.robber
 
-  const human = makePlayer(opts.humanName ?? 'You', 'red', false)
+  const humanColor = opts.humanColor ?? 'red'
+  const human = makePlayer(opts.humanName ?? 'You', humanColor, false)
+  const botColors = PLAYER_COLORS.filter((c) => c !== humanColor)
   const bots = Array.from({ length: opts.playerCount - 1 }, (_, i) =>
-    makePlayer(BOT_NAMES[i], PLAYER_COLORS[i + 1], true),
+    makePlayer(BOT_NAMES[i], botColors[i], true, opts.botLevel ?? 'normal'),
   )
   const players = shuffle(state, [human, ...bots])
   players.forEach((player, id) => {

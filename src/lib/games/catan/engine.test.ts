@@ -240,6 +240,10 @@ function actionWeight(action: Action): number {
       return 3
     case 'maritimeTrade':
     case 'domesticTrade':
+    case 'proposeTrade':
+    case 'respondTrade':
+    case 'confirmTrade':
+    case 'cancelTrade':
       return 1
     case 'discard':
     case 'moveRobber':

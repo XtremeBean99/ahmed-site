@@ -790,6 +790,8 @@ function chooseByPhase(state: GameState, bot: PlayerId): Action {
       return chooseMainAction(state, bot)
     case 'roadBuilding':
       return chooseRoadBuildingAction(state, bot)
+    case 'trade':
+      return fallbackAction(state, bot)
     case 'gameOver':
       throw new Error('no action when the game is over')
   }
@@ -841,6 +843,8 @@ export function fallbackAction(state: GameState, bot: PlayerId): Action {
       if (legal.length === 0) throw new Error('no legal road')
       return { type: 'buildRoad', edge: legal[0] }
     }
+    case 'trade':
+      return state.phase.offer.from === bot ? { type: 'cancelTrade' } : { type: 'respondTrade', player: bot, reply: 'decline' }
     case 'gameOver':
       throw new Error('no action when the game is over')
   }

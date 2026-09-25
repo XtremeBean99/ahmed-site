@@ -1,8 +1,9 @@
 import { applyAction, humanPlayer, playersToAct, validateAction } from './engine'
 import { chooseBotAction } from './ai'
-import { PORT_TYPES, RESOURCES } from './constants'
+import { DEFAULT_SETTINGS, PORT_TYPES, RESOURCES } from './constants'
 import { EDGES, PORT_EDGES, VERTICES } from './geometry'
 import { addResources, emptyResources, subtractResources } from './helpers'
+import { emptyStats } from './stats'
 import type { Action, DevCardType, GameState, PlayerColor, ResourceCounts, Terrain } from './types'
 
 export type TutorialUiId =
@@ -69,6 +70,7 @@ function makePlayer(name: string, color: PlayerColor, isBot: boolean) {
     name,
     color,
     isBot,
+    level: 'normal' as const,
     resources: emptyResources(),
     devCards: [] as DevCardType[],
     newDevCards: [] as DevCardType[],
@@ -104,7 +106,11 @@ export function createTutorialGame(): GameState {
     player.id = id
   })
   return {
-    version: 1,
+    version: 2,
+    settings: { ...DEFAULT_SETTINGS, board: 'starter', botTrades: false },
+    stats: emptyStats(players.length),
+    offersThisTurn: 0,
+    tradeSeq: 0,
     rng: TUTORIAL_SEED,
     tiles: TERRAINS.map((terrain, i) => ({ terrain, number: NUMBERS[i] })),
     ports: PORT_EDGES.map((edge, i) => ({ edge, type: PORT_TYPES[i] })),

@@ -256,3 +256,35 @@ Requested 25 September 2026. Replaces the ten-command `DeskTerminal` toy with a 
 - TRM1 shell, TRM2 files, TRM3 text, TRM4 sed+awk, TRM5 misc, TRM6 fun, TRM7 nano, TRM8 vim: built by deepcode agents (`.agents-work/term-*.md`), verified here.
 - TRM9 UI (`DeskTerminal.tsx`, `TermEditor.tsx`), desktop icons, CLAUDE.md notes.
 
+
+---
+
+## IN PROGRESS — Pixel Catan v3 overhaul (design not yet written)
+
+Requested 25 September 2026: "full overhaul of the catan game, improving it in any and every way". Branch
+`feat/catan-overhaul`, worktree `ahmed-site/.claude/worktrees/catan-overhaul` (node_modules is a junction:
+`cmd /c rmdir` it before any cleanup). Dev server config `catan-overhaul` (port 3102) is in
+`Personal Website/.claude/launch.json`.
+
+### Owner decisions (from the refining questions)
+- **Bots only.** No hot-seat or online multiplayer.
+- **Board art sizes may change.** The owner has not redrawn yet, so a new hex size or grid is allowed as long as
+  `assets/pixel-art/catan/SPEC.md` and the template export (`npm run catan-sprites:export`) are updated to match.
+- **Catan must work on tablets and phones** (touch, responsive layout, pinch/pan board). Another Claude session is
+  making the rest of the site mobile friendly, so this overhaul only touches Catan-owned files: `src/components/catan/`,
+  `src/lib/games/catan/`, `src/app/catan/`, Catan art and scripts, and the `catan` block of `en.ts`. Do not edit
+  `MobileGate.tsx`, `useStageScale.ts`, the root layout or `globals.css`. Just stop using the gate inside `CatanGame`.
+- **Execution is a mix.** Claude Workflow for design, review and verification. deepcode for bulk implementation,
+  plus deepcode second opinions alongside workflows.
+
+### Status
+- Read-only audits launched: Claude Workflow `catan-overhaul-audit` (run `wf_59585dc4-969`; rules/engine, bots,
+  UI/UX/mobile, rendering/architecture) and a deepcode audit (`.agents-work/audit-engine.md`, report at
+  `.agents-work/reports/audit-engine.md`).
+- Playtest notes (1408x768): the board uses integer CSS scale only, so it renders at 2x (558x530) with large empty
+  margins. The sidebar is dense 9-10 px text that needs scrolling. A roll gives no animation or on-board production
+  feedback, and bot turns are only readable in the log. The random board clumped four grain hexes together. A hex
+  hover tooltip can stay on screen after a click. The full test suite takes about 208 s (194 tests pass).
+- Next steps: synthesise the audits into an APPROVED DESIGN section and implementation plan here (task prefix
+  CAT3x); write the engine contract first; run deepcode builders on disjoint files; then Workflow review plus
+  browser verification at desktop, tablet and phone sizes.

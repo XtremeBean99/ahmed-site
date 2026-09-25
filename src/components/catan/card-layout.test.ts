@@ -25,7 +25,7 @@ test('isOverSeven is true only above the discard threshold', () => {
 })
 
 test('eventGainsForPlayer extracts gains from produce and setup resources', () => {
-  const produce = event({ type: 'produce', gains: [{ brick: 2, lumber: 0, wool: 0, grain: 1, ore: 0 }] })
+  const produce = event({ type: 'produce', gains: [{ brick: 2, lumber: 0, wool: 0, grain: 1, ore: 0 }], blocked: [{ brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 }], shortage: [] })
   assert.deepEqual(eventGainsForPlayer(produce, 0), [
     { resource: 'brick', amount: 2 },
     { resource: 'grain', amount: 1 },
@@ -52,7 +52,7 @@ test('eventGainsForPlayer extracts steals, monopoly, year of plenty and trades',
   assert.deepEqual(eventGainsForPlayer(event({ type: 'stole', player: 0, victim: 1, resource: null }), 0), [])
   assert.deepEqual(eventGainsForPlayer(event({ type: 'stole', player: 1, victim: 0, resource: 'ore' }), 0), [])
 
-  assert.deepEqual(eventGainsForPlayer(event({ type: 'monopoly', player: 0, resource: 'wool', taken: 4 }), 0), [
+  assert.deepEqual(eventGainsForPlayer(event({ type: 'monopoly', player: 0, resource: 'wool', taken: 4, takenFrom: [0, 4, 0, 0] }), 0), [
     { resource: 'wool', amount: 4 },
   ])
   assert.deepEqual(eventGainsForPlayer(event({ type: 'yearOfPlenty', player: 0, resources: ['grain', 'grain'] }), 0), [

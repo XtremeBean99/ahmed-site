@@ -23,7 +23,6 @@ const PURPLE_DARK: RGB = [58, 40, 72]
 const AMBER: RGB = [224, 160, 64]
 const AMBER_DARK: RGB = [168, 112, 40]
 const RED: RGB = [192, 57, 43]
-const RED_DARK: RGB = [128, 36, 30]
 const BROWN: RGB = [128, 90, 54]
 const BROWN_DARK: RGB = [84, 58, 34]
 const STEEL: RGB = [168, 176, 190]
@@ -228,39 +227,51 @@ function drawKnightArt(buffer: PixelBuffer): void {
 function drawRoadBuildingArt(buffer: PixelBuffer): void {
   drawRoadSegment(buffer, 5, 24, 11, 15)
   drawRoadSegment(buffer, 11, 15, 17, 24)
-  drawRoadSegment(buffer, 6, 8, 12, 8)
+  fillRect(buffer, 10, 4, 6, 3, STEEL)
+  rectOutline(buffer, 10, 4, 6, 3, OUTLINE)
+  fillRect(buffer, 12, 7, 2, 6, BROWN)
+  setPixel(buffer, 12, 12, OUTLINE)
 }
 
 function drawYearOfPlentyArt(buffer: PixelBuffer): void {
-  drawCircle(buffer, 8, 16, 4, OUTLINE)
-  drawCircle(buffer, 8, 16, 3, TERRAIN_BASE.grain)
-  fillRect(buffer, 7, 12, 3, 2, TERRAIN_DARK.grain)
-  drawCircle(buffer, 16, 16, 4, OUTLINE)
-  drawCircle(buffer, 16, 16, 3, TERRAIN_BASE.brick)
-  fillRect(buffer, 15, 12, 3, 2, TERRAIN_DARK.brick)
+  drawLine(buffer, 5, 11, 17, 9, OUTLINE)
+  drawLine(buffer, 6, 11, 16, 9, AMBER_DARK)
+  drawLine(buffer, 5, 11, 8, 21, OUTLINE)
+  drawLine(buffer, 6, 11, 9, 20, AMBER_DARK)
+  drawLine(buffer, 8, 21, 15, 21, OUTLINE)
+  drawLine(buffer, 9, 20, 14, 20, AMBER)
+  setPixel(buffer, 11, 9, TERRAIN_BASE.grain)
+  setPixel(buffer, 14, 8, TERRAIN_BASE.wool)
+  setPixel(buffer, 17, 9, TERRAIN_BASE.brick)
+  setPixel(buffer, 12, 7, TERRAIN_BASE.grain)
 }
 
 function drawMonopolyArt(buffer: PixelBuffer): void {
-  fillRect(buffer, 8, 9, 2, 5, AMBER)
-  fillRect(buffer, 11, 8, 2, 6, AMBER)
-  fillRect(buffer, 14, 9, 2, 5, AMBER)
-  fillRect(buffer, 7, 13, 10, 2, AMBER_DARK)
-  fillRect(buffer, 7, 14, 10, 1, OUTLINE)
-  setPixel(buffer, 9, 10, OUTLINE)
-  setPixel(buffer, 15, 10, OUTLINE)
+  const crown: string[] = [
+    '....A....',
+    '...AAA...',
+    '...AAA...',
+    '..AAAAA..',
+    '..AAAAA..',
+    'AAAAAAAAA',
+    'AAAAAAAAA',
+  ]
+  drawGrid(buffer, crown, 8, 9, { A: AMBER })
+  setPixel(buffer, 10, 10, RED)
+  setPixel(buffer, 13, 10, RED)
+  setPixel(buffer, 16, 10, RED)
 }
 
 function drawVictoryPointArt(buffer: PixelBuffer): void {
-  setPixel(buffer, 12, 6, AMBER)
-  setPixel(buffer, 12, 8, AMBER)
-  setPixel(buffer, 10, 7, AMBER)
-  setPixel(buffer, 14, 7, AMBER)
-  setPixel(buffer, 12, 7, CREAM)
-  fillRect(buffer, 8, 13, 8, 12, BROWN_DARK)
-  fillRect(buffer, 9, 14, 6, 11, BROWN)
-  fillRect(buffer, 7, 12, 10, 2, RED_DARK)
-  fillRect(buffer, 10, 18, 4, 7, OUTLINE)
-  fillRect(buffer, 11, 19, 2, 5, AMBER)
+  rectOutline(buffer, 6, 10, 3, 11, OUTLINE)
+  fillRect(buffer, 7, 11, 1, 10, STEEL)
+  rectOutline(buffer, 15, 10, 3, 11, OUTLINE)
+  fillRect(buffer, 16, 11, 1, 10, STEEL)
+  rectOutline(buffer, 8, 13, 8, 8, OUTLINE)
+  fillRect(buffer, 9, 14, 6, 7, STEEL)
+  fillRect(buffer, 10, 17, 2, 4, OUTLINE)
+  const one: string[] = ['010', '110', '010', '010', '111']
+  drawGrid(buffer, one, 11, 22, { '1': PURPLE_DARK })
 }
 
 function renderDevCard(buffer: PixelBuffer, kind: 'knight' | 'roadBuilding' | 'yearOfPlenty' | 'monopoly' | 'victoryPoint'): void {
@@ -288,14 +299,21 @@ function drawLongestRoadArt(buffer: PixelBuffer): void {
 }
 
 function drawLargestArmyArt(buffer: PixelBuffer): void {
-  drawLine(buffer, 6, 9, 18, 23, OUTLINE)
-  drawLine(buffer, 6, 9, 18, 23, STEEL)
-  drawLine(buffer, 18, 9, 6, 23, OUTLINE)
-  drawLine(buffer, 18, 9, 6, 23, STEEL)
-  drawLine(buffer, 5, 7, 8, 10, BROWN_DARK)
-  drawLine(buffer, 19, 7, 16, 10, BROWN_DARK)
-  drawLine(buffer, 5, 25, 8, 22, BROWN_DARK)
-  drawLine(buffer, 19, 25, 16, 22, BROWN_DARK)
+  const shield: string[] = [
+    '..RRRRR..',
+    '.RRRRRRR.',
+    '.RRRRRRR.',
+    '.RRRRRRR.',
+    '.RRRRRRR.',
+    '..RRRRR..',
+    '...RRR...',
+  ]
+  drawGrid(buffer, shield, 7, 9, { R: RED })
+  drawLine(buffer, 8, 10, 16, 10, STEEL)
+  drawLine(buffer, 10, 9, 14, 9, STEEL)
+  drawLine(buffer, 12, 5, 17, 21, OUTLINE)
+  drawLine(buffer, 11, 5, 16, 21, STEEL)
+  drawLine(buffer, 12, 5, 12, 9, BROWN_DARK)
 }
 
 function renderAwardCard(buffer: PixelBuffer, kind: 'longestRoad' | 'largestArmy'): void {
@@ -364,7 +382,7 @@ function renderDie(buffer: PixelBuffer, value: number): void {
   setPixel(buffer, 15, 0, IVORY, 0)
   setPixel(buffer, 0, 15, IVORY, 0)
   setPixel(buffer, 15, 15, IVORY, 0)
-  for (const [px, py] of DIE_PIPS[value]) fillRect(buffer, px, py, 2, 2, INK)
+  for (const [px, py] of DIE_PIPS[value]) drawCircle(buffer, px + 1, py + 1, 1, INK)
 }
 
 const RESOURCE_ICON_GRIDS: Record<Resource, string[]> = {

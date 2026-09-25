@@ -79,10 +79,10 @@ const tile = (terrain: Terrain): SpriteMeta => ({
 
 const token = (n: number): SpriteMeta => ({
   file: `token-${n}.png`,
-  width: 11,
-  height: 11,
-  anchorX: 5,
-  anchorY: 5,
+  width: 13,
+  height: 13,
+  anchorX: 6,
+  anchorY: 6,
   recolor: false,
 })
 
@@ -110,7 +110,7 @@ const pier = (orientation: 'vertical' | 'rising' | 'falling'): SpriteMeta => {
 }
 
 export const SPRITES: Record<SpriteName, SpriteMeta> = {
-  sea: { file: 'sea.png', width: 279, height: 265, anchorX: 0, anchorY: 0, recolor: false },
+  sea: { file: 'sea.png', width: 32, height: 32, anchorX: 0, anchorY: 0, recolor: false },
   'tile-brick': tile('brick'),
   'tile-lumber': tile('lumber'),
   'tile-wool': tile('wool'),
@@ -127,9 +127,9 @@ export const SPRITES: Record<SpriteName, SpriteMeta> = {
   'token-10': token(10),
   'token-11': token(11),
   'token-12': token(12),
-  robber: { file: 'robber.png', width: 7, height: 10, anchorX: 3, anchorY: 4, recolor: false },
-  settlement: { file: 'settlement.png', width: 9, height: 9, anchorX: 4, anchorY: 4, recolor: true },
-  city: { file: 'city.png', width: 13, height: 11, anchorX: 6, anchorY: 5, recolor: true },
+  robber: { file: 'robber.png', width: 9, height: 13, anchorX: 4, anchorY: 6, recolor: false },
+  settlement: { file: 'settlement.png', width: 11, height: 11, anchorX: 5, anchorY: 5, recolor: true },
+  city: { file: 'city.png', width: 15, height: 13, anchorX: 7, anchorY: 6, recolor: true },
   'road-vertical': road('vertical'),
   'road-rising': road('rising'),
   'road-falling': road('falling'),

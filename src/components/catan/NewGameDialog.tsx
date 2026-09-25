@@ -3,25 +3,26 @@
 import { useId, useState } from 'react'
 import Link from 'next/link'
 import { useT } from '@/lib/i18n/client'
+import { DEFAULT_SETTINGS } from '@/lib/games/catan/constants'
+import type { NewGameSetup } from './prefs'
 import { Tooltip } from './Tooltip'
 import { FOCUS_CLASS, ModalDialog, PIXEL_FONT, PixelButton, SectionTitle } from './ui'
 
-export function NewGameDialog({
-  onStart,
-  onCancel,
-  canCancel,
-  onTutorial,
-}: {
-  onStart: (count: 3 | 4, name: string) => void
+export interface NewGameDialogProps {
+  /** The last setup the player started, to offer again; null on a first visit. */
+  initial: NewGameSetup | null
+  onStart: (setup: NewGameSetup) => void
   onCancel: () => void
   canCancel: boolean
   onTutorial?: () => void
-}) {
+}
+
+export function NewGameDialog({ initial, onStart, onCancel, canCancel, onTutorial }: NewGameDialogProps) {
   const t = useT()
   const d = t.catan.newGameDialog
   const titleId = useId()
-  const [count, setCount] = useState<3 | 4>(4)
-  const [name, setName] = useState('You')
+  const [count, setCount] = useState<3 | 4>(initial?.playerCount ?? 4)
+  const [name, setName] = useState(initial?.name || 'You')
 
   const trimmed = name.trim().slice(0, 16)
   const valid = trimmed.length > 0
@@ -96,7 +97,19 @@ export function NewGameDialog({
               </Tooltip>
             ) : null}
             <Tooltip content={d.start}>
-              <PixelButton variant="primary" disabled={!valid} onClick={() => onStart(count, trimmed || 'You')}>
+              <PixelButton
+                variant="primary"
+                disabled={!valid}
+                onClick={() =>
+                  onStart({
+                    playerCount: count,
+                    name: trimmed || 'You',
+                    color: initial?.color ?? 'red',
+                    botLevel: initial?.botLevel ?? 'normal',
+                    settings: initial?.settings ?? DEFAULT_SETTINGS,
+                  })
+                }
+              >
                 {d.start}
               </PixelButton>
             </Tooltip>

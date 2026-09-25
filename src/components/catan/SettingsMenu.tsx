@@ -2,25 +2,20 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useT } from '@/lib/i18n/client'
-import { type BotSpeed } from './prefs'
+import { type BotSpeed, type CatanPrefs } from './prefs'
 import { Tooltip } from './Tooltip'
 import { COLORS, PIXEL_FONT, PixelButton } from './ui'
 
-export function SettingsMenu({
-  botSpeed,
-  tooltips,
-  showBoardKey,
-  onBotSpeedChange,
-  onTooltipsChange,
-  onShowBoardKeyChange,
-}: {
-  botSpeed: BotSpeed
-  tooltips: boolean
-  showBoardKey: boolean
-  onBotSpeedChange: (speed: BotSpeed) => void
-  onTooltipsChange: (enabled: boolean) => void
-  onShowBoardKeyChange: (shown: boolean) => void
-}) {
+export interface SettingsMenuProps {
+  prefs: CatanPrefs
+  onChange: (patch: Partial<CatanPrefs>) => void
+}
+
+export function SettingsMenu({ prefs, onChange }: SettingsMenuProps) {
+  const { botSpeed, tooltips, showBoardKey } = prefs
+  const onBotSpeedChange = (speed: BotSpeed) => onChange({ botSpeed: speed })
+  const onTooltipsChange = (enabled: boolean) => onChange({ tooltips: enabled })
+  const onShowBoardKeyChange = (shown: boolean) => onChange({ showBoardKey: shown })
   const t = useT()
   const d = t.catan.settings
   const speed = t.catan.speed

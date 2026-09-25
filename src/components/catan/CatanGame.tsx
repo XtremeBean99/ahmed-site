@@ -290,10 +290,11 @@ function CatanGameSession({
         onError={() => clearGame()}
         fallback={
           <NewGameDialog
+            initial={c.prefs.lastSetup}
             canCancel={false}
             onCancel={() => {}}
-            onStart={(count, name) => {
-              c.startNewGame(count, name)
+            onStart={(setup) => {
+              c.startNewGame(setup)
               c.setResetKey((k) => k + 1)
             }}
           />
@@ -325,12 +326,8 @@ function CatanGameSession({
               onSkip={c.skipToMyTurn}
               onRules={() => c.setDialog('rules')}
               onNewGame={tutorialActive ? onExitTutorial : () => c.setShowNewGame(true)}
-              botSpeed={c.botSpeed}
-              tooltips={c.tooltips}
-              showBoardKey={c.showBoardKey}
-              onBotSpeedChange={c.setBotSpeed}
-              onTooltipsChange={c.setTooltips}
-              onShowBoardKeyChange={c.setShowBoardKey}
+              prefs={c.prefs}
+              onPrefsChange={c.updatePrefs}
             />
 
             <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
@@ -480,6 +477,7 @@ function CatanGameSession({
 
           {c.showNewGame ? (
             <NewGameDialog
+              initial={c.prefs.lastSetup}
               canCancel={c.game !== null}
               onCancel={() => c.setShowNewGame(false)}
               onStart={c.startNewGame}

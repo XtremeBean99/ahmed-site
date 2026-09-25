@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useT } from '@/lib/i18n/client'
 import { fill } from './event-text'
-import { type BotSpeed } from './prefs'
+import { type CatanPrefs } from './prefs'
 import { SettingsMenu } from './SettingsMenu'
 import { Tooltip } from './Tooltip'
 import { COLORS, FOCUS_CLASS, PIXEL_FONT, PixelButton } from './ui'
@@ -14,24 +14,16 @@ export function TopBar({
   onSkip,
   onRules,
   onNewGame,
-  botSpeed,
-  tooltips,
-  showBoardKey,
-  onBotSpeedChange,
-  onTooltipsChange,
-  onShowBoardKeyChange,
+  prefs,
+  onPrefsChange,
 }: {
   turn: number
   canSkip: boolean
   onSkip: () => void
   onRules: () => void
   onNewGame: () => void
-  botSpeed: BotSpeed
-  tooltips: boolean
-  showBoardKey: boolean
-  onBotSpeedChange: (speed: BotSpeed) => void
-  onTooltipsChange: (enabled: boolean) => void
-  onShowBoardKeyChange: (shown: boolean) => void
+  prefs: CatanPrefs
+  onPrefsChange: (patch: Partial<CatanPrefs>) => void
 }) {
   const t = useT()
   const tips = t.catan.tooltips
@@ -59,14 +51,7 @@ export function TopBar({
         </PixelButton>
       </Tooltip>
       <div style={{ flex: 1 }} />
-      <SettingsMenu
-        botSpeed={botSpeed}
-        tooltips={tooltips}
-        showBoardKey={showBoardKey}
-        onBotSpeedChange={onBotSpeedChange}
-        onTooltipsChange={onTooltipsChange}
-        onShowBoardKeyChange={onShowBoardKeyChange}
-      />
+      <SettingsMenu prefs={prefs} onChange={onPrefsChange} />
       <Tooltip content={tips.rules}>
         <PixelButton onClick={onRules}>{t.catan.rules}</PixelButton>
       </Tooltip>

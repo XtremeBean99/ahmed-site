@@ -26,7 +26,7 @@ import type { BoardTargets } from './BoardCanvas'
 import { fill, playerSubject } from './event-text'
 import { describeHover, type HoverTarget } from './hover-info'
 import { type PlayableDevCard, playableDevCards } from './PlayCardDialog'
-import { getCatanPrefsStorage, readPrefs, writePrefs, type BotSpeed, type CatanPrefs } from './prefs'
+import { getCatanPrefsStorage, readPrefs, writePrefs, type BotSpeed, type CatanPrefs, type NewGameSetup } from './prefs'
 import { vertexDescription } from './vertex-info'
 
 export type CatanDialog = 'trade' | 'playCard' | 'rules' | null
@@ -171,10 +171,18 @@ export function useCatanController(options: CatanControllerOptions = {}) {
   }, [])
 
   const startNewGame = useCallback(
-    (count: 3 | 4, name: string) => {
+    (setup: NewGameSetup) => {
       clearSave(saveKey)
       const seed = crypto.getRandomValues(new Uint32Array(1))[0]
-      const fresh = createGame({ seed, playerCount: count, humanName: name || 'You' })
+      const fresh = createGame({
+        seed,
+        playerCount: setup.playerCount,
+        humanName: setup.name || 'You',
+        humanColor: setup.color,
+        botLevel: setup.botLevel,
+        settings: setup.settings,
+      })
+      updatePrefs({ lastSetup: setup })
       gameRef.current = fresh
       setGame(fresh)
       setShowNewGame(false)
@@ -183,7 +191,7 @@ export function useCatanController(options: CatanControllerOptions = {}) {
       setStatus(null)
       setBotStalled(false)
     },
-    [saveKey],
+    [saveKey, updatePrefs],
   )
 
   const startNewFromGameOver = useCallback(() => {
@@ -569,6 +577,7 @@ export function useCatanController(options: CatanControllerOptions = {}) {
 
   return {
     mounted,
+    updatePrefs,
     game,
     showNewGame,
     setShowNewGame,

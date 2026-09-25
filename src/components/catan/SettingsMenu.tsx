@@ -9,9 +9,11 @@ import { COLORS, PIXEL_FONT, PixelButton } from './ui'
 export interface SettingsMenuProps {
   prefs: CatanPrefs
   onChange: (patch: Partial<CatanPrefs>) => void
+  /** popover: a Settings button that opens the panel (top bar). inline: the panel alone (inside a sheet). */
+  variant?: 'popover' | 'inline'
 }
 
-export function SettingsMenu({ prefs, onChange }: SettingsMenuProps) {
+export function SettingsMenu({ prefs, onChange, variant = 'popover' }: SettingsMenuProps) {
   const { botSpeed, tooltips, showBoardKey } = prefs
   const onBotSpeedChange = (speed: BotSpeed) => onChange({ botSpeed: speed })
   const onTooltipsChange = (enabled: boolean) => onChange({ tooltips: enabled })
@@ -52,6 +54,59 @@ export function SettingsMenu({ prefs, onChange }: SettingsMenuProps) {
     { value: 900, label: speed.slow },
   ]
 
+  const controls = (
+    <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.text }}>{d.tooltips}</span>
+        <Tooltip content={d.tooltipsHint}>
+          <PixelButton
+            aria-pressed={tooltips}
+            onClick={() => onTooltipsChange(!tooltips)}
+            style={{ justifyContent: 'space-between', width: '100%' }}
+          >
+            <span>{tooltips ? d.on : d.off}</span>
+          </PixelButton>
+        </Tooltip>
+      </div>
+      <div data-tutorial="speed" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.text }}>{speed.label}</span>
+        <div role="group" aria-label={speed.label} style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          {speedOptions.map((option) => (
+            <Tooltip key={option.value} content={`${speed.label}: ${option.label}`}>
+              <PixelButton
+                selected={botSpeed === option.value}
+                aria-pressed={botSpeed === option.value}
+                onClick={() => onBotSpeedChange(option.value)}
+              >
+                {option.label}
+              </PixelButton>
+            </Tooltip>
+          ))}
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.text }}>{d.boardKey}</span>
+        <Tooltip content={d.boardKeyHint}>
+          <PixelButton
+            aria-pressed={showBoardKey}
+            onClick={() => onShowBoardKeyChange(!showBoardKey)}
+            style={{ justifyContent: 'space-between', width: '100%' }}
+          >
+            <span>{showBoardKey ? d.on : d.off}</span>
+          </PixelButton>
+        </Tooltip>
+      </div>
+    </>
+  )
+
+  if (variant === 'inline') {
+    return (
+      <div role="group" aria-label={d.title} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {controls}
+      </div>
+    )
+  }
+
   return (
     <div style={{ position: 'relative' }}>
       <Tooltip content={d.title}>
@@ -85,46 +140,7 @@ export function SettingsMenu({ prefs, onChange }: SettingsMenuProps) {
             gap: 10,
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.text }}>{d.tooltips}</span>
-            <Tooltip content={d.tooltipsHint}>
-              <PixelButton
-                aria-pressed={tooltips}
-                onClick={() => onTooltipsChange(!tooltips)}
-                style={{ justifyContent: 'space-between', width: '100%' }}
-              >
-                <span>{tooltips ? d.on : d.off}</span>
-              </PixelButton>
-            </Tooltip>
-          </div>
-          <div data-tutorial="speed" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.text }}>{speed.label}</span>
-            <div role="group" aria-label={speed.label} style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {speedOptions.map((option) => (
-                <Tooltip key={option.value} content={`${speed.label}: ${option.label}`}>
-                  <PixelButton
-                    selected={botSpeed === option.value}
-                    aria-pressed={botSpeed === option.value}
-                    onClick={() => onBotSpeedChange(option.value)}
-                  >
-                    {option.label}
-                  </PixelButton>
-                </Tooltip>
-              ))}
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.text }}>{d.boardKey}</span>
-            <Tooltip content={d.boardKeyHint}>
-              <PixelButton
-                aria-pressed={showBoardKey}
-                onClick={() => onShowBoardKeyChange(!showBoardKey)}
-                style={{ justifyContent: 'space-between', width: '100%' }}
-              >
-                <span>{showBoardKey ? d.on : d.off}</span>
-              </PixelButton>
-            </Tooltip>
-          </div>
+          {controls}
         </div>
       ) : null}
     </div>

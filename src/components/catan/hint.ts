@@ -133,7 +133,7 @@ export function describeHintAction(state: GameState, human: PlayerId, action: Ac
 export function describeHint(state: GameState, human: PlayerId): Hint {
   if (human < 0 || human >= state.players.length) return { text: 'No hint available.', highlight: {} }
   try {
-    return describeHintAction(state, human, chooseBotAction(state, human))
+    return describeHintAction(state, human, chooseBotAction(state, human, { level: 'hard' }))
   } catch {
     return fallbackHint(state)
   }

@@ -1,7 +1,7 @@
 'use client'
 
-import { Component, createElement, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { ComponentProps, MutableRefObject, ReactNode, RefObject } from 'react'
+import { Component, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useReducedMotion } from 'framer-motion'
@@ -50,7 +50,6 @@ import { COLORS, FOCUS_CLASS, PIXEL_FONT, PixelButton } from './ui'
 import { useCatanController } from './useCatanController'
 import { useEventAnnouncer } from './useEventAnnouncer'
 import { useShortcuts } from './useShortcuts'
-import type { BoardViewHandle } from './useShortcuts'
 
 type CatanMode = 'normal' | 'tutorial'
 type StackSheet = 'build' | 'cards' | 'log' | 'menu' | null
@@ -177,13 +176,6 @@ export function CatanGame() {
   return <CatanGameSession key={session} mode={mode} onStartTutorial={startTutorial} onExitTutorial={exitTutorial} />
 }
 
-type BoardPlugProps = ComponentProps<typeof BoardCanvas> & {
-  viewRef?: MutableRefObject<BoardView | null>
-  highlightHexes?: number[]
-  robberHex?: number | null
-  hiddenPieces?: { vertices: number[]; edges: number[] }
-}
-
 function CatanGameSession({
   mode,
   onStartTutorial,
@@ -209,7 +201,7 @@ function CatanGameSession({
   const [helpOpen, setHelpOpen] = useState(false)
   const preparedRef = useRef(false)
   const boardWrapRef = useRef<HTMLDivElement | null>(null)
-  const boardViewRef = useRef<BoardViewHandle | null>(null)
+  const boardViewRef = useRef<BoardView | null>(null)
   const [boardOverrides, setBoardOverrides] = useState<BoardOverrides>({
     highlightHexes: [],
     robberHex: undefined,
@@ -387,29 +379,26 @@ function CatanGameSession({
     if (c.game.phase.kind === 'moveRobber') applyHuman({ type: 'moveRobber', hex: h })
   }
 
-  const boardProps: BoardPlugProps | null = c.game
-    ? {
-        state: c.game,
-        targets: c.targets,
-        lastPlaced: c.lastPlaced,
-        labels: t.catan.board,
-        describeVertex: c.describeVertex,
-        describeHover: c.describeHoverTarget,
-        onVertex,
-        onEdge,
-        onHex,
-        viewRef: boardViewRef,
-        highlightHexes: boardOverrides.highlightHexes,
-        robberHex: boardOverrides.robberHex,
-        hiddenPieces: boardOverrides.hiddenPieces,
-      }
-    : null
-
   const boardArea = (
     <main style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
-      {c.game && boardProps ? (
+      {c.game ? (
         <div ref={boardWrapRef} data-tutorial="board" style={{ position: 'absolute', inset: 0 }}>
-          {createElement(BoardCanvas, boardProps)}
+          <BoardCanvas
+            state={c.game}
+            targets={c.targets}
+            lastPlaced={c.lastPlaced}
+            labels={t.catan.board}
+            describeVertex={c.describeVertex}
+            describeHover={c.describeHoverTarget}
+            onVertex={onVertex}
+            onEdge={onEdge}
+            onHex={onHex}
+            viewRef={boardViewRef}
+            highlightHexes={boardOverrides.highlightHexes}
+            robberHex={boardOverrides.robberHex}
+            hiddenPieces={boardOverrides.hiddenPieces}
+            animate={animations}
+          />
           {activeHint ? <HintBoardHighlight highlight={activeHint.highlight} wrapperRef={boardWrapRef} /> : null}
         </div>
       ) : (

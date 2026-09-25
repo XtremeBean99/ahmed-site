@@ -2,12 +2,10 @@
 
 import type { JSX, MutableRefObject } from 'react'
 import type { GameState, PlayerId } from '@/lib/games/catan/types'
+import type { BoardView } from '../BoardCanvas'
 import type { CatanSound } from '../sound'
 
-export interface BoardView {
-  toClient(p: { x: number; y: number }): { x: number; y: number }
-  scale: number
-}
+export type { BoardView }
 
 export interface BoardOverrides {
   highlightHexes: number[]

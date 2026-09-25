@@ -2,13 +2,9 @@
 
 import { useEffect, type RefObject } from 'react'
 import { intentForKey, type ShortcutIntent } from './shortcut-map'
-import type { BoardView } from './effects/EffectsLayer'
+import type { BoardView } from './BoardCanvas'
 
-export interface BoardViewHandle extends BoardView {
-  zoomIn?: () => void
-  zoomOut?: () => void
-  fit?: () => void
-}
+export type BoardViewHandle = BoardView
 
 export interface ShortcutFlags {
   roll: boolean
@@ -108,15 +104,15 @@ export function useShortcuts(opts: {
           break
         case 'zoomIn':
           event.preventDefault()
-          viewRef.current?.zoomIn?.()
+          viewRef.current?.zoomIn()
           break
         case 'zoomOut':
           event.preventDefault()
-          viewRef.current?.zoomOut?.()
+          viewRef.current?.zoomOut()
           break
         case 'zoomFit':
           event.preventDefault()
-          viewRef.current?.fit?.()
+          viewRef.current?.fit()
           break
         case 'cancel':
           run(handlers.cancel)

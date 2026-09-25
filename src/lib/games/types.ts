@@ -1,71 +1,72 @@
 // --- Breakout ---
-export interface Vec2 {
-  x: number
-  y: number
-}
+export type BrickKind = 'normal' | 'tough' | 'steel'
+export type PowerUpKind = 'wide' | 'multi' | 'slow' | 'life' | 'catch'
+export type EffectKind = 'wide' | 'slow' | 'catch'
+export type BreakoutStatus = 'ready' | 'play' | 'paused' | 'clear' | 'over'
 
 export interface Ball {
-  pos: Vec2
-  vel: Vec2
-  radius: number
+  x: number // center x
+  y: number // center y
+  vx: number
+  vy: number
+  /** True while resting on the paddle (serve, after a lost life, or under catch). */
+  stuck: boolean
 }
 
 export interface Paddle {
-  x: number // center x (logical units)
-  y: number // center y
+  x: number // center x
   width: number
-  baseWidth: number
-  height: number
 }
 
 export interface Brick {
+  col: number
+  row: number
   x: number // top-left
   y: number
-  width: number
-  height: number
-  row: number
+  w: number
+  h: number
+  kind: BrickKind
+  /** Colour band 1..8 by row (steel always draws its own grey). */
+  color: number
+  /** Tough bricks only: 0 untouched, 1 cracked (breaks on the next hit). */
+  hits: number
   alive: boolean
 }
 
-export type PowerUpKind = 'expand' | 'multi' | 'slow' | 'life'
-
 export interface PowerUp {
   kind: PowerUpKind
-  pos: Vec2 // center
-  width: number
-  height: number
-  vy: number
+  x: number // center
+  y: number
 }
 
-/** Only timed power-ups appear here; 'multi' and 'life' are instant. */
 export interface ActiveEffect {
-  kind: Extract<PowerUpKind, 'expand' | 'slow'>
+  kind: EffectKind
   remainingMs: number
 }
 
-export type GameStatus = 'ready' | 'playing' | 'paused' | 'won' | 'lost'
-
-export interface GameState {
-  status: GameStatus
+export interface BreakoutState {
+  status: BreakoutStatus
+  score: number
+  lives: number
+  level: number // 1..8
+  loop: number // completed full cycles of the 8 levels
   paddle: Paddle
   balls: Ball[]
   bricks: Brick[]
   powerUps: PowerUp[]
   effects: ActiveEffect[]
-  score: number // time-based: higher for a faster clear
-  elapsedMs: number // total active play time
-  lives: number
-  width: number // logical playfield width
-  height: number // logical playfield height
 }
 
-export interface BreakoutConfig {
-  width: number
-  height: number
-  cols: number
-  rows: number
-  lives: number
-}
+export type BreakoutEvent =
+  | { type: 'paddle' }
+  | { type: 'wall' }
+  | { type: 'brick'; row: number; x: number; y: number; color: number }
+  | { type: 'tough'; row: number; x: number; y: number; color: number }
+  | { type: 'steel'; row: number; x: number; y: number; color: number }
+  | { type: 'powerup'; kind: PowerUpKind }
+  | { type: 'life' }
+  | { type: 'clear' }
+  | { type: 'over' }
 
 // --- Typing test ---
 export type CharStatus = 'untyped' | 'correct' | 'incorrect' | 'current'

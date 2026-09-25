@@ -11,6 +11,7 @@ import {
   ArcadeOverlay,
   ArcadePanel,
   ArcadeStrip,
+  BlockTitle,
   CrtOverlay,
   PIXEL_FONT,
   SCREEN_W,
@@ -437,8 +438,11 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
       const pad = (n: number) => String(Math.min(99999, Math.max(0, n))).padStart(5, '0')
       const x = drawBlockText(ctx, labelsRef.current.hudScore, 8, 5, ARCADE.phosphor, 2, 2)
       drawBlockText(ctx, pad(s.score), x + 6, 5, ARCADE.phosphor, 2, 2)
+      // The dim high score reads cleaner without the glow.
+      ctx.shadowBlur = 0
       const hx = drawBlockText(ctx, labelsRef.current.hudHi, 120, 5, ARCADE.phosphorDim, 2, 2)
       drawBlockText(ctx, pad(bestRef.current), hx + 6, 5, ARCADE.phosphorDim, 2, 2)
+      ctx.shadowBlur = 6 * k
       const levelX = Math.round((COURT_W - 54) / 2)
       const levelEnd = drawBlockText(ctx, labelsRef.current.hudLevel, levelX, 5, ARCADE.phosphor, 2, 2)
       drawBlockText(ctx, String(s.level), levelEnd + 6, 5, ARCADE.phosphor, 2, 2)
@@ -619,7 +623,7 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
         {view === 'ready' && startedRef.current && (
           <p
             className="absolute inset-x-0 text-center pointer-events-none"
-            style={{ bottom: 10, fontSize: 9, color: '#c8b89a', ...PIXEL_FONT, textShadow: '1px 1px 0 rgba(0,0,0,0.7)' }}
+            style={{ bottom: 44, fontSize: 9, color: '#c8b89a', ...PIXEL_FONT, textShadow: '1px 1px 0 rgba(0,0,0,0.7)' }}
           >
             {labels.start}
           </p>
@@ -634,20 +638,13 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
                 doLaunch()
               }}
             >
-              <ArcadePanel className="px-8 py-5 text-center">
-                <p style={{ fontSize: 16, color: ARCADE.phosphor, letterSpacing: 2, textShadow: `2px 2px 0 ${ARCADE.panelShadow}` }}>
-                  {labels.title}
-                </p>
-                <p className="mt-3" style={{ fontSize: 10 }}>
-                  {labels.start}
-                </p>
-                <p className="mt-1.5" style={{ fontSize: 9, color: '#c8b89a' }}>
-                  {best > 0 ? labels.best.replace('{n}', String(best)) : ''}
-                </p>
-                <p className="mt-2.5" style={{ fontSize: 8, color: '#a8987a' }}>
-                  {labels.hint}
-                </p>
-              </ArcadePanel>
+              <div className="flex flex-col items-center gap-3 text-center" style={PIXEL_FONT}>
+                <h2 className="sr-only">{labels.title}</h2>
+                <BlockTitle text={labels.title} block={5} />
+                <p style={{ fontSize: 10, color: ARCADE.panelText }}>{labels.start}</p>
+                {best > 0 && <p style={{ fontSize: 9, color: ARCADE.panelText }}>{labels.best.replace('{n}', String(best))}</p>}
+                <p style={{ fontSize: 9, color: ARCADE.panelText, opacity: 0.8, whiteSpace: 'pre' }}>{labels.hint}</p>
+              </div>
             </div>
           </ArcadeOverlay>
         )}

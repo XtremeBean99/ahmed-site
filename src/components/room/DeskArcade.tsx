@@ -322,6 +322,40 @@ export function ArcadePanel({ children, className, style }: { children: ReactNod
   )
 }
 
+// 5x5 block capitals for the CRT titles.
+const TITLE_FONT: Record<string, string[]> = {
+  A: ['01110', '10001', '11111', '10001', '10001'],
+  B: ['11110', '10001', '11110', '10001', '11110'],
+  E: ['11111', '10000', '11110', '10000', '11111'],
+  G: ['01111', '10000', '10011', '10001', '01110'],
+  K: ['10001', '10010', '11100', '10010', '10001'],
+  N: ['10001', '11001', '10101', '10011', '10001'],
+  O: ['01110', '10001', '10001', '10001', '01110'],
+  P: ['11110', '10001', '11110', '10000', '10000'],
+  R: ['11110', '10001', '11110', '10010', '10001'],
+  T: ['11111', '00100', '00100', '00100', '00100'],
+  U: ['10001', '10001', '10001', '10001', '01110'],
+}
+
+/** A glowing phosphor title in 5x5 block capitals, for the CRT games' menus. Decorative; pair it with text for screen readers. */
+export function BlockTitle({ text, block = 6 }: { text: string; block?: number }) {
+  const letters = text.toUpperCase().split('').filter((c) => TITLE_FONT[c])
+  const w = letters.length * 6 * block - block
+  const rects: ReactNode[] = []
+  letters.forEach((ch, li) => {
+    TITLE_FONT[ch].forEach((row, r) => {
+      for (let c = 0; c < 5; c++) {
+        if (row[c] === '1') rects.push(<rect key={`${li}-${r}-${c}`} x={(li * 6 + c) * block} y={r * block} width={block} height={block} />)
+      }
+    })
+  })
+  return (
+    <svg width={w} height={5 * block} viewBox={`0 0 ${w} ${5 * block}`} shapeRendering="crispEdges" fill={ARCADE.phosphor} aria-hidden style={{ filter: 'drop-shadow(0 0 4px rgba(240,196,130,0.55))' }}>
+      {rects}
+    </svg>
+  )
+}
+
 /** Dims the play area and centres a panel over it (pause, game over, menus). */
 export function ArcadeOverlay({ children, tint = 'rgba(12,8,6,0.55)' }: { children: ReactNode; tint?: string }) {
   return (

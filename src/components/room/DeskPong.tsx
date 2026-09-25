@@ -10,6 +10,7 @@ import {
   ArcadeOverlay,
   ArcadePanel,
   ArcadeStrip,
+  BlockTitle,
   CrtOverlay,
   PIXEL_FONT,
   useCanvasScale,
@@ -158,38 +159,6 @@ function drawCourt(
     drawDigit(ctx, n, COURT_W / 2, 112, 3)
     ctx.restore()
   }
-}
-
-const TITLE: Record<string, string[]> = {
-  P: ['11111', '10001', '11111', '10000', '10000'],
-  O: ['01110', '10001', '10001', '10001', '01110'],
-  N: ['10001', '11001', '10101', '10011', '10001'],
-  G: ['01110', '10001', '10000', '10111', '01111'],
-}
-
-function PongTitle() {
-  const rects: { x: number; y: number }[] = []
-  'PONG'.split('').forEach((ch, li) => {
-    TITLE[ch].forEach((row, r) => {
-      for (let c = 0; c < row.length; c++) {
-        if (row[c] === '1') rects.push({ x: li * 36 + c * 6, y: r * 6 })
-      }
-    })
-  })
-  return (
-    <svg
-      width={138}
-      height={30}
-      viewBox="0 0 138 30"
-      shapeRendering="crispEdges"
-      aria-hidden
-      style={{ filter: 'drop-shadow(0 0 4px rgba(240,196,130,0.55))' }}
-    >
-      {rects.map((p, i) => (
-        <rect key={i} x={p.x} y={p.y} width={6} height={6} fill={ARCADE.phosphor} />
-      ))}
-    </svg>
-  )
 }
 
 export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack, onDesktop }: DeskGameProps<PongLabels>) {
@@ -480,7 +449,7 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
         {view === 'menu' && (
           <ArcadeOverlay>
             <div className="flex flex-col items-center gap-4">
-              <PongTitle />
+              <BlockTitle text="PONG" />
               <div className="flex flex-col items-stretch gap-2">
                 <ArcadeButton size="lg" onClick={() => { tone('select'); start('1p', difficulty) }}>
                   {labels.onePlayer}

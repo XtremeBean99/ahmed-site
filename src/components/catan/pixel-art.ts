@@ -645,7 +645,9 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }
 
+/** Plates start this far out along the edge normal and move out further only to clear pieces. */
 const HARBOR_LABEL_OFFSET = 22
+const HARBOR_LABEL_MAX_OFFSET = 32
 const HARBOR_LABEL_HEIGHT = 11
 
 export interface Rect {
@@ -655,7 +657,25 @@ export interface Rect {
   height: number
 }
 
-/** Pixel rect of a harbour label plate, placed seaward along the edge normal. */
+function rectsOverlap(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
+}
+
+/** The largest piece (a city) standing on each of the edge's two corners, with a 1 px gap. */
+function portPieceRects(edge: number): Rect[] {
+  const city = SPRITES.city
+  return edgeEndpoints(edge).map((p) => ({
+    x: p.x - city.anchorX - 1,
+    y: p.y - city.anchorY - 1,
+    width: city.width + 2,
+    height: city.height + 2,
+  }))
+}
+
+/**
+ * Pixel rect of a harbour label plate, placed seaward along the edge normal: as close to the coast
+ * as it can be without touching a city on either of the harbour's corners.
+ */
 export function harborPlateRect(edge: number, type: PortType): Rect {
   const [a, b] = edgeEndpoints(edge)
   const mx = (a.x + b.x) / 2
@@ -678,9 +698,15 @@ export function harborPlateRect(edge: number, type: PortType): Rect {
   const swatchW = isAny ? 0 : 5
   const gap = isAny ? 0 : 2
   const width = 2 + textWidth(text) + gap + swatchW + 2
-  const x = clamp(Math.round(mx + dx * HARBOR_LABEL_OFFSET - width / 2), 1, BOARD_WIDTH - width - 1)
-  const y = clamp(Math.round(my + dy * HARBOR_LABEL_OFFSET - HARBOR_LABEL_HEIGHT / 2), 1, BOARD_HEIGHT - HARBOR_LABEL_HEIGHT - 1)
-  return { x, y, width, height: HARBOR_LABEL_HEIGHT }
+  const pieces = portPieceRects(edge)
+  let rect: Rect = { x: 0, y: 0, width, height: HARBOR_LABEL_HEIGHT }
+  for (let offset = HARBOR_LABEL_OFFSET; offset <= HARBOR_LABEL_MAX_OFFSET; offset++) {
+    const x = clamp(Math.round(mx + dx * offset - width / 2), 1, BOARD_WIDTH - width - 1)
+    const y = clamp(Math.round(my + dy * offset - HARBOR_LABEL_HEIGHT / 2), 1, BOARD_HEIGHT - HARBOR_LABEL_HEIGHT - 1)
+    rect = { x, y, width, height: HARBOR_LABEL_HEIGHT }
+    if (!pieces.some((piece) => rectsOverlap(rect, piece))) break
+  }
+  return rect
 }
 
 function drawHarborPlateShape(buffer: PixelBuffer, plate: Rect, type: PortType): void {

@@ -13,7 +13,7 @@ import {
   vertexPoint,
 } from './board-layout'
 import { TILE_MASK_OFFSETS, createBuffer, drawBoard, harborPlateRect } from './pixel-art'
-import { TILE_ANCHOR_X, TILE_ANCHOR_Y, TILE_MASK_HEIGHT, TILE_MASK_WIDTH } from './sprites'
+import { SPRITES, TILE_ANCHOR_X, TILE_ANCHOR_Y, TILE_MASK_HEIGHT, TILE_MASK_WIDTH } from './sprites'
 import type { PixelBuffer } from './pixel-art'
 
 function changedPixels(a: PixelBuffer, b: PixelBuffer): { x: number; y: number }[] {
@@ -226,3 +226,21 @@ test('harbour label plates stay inside the canvas and entirely at sea', () => {
     }
   }
 })
+
+test('harbour label plates never sit under a city on their own corners', () => {
+  const city = SPRITES.city
+  for (const edge of PORT_EDGES) {
+    for (const type of ['any', 'ore'] as const) {
+      const plate = harborPlateRect(edge, type)
+      for (const v of EDGES[edge].vertices) {
+        const c = vertexPoint(v)
+        const x0 = c.x - city.anchorX
+        const y0 = c.y - city.anchorY
+        const overlapX = Math.min(x0 + city.width, plate.x + plate.width) - Math.max(x0, plate.x)
+        const overlapY = Math.min(y0 + city.height, plate.y + plate.height) - Math.max(y0, plate.y)
+        assert.ok(overlapX <= 0 || overlapY <= 0, `plate for port ${edge} overlaps a city on vertex ${v}`)
+      }
+    }
+  }
+})
+

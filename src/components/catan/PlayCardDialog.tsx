@@ -4,12 +4,13 @@ import { useId, useState } from 'react'
 import { useT } from '@/lib/i18n/client'
 import { RESOURCES } from '@/lib/games/catan/constants'
 import { validateAction } from '@/lib/games/catan/engine'
-import { emptyResources, hasResources, totalCards } from '@/lib/games/catan/helpers'
+import { totalCards } from '@/lib/games/catan/helpers'
 import type { Action, DevCardType, GameState, PlayerId, Resource, ResourceCounts } from '@/lib/games/catan/types'
+import { devCardSprite, emptySelection, yearOfPlentyAdd, yearOfPlentyPair, yearOfPlentyRemove, yearOfPlentyValid } from './dialog-logic'
+import { PixelSprite } from './PixelSprite'
 import { ResourceIcon } from './ResourceIcon'
 import { ResourceStepper } from './ResourceStepper'
-import { Tooltip } from './Tooltip'
-import { ModalDialog, Muted, PIXEL_FONT, PixelButton, SectionTitle } from './ui'
+import { COLORS, FONT, ModalDialog, Muted, PIXEL_FONT, PixelButton, SectionTitle } from './ui'
 
 export type PlayableDevCard = Exclude<DevCardType, 'victoryPoint'>
 
@@ -55,115 +56,119 @@ export function PlayCardDialog({
   const t = useT()
   const d = t.catan.playCard
   const titleId = useId()
-  const [selected, setSelected] = useState<Exclude<DevCardType, 'victoryPoint'> | null>(preselect)
-  const [yop, setYop] = useState<ResourceCounts>(emptyResources())
+  const [selected, setSelected] = useState<PlayableDevCard | null>(preselect)
+  const [yop, setYop] = useState<ResourceCounts>(emptySelection())
   const [mono, setMono] = useState<Resource | null>(null)
 
   const playable = playableDevCards(state, human)
+  const selectedCard = selected && playable.includes(selected) ? selected : null
 
-  const yopTotal = totalCards(yop)
-  const yopValid = yopTotal === 2 && hasResources(state.bank, yop)
+  const yopValid = yearOfPlentyValid(yop, state.bank)
+  const valid =
+    selectedCard === 'knight' ||
+    selectedCard === 'roadBuilding' ||
+    (selectedCard === 'yearOfPlenty' && yopValid) ||
+    (selectedCard === 'monopoly' && mono !== null)
+
+  const chooseCard = (card: PlayableDevCard) => {
+    setSelected(card)
+    setYop(emptySelection())
+    setMono(null)
+  }
+
+  const changeYop = (resource: Resource, next: number) => {
+    setYop((prev) => (next > prev[resource] ? yearOfPlentyAdd(prev, resource, state.bank) : yearOfPlentyRemove(prev, resource)))
+  }
 
   const doPlay = () => {
-    if (!selected) return
-    if (selected === 'knight') onPlay({ type: 'playKnight' })
-    else if (selected === 'roadBuilding') onPlay({ type: 'playRoadBuilding' })
-    else if (selected === 'yearOfPlenty') {
-      const pair: [Resource, Resource] = RESOURCES.flatMap((r) =>
-        Array.from({ length: yop[r] }, () => r),
-      ) as [Resource, Resource]
-      onPlay({ type: 'playYearOfPlenty', resources: pair })
-    } else if (selected === 'monopoly' && mono !== null) {
+    if (!valid) return
+    if (selectedCard === 'knight') onPlay({ type: 'playKnight' })
+    else if (selectedCard === 'roadBuilding') onPlay({ type: 'playRoadBuilding' })
+    else if (selectedCard === 'yearOfPlenty') {
+      const pair = yearOfPlentyPair(yop)
+      if (pair) onPlay({ type: 'playYearOfPlenty', resources: pair })
+    } else if (selectedCard === 'monopoly' && mono !== null) {
       onPlay({ type: 'playMonopoly', resource: mono })
     }
   }
 
-  const valid =
-    selected === 'knight' ||
-    selected === 'roadBuilding' ||
-    (selected === 'yearOfPlenty' && yopValid) ||
-    (selected === 'monopoly' && mono !== null)
-
   return (
-    <ModalDialog labelledBy={titleId} onClose={onClose} style={{ width: 440 }}>
+    <ModalDialog labelledBy={titleId} onClose={onClose} style={{ width: 520 }}>
       <SectionTitle id={titleId}>{d.title}</SectionTitle>
-        {playable.length === 0 ? (
-          <p style={{ ...PIXEL_FONT, fontSize: 10, color: '#a09080' }}>{d.empty}</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+
+      {playable.length === 0 ? (
+        <p style={{ ...PIXEL_FONT, fontSize: FONT.small, color: COLORS.muted }}>{d.empty}</p>
+      ) : (
+        <>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+              gap: 8,
+              marginTop: 12,
+            }}
+          >
             {playable.map((card) => (
-              <Tooltip key={card} content={d.cards[card].desc}>
-                <PixelButton
-                  selected={selected === card}
-                  onClick={() => {
-                    setSelected(card)
-                    setYop(emptyResources())
-                    setMono(null)
-                  }}
-                  aria-pressed={selected === card}
-                  style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2, width: '100%' }}
-                >
-                  <span style={{ fontSize: 12, color: '#e8d5b0' }}>{d.cards[card].name}</span>
-                  <span style={{ fontSize: 10, color: '#a09080', whiteSpace: 'normal', textAlign: 'left' }}>
-                    {d.cards[card].desc}
-                  </span>
-                </PixelButton>
-              </Tooltip>
+              <PixelButton
+                key={card}
+                selected={selectedCard === card}
+                aria-pressed={selectedCard === card}
+                onClick={() => chooseCard(card)}
+                style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 6, width: '100%', padding: 10 }}
+              >
+                <PixelSprite name={devCardSprite(card)} scale={2} alt="" />
+                <span style={{ fontSize: FONT.body, color: COLORS.text }}>{d.cards[card].name}</span>
+                <span style={{ fontSize: FONT.small, color: COLORS.muted, whiteSpace: 'normal', textAlign: 'left' }}>
+                  {d.cards[card].desc}
+                </span>
+              </PixelButton>
             ))}
-
-            {selected === 'yearOfPlenty' ? (
-              <div style={{ marginTop: 4 }}>
-                <Muted>{d.chooseTwo}</Muted>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
-                  {RESOURCES.map((r) => (
-                    <ResourceStepper
-                      key={r}
-                      resource={r}
-                      label={t.catan.resources[r]}
-                      value={yop[r]}
-                      max={Math.min(2, state.bank[r])}
-                      onChange={(n) => {
-                        const next = { ...yop, [r]: n }
-                        if (totalCards(next) > 2) return
-                        setYop(next)
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {selected === 'monopoly' ? (
-              <div style={{ marginTop: 4 }}>
-                <Muted>{d.chooseOne}</Muted>
-                <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-                  {RESOURCES.map((r) => (
-                    <PixelButton
-                      key={r}
-                      selected={mono === r}
-                      onClick={() => setMono(r)}
-                      aria-pressed={mono === r}
-                    >
-                      <ResourceIcon resource={r} size={14} />
-                      {t.catan.resources[r]}
-                    </PixelButton>
-                  ))}
-                </div>
-              </div>
-            ) : null}
           </div>
-        )}
 
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-          <Tooltip content={d.close}>
-            <PixelButton onClick={onClose}>{d.close}</PixelButton>
-          </Tooltip>
-          <Tooltip content={d.play}>
-            <PixelButton variant="primary" disabled={!valid} onClick={doPlay}>
-              {d.play}
-            </PixelButton>
-          </Tooltip>
-        </div>
+          {selectedCard === 'yearOfPlenty' ? (
+            <div style={{ marginTop: 12 }}>
+              <Muted>{d.chooseTwo}</Muted>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
+                {RESOURCES.map((r) => (
+                  <ResourceStepper
+                    key={r}
+                    resource={r}
+                    label={t.catan.resources[r]}
+                    value={yop[r]}
+                    max={Math.min(2, state.bank[r], yop[r] + (2 - totalCards(yop)))}
+                    onChange={(n) => changeYop(r, n)}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {selectedCard === 'monopoly' ? (
+            <div style={{ marginTop: 12 }}>
+              <Muted>{d.chooseOne}</Muted>
+              <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                {RESOURCES.map((r) => (
+                  <PixelButton key={r} selected={mono === r} onClick={() => setMono(r)} aria-pressed={mono === r}>
+                    <ResourceIcon resource={r} size={16} />
+                    {t.catan.resources[r]}
+                  </PixelButton>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {selectedCard === 'knight' || selectedCard === 'roadBuilding' ? (
+            <Muted style={{ display: 'block', marginTop: 12 }}>{d.cards[selectedCard].desc}</Muted>
+          ) : null}
+        </>
+      )}
+
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
+        <PixelButton onClick={onClose}>{d.close}</PixelButton>
+        <PixelButton variant="primary" disabled={!valid} onClick={doPlay}>
+          {d.play}
+        </PixelButton>
+      </div>
     </ModalDialog>
   )
 }

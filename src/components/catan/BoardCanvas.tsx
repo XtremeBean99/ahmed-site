@@ -973,7 +973,13 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
       onPointerLeave={hideHoverTip}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
+      onScroll={(event) => {
+        // The camera owns positioning; focus must never scroll the viewport (browsers without overflow: clip).
+        event.currentTarget.scrollTop = 0
+        event.currentTarget.scrollLeft = 0
+      }}
       style={{
+        overflow: 'clip',
         backgroundColor: COLORS.sea,
         backgroundImage: 'url(/catan/sea.png)',
         backgroundSize: `${SEA_TILE * s}px ${SEA_TILE * s}px`,

@@ -11,6 +11,7 @@
     "test:catan": "tsx --test \"src/lib/games/catan/**/*.test.ts\" \"src/components/catan/**/*.test.ts\"",
     "test:snake": "tsx --test \"src/lib/games/snake-engine.test.ts\"",
     "test:games": "tsx --test \"src/lib/games/*.test.ts\"",
+    "test:terminal": "tsx --test \"src/lib/terminal/**/*.test.ts\"",
     "catan-sprites:export": "tsx scripts/catan-sprites.ts export",
     "catan-sprites": "tsx scripts/catan-sprites.ts validate",
     "lighting": "node scripts/generate-lighting.mjs",

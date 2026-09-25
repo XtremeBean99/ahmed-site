@@ -1,0 +1,8 @@
+// Cow ASCII art from the classic cowsay cow files (extracted here-doc bodies).
+// Placeholders: $thoughts, $eyes, $tongue, $eye (first = left eye, second = right eye).
+export const COWS: Record<string, string> = {
+  "default": "        $thoughts   ^__^\n         $thoughts  ($eyes)\\_______\n            (__)\\       )\\/\\\n             $tongue ||----w |\n                ||     ||",
+  "tux": "   $thoughts\n    $thoughts\n        .--.\n       |$eye_$eye |\n       |:_/ |\n      //   \\ \\\n     (|     | )\n    /'\\_   _/`\\\n    \\___)=(___/\n",
+  "dragon": "      $thoughts                    / \\  //\\\n       $thoughts    |\\___/|      /   \\//  \\\\\n            /$eye  $eye  \\__  /    //  | \\ \\    \n           /     /  \\/_/    //   |  \\  \\  \n           @_^_@'/   \\/_   //    |   \\   \\ \n           //_^_/     \\/_ //     |    \\    \\\n        ( //) |        \\///      |     \\     \\\n      ( / /) _|_ /   )  //       |      \\     _\\\n    ( // /) '/,_ _ _/  ( ; -.    |    _ _\\.-~        .-~~~^-.\n  (( / / )) ,-{        _      `-.|.-~-.           .~         `.\n (( // / ))  '/\\      /                 ~-. _ .-~      .-~^-.  \\\n (( /// ))      `.   {            }                   /      \\  \\\n  (( / ))     .----~-.\\        \\-'                 .~         \\  `. \\^-.\n             ///.----..>        \\             _ -~             `.  ^-`  ^-_\n               ///-._ _ _ _ _ _ _}^ - - - - ~                     ~-- ,.-~\n                                                                  /.-~",
+  "sheep": "  $thoughts\n   $thoughts\n       __     \n      U${eyes}U\\.'@@@@@@`.\n      \\__/(@@@@@@@@@@)\n        $tongue (@@@@@@@@)\n           `YY~~~~YY'\n            ||    ||",
+}

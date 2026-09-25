@@ -173,6 +173,16 @@ Screen modes: `desktop | paint | minesweeper | snake | readme | music | legal | 
 settings | terminal | movie`. Desktop icons: LinkedIn (external), GitHub (external), Settings,
 Music, Paint, Minesweeper, Snake, README, Guestbook, Movie, Legal. (Links/webring was removed
 in v19; `terminal` stays konami-only and has no icon.)
+`terminal` (`DeskTerminal.tsx` + `TermEditor.tsx`, engine in `src/lib/terminal/`): a client-only Linux
+shell. `shell/` is an async bash interpreter (quoting, expansions, arrays, arithmetic, control flow,
+functions, pipes, redirections, heredocs, aliases, `~/.bashrc`; an 8 s busy-time budget and Ctrl+C abort
+stop runaway loops). `commands/*.ts` hold ~200 commands (coreutils, grep/sed/awk, jq, bc, tar, cowsay...)
+merged in `commands/index.ts`, which also owns `help`/`man`. `editors/nano.ts` and `editors/vim*.ts` are
+pure state machines rendered as a char grid; `TermEditor` feeds keys through a hidden textarea (so IME and
+phone keyboards work) and swallows Escape so vim never closes the desk. Files live in a `VFS` saved to
+`room-terminal-fs-v1` (1.5 MB cap), history in `room-terminal-history-v1`. Files in `~/Desktop` show as
+icons on the pixel desktop (`DeskDesktop` `files`), clicking one opens it in nano; `download FILE` saves
+to the visitor's real machine. Tests: `npm run test:terminal` (518). Design log: `todo.md` (TRM).
 `paint` (`DeskPaint.tsx`: 107×50 pixel canvas, 10-colour palette, pencil/eraser/fill tools,
 persistent to `room-paint-v1`, PNG download), `minesweeper` (`DeskMinesweeper.tsx`: 9×9/10
 mines, pure engine in `src/lib/games/minesweeper-engine.ts`, first-click safety,

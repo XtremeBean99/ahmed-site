@@ -230,3 +230,29 @@ Pong has **a CPU opponent and local 2-player**; **soft synthesized SFX** that ob
 | ARC6 | Visual pass: 1408x768 and full-screen screenshots of every state, polish until right | orchestrator | |
 | ARC7 | Card art polish (aces, court portraits) | orchestrator | |
 | ARC8 | Docs (CLAUDE.md v20), commit, push, deploy, production check | orchestrator | |
+
+---
+
+## APPROVED DESIGN — Terminal overhaul (real bash, nano, vim)
+
+Requested 25 September 2026. Replaces the ten-command `DeskTerminal` toy with a Linux-like shell.
+
+### Decisions
+- **Client-only virtual machine.** No server, no network. Files live in a `VFS` (`src/lib/terminal/vfs.ts`), persisted in
+  `localStorage` (`room-terminal-fs-v1`, 1.5 MB cap), history in `room-terminal-history-v1`.
+- **Desktop = `~/Desktop`.** Files saved there appear as icons on the pixel desktop (`DeskDesktop` `files` prop, refreshed when the
+  desktop is shown); clicking one opens it in nano inside the Terminal. `download FILE` hands a file to the browser for the real
+  desktop. The Terminal stays konami-only (no icon), per the existing design.
+- **Bash is an async tree-walking interpreter** (`shell/`): full quoting/expansion, arrays, arithmetic, if/for/while/case,
+  functions, pipes, redirections, heredocs, `$(...)`, aliases, `~/.bashrc`. Stages of a pipeline run sequentially with the
+  previous output as the next stdin. Step budget + abort signal so `while true` cannot hang the tab.
+- **Commands** (`commands/*.ts`, merged in `commands/index.ts`, which also owns `help` and `man`): files, text, sed, awk, system, fun.
+- **Editors are pure state machines** (`editors/nano.ts`, `editors/vim.ts`) returning a styled character grid; `TermEditor.tsx`
+  draws it in a measured monospace grid and swallows Escape so vim does not close the desk.
+- **Known gaps:** no real background jobs, no symlinks, no Ctrl+R history search, nano's Ctrl+W is stolen by the browser (use F6 or Alt+W).
+
+### Tasks
+- TRM0 foundation (types, vfs, glob, regex, printf, seed, ansi, session): done, `npm run test:terminal`.
+- TRM1 shell, TRM2 files, TRM3 text, TRM4 sed+awk, TRM5 misc, TRM6 fun, TRM7 nano, TRM8 vim: built by deepcode agents (`.agents-work/term-*.md`), verified here.
+- TRM9 UI (`DeskTerminal.tsx`, `TermEditor.tsx`), desktop icons, CLAUDE.md notes.
+

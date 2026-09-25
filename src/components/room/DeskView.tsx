@@ -18,6 +18,7 @@ import { DeskMusic } from './DeskMusic'
 import { DeskLegal, type LegalLabels } from './DeskLegal'
 import { DeskSettings, type SettingsLabels } from './DeskSettings'
 import { DeskTerminal } from './DeskTerminal'
+import { desktopFiles } from '@/lib/terminal/session'
 import { DeskGuestbook, type GuestbookLabels } from './DeskGuestbook'
 import { DeskMovie, type MovieLabels } from './DeskMovie'
 import { MusicNotes } from './MusicNotes'
@@ -109,6 +110,8 @@ export function DeskView(props: DeskViewProps) {
   const [showDesktop, setShowDesktop] = useState(false)
   const [time, setTime] = useState('')
   const [screenMode, setScreenMode] = useState<ScreenMode>('readme')
+  const [termBoot, setTermBoot] = useState<string | null>(null)
+  const [deskFiles, setDeskFiles] = useState<{ name: string; path: string }[]>([])
   const [mouseJitter, setMouseJitter] = useState(false)
   const [screensaver, setScreensaver] = useState(false)
   const [backPending, setBackPending] = useState(false)
@@ -183,6 +186,14 @@ export function DeskView(props: DeskViewProps) {
       onKonamiHandled()
     }
   }, [konamiOpen, onKonamiHandled])
+  // Files saved to ~/Desktop in the Terminal show up as desktop icons; refresh when the desktop is shown
+  useEffect(() => {
+    if (screenMode === 'desktop') setDeskFiles(desktopFiles(readmeContent))
+  }, [screenMode, readmeContent])
+  const openDeskFile = useCallback((path: string) => {
+    setTermBoot("nano '" + path.replace(/'/g, "'\\''") + "'")
+    setScreenMode('terminal')
+  }, [])
   // Return to desktop
   const goDesktop = useCallback(() => {
     setScreenMode('desktop')
@@ -382,6 +393,8 @@ export function DeskView(props: DeskViewProps) {
                   screenW={SCREEN_W}
                   screenH={SCREEN_H}
                   onShortcutClick={handleShortcutClick}
+                  files={deskFiles}
+                  onFileClick={openDeskFile}
                 />
               </motion.div>
             )}
@@ -550,6 +563,8 @@ export function DeskView(props: DeskViewProps) {
                   desktopLabel={desktopLabel}
                   onDesktop={goDesktop}
                   readmeContent={readmeContent}
+                  bootCommand={termBoot}
+                  onBootHandled={() => setTermBoot(null)}
                 />
               </motion.div>
             )}

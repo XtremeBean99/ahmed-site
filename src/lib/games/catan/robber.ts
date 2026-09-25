@@ -4,6 +4,7 @@ import {
   isHexId,
   isPlayerId,
   isResourceCounts,
+  legalRobberHexes,
   payToBank,
   pushEvent,
   robberVictims,
@@ -69,7 +70,7 @@ export const robberHandlers: HandlerMap<'discard' | 'moveRobber' | 'steal'> = {
     validate(state, action) {
       if (state.phase.kind !== 'moveRobber') return 'No robber move is pending'
       if (!isHexId(action.hex)) return 'Invalid hex'
-      if (action.hex === state.robber) return 'Must move the robber to a different hex'
+      if (!legalRobberHexes(state).includes(action.hex)) return 'The robber cannot move there'
       return null
     },
     apply(state, action) {

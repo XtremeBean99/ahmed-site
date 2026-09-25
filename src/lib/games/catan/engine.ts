@@ -35,12 +35,30 @@ export function validateAction(state: GameState, action: Action): string | null 
 export function applyAction(state: GameState, action: Action): GameState {
   const reason = validateAction(state, action)
   if (reason !== null) throw new Error(reason)
-  const next = structuredClone(state)
+  // Events are append-only after pushEvent creates them, so sharing them is safe.
+  const { events, ...rest } = state
+  const next = structuredClone(rest) as GameState
+  next.events = events.slice()
   handlerFor(action)!.apply(next, action)
   updateLongestRoad(next)
   updateLargestArmy(next)
   checkVictory(next)
   return next
+}
+
+/** Actions safe to undo with a simple state snapshot (no hidden information revealed or consumed). */
+export function isUndoable(action: Action): boolean {
+  switch (action.type) {
+    case 'buildRoad':
+    case 'buildSettlement':
+    case 'buildCity':
+    case 'maritimeTrade':
+    case 'playRoadBuilding':
+    case 'playYearOfPlenty':
+      return true
+    default:
+      return false
+  }
 }
 
 /** Only the player whose turn it is can win, so a player pushed to 10 elsewhere wins when their turn starts. */

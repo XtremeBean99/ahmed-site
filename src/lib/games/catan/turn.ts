@@ -72,7 +72,8 @@ const rollDice: Handler<'rollDice'> = {
     return state.phase.kind === 'preRoll' ? null : 'Roll only before the main phase'
   },
   apply(state) {
-    const dice: [number, number] = [nextInt(state, 6) + 1, nextInt(state, 6) + 1]
+    const scripted = state.scriptedRolls && state.scriptedRolls.length > 0 ? state.scriptedRolls.shift() : undefined
+    const dice: [number, number] = scripted ?? [nextInt(state, 6) + 1, nextInt(state, 6) + 1]
     state.dice = dice
     pushEvent(state, { type: 'roll', player: state.current, dice })
     if (dice[0] + dice[1] === 7) {
@@ -227,6 +228,7 @@ const endTurn: Handler<'endTurn'> = {
     player.newDevCards = []
     state.devCardPlayedThisTurn = false
     state.dice = null
+    state.offersThisTurn = 0
     pushEvent(state, { type: 'turnEnded', player: state.current })
     state.current = (state.current + 1) % state.players.length
     state.turn += 1

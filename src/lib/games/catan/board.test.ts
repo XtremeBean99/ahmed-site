@@ -17,7 +17,7 @@ import { HEXES, PORT_EDGES } from './geometry'
 import type { DevCardType, NewGameOptions, Terrain } from './types'
 
 test('generateBoard returns the standard multisets and robber on the desert', () => {
-  const board = generateBoard({ rng: 12345 })
+  const board = generateBoard({ rng: 12345 }, 'random')
   assert.equal(board.tiles.length, 19)
   const terrains = Object.fromEntries(Object.keys(TERRAIN_COUNTS).map((t) => [t, 0])) as Record<Terrain, number>
   for (const tile of board.tiles) terrains[tile.terrain] += 1
@@ -35,7 +35,7 @@ test('generateBoard returns the standard multisets and robber on the desert', ()
 
 test('no adjacent red numbers over 300 generated boards', () => {
   for (let seed = 0; seed < 300; seed++) {
-    const board = generateBoard({ rng: seed | 0 })
+    const board = generateBoard({ rng: seed | 0 }, 'random')
     for (const hex of HEXES) {
       const n = board.tiles[hex.id].number
       if (n !== 6 && n !== 8) continue

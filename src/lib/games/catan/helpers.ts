@@ -1,6 +1,7 @@
-import { MAX_EVENTS, RESOURCES } from './constants'
+import { FRIENDLY_ROBBER_MAX_VP, MAX_EVENTS, RESOURCES } from './constants'
 import { EDGES, HEXES, VERTICES } from './geometry'
-import type { GameEventInput, GameState, PlayerId, PortType, Resource, ResourceCounts } from './types'
+import { recordStats } from './stats'
+import type { GameEvent, GameEventInput, GameState, PlayerId, PortType, Resource, ResourceCounts } from './types'
 
 // --- Resource arithmetic ---
 
@@ -136,12 +137,39 @@ export function maritimeRate(state: GameState, player: PlayerId, resource: Resou
 
 /** Opponents of `player` with a building on `hex` and at least one resource card. */
 export function robberVictims(state: GameState, hex: number, player: PlayerId): PlayerId[] {
+  const protectedOpponents = friendlyRobberProtected(state, player)
   const owners = new Set<PlayerId>()
   for (const v of HEXES[hex].vertices) {
     const b = state.buildings[v]
-    if (b && b.owner !== player && totalCards(state.players[b.owner].resources) > 0) owners.add(b.owner)
+    if (b && b.owner !== player && totalCards(state.players[b.owner].resources) > 0 && !protectedOpponents.has(b.owner)) {
+      owners.add(b.owner)
+    }
   }
   return [...owners].sort((a, b) => a - b)
+}
+
+function friendlyRobberProtected(state: GameState, player: PlayerId): Set<PlayerId> {
+  const protectedOpponents = new Set<PlayerId>()
+  if (!state.settings.friendlyRobber) return protectedOpponents
+  for (let p = 0; p < state.players.length; p++) {
+    if (p === player) continue
+    if (victoryPoints(state, p, false) <= FRIENDLY_ROBBER_MAX_VP) protectedOpponents.add(p)
+  }
+  return protectedOpponents
+}
+
+/** Hexes the current player may move the robber to, honouring the friendly-robber setting. */
+export function legalRobberHexes(state: GameState): number[] {
+  const all = HEXES.filter((hex) => hex.id !== state.robber).map((hex) => hex.id)
+  const protectedOpponents = friendlyRobberProtected(state, state.current)
+  if (protectedOpponents.size === 0) return all
+  const free = all.filter((hex) =>
+    HEXES[hex].vertices.every((v) => {
+      const building = state.buildings[v]
+      return building === null || !protectedOpponents.has(building.owner)
+    }),
+  )
+  return free.length > 0 ? free : all
 }
 
 // --- Scoring and turn order ---
@@ -169,6 +197,8 @@ export function setupOrder(playerCount: number, round: 1 | 2): PlayerId[] {
 
 export function pushEvent(state: GameState, event: GameEventInput): void {
   state.eventSeq += 1
-  state.events.push({ ...event, seq: state.eventSeq, turn: state.turn })
+  const full: GameEvent = { ...event, seq: state.eventSeq, turn: state.turn }
+  state.events.push(full)
+  recordStats(state, full)
   if (state.events.length > MAX_EVENTS) state.events.splice(0, state.events.length - MAX_EVENTS)
 }

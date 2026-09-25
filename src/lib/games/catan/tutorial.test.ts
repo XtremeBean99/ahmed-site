@@ -119,7 +119,22 @@ test('createTutorialGame builds a valid, deterministic tutorial state', () => {
     state.ports.map((port) => port.edge),
     [33, 10, 1, 5, 22, 48, 71, 68, 62],
   )
-  assert.equal(state.devDeck[state.devDeck.length - 1], 'knight')
+  assert.deepEqual(
+    state.scriptedRolls,
+    [
+      [5, 3],
+      [6, 5],
+      [2, 3],
+      [1, 6],
+      [5, 1],
+      [2, 2],
+    ],
+  )
+  const deckCounts: Record<string, number> = {}
+  for (const card of state.devDeck) deckCounts[card] = (deckCounts[card] ?? 0) + 1
+  assert.deepEqual(deckCounts, { knight: 14, victoryPoint: 5, roadBuilding: 2, yearOfPlenty: 2, monopoly: 2 })
+  const grouped = [...state.devDeck.filter((c) => c !== 'knight'), ...state.devDeck.filter((c) => c === 'knight')]
+  assert.notDeepEqual(state.devDeck, grouped)
   const first = createTutorialGame()
   const second = createTutorialGame()
   assert.deepEqual(first, second)
@@ -197,7 +212,8 @@ test('the full scripted lesson plays through the real engine', () => {
   assert.deepEqual(firstRolls, [8])
   assert.deepEqual(secondRolls, [7])
   assert.equal(state.players[human].knightsPlayed, 1)
-  assert.equal(state.devDeck[state.devDeck.length - 1], 'knight')
+  const groupedRemaining = [...state.devDeck.filter((c) => c !== 'knight'), ...state.devDeck.filter((c) => c === 'knight')]
+  assert.notDeepEqual(state.devDeck, groupedRemaining)
   assert.ok(totalCards(state.players[human].resources) >= 0)
   for (const resource of RESOURCES) {
     const total = state.bank[resource] + state.players.reduce((sum, player) => sum + player.resources[resource], 0)

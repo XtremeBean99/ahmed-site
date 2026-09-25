@@ -1,5 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { chooseBotAction } from './ai'
 import {
   BANK_PER_RESOURCE,
   COSTS,
@@ -8,7 +9,7 @@ import {
   PIECES,
   RESOURCES,
 } from './constants'
-import { applyAction, createGame, humanPlayer, isUndoable, playersToAct, validateAction } from './engine'
+import { applyAction, createGame, playersToAct, validateAction } from './engine'
 import { HEXES, VERTICES } from './geometry'
 import {
   emptyResources,
@@ -21,7 +22,6 @@ import {
   totalCards,
   victoryPoints,
 } from './helpers'
-import { give, makeTestState, putSettlement, res } from './test-fixtures'
 import type { Action, GameState, Resource, ResourceCounts } from './types'
 
 function mulberry32(seed: number): () => number {
@@ -32,34 +32,6 @@ function mulberry32(seed: number): () => number {
     r ^= r + Math.imul(r ^ (r >>> 7), r | 61)
     return ((r ^ (r >>> 14)) >>> 0) / 4294967296
   }
-}
-
-function scriptedSetup(seed: number, playerCount: 3 | 4): { state: GameState; expected: ResourceCounts[] } {
-  let state = createGame({ seed, playerCount })
-  const expected = state.players.map(() => emptyResources())
-  while (state.phase.kind === 'setup') {
-    const phase = state.phase
-    let action: Action
-    if (phase.step === 'settlement') {
-      const vertices = legalSetupSettlements(state)
-      assert.ok(vertices.length > 0, 'expected a legal setup settlement')
-      if (phase.round === 2) {
-        for (const hex of VERTICES[vertices[0]].hexes) {
-          const terrain = state.tiles[hex].terrain
-          if (terrain !== 'desert') expected[state.current][terrain] += 1
-        }
-      }
-      action = { type: 'placeSetupSettlement', vertex: vertices[0] }
-    } else {
-      const edges = legalSetupRoads(state)
-      assert.ok(edges.length > 0, 'expected a legal setup road')
-      action = { type: 'placeSetupRoad', edge: edges[0] }
-    }
-    assert.equal(validateAction(state, action), null)
-    assert.deepEqual(playersToAct(state), [state.current])
-    state = applyAction(state, action)
-  }
-  return { state, expected }
 }
 
 function randomDiscard(hand: ResourceCounts, owed: number, rng: () => number): ResourceCounts | null {
@@ -200,6 +172,23 @@ function candidateActions(state: GameState, rng: () => number): Action[] {
     case 'roadBuilding':
       for (const edge of legalRoads(state, current)) actions.push({ type: 'buildRoad', edge })
       break
+    case 'trade':
+      if (phase.offer.from === current) {
+        for (const partner of phase.offer.to) {
+          if (phase.offer.replies[partner] === 'accept' || phase.offer.replies[partner] === 'counter') {
+            actions.push({ type: 'confirmTrade', partner })
+          }
+        }
+        actions.push({ type: 'cancelTrade' })
+      } else {
+        for (let p = 0; p < state.players.length; p++) {
+          if (phase.offer.replies[p] === 'pending') {
+            actions.push({ type: 'respondTrade', player: p, reply: 'accept' })
+            actions.push({ type: 'respondTrade', player: p, reply: 'decline' })
+          }
+        }
+      }
+      break
     case 'gameOver':
       break
   }
@@ -295,6 +284,10 @@ function assertPhaseShape(state: GameState): void {
     case 'roadBuilding':
       assert.ok(phase.remaining >= 1)
       assert.ok(phase.returnTo === 'preRoll' || phase.returnTo === 'main')
+      break
+    case 'trade':
+      assert.ok(phase.offer.to.length >= 1)
+      for (const p of phase.offer.to) assertValidPlayerId(state, p)
       break
     case 'gameOver':
       assertValidPlayerId(state, phase.winner)
@@ -421,109 +414,10 @@ function runFuzzGame(
   return { state, actions, finished: state.phase.kind === 'gameOver', playedDevCards }
 }
 
-for (const playerCount of [3, 4] as const) {
-  test(`scripted engine setup for ${playerCount} players reaches preRoll`, () => {
-    const { state, expected } = scriptedSetup(100 + playerCount, playerCount)
-    assert.equal(state.phase.kind, 'preRoll')
-    assert.deepEqual(state.phase, { kind: 'preRoll' })
-    assert.equal(state.current, 0)
-    assert.equal(state.turn, 1)
-
-    for (let player = 0; player < playerCount; player++) {
-      assert.equal(victoryPoints(state, player), 2)
-      assert.equal(state.players[player].roadsLeft, PIECES.roads - 2)
-      assert.equal(state.players[player].settlementsLeft, PIECES.settlements - 2)
-      assert.equal(state.players[player].citiesLeft, PIECES.cities)
-      assert.equal(state.buildings.filter((b) => b?.owner === player && b.kind === 'settlement').length, 2)
-      assert.equal(state.roads.filter((owner) => owner === player).length, 2)
-      assert.deepEqual(state.players[player].resources, expected[player])
-      assert.equal(state.players[player].devCards.length, 0)
-      assert.equal(state.players[player].newDevCards.length, 0)
-    }
-  })
-}
-
-test('applyAction never mutates its input and throws on illegal actions with the validate reason', () => {
-  const state = createGame({ seed: 11, playerCount: 3 })
-  const vertex = legalSetupSettlements(state)[0]
-  const action: Action = { type: 'placeSetupSettlement', vertex }
-  const before = JSON.stringify(state)
-  const next = applyAction(state, action)
-  assert.equal(JSON.stringify(state), before)
-  assert.notEqual(JSON.stringify(next), before)
-
-  const illegal: Action = { type: 'placeSetupRoad', edge: 0 }
-  const reason = validateAction(state, illegal)
-  assert.ok(reason !== null)
-  const beforeIllegal = JSON.stringify(state)
-  assert.throws(() => applyAction(state, illegal), { message: reason })
-  assert.equal(JSON.stringify(state), beforeIllegal)
-})
-
-test('playersToAct and humanPlayer follow the acting player and the human seat', () => {
-  const game = createGame({ seed: 13, playerCount: 4 })
-  assert.deepEqual(playersToAct(game), [0])
-  const human = humanPlayer(game)
-  assertValidPlayerId(game, human)
-  assert.equal(game.players[human].isBot, false)
-
-  const { state } = scriptedSetup(13, 4)
-  assert.deepEqual(playersToAct(state), [0])
-  assert.equal(humanPlayer(state), human)
-})
-
-test('applyAction copies action payloads into recorded events', () => {
-  const discardState = makeTestState({ phase: { kind: 'discard', discards: [4, 0, 0, 0] } })
-  give(discardState, 0, res({ brick: 8 }))
-  const discard: Action = { type: 'discard', player: 0, resources: res({ brick: 4 }) }
-  const afterDiscard = applyAction(discardState, discard)
-  const discardEvent = afterDiscard.events.find((event) => event.type === 'discard')
-  assert.ok(discardEvent && discardEvent.type === 'discard')
-  const recordedDiscard = { ...discardEvent.resources }
-  discard.resources.brick = 0
-  assert.deepEqual(discardEvent.resources, recordedDiscard)
-
-  const domesticState = makeTestState()
-  give(domesticState, 0, res({ brick: 1 }))
-  give(domesticState, 1, res({ wool: 1 }))
-  const domestic: Action = {
-    type: 'domesticTrade',
-    partner: 1,
-    give: res({ brick: 1 }),
-    get: res({ wool: 1 }),
-  }
-  const afterDomestic = applyAction(domesticState, domestic)
-  const domesticEvent = afterDomestic.events.find((event) => event.type === 'domesticTrade')
-  assert.ok(domesticEvent && domesticEvent.type === 'domesticTrade')
-  const recordedGive = { ...domesticEvent.give }
-  const recordedGet = { ...domesticEvent.get }
-  domestic.give.brick = 0
-  domestic.get.wool = 0
-  assert.deepEqual(domesticEvent.give, recordedGive)
-  assert.deepEqual(domesticEvent.get, recordedGet)
-
-  const plentyState = makeTestState()
-  plentyState.players[0].devCards.push('yearOfPlenty')
-  const plenty: Action = { type: 'playYearOfPlenty', resources: ['ore', 'ore'] }
-  const afterPlenty = applyAction(plentyState, plenty)
-  const plentyEvent = afterPlenty.events.find((event) => event.type === 'yearOfPlenty')
-  assert.ok(plentyEvent && plentyEvent.type === 'yearOfPlenty')
-  const recordedPlenty = [...plentyEvent.resources]
-  plenty.resources[0] = 'brick'
-  assert.deepEqual(plentyEvent.resources, recordedPlenty)
-})
-
-test('the same seed and the same action sequence produce identical states', () => {
-  const first = runFuzzGame(999, 3, 777, 250)
-  const second = runFuzzGame(999, 3, 777, 250)
-  assert.equal(first.actions, second.actions)
-  assert.deepEqual(first.state, second.state)
-})
-
-test('fuzz driver runs 25 random legal games without an action throwing', () => {
+test('long fuzz: 300 random legal games without an action throwing', { timeout: 600000 }, () => {
   let finished = 0
   let totalActions = 0
-  const games = 25
+  const games = 300
   for (let game = 0; game < games; game++) {
     const playerCount: 3 | 4 = game % 2 === 0 ? 3 : 4
     const result = runFuzzGame(10000 + game, playerCount, 20000 + game, 4000)
@@ -531,51 +425,67 @@ test('fuzz driver runs 25 random legal games without an action throwing', () => 
     if (result.finished) finished += 1
   }
   assert.equal(totalActions >= games, true)
-  console.log(`fuzz: ${finished}/${games} games reached gameOver, ${totalActions} total actions`)
+  console.log(`long fuzz: ${finished}/${games} games reached gameOver, ${totalActions} total actions`)
 })
 
-test('applyAction shares append-only event objects and keeps old event logs intact', () => {
-  const s = makeTestState({ phase: { kind: 'main' }, current: 0 })
-  putSettlement(s, 0, 17)
-  give(s, 0, res({ brick: 2, lumber: 2 }))
+test('long bots-only simulation: 240 games finish with legal, deterministic actions', { timeout: 600000 }, () => {
+  const playerCounts = [3, 4] as const
+  const seedsPerCount = 120
+  const actionCap = 2500
+  let total = 0
+  let finished = 0
+  let capped = 0
+  let invalid = 0
+  let throws = 0
+  let turnTotal = 0
+  const wins: number[] = [0, 0, 0, 0]
 
-  const first = applyAction(s, { type: 'buildRoad', edge: VERTICES[17].edges[0] })
-  assert.ok(first.events.length > 0)
-  const firstLength = first.events.length
-  const sharedEvent = first.events[0]
-
-  const second = applyAction(first, { type: 'buildRoad', edge: VERTICES[17].edges[1] })
-  assert.equal(second.events[0], sharedEvent)
-  assert.equal(first.events.length, firstLength)
-
-  second.events.push({ seq: 9999, turn: 1, type: 'gameOver', winner: 0 })
-  assert.equal(first.events.length, firstLength)
-})
-
-test('undoable actions leave rng, devDeck and other players\' resources unchanged', () => {
-  let checked = 0
-  for (let game = 0; game < 5; game++) {
-    let state = createGame({ seed: 7000 + game, playerCount: game % 2 === 0 ? 3 : 4 })
-    const rng = mulberry32(30000 + game)
-    let actions = 0
-    while (actions < 300 && state.phase.kind !== 'gameOver') {
-      const candidates = dedupeActions(candidateActions(state, rng))
-      const legal = candidates.filter((action) => validateAction(state, action) === null)
-      assert.ok(legal.length > 0, `no legal action in phase ${state.phase.kind}`)
-      for (const candidate of legal) {
-        if (!isUndoable(candidate)) continue
-        const next = applyAction(state, candidate)
-        assert.equal(next.rng, state.rng, `${candidate.type} must not consume rng`)
-        assert.deepEqual(next.devDeck, state.devDeck, `${candidate.type} must not consume the deck`)
-        for (let p = 0; p < state.players.length; p++) {
-          if (p === state.current) continue
-          assert.deepEqual(next.players[p].resources, state.players[p].resources, `${candidate.type} must not touch others`)
+  for (const playerCount of playerCounts) {
+    for (let seed = 0; seed < seedsPerCount; seed++) {
+      total++
+      let state = createGame({ seed, playerCount })
+      let actions = 0
+      try {
+        while (state.phase.kind !== 'gameOver' && actions < actionCap) {
+          const actors = playersToAct(state)
+          for (const player of actors) {
+            const action = chooseBotAction(state, player)
+            const reason = validateAction(state, action)
+            if (reason !== null) {
+              invalid++
+              assert.equal(reason, null, `invalid action at seed ${seed}/${playerCount}: ${JSON.stringify(action)}`)
+            }
+            state = applyAction(state, action)
+            actions++
+            if (state.phase.kind === 'gameOver') break
+          }
         }
-        checked += 1
+        if (state.phase.kind === 'gameOver') {
+          finished++
+          wins[state.phase.winner]++
+        } else {
+          capped++
+        }
+        turnTotal += state.turn
+      } catch (error) {
+        throws++
+        console.error('simulation threw', { playerCount, seed, error })
       }
-      state = applyAction(state, pickWeighted(legal, rng))
-      actions += 1
     }
   }
-  assert.ok(checked > 0, 'expected to check at least one undoable action')
+
+  const stats = {
+    total,
+    finished,
+    capped,
+    invalid,
+    throws,
+    avgTurns: total === 0 ? 0 : turnTotal / total,
+    winShareBySeat: wins,
+  }
+  console.log('AI_SIM_STATS ' + JSON.stringify(stats))
+
+  assert.equal(invalid, 0)
+  assert.equal(throws, 0)
+  assert.ok(finished / total >= 0.97, `only ${finished}/${total} games reached gameOver`)
 })

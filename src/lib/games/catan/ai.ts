@@ -1,10 +1,11 @@
-import { COSTS, MIN_LARGEST_ARMY, MIN_LONGEST_ROAD, RESOURCES, VP_TO_WIN, pips } from './constants'
+import { COSTS, MIN_LARGEST_ARMY, MIN_LONGEST_ROAD, RESOURCES, pips } from './constants'
 import { validateAction } from './engine'
 import { EDGES, HEXES, VERTICES } from './geometry'
 import {
   emptyResources,
   hasResources,
   legalCities,
+  legalRobberHexes,
   legalRoads,
   legalSettlements,
   legalSetupRoads,
@@ -202,7 +203,7 @@ function wouldGainLargestArmy(state: GameState, bot: PlayerId): boolean {
 function choosePreRoll(state: GameState, bot: PlayerId): Action {
   const player = state.players[bot]
   if (!state.devCardPlayedThisTurn && player.devCards.includes('knight')) {
-    const winsByArmy = wouldGainLargestArmy(state, bot) && victoryPoints(state, bot) + 2 >= VP_TO_WIN
+    const winsByArmy = wouldGainLargestArmy(state, bot) && victoryPoints(state, bot) + 2 >= state.settings.vpToWin
     if (robberHurtsBot(state, bot) || winsByArmy) return { type: 'playKnight' }
   }
   return { type: 'rollDice' }
@@ -288,7 +289,7 @@ function robberHexScore(state: GameState, bot: PlayerId, hex: number): number {
 }
 
 function chooseMoveRobber(state: GameState, bot: PlayerId): Action {
-  const candidates = HEXES.map((h) => h.id).filter((hex) => hex !== state.robber)
+  const candidates = legalRobberHexes(state)
   const avoidsOwn = candidates.filter(
     (hex) => !HEXES[hex].vertices.some((v) => state.buildings[v]?.owner === bot),
   )
@@ -460,13 +461,13 @@ function bestWinningRoad(state: GameState, bot: PlayerId): Action | null {
 function winningAction(state: GameState, bot: PlayerId): Action | null {
   if (state.phase.kind !== 'main') return null
   const vp = victoryPoints(state, bot)
-  if (vp + 1 >= VP_TO_WIN) {
+  if (vp + 1 >= state.settings.vpToWin) {
     const city = bestCity(state, bot)
     if (city) return city
     const settlement = bestSettlement(state, bot)
     if (settlement) return settlement
   }
-  if (vp + 2 >= VP_TO_WIN) {
+  if (vp + 2 >= state.settings.vpToWin) {
     if (hasResources(state.players[bot].resources, COSTS.road) && state.players[bot].roadsLeft > 0) {
       const road = bestWinningRoad(state, bot)
       if (road) return road
@@ -791,10 +792,27 @@ function chooseByPhase(state: GameState, bot: PlayerId): Action {
     case 'roadBuilding':
       return chooseRoadBuildingAction(state, bot)
     case 'trade':
-      return fallbackAction(state, bot)
+      return chooseTrade(state, bot)
     case 'gameOver':
       throw new Error('no action when the game is over')
   }
+}
+
+function chooseTrade(state: GameState, bot: PlayerId): Action {
+  if (state.phase.kind !== 'trade') throw new Error('not in trade phase')
+  const { offer } = state.phase
+  if (offer.from === bot) {
+    const accepted = offer.to.find((p) => offer.replies[p] === 'accept')
+    if (accepted !== undefined) return { type: 'confirmTrade', partner: accepted }
+    return { type: 'cancelTrade' }
+  }
+  if (offer.replies[bot] !== 'pending') throw new Error('bot is not pending on this offer')
+  const accepts =
+    botAcceptsTrade(state, bot, { from: offer.from, give: offer.give, get: offer.get }) &&
+    hasResources(state.players[bot].resources, offer.get)
+  return accepts
+    ? { type: 'respondTrade', player: bot, reply: 'accept' }
+    : { type: 'respondTrade', player: bot, reply: 'decline' }
 }
 
 function firstNCards(hand: ResourceCounts, count: number): ResourceCounts {
@@ -829,8 +847,9 @@ export function fallbackAction(state: GameState, bot: PlayerId): Action {
       return { type: 'discard', player: bot, resources: firstNCards(state.players[bot].resources, owed) }
     }
     case 'moveRobber': {
-      const hex = HEXES.findIndex((_, h) => h !== state.robber)
-      return { type: 'moveRobber', hex }
+      const legal = legalRobberHexes(state)
+      if (legal.length === 0) throw new Error('no legal robber hex')
+      return { type: 'moveRobber', hex: legal[0] }
     }
     case 'steal': {
       const victim = state.phase.candidates[0]
@@ -843,8 +862,12 @@ export function fallbackAction(state: GameState, bot: PlayerId): Action {
       if (legal.length === 0) throw new Error('no legal road')
       return { type: 'buildRoad', edge: legal[0] }
     }
-    case 'trade':
-      return state.phase.offer.from === bot ? { type: 'cancelTrade' } : { type: 'respondTrade', player: bot, reply: 'decline' }
+    case 'trade': {
+      const { offer } = state.phase
+      if (offer.from === bot) return { type: 'cancelTrade' }
+      if (offer.replies[bot] === 'pending') return { type: 'respondTrade', player: bot, reply: 'decline' }
+      throw new Error('bot already answered the trade offer')
+    }
     case 'gameOver':
       throw new Error('no action when the game is over')
   }
@@ -910,7 +933,7 @@ export function botAcceptsTrade(
 ): boolean {
   const proposer = offer.from
   const proposerPublicVp = publicVp(state, proposer)
-  if (proposerPublicVp >= 8) return false
+  if (proposerPublicVp >= state.settings.vpToWin - 2) return false
 
   const give = offer.give // bot receives
   const get = offer.get // bot gives
@@ -922,7 +945,7 @@ export function botAcceptsTrade(
   if (totalCards(get) - totalCards(give) > 1) return false
 
   // Refuse to help a near-leader finish a settlement or city.
-  if (proposerPublicVp + 1 >= 8 && canCompleteBuilding(state, proposer, get, give)) return false
+  if (proposerPublicVp + 1 >= state.settings.vpToWin - 2 && canCompleteBuilding(state, proposer, get, give)) return false
 
   const target = currentTarget(state, bot)
   const before = deficitToBuild(hand, target.cost)

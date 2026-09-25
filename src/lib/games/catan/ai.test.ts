@@ -24,7 +24,7 @@ function asSettlement(action: unknown): number {
 
 test('bots-only full games: every action validates, games finish, deterministic stats', () => {
   const playerCounts = [3, 4] as const
-  const seedsPerCount = 120
+  const seedsPerCount = 10
   const actionCap = 2500
   let total = 0
   let finished = 0

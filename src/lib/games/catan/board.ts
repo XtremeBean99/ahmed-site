@@ -3,50 +3,20 @@ import {
   BOT_NAMES,
   DEFAULT_SETTINGS,
   DEV_DECK_COUNTS,
-  NUMBER_TOKENS,
+  MAX_VP_TO_WIN,
+  MIN_VP_TO_WIN,
   PIECES,
   PLAYER_COLORS,
-  PORT_TYPES,
   RESOURCES,
-  TERRAIN_COUNTS,
 } from './constants'
-import { EDGES, HEXES, PORT_EDGES, VERTICES } from './geometry'
+import { EDGES, VERTICES } from './geometry'
 import { emptyResources } from './helpers'
+import { generateBoard } from './presets'
 import { shuffle } from './rng'
 import { emptyStats } from './stats'
-import type { BotLevel, DevCardType, GameState, NewGameOptions, Player, PlayerColor, Port, Terrain, Tile } from './types'
+import type { BotLevel, DevCardType, GameState, NewGameOptions, Player, PlayerColor } from './types'
 
-export function generateBoard(holder: { rng: number }): { tiles: Tile[]; ports: Port[]; robber: number } {
-  const terrains: Terrain[] = []
-  for (const [terrain, count] of Object.entries(TERRAIN_COUNTS) as [Terrain, number][]) {
-    for (let i = 0; i < count; i++) terrains.push(terrain)
-  }
-  shuffle(holder, terrains)
-  const tiles: Tile[] = terrains.map((terrain) => ({ terrain, number: null }))
-
-  const nonDesertIds = tiles.flatMap((tile, id) => (tile.terrain === 'desert' ? [] : [id]))
-  const tokens = shuffle(holder, [...NUMBER_TOKENS])
-  let redNumbersOk = false
-  while (!redNumbersOk) {
-    nonDesertIds.forEach((id, i) => {
-      tiles[id].number = tokens[i]
-    })
-    redNumbersOk = HEXES.every((hex) => {
-      const n = tiles[hex.id].number
-      if (n !== 6 && n !== 8) return true
-      return hex.neighbors.every((neighbor) => {
-        const m = tiles[neighbor].number
-        return m !== 6 && m !== 8
-      })
-    })
-    if (!redNumbersOk) shuffle(holder, tokens)
-  }
-
-  const portTypes = shuffle(holder, [...PORT_TYPES])
-  const ports: Port[] = PORT_EDGES.map((edge, i) => ({ edge, type: portTypes[i] }))
-  const robber = tiles.findIndex((tile) => tile.terrain === 'desert')
-  return { tiles, ports, robber }
-}
+export { generateBoard } from './presets'
 
 export function makePlayer(name: string, color: PlayerColor, isBot: boolean, level: BotLevel = 'normal'): Player {
   return {
@@ -97,7 +67,12 @@ export function createGame(opts: NewGameOptions): GameState {
   }
   for (const resource of RESOURCES) state.bank[resource] = BANK_PER_RESOURCE
 
-  const board = generateBoard(state)
+  const vpToWin = state.settings.vpToWin
+  if (!Number.isInteger(vpToWin) || vpToWin < MIN_VP_TO_WIN || vpToWin > MAX_VP_TO_WIN) {
+    throw new Error(`vpToWin must be an integer from ${MIN_VP_TO_WIN} to ${MAX_VP_TO_WIN}`)
+  }
+
+  const board = generateBoard(state, state.settings.board)
   state.tiles = board.tiles
   state.ports = board.ports
   state.robber = board.robber

@@ -502,6 +502,10 @@ export const en = {
       paint: 'Paint',
       minesweeper: 'Minesweeper',
       snake: 'Snake',
+      blackjack: 'Blackjack',
+      solitaire: 'Solitaire',
+      pong: 'Pong',
+      breakout: 'Breakout',
       readme: 'README',
       legal: 'Legal',
       settings: 'Settings',
@@ -889,6 +893,37 @@ export const en = {
     paintTip: 'Doodle on a pixel canvas, it saves itself',
     minesweeperTip: 'Classic mines, room edition',
     snakeTip: 'Eat, grow, do not hit the walls',
+    blackjack: 'Blackjack',
+    blackjackTip: 'Beat the dealer to 21',
+    solitaire: 'Solitaire',
+    solitaireTip: 'Klondike, draw one or three',
+    pong: 'Pong',
+    pongTip: 'First to 7, against the CPU or a friend',
+    breakout: 'Breakout',
+    breakoutTip: 'Break every brick, keep the ball alive',
+    arcade: {
+      fullscreen: 'Full screen',
+      exitFullscreen: 'Exit full screen',
+      cards: {
+        ranks: ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'],
+        suits: { S: 'spades', H: 'hearts', D: 'diamonds', C: 'clubs' },
+        card: '{rank} of {suit}',
+        faceDown: 'Face-down card',
+      },
+    },
+    // Each block below belongs to one game's component (its Labels interface).
+    blackjackApp: {
+      table: 'Blackjack table',
+    },
+    solitaireApp: {
+      table: 'Solitaire table',
+    },
+    pongApp: {
+      court: 'Pong court',
+    },
+    breakoutApp: {
+      field: 'Breakout playfield',
+    },
     paintApp: {
       pencil: 'Pencil',
       eraser: 'Eraser',

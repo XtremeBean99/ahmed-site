@@ -9,7 +9,30 @@ export const BEST_KEYS = {
   breakout: 'breakout-best',
   minesweeper: 'minesweeper-best',
   snake: 'snake-best',
+  blackjack: 'blackjack-best',
+  solitaire: 'solitaire-best',
+  pong: 'pong-best',
+  /** The desk Breakout scores bricks, unlike the retired time-scored page, so it keeps its own best. */
+  breakoutDesk: 'breakout-desk-best',
 } as const
+
+/** Parsed JSON stored under a games key, or undefined. Callers validate the shape. SSR-safe. */
+export function readJson(key: string): unknown {
+  if (typeof window === 'undefined') return undefined
+  try {
+    const raw = window.localStorage.getItem(vk(key))
+    return raw ? (JSON.parse(raw) as unknown) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+export function writeJson(key: string, value: unknown): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(vk(key), JSON.stringify(value))
+  } catch {}
+}
 
 /** Read a numeric best score. SSR-safe; returns 0 on any failure. */
 export function getBest(key: string): number {

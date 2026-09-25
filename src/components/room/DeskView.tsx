@@ -8,6 +8,11 @@ import { DeskDesktop, type DesktopShortcut } from './DeskDesktop'
 import { DeskPaint, type PaintLabels } from './DeskPaint'
 import { DeskMinesweeper, type MinesLabels } from './DeskMinesweeper'
 import { DeskSnake, type SnakeLabels } from './DeskSnake'
+import { DeskBlackjack, type BlackjackLabels } from './DeskBlackjack'
+import { DeskSolitaire, type SolitaireLabels } from './DeskSolitaire'
+import { DeskPong, type PongLabels } from './DeskPong'
+import { DeskBreakout, type BreakoutLabels } from './DeskBreakout'
+import type { ArcadeLabels } from './DeskArcade'
 import { DeskReadme } from './DeskReadme'
 import { DeskMusic } from './DeskMusic'
 import { DeskLegal, type LegalLabels } from './DeskLegal'
@@ -32,7 +37,7 @@ const DESK_SPEAKER_HOLES_RIGHT = [
 const MOUSE_X_MIN = 975; const MOUSE_X_MAX = 1140
 const MOUSE_Y_MIN = 572; const MOUSE_Y_MAX = 635
 const MOUSE_REST_X = 1007; const MOUSE_REST_Y = 608
-type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'snake' | 'readme' | 'music' | 'legal' | 'guestbook' | 'settings' | 'terminal' | 'movie'
+type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'snake' | 'blackjack' | 'solitaire' | 'pong' | 'breakout' | 'readme' | 'music' | 'legal' | 'guestbook' | 'settings' | 'terminal' | 'movie'
 
 interface DeskViewProps {
   shortcuts: DesktopShortcut[]
@@ -46,6 +51,12 @@ interface DeskViewProps {
   paintLabels: PaintLabels
   minesLabels: MinesLabels
   snakeLabels: SnakeLabels
+  blackjackLabels: BlackjackLabels
+  solitaireLabels: SolitaireLabels
+  pongLabels: PongLabels
+  breakoutLabels: BreakoutLabels
+  /** Shared by the arcade apps: full-screen button and card names */
+  arcadeLabels: ArcadeLabels
   /** Labels for the readme popup */
   readmeLabels: { title: string; close: string }
   /** Labels for the music player */
@@ -91,7 +102,7 @@ interface DeskViewProps {
   onBack: () => void
 }
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
+  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
   const { scale } = useStageScale()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
@@ -144,6 +155,8 @@ export function DeskView(props: DeskViewProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
+      // A full-screen game: the browser's own Escape leaves full screen, and that is all it should do.
+      if (document.fullscreenElement) return
       if (screenMode !== 'desktop') {
         setScreenMode('desktop')
         activeIconRef.current?.focus()
@@ -398,6 +411,46 @@ export function DeskView(props: DeskViewProps) {
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskSnake time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={snakeLabels} onDesktop={goDesktop}
+                  onBack={(e) => { e.stopPropagation(); onBack() }} />
+              </motion.div>
+            )}
+
+            {screenMode === 'blackjack' && (
+              <motion.div key="blackjack" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskBlackjack time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                  labels={blackjackLabels} arcade={arcadeLabels} onDesktop={goDesktop}
+                  onBack={(e) => { e.stopPropagation(); onBack() }} />
+              </motion.div>
+            )}
+
+            {screenMode === 'solitaire' && (
+              <motion.div key="solitaire" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskSolitaire time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                  labels={solitaireLabels} arcade={arcadeLabels} onDesktop={goDesktop}
+                  onBack={(e) => { e.stopPropagation(); onBack() }} />
+              </motion.div>
+            )}
+
+            {screenMode === 'pong' && (
+              <motion.div key="pong" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskPong time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                  labels={pongLabels} arcade={arcadeLabels} onDesktop={goDesktop}
+                  onBack={(e) => { e.stopPropagation(); onBack() }} />
+              </motion.div>
+            )}
+
+            {screenMode === 'breakout' && (
+              <motion.div key="breakout" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                <DeskBreakout time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                  labels={breakoutLabels} arcade={arcadeLabels} onDesktop={goDesktop}
                   onBack={(e) => { e.stopPropagation(); onBack() }} />
               </motion.div>
             )}

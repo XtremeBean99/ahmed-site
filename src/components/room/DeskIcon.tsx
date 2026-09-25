@@ -189,6 +189,102 @@ export const ICON_SNAKE = (
   </>
 )
 
+/** A 16x16 bitmap (one palette key per pixel, '.' clear) as 1px rects, one per horizontal run. */
+function pixels(rows: string[], palette: Record<string, string>) {
+  const rects: ReactNode[] = []
+  rows.forEach((row, y) => {
+    for (let x = 0; x < row.length; ) {
+      let w = 1
+      while (row[x + w] === row[x]) w++
+      if (row[x] !== '.') rects.push(<rect key={`${x}-${y}`} x={x} y={y} width={w} height={1} fill={palette[row[x]]} />)
+      x += w
+    }
+  })
+  return <>{rects}</>
+}
+
+const ARCADE_ICON_PALETTE = {
+  o: '#3a3028', w: '#faf8f5', r: '#b3372c', k: '#2a2520', c: '#b3372c', C: '#f4e8d0',
+  D: '#23392a', f: '#35553a', s: '#211a14', S: '#6a5a4a', p: '#f0dcb4', n: '#7a6a58',
+  R: '#b3372c', a: '#e8a83a', g: '#7a9a4a',
+}
+
+export const ICON_BLACKJACK = pixels([
+  '.ooooooo........',
+  'owwwwwwwo.......',
+  'owrrwrrwo.......',
+  'owrrrrrwo.......',
+  'owrrrrrwooooooo.',
+  'owwrrrwowwwwwwwo',
+  'owwwrwwowwwkwwwo',
+  'owwwwwwowwkkkwwo',
+  'owwwwwwowkkkkkwo',
+  '.ooooooowkkkkkwo',
+  '.oooo..owkwkwkwo',
+  'ocCCco.owwwkwwwo',
+  'oCccCo.owwkkkwwo',
+  'oCccCo.owwwwwwwo',
+  'ocCCco.owwwwwwwo',
+  '.oooo...ooooooo.',
+], ARCADE_ICON_PALETTE)
+
+export const ICON_SOLITAIRE = pixels([
+  '.DDDDDDDDDDDDDD.',
+  'DffffffffffffffD',
+  'DfffoooooooofffD',
+  'DffowrwwwwwwoffD',
+  'DffooooooooooffD',
+  'DffowkwwwwwwoffD',
+  'DffooooooooooffD',
+  'DffowrwwwwwwoffD',
+  'DffowwrrwrrwoffD',
+  'DffowwrrrrrwoffD',
+  'DffowwrrrrrwoffD',
+  'DffowwwrrrwwoffD',
+  'DffowwwwrwwwoffD',
+  'DfffoooooooofffD',
+  'DffffffffffffffD',
+  '.DDDDDDDDDDDDDD.',
+], ARCADE_ICON_PALETTE)
+
+export const ICON_PONG = pixels([
+  '................',
+  '.oooooooooooooo.',
+  'oSSSSSSSSSSSSSSo',
+  'oSssssssssssssSo',
+  'oSspssssnsssssSo',
+  'oSspssssssssssSo',
+  'oSspssssnssspsSo',
+  'oSsssssssspspsSo',
+  'oSssssssnssspsSo',
+  'oSssssssssssssSo',
+  'oSssssssnsssssSo',
+  'oSSSSSSSSSSSSSSo',
+  '.oooooooooooooo.',
+  '......oooo......',
+  '....oooooooo....',
+  '................',
+], ARCADE_ICON_PALETTE)
+
+export const ICON_BREAKOUT = pixels([
+  '................',
+  '.oooooooooooooo.',
+  'oSSSSSSSSSSSSSSo',
+  'oSRRsRRsRRsRRsSo',
+  'oSaasaasaasaasSo',
+  'oSggsggssssggsSo',
+  'oSssssssssssssSo',
+  'oSssssssspssssSo',
+  'oSssssssssssssSo',
+  'oSssssssssssssSo',
+  'oSssssspppssssSo',
+  'oSSSSSSSSSSSSSSo',
+  '.oooooooooooooo.',
+  '......oooo......',
+  '....oooooooo....',
+  '................',
+], ARCADE_ICON_PALETTE)
+
 export const ICON_LINKEDIN = (
   <image href="/icons/linkedin.png" x="0" y="0" width="16" height="16" preserveAspectRatio="xMidYMid meet" />
 )

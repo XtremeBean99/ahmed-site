@@ -177,3 +177,56 @@ existing Minesweeper pattern rather than a new route, so it lands as one more ap
 No leaderboard (localStorage best only, like Minesweeper and Breakout), no touch D-pad (the room is
 desktop-only behind `MobileGate`), no sound (Minesweeper has none either), no new sprite art: the icon
 is inline SVG rects in `DeskIcon.tsx` like the other hand-drawn ones.
+
+---
+
+## APPROVED DESIGN — Desk arcade (Blackjack, Solitaire, Pong, Breakout)
+
+Requested by the owner 25 September 2026: "fully implement blackjack, solitaire, pong and breakout, spend a
+dedicated amount of time on the visuals so they are perfect, and make them desktop icons". Answers to the
+kick-off questions: games run **on the desk monitor with a Full screen button**; **room-palette retro** look;
+Pong has **a CPU opponent and local 2-player**; **soft synthesized SFX** that obey Settings.
+
+### Decisions
+- **Four new desk apps** on the Minesweeper/Snake pattern: screen modes `blackjack | solitaire | pong | breakout`,
+  one desktop shortcut each, a discovery each (26 total), copy in `en.ts` under `desk.<game>App`.
+- **Desktop grid is now 5x3** (it was 3 columns and already clipped the last row): about the site, then tools
+  and media, then a full row of games (Snake, Blackjack, Solitaire, Pong, Breakout).
+- **Full screen** uses the real Fullscreen API on the app's root (`ArcadeFrame`), so React state survives the
+  switch; the fixed 536x308 app scales to fit. The browser's Escape leaves full screen only (DeskView's Escape
+  ladder ignores the key while an element is full screen).
+- **One visual system** in `DeskArcade.tsx`: `ARCADE` palette, `FELT_STYLE` (muted felt, weave, vignette),
+  `CrtOverlay` (scanlines, vignette), `ArcadeButton` (cream bevel like "To Room", or the dark bubble),
+  `ArcadePanel`, `ArcadeOverlay`, `ArcadeStrip` (clock, Full screen, Desktop, Room), `useCanvasScale` (canvas
+  backing store at device pixels through the stage scale and full screen).
+- **Cards are pixel art** painted by `card-art.ts` (45x63, rank + suit index side by side so tableau strips stay
+  short, classic pip layouts with lower pips inverted, double-headed court portraits, rust lattice back) and
+  shown by `PlayingCard` as cached PNG data URLs with `image-rendering: pixelated`. `cards.ts` holds the deck,
+  seeded shuffle and names.
+- **Sound** is `tone(name, pitch?)` on `useSfx()`: Web Audio blips and noise bursts, no files, gated by the SFX
+  toggle and volume.
+
+### Games
+- **Blackjack**: 6-deck shoe reshuffled past 75 %, dealer stands on soft 17, blackjack pays 3:2, dealer peeks
+  on an Ace or ten, insurance 2:1, double on any two cards (and after a split), split up to 4 hands (split Aces
+  get one card), chips 5/25/100/500, bankroll 1000 saved locally with a re-buy, best bankroll as the high score.
+- **Solitaire**: Klondike, Draw 1 or Draw 3, drag and drop plus click-to-move, double-click to a foundation,
+  unlimited undo, standard scoring with a timer and time bonus, auto-finish, the bouncing-cards win.
+- **Pong**: 1 player vs CPU (Easy/Normal/Hard) or 2 players on one keyboard (W/S and Up/Down), first to 7,
+  mouse control for player one, serve countdown, ball speeds up per rally.
+- **Breakout**: the pure engine is reworked for the desk (seeded, brick scoring, levels with tough and steel
+  bricks, power-ups), mouse or keys, lives, best score under `breakout-desk-best`.
+
+## Desk arcade Implementation Plan
+
+| ID | Item | Owner | Status |
+|---|---|---|---|
+| ARC0 | Shared contract: `cards.ts` (+test), `card-art.ts`, `PlayingCard.tsx`, `DeskArcade.tsx`, `tone()` SFX, storage keys + `readJson`/`writeJson`, discoveries, `en.ts` copy, icons, 5x3 grid, stub apps, DeskView/Room wiring, `npm run test:games` | orchestrator | Done |
+| ARC1 | Blackjack engine + tests + `DeskBlackjack.tsx` | deepcode agent | |
+| ARC2 | Solitaire engine + tests + `DeskSolitaire.tsx` (win cascade) | deepcode agent | |
+| ARC3 | Pong engine + tests + `DeskPong.tsx` (CPU + 2P) | deepcode agent | |
+| ARC4 | Breakout engine rework + tests + `DeskBreakout.tsx` (levels) | deepcode agent | |
+| ARC5 | Integration: type-check, lint, all tests, production build | orchestrator | |
+| ARC6 | Visual pass: 1408x768 and full-screen screenshots of every state, polish until right | orchestrator | |
+| ARC7 | Card art polish (aces, court portraits) | orchestrator | |
+| ARC8 | Docs (CLAUDE.md v20), commit, push, deploy, production check | orchestrator | |

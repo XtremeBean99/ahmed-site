@@ -28,6 +28,11 @@ import { ShelfBooks } from './ShelfBooks'
 import { RoomReader, type ReaderLabels } from './RoomReader'
 import type { MovieLabels } from './DeskMovie'
 import type { SnakeLabels } from './DeskSnake'
+import type { BlackjackLabels } from './DeskBlackjack'
+import type { SolitaireLabels } from './DeskSolitaire'
+import type { PongLabels } from './DeskPong'
+import type { BreakoutLabels } from './DeskBreakout'
+import type { ArcadeLabels } from './DeskArcade'
 import { SHELF_BOOKS } from '@/lib/room/books'
 import { DeskView } from './DeskView'
 import { SideTableClock } from './SideTableClock'
@@ -44,6 +49,10 @@ import {
   ICON_PAINT,
   ICON_MINESWEEPER,
   ICON_SNAKE,
+  ICON_BLACKJACK,
+  ICON_SOLITAIRE,
+  ICON_PONG,
+  ICON_BREAKOUT,
   ICON_README,
   ICON_MUSIC,
   ICON_LEGAL,
@@ -112,6 +121,19 @@ interface RoomProps {
       paintTip: string
       minesweeperTip: string
       snakeTip: string
+      blackjack: string
+      blackjackTip: string
+      solitaire: string
+      solitaireTip: string
+      pong: string
+      pongTip: string
+      breakout: string
+      breakoutTip: string
+      arcade: ArcadeLabels
+      blackjackApp: BlackjackLabels
+      solitaireApp: SolitaireLabels
+      pongApp: PongLabels
+      breakoutApp: BreakoutLabels
       music: string
       settingsApp: { title: string; sfx: string; sfxVolume: string; musicVolume: string; clock: string; clock12: string; clock24: string; on: string; off: string; close: string }
       paintApp: { pencil: string; eraser: string; fill: string; clear: string; download: string; color: string; canvas: string }
@@ -520,18 +542,23 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const STAGE_H = 768
   const glowX = (screenCenterX / STAGE_W) * 100
   const glowY = (screenCenterY / STAGE_H) * 100
+  // A 5x3 grid: about the site, then tools and media, then a full row of games.
   const deskShortcuts: DesktopShortcut[] = [
+    { id: 'readme', kind: 'app', target: 'readme', label: t.desk.readme, tooltip: t.desk.readmeTip, icon: ICON_README },
     { id: 'linkedin', kind: 'external', target: 'https://www.linkedin.com/in/ahmed-hussain-0880ba25a/', label: t.desk.linkedin, tooltip: t.desk.linkedinTip, icon: ICON_LINKEDIN, iconSize: 24 },
     { id: 'github', kind: 'external', target: 'https://github.com/XtremeBean99', label: t.desk.github, tooltip: t.desk.githubTip, icon: ICON_GITHUB, iconSize: 48 },
+    { id: 'guestbook', kind: 'app', target: 'guestbook', label: t.desk.guestbook, tooltip: t.desk.guestbookTip, icon: ICON_README },
+    { id: 'legal', kind: 'app', target: 'legal', label: t.desk.legal, tooltip: t.desk.legalTip, icon: ICON_LEGAL },
     { id: 'settings', kind: 'app', target: 'settings', label: t.desk.settings, tooltip: t.desk.settingsTip, icon: ICON_SETTINGS },
     { id: 'music', kind: 'app', target: 'music', label: t.desk.music, tooltip: t.desk.musicTip, icon: ICON_MUSIC, iconSize: 48 },
+    { id: 'movie', kind: 'app', target: 'movie', label: t.desk.movie, tooltip: t.desk.movieTip, icon: ICON_MOVIE },
     { id: 'paint', kind: 'app', target: 'paint', label: t.desk.paint, tooltip: t.desk.paintTip, icon: ICON_PAINT },
     { id: 'minesweeper', kind: 'app', target: 'minesweeper', label: t.desk.minesweeper, tooltip: t.desk.minesweeperTip, icon: ICON_MINESWEEPER, iconSize: 38 },
     { id: 'snake', kind: 'app', target: 'snake', label: t.desk.snake, tooltip: t.desk.snakeTip, icon: ICON_SNAKE },
-    { id: 'readme', kind: 'app', target: 'readme', label: t.desk.readme, tooltip: t.desk.readmeTip, icon: ICON_README },
-    { id: 'guestbook', kind: 'app', target: 'guestbook', label: t.desk.guestbook, tooltip: t.desk.guestbookTip, icon: ICON_README },
-    { id: 'movie', kind: 'app', target: 'movie', label: t.desk.movie, tooltip: t.desk.movieTip, icon: ICON_MOVIE },
-    { id: 'legal', kind: 'app', target: 'legal', label: t.desk.legal, tooltip: t.desk.legalTip, icon: ICON_LEGAL },
+    { id: 'blackjack', kind: 'app', target: 'blackjack', label: t.desk.blackjack, tooltip: t.desk.blackjackTip, icon: ICON_BLACKJACK },
+    { id: 'solitaire', kind: 'app', target: 'solitaire', label: t.desk.solitaire, tooltip: t.desk.solitaireTip, icon: ICON_SOLITAIRE },
+    { id: 'pong', kind: 'app', target: 'pong', label: t.desk.pong, tooltip: t.desk.pongTip, icon: ICON_PONG },
+    { id: 'breakout', kind: 'app', target: 'breakout', label: t.desk.breakout, tooltip: t.desk.breakoutTip, icon: ICON_BREAKOUT },
   ]
 
   // Mobile: the pixel-art room needs a mouse, not a touchscreen. Show a static
@@ -556,6 +583,11 @@ export function Room({ dict, readmeContent }: RoomProps) {
           paintLabels={t.desk.paintApp}
           minesLabels={t.desk.mines}
           snakeLabels={t.desk.snakeApp}
+          blackjackLabels={t.desk.blackjackApp}
+          solitaireLabels={t.desk.solitaireApp}
+          pongLabels={t.desk.pongApp}
+          breakoutLabels={t.desk.breakoutApp}
+          arcadeLabels={t.desk.arcade}
           musicLabels={t.desk.musicApp}
           legalLabels={t.desk.legalApp}
           legalPrivacy={t.legal.privacy}

@@ -259,32 +259,116 @@ Requested 25 September 2026. Replaces the ten-command `DeskTerminal` toy with a 
 
 ---
 
-## IN PROGRESS — Pixel Catan v3 overhaul (design not yet written)
+## APPROVED DESIGN — Pixel Catan v3 (overhaul)
 
-Requested 25 September 2026: "full overhaul of the catan game, improving it in any and every way". Branch
-`feat/catan-overhaul`, worktree `ahmed-site/.claude/worktrees/catan-overhaul` (node_modules is a junction:
-`cmd /c rmdir` it before any cleanup). Dev server config `catan-overhaul` (port 3102) is in
-`Personal Website/.claude/launch.json`.
+Requested 25 September 2026: "plan and implement a full overhaul of the catan game, improving it in any and every
+way you can; ask refining questions then proceed autonomously". Branch `feat/catan-overhaul` in the worktree
+`ahmed-site/.claude/worktrees/catan-overhaul` (its `node_modules` is a junction: `cmd /c rmdir` it before any
+cleanup). Each deepcode builder gets its own worktree `catan-<key>` on branch `catan/<key>`, merged back after review.
 
-### Owner decisions (from the refining questions)
-- **Bots only.** No hot-seat or online multiplayer.
-- **Board art sizes may change.** The owner has not redrawn yet, so a new hex size or grid is allowed as long as
-  `assets/pixel-art/catan/SPEC.md` and the template export (`npm run catan-sprites:export`) are updated to match.
-- **Catan must work on tablets and phones** (touch, responsive layout, pinch/pan board). Another Claude session is
-  making the rest of the site mobile friendly, so this overhaul only touches Catan-owned files: `src/components/catan/`,
-  `src/lib/games/catan/`, `src/app/catan/`, Catan art and scripts, and the `catan` block of `en.ts`. Do not edit
-  `MobileGate.tsx`, `useStageScale.ts`, the root layout or `globals.css`. Just stop using the gate inside `CatanGame`.
-- **Execution is a mix.** Claude Workflow for design, review and verification. deepcode for bulk implementation,
-  plus deepcode second opinions alongside workflows.
+### Owner decisions (refining questions)
+- **Bots only.** No hot-seat or online play.
+- **Board art sizes may change** (the redraw has not started); `assets/pixel-art/catan/SPEC.md` and the template
+  export stay the contract.
+- **Catan must work on tablets and phones.** Another session makes the rest of the site mobile friendly, so this
+  overhaul touches only Catan-owned files (`src/components/catan/`, `src/lib/games/catan/`, `src/app/catan/`,
+  Catan art and scripts, the `catan` block of `en.ts`), plus the shared `tsconfig.json` exclude.
+- **Execution:** Claude Workflow for design, review and verification; deepcode for bulk implementation.
 
-### Status
-- Read-only audits launched: Claude Workflow `catan-overhaul-audit` (run `wf_59585dc4-969`; rules/engine, bots,
-  UI/UX/mobile, rendering/architecture) and a deepcode audit (`.agents-work/audit-engine.md`, report at
-  `.agents-work/reports/audit-engine.md`).
-- Playtest notes (1408x768): the board uses integer CSS scale only, so it renders at 2x (558x530) with large empty
-  margins. The sidebar is dense 9-10 px text that needs scrolling. A roll gives no animation or on-board production
-  feedback, and bot turns are only readable in the log. The random board clumped four grain hexes together. A hex
-  hover tooltip can stay on screen after a click. The full test suite takes about 208 s (194 tests pass).
-- Next steps: synthesise the audits into an APPROVED DESIGN section and implementation plan here (task prefix
-  CAT3x); write the engine contract first; run deepcode builders on disjoint files; then Workflow review plus
-  browser verification at desktop, tablet and phone sizes.
+### Goal
+Turn /catan from a correct engine behind a dense, debug-style UI into a polished, lively board game: a big board
+over open sea, feedback for every event, bots that trade with you, real game options, an end-game stats screen,
+and layouts from a 390 px phone to a 1920 px monitor, in the room's pixel style.
+
+### Findings that shaped it
+- Rules audit (Claude): no rule bugs in the engine. Two tutorial bugs (a stacked, unshuffled deck after the lesson;
+  exiting the tutorial deleted the normal save). 85% of `applyAction` went to deep-cloning the 200-event log (suite
+  216 s). A strict v1-only save schema would have deleted every save on the first new field. The win condition had
+  no test.
+- Layout maths: the island plus harbour ring is 258x230 logical px; choosing an integer scale in device pixels and
+  letting the sea fill the board area fits the board at 3x on 1280x720 to 1408x768 laptops (2x today), 4x at
+  1920x1080, and fills phones by width. A bigger hex lattice would make 768 px laptops worse, so the lattice stays.
+- Contrast: muted text (4.2:1), red danger text (2.8:1) and red/blue player-coloured text (about 2.5:1) failed AA;
+  replaced (all at least 4.5:1).
+- Random boards clump: 77% have three or more same-terrain hexes together; hence the balanced preset.
+
+### A. Engine (done: CAT30, CAT31)
+Game settings in state (VP to win 8-13, friendly robber with a legal-hex fallback, board preset balanced / random /
+starter, bots trade); bot level per player; a trade-offer phase (propose to several players, accept / decline /
+counter, confirm, cancel, per-turn cap); per-game stats kept as events are pushed; scripted tutorial rolls; save v2
+(`catan-save-v2`) with a validated v1 migration and quarantine instead of deletion; `isUndoable`; event log shared,
+not deep-cloned; default tests 16 s, long fuzz in `test:catan:long`.
+
+### B. Board and art (CAT32)
+Device-pixel integer fit of the island and harbours, tiled sea filling the board area with a slow drift, a drawn
+shoreline, harbour plates 6 px closer; camera with wheel, pinch, double-tap and buttons, drag to pan; tap-to-select
+then confirm on touch, long-press info; static / pieces / overlay layers; hex highlight, robber and hidden-piece
+overrides and a board-to-screen view for animations; placeholder art v2 (tiles with trees, sheep, wheat, kiln,
+peaks, dunes; 13x13 tokens with pips; bigger settlement, city and robber; 32x32 sea tile; redrawn cards and icons).
+
+### C. Layout and controller (CAT33)
+Three layouts from `useCatanLayout()`: wide (opponents and log | board | dice, hand, cards, build grid, actions),
+medium (opponent strip, board, right column, log drawer) and stack (top bar, opponent chips, board, hand strip,
+action bar, bottom sheets). Large cards at 2x, a status banner, a whole-game dice histogram, undo for builds and
+bank trades, keyboard shortcuts with a help overlay, live-region narration, the tutorial exit fix, no mobile gate.
+The controller splits into game state, bot loop and pure selectors.
+
+### D. Dialogs (CAT34)
+New game dialog with name, colour, players, bot level, board, points to win, friendly robber and bot trades; settings
+with sound, volume and animations; a sectioned rules reference with cost cards and shortcuts; big, touch-friendly
+discard, steal and play-card dialogs; tooltips on long-press.
+
+### E. Bots (CAT35)
+Easy / Normal / Hard; bots propose trades to the human and to each other with safeguards (never feed a player near
+the target, offer caps, fair ratios) and counter human offers; stronger play from measured weaknesses; deterministic,
+never touching `state.rng`, under 30 ms per decision.
+
+### F. Game feel (CAT36)
+Animated dice, producing hexes pulse, resource cards fly from hexes to players, the robber hops, steals fly between
+players, pieces pop in, award and turn banners, bot actions shown, Web Audio sounds; all decorative motion off under
+reduced motion or the animations setting.
+
+### G. Trading and results (CAT37, CAT38)
+A trade panel for the human's offers (bank and harbour rates, offers to one or all bots with live replies and
+counters) and an incoming-offer banner for bot offers. A results screen: winner, VP breakdown, dice histogram
+against expectation, production by player, VP timeline, robberies and trades; rematch or new game.
+
+### H. Tutorial (CAT39)
+The lesson rewritten for the new layout and copy moved to `en.ts`, resumable after a reload.
+
+### Deliberately skipped
+Human multiplayer; 5-6 player extension and expansions; site-wide mobile work; per-seat bot levels in the dialog (the
+engine stores a level per player; the dialog sets one level for all bots); structured rule-violation codes in the
+engine (its messages are only shown when the UI already prevented the action).
+
+---
+
+## Pixel Catan v3 Implementation Plan
+
+Every task is a deepcode builder in its own worktree with a task file in `.agents-work/` (gitignored), reviewed and
+verified by the orchestrator (tests, type-check, lint, code review, browser checks at desktop, tablet and phone
+sizes) before merging into `feat/catan-overhaul`. Task files hold the full specification; the shared briefing is
+`.agents-work/catan-context.md` and the UI seams are in `.agents-work/plugin-contract.md`.
+
+| ID | Wave | Task | Status |
+|---|---|---|---|
+| CAT30 | 0 | Engine contract types, defaults, trade stubs; tsconfig excludes `.claude` and `.agents-work` | Done (orchestrator) |
+| CAT30b | 0 | UI kit: `useCatanLayout`, accessible palette, button sizes, full-screen dialogs on phones, prefs v2 | Done (orchestrator) |
+| CAT30c | 0 | Seams: `NewGameSetup` new-game flow, settings props and inline variant, Web Audio `sound.ts` | Done (orchestrator) |
+| CAT31 | 1 | Engine v2: speed, settings, presets, friendly robber, trade offers, stats, save v2, tutorial fixes, undo | Done, merged |
+| CAT32 | 1 | Board renderer and placeholder art v2 | Building |
+| CAT33 | 1 | Layouts, panels, controller split, undo, shortcuts, placeholders | Building |
+| CAT34 | 1 | Dialogs, game options, settings, rules | Building |
+| CAT35 | 2 | Bots: levels, trade proposals and counters, stronger play | Planned |
+| CAT36 | 2 | Game feel: EffectsLayer animations, sounds, narration | Planned |
+| CAT37 | 2 | Trade panel and incoming offers; remove the old `domesticTrade` path | Planned |
+| CAT38 | 2 | Results screen with stats charts, rematch | Planned |
+| CAT39 | 3 | Tutorial for the new layout, copy in `en.ts`, resume after reload | Planned |
+| CAT40 | 4 | Claude Workflow review (correctness, UX, accessibility, performance) and fixes | Planned |
+| CAT41 | 4 | Docs (CLAUDE.md Catan section, SPEC.md), final verification, merge | Planned |
+
+### Build log
+- 25-26 September: refining questions answered; audits run (the Claude rules audit completed; the UI, rendering
+  and bots audits hit usage limits three times and were replaced by the orchestrator's own measurements, and the
+  deepcode audit stopped when the DeepSeek balance ran out, since topped up).
+- CAT31 review fix: a migrated save keeps the v1 event counter, so event numbers never go backwards.

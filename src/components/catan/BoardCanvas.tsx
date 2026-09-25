@@ -94,15 +94,15 @@ export interface BoardCanvasProps {
 
 const PULSE_CSS = `
   @keyframes catan-ring-pulse {
-    0% { transform: scale(0.7); opacity: 0.9; }
-    70%, 100% { transform: scale(1.9); opacity: 0; }
+    0% { transform: scale(0.85); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0.45; }
   }
   .catan-target:focus-visible {
     outline: 2px solid rgba(200, 184, 154, 0.7);
     outline-offset: 2px;
   }
   .catan-marker-ring {
-    animation: catan-ring-pulse 1.1s ease-out infinite;
+    animation: catan-ring-pulse 0.7s ease-in-out infinite alternate;
   }
   .catan-target .catan-vertex-note {
     display: none;

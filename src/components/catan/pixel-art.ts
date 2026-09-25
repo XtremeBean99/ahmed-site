@@ -1034,8 +1034,14 @@ export function drawOverlayLayer(buffer: PixelBuffer, opts: OverlayOpts, sprites
   if (opts.touchSelection) drawTouchSelectionShape(buffer, opts.touchSelection)
 }
 
+/** A solid 5x5 amber square with a dark rim: readable at every scale, including phones. */
+function drawTargetDot(buffer: PixelBuffer, center: { x: number; y: number }): void {
+  drawRectFill(buffer, center.x - 3, center.y - 3, 7, 7, OUTLINE)
+  drawRectFill(buffer, center.x - 2, center.y - 2, 5, 5, AMBER)
+}
+
 export function drawTargets(buffer: PixelBuffer, targets: TargetShapes): void {
-  for (const vertex of targets.vertices) drawSquareOutline(buffer, vertexPoint(vertex), 5, AMBER)
+  for (const vertex of targets.vertices) drawTargetDot(buffer, vertexPoint(vertex))
   for (const edge of targets.edges) {
     const [a, b] = edgeEndpoints(edge)
     const dx = b.x - a.x
@@ -1047,6 +1053,7 @@ export function drawTargets(buffer: PixelBuffer, targets: TargetShapes): void {
     const p1 = { x: Math.round(a.x + ux * 4), y: Math.round(a.y + uy * 4) }
     const p2 = { x: Math.round(b.x - ux * 4), y: Math.round(b.y - uy * 4) }
     drawLine(buffer, p1, p2, AMBER, 0)
+    drawTargetDot(buffer, edgePoint(edge))
   }
   for (const hex of targets.hexes) {
     const vertices = HEXES[hex].vertices

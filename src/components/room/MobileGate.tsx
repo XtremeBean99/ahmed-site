@@ -40,7 +40,7 @@ export function MobileGate() {
       style={{ backgroundColor: '#2a2220', color: '#e8d5b0' }}
     >
       <p style={{ ...PIXEL, fontSize: 14 }}>Sorry, this site only works on desktop.</p>
-      <p style={{ fontSize: 13, opacity: 0.8, maxWidth: 320 }}>
+      <p style={{ ...PIXEL, fontSize: 11, lineHeight: 1.6, opacity: 0.8, maxWidth: 320 }}>
         {SITE_NAME} is a mouse-and-keyboard experience. Send yourself the link and open it on a
         Mac or PC instead.
       </p>
@@ -56,7 +56,7 @@ export function MobileGate() {
             padding: '10px 12px',
           }}
         >
-          {status === 'copied' ? 'Link copied!' : status === 'unsupported' ? "Couldn't copy — copy from the address bar" : 'Share to another device'}
+          {status === 'copied' ? 'Link copied!' : status === 'unsupported' ? "Couldn't copy. Copy it from the address bar." : 'Share to another device'}
         </button>
         <a
           href={mailHref}

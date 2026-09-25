@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createBoard, reveal, toggleFlag, flagCount, type Board } from '@/lib/games/minesweeper-engine'
 import { getBest, setBestIfLower, BEST_KEYS } from '@/lib/games/storage'
 import { ScreenStrip, StripButton } from './ScreenStrip'
+import { ArcadeFrame, useFullscreen } from './DeskArcade'
 
 const ROWS = 9
 const COLS = 9
@@ -33,6 +34,7 @@ interface DeskMinesweeperProps {
 }
 
 export function DeskMinesweeper({ time, backLabel, desktopLabel, labels, onBack, onDesktop }: DeskMinesweeperProps) {
+  const fs = useFullscreen()
   const [board, setBoard] = useState<Board>(() => createBoard(ROWS, COLS, MINES))
   const [elapsed, setElapsed] = useState(0)
   const [best, setBest] = useState(0)
@@ -89,15 +91,12 @@ export function DeskMinesweeper({ time, backLabel, desktopLabel, labels, onBack,
   const pixelFont = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const
 
   return (
-    <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#faf8f5' }}>
-      <ScreenStrip time={time}>
-        <StripButton onClick={() => onDesktop()}>{desktopLabel}</StripButton>
-        <StripButton onClick={onBack} ariaLabel={backLabel}>← {backLabel}</StripButton>
-      </ScreenStrip>
+    <ArcadeFrame fs={fs}>
+      <ScreenStrip time={time} fs={fs} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack} />
 
       {/* Status bar */}
       <div
-        className="flex items-center gap-3 px-3 border-b flex-shrink-0"
+        className="flex items-center gap-3 pl-3 pr-[5px] border-b flex-shrink-0"
         style={{ height: 24, backgroundColor: '#e8e0d8', borderColor: '#c8b8a8', fontSize: '10px', color: '#3a3028', ...pixelFont }}
       >
         <span>{labels.minesLeft.replace('{n}', String(MINES - flagCount(board)))}</span>
@@ -168,6 +167,6 @@ export function DeskMinesweeper({ time, backLabel, desktopLabel, labels, onBack,
           })}
         </div>
       </div>
-    </div>
+    </ArcadeFrame>
   )
 }

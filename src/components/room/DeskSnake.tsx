@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { createGame, step, turn, tickMs, type Dir } from '@/lib/games/snake-engine'
 import { getBest, setBestIfHigher, BEST_KEYS } from '@/lib/games/storage'
 import { ScreenStrip, StripButton } from './ScreenStrip'
+import { ArcadeButton, ArcadeFrame, useFullscreen } from './DeskArcade'
+import { ARCADE } from './pixel-ui'
 
 const COLS = 14
 const ROWS = 14
@@ -47,6 +49,7 @@ interface DeskSnakeProps {
 }
 
 export function DeskSnake({ time, backLabel, desktopLabel, labels, onBack, onDesktop }: DeskSnakeProps) {
+  const fs = useFullscreen()
   const [game, setGame] = useState(() => createGame(COLS, ROWS))
   const [best, setBest] = useState(0)
   const [paused, setPaused] = useState(false)
@@ -104,15 +107,12 @@ export function DeskSnake({ time, backLabel, desktopLabel, labels, onBack, onDes
     game.status === 'over' ? labels.over : game.status === 'won' ? labels.won : paused ? labels.paused : ''
 
   return (
-    <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#faf8f5' }}>
-      <ScreenStrip time={time}>
-        <StripButton onClick={() => onDesktop()}>{desktopLabel}</StripButton>
-        <StripButton onClick={onBack} ariaLabel={backLabel}>← {backLabel}</StripButton>
-      </ScreenStrip>
+    <ArcadeFrame fs={fs}>
+      <ScreenStrip time={time} fs={fs} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack} />
 
       {/* Status bar */}
       <div
-        className="flex items-center gap-3 px-3 border-b flex-shrink-0"
+        className="flex items-center gap-3 pl-3 pr-[5px] border-b flex-shrink-0"
         style={{ height: 24, backgroundColor: '#e8e0d8', borderColor: '#c8b8a8', fontSize: '10px', color: '#3a3028', ...pixelFont }}
       >
         <span>{labels.score.replace('{n}', String(game.score))}</span>
@@ -176,20 +176,19 @@ export function DeskSnake({ time, backLabel, desktopLabel, labels, onBack, onDes
                 style={{ backgroundColor: '#3d2e1e', borderColor: '#5a4430', borderRadius: '3px', color: '#e8d5b0', ...pixelFont }}
               >
                 <p style={{ fontSize: '12px' }}>{overlay}</p>
-                <button
-                  type="button"
+                <ArcadeButton
+                  size="sm"
+                  className="mt-1.5"
                   onClick={() => (paused && game.status === 'playing' ? setPaused(false) : reset())}
-                  className="mt-1.5 border px-2 py-0.5 outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#e8d5b0]"
-                  style={{ borderColor: '#5a4430', backgroundColor: '#2d2116', fontSize: '9px', color: '#c8b89a', ...pixelFont }}
                 >
                   {paused && game.status === 'playing' ? labels.resume : labels.reset}
-                </button>
+                </ArcadeButton>
               </div>
             </div>
           )}
         </div>
-        <p style={{ fontSize: '9px', color: '#8a7a68', ...pixelFont }}>{labels.hint}</p>
+        <p style={{ fontSize: '9px', color: ARCADE.phosphorDim, ...pixelFont }}>{labels.hint}</p>
       </div>
-    </div>
+    </ArcadeFrame>
   )
 }

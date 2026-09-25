@@ -440,8 +440,8 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
       drawBlockText(ctx, pad(s.score), x + 6, 5, ARCADE.phosphor, 2, 2)
       // The dim high score reads cleaner without the glow.
       ctx.shadowBlur = 0
-      const hx = drawBlockText(ctx, labelsRef.current.hudHi, 120, 5, ARCADE.phosphorDim, 2, 2)
-      drawBlockText(ctx, pad(bestRef.current), hx + 6, 5, ARCADE.phosphorDim, 2, 2)
+      const hx = drawBlockText(ctx, labelsRef.current.hudHi, 120, 5, ARCADE.inkSoft, 2, 2)
+      drawBlockText(ctx, pad(bestRef.current), hx + 6, 5, ARCADE.inkSoft, 2, 2)
       ctx.shadowBlur = 6 * k
       const levelX = Math.round((COURT_W - 54) / 2)
       const levelEnd = drawBlockText(ctx, labelsRef.current.hudLevel, levelX, 5, ARCADE.phosphor, 2, 2)

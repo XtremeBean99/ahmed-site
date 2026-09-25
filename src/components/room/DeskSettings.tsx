@@ -1,6 +1,7 @@
 'use client'
 
-import { ScreenStrip, StripButton } from './ScreenStrip'
+import { ScreenStrip } from './ScreenStrip'
+import { ArcadeButton } from './pixel-ui'
 
 const PIXEL = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const
 
@@ -11,8 +12,11 @@ export interface SettingsLabels {
 }
 
 interface DeskSettingsProps {
+  time: string
   labels: SettingsLabels
   desktopLabel: string
+  backLabel: string
+  onBack: (e: React.MouseEvent) => void
   sfxOn: boolean; onSfx: (v: boolean) => void
   sfxVolume: number; onSfxVolume: (v: number) => void
   musicVolume: number; onMusicVolume: (v: number) => void
@@ -20,15 +24,16 @@ interface DeskSettingsProps {
   onDesktop: () => void
 }
 
-export function DeskSettings(p: DeskSettingsProps) {
-  const Toggle = ({ on, onChange, aria }: { on: boolean; onChange: (v: boolean) => void; aria: string }) => (
-    <button type="button" role="switch" aria-checked={on} aria-label={aria}
-      onClick={() => onChange(!on)} style={{ ...PIXEL, fontSize: '10px', padding: '2px 10px',
-      border: '1px solid #c8b8a8', backgroundColor: on ? '#3d2e1e' : '#e8e0d8',
-      color: on ? '#e8d5b0' : '#3a3028' }}>
-      {on ? p.labels.on : p.labels.off}
-    </button>
+// Module level: defined inside render it would remount on every click and drop keyboard focus.
+function Toggle({ on, onChange, aria, onLabel, offLabel }: { on: boolean; onChange: (v: boolean) => void; aria: string; onLabel: string; offLabel: string }) {
+  return (
+    <ArcadeButton tone="dark" size="sm" pressed={on} ariaLabel={aria} onClick={() => onChange(!on)}>
+      {on ? onLabel : offLabel}
+    </ArcadeButton>
   )
+}
+
+export function DeskSettings(p: DeskSettingsProps) {
   const row = { display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '8px 4px', borderBottom: '1px solid #e0d8cc' } as const
   const slider = (v: number, on: (n: number) => void, aria: string) => (
@@ -38,14 +43,12 @@ export function DeskSettings(p: DeskSettingsProps) {
   )
   return (
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#faf8f5' }}>
-      <ScreenStrip time={p.labels.title}>
-        <StripButton onClick={p.onDesktop} ariaLabel={p.desktopLabel}>{p.desktopLabel}</StripButton>
-      </ScreenStrip>
+      <ScreenStrip time={p.time} title={p.labels.title} desktopLabel={p.desktopLabel} onDesktop={p.onDesktop} backLabel={p.backLabel} onBack={p.onBack} />
       <div className="flex-1 overflow-y-auto px-4 py-2" style={{ ...PIXEL, fontSize: '11px', color: '#2a2520' }}>
-        <div style={row}><span>{p.labels.sfx}</span><Toggle on={p.sfxOn} onChange={p.onSfx} aria={p.labels.sfx} /></div>
+        <div style={row}><span>{p.labels.sfx}</span><Toggle on={p.sfxOn} onChange={p.onSfx} aria={p.labels.sfx} onLabel={p.labels.on} offLabel={p.labels.off} /></div>
         <div style={row}><span>{p.labels.sfxVolume}</span>{slider(p.sfxVolume, p.onSfxVolume, p.labels.sfxVolume)}</div>
         <div style={row}><span>{p.labels.musicVolume}</span>{slider(p.musicVolume, p.onMusicVolume, p.labels.musicVolume)}</div>
-        <div style={row}><span>{p.labels.clock}</span><Toggle on={p.is24h} onChange={() => p.onClock()} aria={p.labels.clock} /></div>
+        <div style={row}><span>{p.labels.clock}</span><Toggle on={p.is24h} onChange={() => p.onClock()} aria={p.labels.clock} onLabel={p.labels.on} offLabel={p.labels.off} /></div>
       </div>
     </div>
   )

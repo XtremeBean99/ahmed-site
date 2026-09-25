@@ -10,9 +10,10 @@ interface DeskIconProps {
   /** Rendered icon size in px (square). Defaults to 32. */
   iconSize?: number
   onClick: (e: React.MouseEvent) => void
+  autoFocus?: boolean
 }
 
-export function DeskIcon({ label, tooltip, href, icon, iconSize = 32, onClick }: DeskIconProps) {
+export function DeskIcon({ label, tooltip, href, icon, iconSize = 32, onClick, autoFocus }: DeskIconProps) {
   const tipId = useId()
   const [showTooltip, setShowTooltip] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -38,7 +39,9 @@ export function DeskIcon({ label, tooltip, href, icon, iconSize = 32, onClick }:
   const sharedHandlers = {
     onMouseEnter: activate,
     onMouseLeave: deactivate,
-    onFocus: activate,
+    // Keyboard focus only: DeskDesktop autoFocuses the last app's icon, and a
+    // mouse user should not get a tooltip stuck open on it.
+    onFocus: (e: React.FocusEvent<HTMLElement>) => { if (e.currentTarget.matches(':focus-visible')) activate() },
     onBlur: deactivate,
   }
   const inner = (
@@ -67,11 +70,11 @@ export function DeskIcon({ label, tooltip, href, icon, iconSize = 32, onClick }:
     </>
   )
   return href ? (
-    <a href={href} onClick={onClick} className={className} aria-label={label} aria-describedby={tooltip ? tipId : undefined} style={style} {...sharedHandlers}>
+    <a href={href} onClick={onClick} autoFocus={autoFocus} className={className} aria-label={label} aria-describedby={tooltip ? tipId : undefined} style={style} {...sharedHandlers}>
       {inner}
     </a>
   ) : (
-    <button type="button" onClick={onClick} className={className} aria-label={label} aria-describedby={tooltip ? tipId : undefined} style={style} {...sharedHandlers}>
+    <button type="button" onClick={onClick} autoFocus={autoFocus} className={className} aria-label={label} aria-describedby={tooltip ? tipId : undefined} style={style} {...sharedHandlers}>
       {inner}
     </button>
   )

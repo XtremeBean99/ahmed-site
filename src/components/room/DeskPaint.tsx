@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ScreenStrip, StripButton } from './ScreenStrip'
+import { ArcadeFrame, useFullscreen } from './DeskArcade'
 
 const COLS = 107
 const ROWS = 50
@@ -24,6 +25,7 @@ export interface PaintLabels {
   eraser: string
   fill: string
   clear: string
+  clearConfirm: string
   download: string
   color: string
   canvas: string
@@ -58,14 +60,17 @@ function loadCells(): Uint8Array {
 }
 
 export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDesktop }: DeskPaintProps) {
+  const fs = useFullscreen()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const cellsRef = useRef<Uint8Array | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const armTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const [armed, setArmed] = useState(false)
   const [tool, setTool] = useState<Tool>('pencil')
   const [colorIdx, setColorIdx] = useState(0)
   const [customColor, setCustomColor] = useState(DEFAULT_CUSTOM_COLOR)
   // Palette indices are stored per-cell, but the custom slot's colour is picked
-  // at runtime — a ref keeps repaint/setCell/flood reading the live colour
+  // at runtime - a ref keeps repaint/setCell/flood reading the live colour
   // without having to rebuild those callbacks on every colour change.
   const paletteRef = useRef<string[]>([...FIXED_PALETTE, DEFAULT_CUSTOM_COLOR])
 
@@ -85,10 +90,13 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
   useEffect(() => {
     cellsRef.current = loadCells()
     repaint()
-    return () => clearTimeout(saveTimer.current)
+    return () => {
+      clearTimeout(saveTimer.current)
+      clearTimeout(armTimer.current)
+    }
   }, [repaint])
 
-  // The custom slot's colour can change after cells already used it — repaint
+  // The custom slot's colour can change after cells already used it - repaint
   // so those cells pick up the new colour immediately.
   useEffect(() => {
     paletteRef.current = [...FIXED_PALETTE, customColor]
@@ -144,7 +152,7 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
     [repaint, persist],
   )
 
-  // The stage transform scales the canvas; map pointer coords via the box.
+  // The stage and full-screen transforms scale the canvas; map pointer coords via its box.
   const cellFromEvent = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const x = Math.floor(((e.clientX - rect.left) / rect.width) * COLS)
@@ -176,15 +184,12 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
   }
 
   return (
-    <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#faf8f5' }}>
-      <ScreenStrip time={time}>
-        <StripButton onClick={() => onDesktop()}>{desktopLabel}</StripButton>
-        <StripButton onClick={onBack} ariaLabel={backLabel}>← {backLabel}</StripButton>
-      </ScreenStrip>
+    <ArcadeFrame fs={fs}>
+      <ScreenStrip time={time} fs={fs} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack} />
 
       {/* Toolbar */}
       <div
-        className="flex items-center gap-2 px-2 border-b flex-shrink-0"
+        className="flex items-center gap-1.5 px-[5px] border-b flex-shrink-0"
         style={{ height: 24, backgroundColor: '#e8e0d8', borderColor: '#c8b8a8', fontSize: '10px', color: '#3a3028' }}
       >
         <StripButton pressed={tool === 'pencil'} onClick={() => setTool('pencil')}>{labels.pencil}</StripButton>
@@ -234,8 +239,23 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
             />
           </span>
         </span>
-        <span className="ml-auto flex items-center gap-2">
-          <StripButton onClick={clearAll}>{labels.clear}</StripButton>
+        <span className="ml-auto flex items-center gap-1.5">
+          <StripButton
+            pressed={armed || undefined}
+            onClick={() => {
+              if (!armed) {
+                setArmed(true)
+                clearTimeout(armTimer.current)
+                armTimer.current = setTimeout(() => setArmed(false), 3000)
+                return
+              }
+              clearTimeout(armTimer.current)
+              setArmed(false)
+              clearAll()
+            }}
+          >
+            {armed ? labels.clearConfirm : labels.clear}
+          </StripButton>
           <StripButton onClick={download}>{labels.download}</StripButton>
         </span>
       </div>
@@ -258,6 +278,6 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
           }}
         />
       </div>
-    </div>
+    </ArcadeFrame>
   )
 }

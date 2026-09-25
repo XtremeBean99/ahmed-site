@@ -145,6 +145,9 @@ export function RoomReader({ book, labels, onClose }: RoomReaderProps) {
         else onClose()
         return
       }
+      // Space on a focused control activates it; only turn the page when the
+      // frame or paper has focus.
+      if (e.key === ' ' && (e.target as HTMLElement | null)?.closest('button, a, input, textarea, select')) return
       if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(1) }
       if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(-1) }
       if (e.key === 'Home') jump(0)
@@ -301,7 +304,7 @@ export function RoomReader({ book, labels, onClose }: RoomReaderProps) {
                           </p>
                         ),
                       )}
-                      <p className="mt-6" style={{ ...PIXEL, fontSize: 9, color: '#9b8062', opacity: 0.7, textAlign: 'center' }}>
+                      <p className="mt-6" style={{ ...PIXEL, fontSize: 9, color: '#6a5843', textAlign: 'center' }}>
                         {p.label || page + i + 1}
                       </p>
                     </article>

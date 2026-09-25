@@ -21,7 +21,7 @@ retired in Spec 1 (July 2026) and 301-redirect to `/`. Their source code is arch
 
 ## Current State (23 September 2026)
 
-Latest: Snake is a desk app (v18 below) alongside Paint and Minesweeper.
+Latest: one consistent desk chrome, fullscreen with a music bar, Blackjack tutorial, reactive keyboard (v20 below).
 
 
 Pixel OS v1 desk launcher (Home/Paint/Minesweeper icons with bubble tooltips; Paint app
@@ -421,6 +421,24 @@ sky-restaurant ⚠ commercial. Covers: sky-restaurant.jpg, summer-days.jpg.
   no dead code is left and the discoveries badge stays completable at **22**. Minesweeper's desk
   icon went 32 → 38 px (+20%).
 
+
+- **v20** `26 September 2026`: **One desk chrome.** Every screen's 28px `ScreenStrip` is identical: a
+  clock box at left (a button toggling 12/24 h via `DeskClockContext`, the desk time now honours
+  `is24h`), an optional title, app controls, Full screen (where supported), Desktop (not on the
+  desktop), ← Room, all `ArcadeButton tone="dark" size="sm"` (Pong's difficulty-box look; `StripButton`
+  wraps it and blurs after pointer clicks so window-level game keys keep working). The cream
+  page-corner To Room button is gone; ← Room lives in the desktop strip. `ArcadeButton`, `ARCADE` and
+  `PIXEL_FONT` moved to `pixel-ui.tsx` (re-exported from `DeskArcade.tsx`, avoiding an import cycle).
+  **Fullscreen** also for Paint, Minesweeper and Snake; in fullscreen `ArcadeFrame` scales the 536x308
+  app above a 52px music bar with an embedded `NowPlaying` (the page-level player is outside the
+  fullscreen element). **Blackjack**: player hands were offset twice by `left` and drew off the felt
+  (fixed); discard tray, felt rules and lines removed (only BLACKJACK PAYS 3 TO 2 stays); a 6-page
+  How to play tutorial (auto-opens once, `blackjack-tutorial-seen`; Escape closes only the dialog).
+  **Reactive keyboard** (`DeskKeyboard.tsx`, `src/lib/room/keyboard-keys.ts`): 86 caps measured as
+  exact pixel masks from the desk art; pressed caps sink 2px (capture-phase listener, never blocks
+  keys). Room README popup removed. UI audit fixes: Paint clear needs a second click, Music app on the
+  room palette, contrast fixes, focus returns to the launching icon, hint pulses inside `RoomStage`,
+  splash skippable (click/key, instant on reduced motion), terminal and screensaver discoveries fire.
 
 
 - **v6 (security hardening)** `7 July 2026`: Deleted live Vercel OIDC token from

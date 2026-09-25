@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useSfx } from './RoomSfxProvider'
-import { ScreenStrip, StripButton } from './ScreenStrip'
+import { ScreenStrip } from './ScreenStrip'
 import { TermEditor, TERM_FONT, TERM_FONT_SIZE, TERM_LINE_H } from './TermEditor'
 import { Shell } from '@/lib/terminal/shell/shell'
 import { COMMANDS } from '@/lib/terminal/commands'
@@ -18,9 +18,12 @@ const FG = '#35e65c'
 const BG = '#0a0a0a'
 
 interface DeskTerminalProps {
+  time: string
   labels: { title: string }
   desktopLabel: string
+  backLabel: string
   onDesktop: () => void
+  onBack: (e: React.MouseEvent) => void
   readmeContent: string
   /** Run this command line once the shell is up (used when a desktop file is opened). */
   bootCommand?: string | null
@@ -68,7 +71,7 @@ function commonPrefix(a: string[]): string {
   return p
 }
 
-export function DeskTerminal({ labels, desktopLabel, onDesktop, readmeContent, bootCommand, onBootHandled }: DeskTerminalProps) {
+export function DeskTerminal({ time, labels, desktopLabel, backLabel, onDesktop, onBack, readmeContent, bootCommand, onBootHandled }: DeskTerminalProps) {
   const sfx = useSfx()
   const [lines, setLines] = useState<string[]>([''])
   const [input, setInput] = useState('')
@@ -319,9 +322,7 @@ export function DeskTerminal({ labels, desktopLabel, onDesktop, readmeContent, b
 
   return (
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: BG }}>
-      <ScreenStrip time={labels.title}>
-        <StripButton onClick={onDesktop} ariaLabel={desktopLabel}>{desktopLabel}</StripButton>
-      </ScreenStrip>
+      <ScreenStrip time={time} title={labels.title} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack} />
 
       {editor && (
         <TermEditor

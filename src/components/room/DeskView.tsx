@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
 import { useStageScale, STAGE_W, STAGE_H } from '@/lib/room/useStageScale'
 import { useRoomAudio } from './RoomAudioProvider'
 import { DeskDesktop, type DesktopShortcut } from './DeskDesktop'
+import { DeskClockContext } from './ScreenStrip'
 import { DeskPaint, type PaintLabels } from './DeskPaint'
 import { DeskMinesweeper, type MinesLabels } from './DeskMinesweeper'
 import { DeskSnake, type SnakeLabels } from './DeskSnake'
@@ -22,6 +23,7 @@ import { desktopFiles } from '@/lib/terminal/session'
 import { DeskGuestbook, type GuestbookLabels } from './DeskGuestbook'
 import { DeskMovie, type MovieLabels } from './DeskMovie'
 import { MusicNotes } from './MusicNotes'
+import { DeskKeyboard } from './DeskKeyboard'
 
 const SCREEN_X = 436; const SCREEN_Y = 152; const SCREEN_W = 536; const SCREEN_H = 308
 const SPEAKER_LEFT = { x: 190, y: 265, w: 175, h: 300 }
@@ -43,6 +45,7 @@ type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'snake' | 'blackjack' | 
 interface DeskViewProps {
   shortcuts: DesktopShortcut[]
   backLabel: string
+  clickAgainLabel: string
   screenLabel: string
   desktopLabel: string
   speakersLabel: string
@@ -103,7 +106,7 @@ interface DeskViewProps {
   onBack: () => void
 }
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
+  const { shortcuts, backLabel, clickAgainLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
   const { scale } = useStageScale()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
@@ -116,20 +119,23 @@ export function DeskView(props: DeskViewProps) {
   const [screensaver, setScreensaver] = useState(false)
   const [backPending, setBackPending] = useState(false)
   const backPendingTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const activeIconRef = useRef<HTMLAnchorElement>(null)
+  const lastAppRef = useRef<string | null>(null)
   const mouseRef = useRef<HTMLDivElement>(null)
   const mouseTarget = useRef({ x: MOUSE_REST_X, y: MOUSE_REST_Y })
   const mouseCurrent = useRef({ x: MOUSE_REST_X, y: MOUSE_REST_Y })
   const rafRef = useRef(0)
   const idleTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  // Live clock
+  // Live clock, in the visitor's 12/24-hour choice (the strip clock toggles it)
   useEffect(() => {
-    const update = () => setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))
+    const update = () => setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: !is24h }))
     update()
     const id = setInterval(update, 1000)
     return () => clearInterval(id)
-  }, [])
+  }, [is24h])
+  const clock = useMemo(() => ({ is24h, onToggle: onClock }), [is24h, onClock])
+  // Every strip's Room button: the click must not also count as a desk click.
+  const backToRoom = useCallback((e: React.MouseEvent) => { e.stopPropagation(); onBack() }, [onBack])
 
   // Loading beat
   useEffect(() => {
@@ -146,6 +152,7 @@ export function DeskView(props: DeskViewProps) {
         return
       }
       if (s.kind === 'app') {
+        lastAppRef.current = s.id
         setScreenMode(s.target as ScreenMode)
         window.dispatchEvent(new CustomEvent('room:app-open', { detail: s.target }))
         return
@@ -162,7 +169,6 @@ export function DeskView(props: DeskViewProps) {
       if (document.fullscreenElement) return
       if (screenMode !== 'desktop') {
         setScreenMode('desktop')
-        activeIconRef.current?.focus()
       } else {
         onBack()
       }
@@ -183,6 +189,7 @@ export function DeskView(props: DeskViewProps) {
   useEffect(() => {
     if (konamiOpen) {
       setScreenMode("terminal")
+      window.dispatchEvent(new CustomEvent('room:app-open', { detail: 'terminal' }))
       onKonamiHandled()
     }
   }, [konamiOpen, onKonamiHandled])
@@ -197,7 +204,6 @@ export function DeskView(props: DeskViewProps) {
   // Return to desktop
   const goDesktop = useCallback(() => {
     setScreenMode('desktop')
-    activeIconRef.current?.focus()
   }, [])
 
   // Idle screensaver: reset timer on any activity, trigger after 15s
@@ -215,6 +221,11 @@ export function DeskView(props: DeskViewProps) {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
     }
   }, [])
+
+  // The screensaver overlay only exists on the desktop, so only count it there.
+  useEffect(() => {
+    if (screensaver && screenMode === 'desktop') window.dispatchEvent(new CustomEvent('room:app-open', { detail: 'screensaver' }))
+  }, [screensaver, screenMode])
 
   // Mouse follower rAF loop with visibility guard
   useEffect(() => {
@@ -311,6 +322,7 @@ export function DeskView(props: DeskViewProps) {
         <img src="/room/desk-closeup.png" alt="" draggable={false}
           className={`absolute inset-0 w-full h-full ${lampFlicker && !reduce ? 'animate-[lamp-flicker_0.5s_ease-out]' : ''}`}
           style={{ imageRendering: 'pixelated', opacity: lampOn ? 1 : 0, transition: reduce ? 'none' : 'opacity 0.4s ease' }} />
+        <DeskKeyboard lampOn={lampOn} />
 
         {/* Desk lamp toggle */}
         <button onClick={(e) => { e.stopPropagation(); onToggleLamp() }} aria-label={lampLabel}
@@ -358,7 +370,7 @@ export function DeskView(props: DeskViewProps) {
                   textShadow: '1px 1px 0 #1a0e04',
                 }}
               >
-                Click again to return to room
+                {clickAgainLabel}
               </div>
             </motion.div>
           )}
@@ -379,6 +391,7 @@ export function DeskView(props: DeskViewProps) {
 
         {/* Screen area */}
         <div data-screen-area style={screenStyle}>
+          <DeskClockContext.Provider value={clock}>
           <AnimatePresence mode="wait">
             {screenMode === 'desktop' && showDesktop && (
               <motion.div key="desktop" className="absolute inset-0"
@@ -386,6 +399,8 @@ export function DeskView(props: DeskViewProps) {
                 transition={{ duration: reduce ? 0 : 0.3 }}>
                 <DeskDesktop
                   time={time}
+                  backLabel={backLabel}
+                  onBack={backToRoom}
                   screenLabel={screenLabel}
                   shortcuts={shortcuts}
                   screensaver={screensaver}
@@ -395,6 +410,7 @@ export function DeskView(props: DeskViewProps) {
                   onShortcutClick={handleShortcutClick}
                   files={deskFiles}
                   onFileClick={openDeskFile}
+                  focusId={lastAppRef.current}
                 />
               </motion.div>
             )}
@@ -404,7 +420,7 @@ export function DeskView(props: DeskViewProps) {
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskPaint time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={paintLabels} onDesktop={goDesktop}
-                  onBack={(e) => { e.stopPropagation(); onBack() }} />
+                  onBack={backToRoom} />
               </motion.div>
             )}
 
@@ -414,7 +430,7 @@ export function DeskView(props: DeskViewProps) {
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskMinesweeper time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={minesLabels} onDesktop={goDesktop}
-                  onBack={(e) => { e.stopPropagation(); onBack() }} />
+                  onBack={backToRoom} />
               </motion.div>
             )}
 
@@ -424,7 +440,7 @@ export function DeskView(props: DeskViewProps) {
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskSnake time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={snakeLabels} onDesktop={goDesktop}
-                  onBack={(e) => { e.stopPropagation(); onBack() }} />
+                  onBack={backToRoom} />
               </motion.div>
             )}
 
@@ -434,7 +450,7 @@ export function DeskView(props: DeskViewProps) {
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskBlackjack time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={blackjackLabels} arcade={arcadeLabels} onDesktop={goDesktop}
-                  onBack={(e) => { e.stopPropagation(); onBack() }} />
+                  onBack={backToRoom} />
               </motion.div>
             )}
 
@@ -444,7 +460,7 @@ export function DeskView(props: DeskViewProps) {
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskSolitaire time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={solitaireLabels} arcade={arcadeLabels} onDesktop={goDesktop}
-                  onBack={(e) => { e.stopPropagation(); onBack() }} />
+                  onBack={backToRoom} />
               </motion.div>
             )}
 
@@ -454,7 +470,7 @@ export function DeskView(props: DeskViewProps) {
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskPong time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={pongLabels} arcade={arcadeLabels} onDesktop={goDesktop}
-                  onBack={(e) => { e.stopPropagation(); onBack() }} />
+                  onBack={backToRoom} />
               </motion.div>
             )}
 
@@ -464,7 +480,7 @@ export function DeskView(props: DeskViewProps) {
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskBreakout time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={breakoutLabels} arcade={arcadeLabels} onDesktop={goDesktop}
-                  onBack={(e) => { e.stopPropagation(); onBack() }} />
+                  onBack={backToRoom} />
               </motion.div>
             )}
 
@@ -473,10 +489,13 @@ export function DeskView(props: DeskViewProps) {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskReadme
+                  time={time}
                   content={readmeContent}
                   labels={readmeLabels}
                   desktopLabel={desktopLabel}
+                  backLabel={backLabel}
                   onDesktop={goDesktop}
+                  onBack={backToRoom}
                 />
               </motion.div>
             )}
@@ -488,8 +507,10 @@ export function DeskView(props: DeskViewProps) {
                 <DeskMusic
                   time={time}
                   desktopLabel={desktopLabel}
+                  backLabel={backLabel}
                   labels={musicLabels}
                   onDesktop={goDesktop}
+                  onBack={backToRoom}
                 />
               </motion.div>
             )}
@@ -499,12 +520,15 @@ export function DeskView(props: DeskViewProps) {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskLegal
+                  time={time}
                   privacy={legalPrivacy}
                   terms={legalTerms}
                   effectiveDate={legalEffectiveDate}
                   labels={legalLabels}
                   desktopLabel={desktopLabel}
+                  backLabel={backLabel}
                   onDesktop={goDesktop}
+                  onBack={backToRoom}
                 />
               </motion.div>
             )}
@@ -514,9 +538,12 @@ export function DeskView(props: DeskViewProps) {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskGuestbook
+                  time={time}
                   labels={guestbookLabels}
                   desktopLabel={desktopLabel}
+                  backLabel={backLabel}
                   onDesktop={goDesktop}
+                  onBack={backToRoom}
                 />
               </motion.div>
             )}
@@ -526,8 +553,11 @@ export function DeskView(props: DeskViewProps) {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskSettings
+                  time={time}
                   labels={settingsLabels}
                   desktopLabel={desktopLabel}
+                  backLabel={backLabel}
+                  onBack={backToRoom}
                   sfxOn={sfxOn}
                   onSfx={onSfx}
                   sfxVolume={sfxVolume}
@@ -548,8 +578,10 @@ export function DeskView(props: DeskViewProps) {
                 <DeskMovie
                   time={time}
                   desktopLabel={desktopLabel}
+                  backLabel={backLabel}
                   labels={movieLabels}
                   onDesktop={goDesktop}
+                  onBack={backToRoom}
                 />
               </motion.div>
             )}
@@ -559,9 +591,12 @@ export function DeskView(props: DeskViewProps) {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 <DeskTerminal
+                  time={time}
                   labels={terminalLabels}
                   desktopLabel={desktopLabel}
+                  backLabel={backLabel}
                   onDesktop={goDesktop}
+                  onBack={backToRoom}
                   readmeContent={readmeContent}
                   bootCommand={termBoot}
                   onBootHandled={() => setTermBoot(null)}
@@ -569,31 +604,9 @@ export function DeskView(props: DeskViewProps) {
               </motion.div>
             )}
           </AnimatePresence>
+          </DeskClockContext.Provider>
         </div>
       </motion.div>
-
-      {/* "To Room" CTA: sits outside the scaled stage so it's pinned to the
-          site's corner regardless of stage scale, not the in-monitor screen. */}
-      {screenMode === 'desktop' && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onBack() }}
-          aria-label={backLabel}
-          className="absolute top-4 left-4 z-40 flex items-center gap-2 px-4 py-2 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#3a2820] transition-transform duration-100 active:translate-y-[2px]"
-          style={{
-            fontFamily: 'var(--font-pixel), "Courier New", monospace',
-            fontSize: '15px',
-            color: '#3a2820',
-            textShadow: '1px 1px 0 rgba(255,255,255,0.4)',
-            background: 'linear-gradient(180deg, #fffaf0 0%, #f0e0c0 45%, #d8c098 100%)',
-            border: '4px solid #3a2820',
-            clipPath:
-              'polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px)',
-            boxShadow: 'inset 2px 2px 0 rgba(255,255,255,0.7), inset -3px -3px 0 rgba(0,0,0,0.25)',
-          }}
-        >
-          <span aria-hidden>&larr;</span> To {backLabel}
-        </button>
-      )}
     </div>
   )
 }

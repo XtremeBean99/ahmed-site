@@ -1,16 +1,24 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ScreenStrip, StripButton } from './ScreenStrip'
+import { ScreenStrip } from './ScreenStrip'
+import { ArcadeButton } from './pixel-ui'
 import type { GuestbookEntry } from '@/services/guestbook'
 
 const PIXEL = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const
 
 export interface GuestbookLabels { title: string; close: string; namePh: string; messagePh: string; sign: string; empty: string; posting: string; error: string }
 
-interface Props { labels: GuestbookLabels; desktopLabel: string; onDesktop: () => void }
+interface Props {
+  time: string
+  labels: GuestbookLabels
+  desktopLabel: string
+  backLabel: string
+  onDesktop: () => void
+  onBack: (e: React.MouseEvent) => void
+}
 
-export function DeskGuestbook({ labels, desktopLabel, onDesktop }: Props) {
+export function DeskGuestbook({ time, labels, desktopLabel, backLabel, onDesktop, onBack }: Props) {
   const [entries, setEntries] = useState<GuestbookEntry[] | null>(null)
   const [name, setName] = useState(''); const [message, setMessage] = useState('')
   const [website, setWebsite] = useState('') // honeypot
@@ -34,9 +42,7 @@ export function DeskGuestbook({ labels, desktopLabel, onDesktop }: Props) {
 
   return (
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#faf8f5' }}>
-      <ScreenStrip time={labels.title}>
-        <StripButton onClick={onDesktop} ariaLabel={desktopLabel}>{desktopLabel}</StripButton>
-      </ScreenStrip>
+      <ScreenStrip time={time} title={labels.title} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack} />
       <div className="flex-1 overflow-y-auto p-2 mx-2 mt-2" style={{ backgroundColor: '#fffef5', border: '1px solid #d8d0c0', ...PIXEL, fontSize: 10, color: '#2a2520' }}>
         {entries === null ? null : entries.length === 0 ? <p>{labels.empty}</p> : entries.map((en) => (
           <div key={en.id} className="mb-2 pb-1" style={{ borderBottom: '1px dotted #d8d0c0' }}>
@@ -50,7 +56,7 @@ export function DeskGuestbook({ labels, desktopLabel, onDesktop }: Props) {
         <input aria-label={labels.messagePh} placeholder={labels.messagePh} maxLength={280} value={message} onChange={(e) => setMessage(e.target.value)} style={inputStyle} />
         <input tabIndex={-1} autoComplete="off" aria-hidden value={website} onChange={(e) => setWebsite(e.target.value)} style={{ position: 'absolute', left: '-9999px', width: 1, height: 1 }} />
         {err && <span style={{ ...PIXEL, fontSize: 9, color: '#a33' }}>{err}</span>}
-        <button type="submit" disabled={busy || !name.trim() || !message.trim()} style={{ ...PIXEL, fontSize: 10, backgroundColor: '#e8e0d8', color: '#3a3028', border: '1px solid #c8b8a8', padding: '2px 6px', opacity: busy ? 0.6 : 1 }}>{busy ? labels.posting : labels.sign}</button>
+        <ArcadeButton type="submit" tone="dark" size="sm" disabled={busy || !name.trim() || !message.trim()}>{busy ? labels.posting : labels.sign}</ArcadeButton>
       </form>
     </div>
   )

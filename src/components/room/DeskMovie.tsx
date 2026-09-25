@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScreenStrip, StripButton } from './ScreenStrip'
+import { ScreenStrip } from './ScreenStrip'
+import { ArcadeButton } from './pixel-ui'
 import { useRoomAudio } from './RoomAudioProvider'
 
 const PIXEL = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const
@@ -20,8 +21,10 @@ export interface MovieLabels {
 interface DeskMovieProps {
   time: string
   desktopLabel: string
+  backLabel: string
   labels: MovieLabels
   onDesktop: () => void
+  onBack: (e: React.MouseEvent) => void
 }
 
 function clock(seconds: number) {
@@ -37,7 +40,7 @@ function clock(seconds: number) {
  * browser's own player. Starting the film pauses the room's music so the two
  * do not talk over each other.
  */
-export function DeskMovie({ time, desktopLabel, labels, onDesktop }: DeskMovieProps) {
+export function DeskMovie({ time, desktopLabel, backLabel, labels, onDesktop, onBack }: DeskMovieProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(false)
@@ -83,9 +86,7 @@ export function DeskMovie({ time, desktopLabel, labels, onDesktop }: DeskMoviePr
 
   return (
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#1b1b1b' }}>
-      <ScreenStrip time={time}>
-        <StripButton onClick={onDesktop} ariaLabel={desktopLabel}>{desktopLabel}</StripButton>
-      </ScreenStrip>
+      <ScreenStrip time={time} title={labels.title} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack} />
 
       {/* Letterboxed picture */}
       <div className="relative flex-1" style={{ backgroundColor: '#000' }}>
@@ -119,7 +120,7 @@ export function DeskMovie({ time, desktopLabel, labels, onDesktop }: DeskMoviePr
                 width: 46,
                 height: 34,
                 backgroundColor: '#e8e0d8',
-                border: '2px solid #8a8078',
+                border: '2px solid #c8b8a8',
                 color: '#2a2520',
                 fontSize: 16,
                 ...PIXEL,
@@ -139,15 +140,9 @@ export function DeskMovie({ time, desktopLabel, labels, onDesktop }: DeskMoviePr
         className="flex items-center gap-2 px-3 h-9 flex-shrink-0 border-t"
         style={{ backgroundColor: '#e8e0d8', borderColor: '#c8b8a8', ...PIXEL, fontSize: 10, color: '#3a3028' }}
       >
-        <button
-          type="button"
-          onClick={togglePlay}
-          aria-label={playing ? labels.pause : labels.play}
-          className="px-2 py-[2px] border outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028]"
-          style={{ borderColor: '#c8b8a8', backgroundColor: '#faf8f5' }}
-        >
+        <ArcadeButton tone="dark" size="sm" onClick={togglePlay} ariaLabel={playing ? labels.pause : labels.play}>
           {playing ? '❚❚' : '▶'}
-        </button>
+        </ArcadeButton>
         <span style={{ minWidth: 34 }}>{clock(current)}</span>
         <input
           type="range"
@@ -161,29 +156,22 @@ export function DeskMovie({ time, desktopLabel, labels, onDesktop }: DeskMoviePr
           style={{ accentColor: '#8a6a3a', backgroundColor: '#c8b8a8' }}
         />
         <span style={{ minWidth: 34 }}>{clock(duration)}</span>
-        <button
-          type="button"
+        <ArcadeButton
+          tone="dark"
+          size="sm"
           onClick={() => {
             const el = videoRef.current
             if (!el) return
             el.muted = !el.muted
             setMuted(el.muted)
           }}
-          aria-label={muted ? labels.unmute : labels.mute}
-          className="px-2 py-[2px] border outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028]"
-          style={{ borderColor: '#c8b8a8', backgroundColor: '#faf8f5' }}
+          ariaLabel={muted ? labels.unmute : labels.mute}
         >
           {muted ? '✕♪' : '♪'}
-        </button>
-        <button
-          type="button"
-          onClick={fullscreen}
-          aria-label={labels.fullscreen}
-          className="px-2 py-[2px] border outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028]"
-          style={{ borderColor: '#c8b8a8', backgroundColor: '#faf8f5' }}
-        >
+        </ArcadeButton>
+        <ArcadeButton tone="dark" size="sm" onClick={fullscreen} ariaLabel={labels.fullscreen}>
           ⛶
-        </button>
+        </ArcadeButton>
       </div>
     </div>
   )

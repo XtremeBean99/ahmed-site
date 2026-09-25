@@ -1,8 +1,6 @@
 'use client'
 
-import { ScreenStrip, StripButton } from './ScreenStrip'
-
-const PIXEL = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const
+import { ScreenStrip } from './ScreenStrip'
 
 interface ReadmeLabels {
   title: string
@@ -10,20 +8,19 @@ interface ReadmeLabels {
 }
 
 interface DeskReadmeProps {
+  time: string
   content: string
   labels: ReadmeLabels
   desktopLabel: string
+  backLabel: string
   onDesktop: () => void
+  onBack: (e: React.MouseEvent) => void
 }
 
-export function DeskReadme({ content, labels, desktopLabel, onDesktop }: DeskReadmeProps) {
+export function DeskReadme({ time, content, labels, desktopLabel, backLabel, onDesktop, onBack }: DeskReadmeProps) {
   return (
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#faf8f5' }}>
-      <ScreenStrip time={labels.title}>
-        <StripButton onClick={onDesktop} ariaLabel={desktopLabel}>
-          {desktopLabel}
-        </StripButton>
-      </ScreenStrip>
+      <ScreenStrip time={time} title={labels.title} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack} />
 
       {/* Notepad body */}
       <div
@@ -39,24 +36,6 @@ export function DeskReadme({ content, labels, desktopLabel, onDesktop }: DeskRea
         }}
       >
         {content}
-      </div>
-
-      {/* Footer with close */}
-      <div className="flex items-center justify-end px-3 h-7 border-t flex-shrink-0"
-        style={{ backgroundColor: '#e8e0d8', borderColor: '#c8b8a8' }}>
-        <button
-          type="button"
-          onClick={onDesktop}
-          className="px-3 py-[2px] text-[10px]"
-          style={{
-            ...PIXEL,
-            backgroundColor: '#e8e0d8',
-            color: '#3a3028',
-            border: '1px solid #c8b8a8',
-          }}
-        >
-          {labels.close}
-        </button>
       </div>
     </div>
   )

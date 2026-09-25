@@ -158,7 +158,7 @@ export function ArcadeStrip({
     <ScreenStrip time={time}>
       {children}
       {fs.supported && (
-        <StripButton onClick={fs.toggle} pressed={fs.active}>
+        <StripButton onClick={fs.toggle}>
           {fs.active ? arcade.exitFullscreen : arcade.fullscreen}
         </StripButton>
       )}

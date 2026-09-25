@@ -22,3 +22,15 @@ export function diceStats(events: readonly GameEvent[]): DiceStats {
   const expected = counts.map((_, total) => (rolls * COMBINATIONS[total]) / 36)
   return { rolls, counts, expected }
 }
+
+/** Builds the same shape from GameState.stats.rolls (the whole-game histogram). */
+export function diceStatsFromRollCounts(rolls: readonly number[]): DiceStats {
+  const counts = Array<number>(13).fill(0)
+  let total = 0
+  for (let value = 2; value <= 12 && value < rolls.length; value++) {
+    counts[value] = rolls[value]
+    total += rolls[value]
+  }
+  const expected = counts.map((_, v) => (total * COMBINATIONS[v]) / 36)
+  return { rolls: total, counts, expected }
+}

@@ -62,9 +62,9 @@ export function StackActionBar({
           {primaryLabel}
         </PixelButton>
       ) : (
+        // The top bar already announces this status; repeating it here is visual only.
         <span
-          data-tutorial="status"
-          role="status"
+          aria-hidden
           style={{
             ...PIXEL_FONT,
             fontSize: 10,

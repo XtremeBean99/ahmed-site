@@ -853,19 +853,21 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
               {note}
             </span>
           ) : null}
-          <span
-            aria-hidden
-            className="catan-marker-ring"
-            style={{
-              width: 12,
-              height: 12,
-              border: '2px solid #e0a040',
-              boxShadow: '0 0 0 1px #1a1410',
-              backgroundColor: 'rgba(224, 160, 64, 0.35)',
-              display: 'block',
-              animation: reduceMotion ? 'none' : undefined,
-            }}
-          />
+          {kind === 'robber' ? null : (
+            <span
+              aria-hidden
+              className="catan-marker-ring"
+              style={{
+                width: 12,
+                height: 12,
+                border: '2px solid #e0a040',
+                boxShadow: '0 0 0 1px #1a1410',
+                backgroundColor: 'rgba(224, 160, 64, 0.35)',
+                display: 'block',
+                animation: reduceMotion ? 'none' : undefined,
+              }}
+            />
+          )}
         </button>,
       )
     }

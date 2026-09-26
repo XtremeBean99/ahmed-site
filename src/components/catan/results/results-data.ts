@@ -65,14 +65,20 @@ export function diceSeries(stats: GameStats): DiceSeries {
     bars.push({ total, actual, expected: (rolls * WAYS[total]) / 36 })
   }
 
+  return { rolls, bars, ...extremes(bars) }
+}
+
+/** The most over- and under-rolled totals, optionally ignoring some (7 produces nothing, so it is never "lucky"). */
+export function extremes(bars: DiceBar[], ignore: readonly number[] = []): { over: DiceBar | null; under: DiceBar | null } {
   let over: DiceBar | null = null
   let under: DiceBar | null = null
   for (const bar of bars) {
+    if (ignore.includes(bar.total)) continue
     const deviation = bar.actual - bar.expected
     if (deviation > 0 && (over === null || deviation > over.actual - over.expected)) over = bar
     if (deviation < 0 && (under === null || deviation < under.actual - under.expected)) under = bar
   }
-  return { rolls, bars, over, under }
+  return { over, under }
 }
 
 export interface ProductionBar {
@@ -149,9 +155,9 @@ export function highlights(state: GameState): Highlight[] {
     out.push({ kind: 'trades', playerTrades: playerTrades / 2, bankTrades })
   }
 
-  const dice = diceSeries(stats)
-  if (dice.over) out.push({ kind: 'luckiest', ...dice.over })
-  if (dice.under) out.push({ kind: 'unluckiest', ...dice.under })
+  const lucky = extremes(diceSeries(stats).bars, [7])
+  if (lucky.over) out.push({ kind: 'luckiest', ...lucky.over })
+  if (lucky.under) out.push({ kind: 'unluckiest', ...lucky.under })
 
   return out
 }

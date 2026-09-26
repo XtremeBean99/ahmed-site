@@ -133,3 +133,14 @@ test('result data functions agree over a real bots-only game', () => {
   const facts = highlights(state)
   assert.ok(facts.length > 0)
 })
+
+test('the luckiest and unluckiest numbers never name 7', () => {
+  const stats = makeTestState().stats
+  stats.rolls = [0, 0, 1, 2, 3, 4, 12, 14, 5, 4, 3, 2, 1]
+  const facts = highlights({ ...makeTestState(), stats })
+  const lucky = facts.find((f) => f.kind === 'luckiest')
+  assert.ok(lucky && lucky.kind === 'luckiest')
+  assert.equal(lucky.total, 6)
+  assert.equal(diceSeries(stats).over?.total, 7)
+})
+

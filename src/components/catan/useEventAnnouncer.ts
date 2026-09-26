@@ -20,9 +20,11 @@ export function useEventAnnouncer(game: GameState | null, t: Dictionary): string
   useEffect(() => {
     if (!game) return
     if (game.eventSeq < lastSeq.current) {
-      lastSeq.current = 0
+      // Undo or a new game: resume from the restored log instead of reading all of it out again.
+      lastSeq.current = game.eventSeq
       queue.current = []
       setAnnouncement('')
+      return
     }
     const fresh = game.events.filter((e) => e.seq > lastSeq.current)
     if (fresh.length === 0) return

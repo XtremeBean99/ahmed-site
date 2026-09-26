@@ -291,6 +291,20 @@ function CatanGameSession({
   const gameRef = useRef<GameState | null>(null)
   gameRef.current = c.game
 
+  // A dialog, or a trade offer waiting on your answer, replaces any open sheet, drawer or menu:
+  // stacked layers hid the dialog and fought over focus. Hiding them in the same render also
+  // un-inerts the board, so the offer banner can take focus.
+  const interrupted = c.modalOpen || c.tradePending
+  useEffect(() => {
+    if (!interrupted) return
+    setSheet(null)
+    setLogDrawerOpen(false)
+    setKeyOpen(false)
+    setMenuOpen(false)
+  }, [interrupted])
+  const openSheet = interrupted ? null : sheet
+  const drawerOpen = logDrawerOpen && !interrupted
+
   useEffect(() => {
     preparedRef.current = false
   }, [stepIndex, tutorialActive, tutorialFinished])
@@ -356,6 +370,7 @@ function CatanGameSession({
 
   const openPlayCard = (card: PlayableDevCard | null) => {
     setPlayPreselect(card)
+    setSheet(null)
     c.setDialog('playCard')
   }
 
@@ -387,7 +402,7 @@ function CatanGameSession({
   }
 
   const coachPlacement: TutorialCoachPlacement =
-    layout === 'stack' ? (sheet !== null && sheet === tutorialSheet ? 'sheet' : 'dock') : 'board'
+    layout === 'stack' ? (openSheet !== null && openSheet === tutorialSheet ? 'sheet' : 'dock') : 'board'
 
   const coach =
     tutorialActive && !tutorialFinished && c.game ? (
@@ -698,7 +713,7 @@ function CatanGameSession({
           }}
         >
           <div
-            inert={(c.modalOpen || sheet !== null || logDrawerOpen) || undefined}
+            inert={(c.modalOpen || openSheet !== null || drawerOpen) || undefined}
             style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
           >
             {layout === 'stack' ? (
@@ -709,6 +724,10 @@ function CatanGameSession({
                 dice={c.game?.dice ?? null}
                 canRoll={c.canRoll}
                 onRoll={() => applyHuman({ type: 'rollDice' })}
+                canUndo={c.canUndo}
+                onUndo={() => {
+                  if (c.undo()) setHintVisible(false)
+                }}
                 onMenu={() => setSheet('menu')}
               />
             ) : (
@@ -752,6 +771,7 @@ function CatanGameSession({
                 canPrimary={canPrimary}
                 primaryTutorialId={primaryTutorialId}
                 onBuild={() => setSheet('build')}
+                canTrade={c.canTrade}
                 onTrade={() => c.setDialog('trade')}
                 onCards={() => setSheet('cards')}
                 onLog={() => setSheet('log')}
@@ -793,7 +813,6 @@ function CatanGameSession({
                 if (applyHuman(action)) {
                   c.setDialog(null)
                   setPlayPreselect(null)
-                  if (tutorialActive && !tutorialFinished) setSheet(null)
                 }
               }}
               onClose={() => {
@@ -830,7 +849,7 @@ function CatanGameSession({
             />
           ) : null}
 
-          {sheet ? (
+          {openSheet ? (
             <BottomSheet
               labelledBy={
                 sheet === 'build'
@@ -855,7 +874,8 @@ function CatanGameSession({
                     buildMode={c.buildMode}
                     onBuildModeChange={(mode) => {
                       c.setBuildMode(mode)
-                      if (tutorialActive && !tutorialFinished && mode !== null) setSheet(null)
+                      // The board is inert under the sheet, so choosing what to build closes it.
+                      if (mode !== null) setSheet(null)
                     }}
                     canRoad={c.canRoad}
                     canSettlement={c.canSettlement}
@@ -872,12 +892,7 @@ function CatanGameSession({
                 </div>
               ) : null}
               {sheet === 'cards' && c.game && c.me ? (
-                <div>
-                  <h2 id={cardsSheetTitle} style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.text, margin: '0 0 8px' }}>
-                    {t.catan.devCards}
-                  </h2>
-                  <DevCardsPanel state={c.game} human={c.human} onPlayCard={openPlayCard} />
-                </div>
+                <DevCardsPanel state={c.game} human={c.human} onPlayCard={openPlayCard} titleId={cardsSheetTitle} />
               ) : null}
               {sheet === 'log' && c.game ? (
                 <div style={{ display: 'flex', flexDirection: 'column', minHeight: '50dvh' }}>
@@ -933,7 +948,7 @@ function CatanGameSession({
             </BottomSheet>
           ) : null}
 
-          {logDrawerOpen && layout === 'medium' && c.game ? (
+          {drawerOpen && layout === 'medium' && c.game ? (
             <LogDrawer labelledBy={logSheetTitle} onClose={() => setLogDrawerOpen(false)}>
               <h2 id={logSheetTitle} style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.text, margin: '0 0 8px' }}>
                 {t.catan.layout.sheetTitles.log}

@@ -4,9 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useT } from '@/lib/i18n/client'
 import type { GameEvent, GameState } from '@/lib/games/catan/types'
 import { fill, formatEvent, formatEventText, type EventSegment } from './event-text'
-import { PLAYER_HEX } from './player-colors'
+import { PLAYER_TEXT } from './player-colors'
 import { PixelSprite } from './PixelSprite'
-import { RESOURCE_COLORS } from './ResourceIcon'
 import { COLORS, PIXEL_FONT, Panel, PixelButton, SectionTitle } from './ui'
 import type { UiSpriteName } from './ui-sprites'
 
@@ -33,17 +32,18 @@ function Segment({ segment, state }: { segment: EventSegment; state: GameState }
   switch (segment.kind) {
     case 'player':
       return (
-        <span style={{ color: segment.player !== undefined ? PLAYER_HEX[state.players[segment.player].color] : COLORS.text }}>
+        <span style={{ color: segment.player !== undefined ? PLAYER_TEXT[state.players[segment.player].color] : COLORS.text }}>
           {segment.text}
         </span>
       )
     case 'dice':
-      return <span style={{ color: segment.value === 7 ? COLORS.danger : COLORS.accent }}>{segment.text}</span>
+      return <span style={{ color: segment.value === 7 ? COLORS.dangerText : COLORS.accent }}>{segment.text}</span>
     case 'resource':
+      // The icon carries the resource colour; the tile colours are too dark for text on the panel.
       return (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
           <PixelSprite name={`icon-${segment.resource}` as UiSpriteName} scale={2} alt="" />
-          <span style={{ color: segment.resource ? RESOURCE_COLORS[segment.resource].base : COLORS.text }}>{segment.text}</span>
+          <span style={{ color: COLORS.text }}>{segment.text}</span>
         </span>
       )
     case 'count':
@@ -51,7 +51,7 @@ function Segment({ segment, state }: { segment: EventSegment; state: GameState }
     case 'card':
       return <span style={{ color: CARD_PURPLE }}>{segment.text}</span>
     case 'robber':
-      return <span style={{ color: COLORS.danger }}>{segment.text}</span>
+      return <span style={{ color: COLORS.dangerText }}>{segment.text}</span>
     case 'vp':
       return <span style={{ color: COLORS.accent }}>{segment.text}</span>
     default:

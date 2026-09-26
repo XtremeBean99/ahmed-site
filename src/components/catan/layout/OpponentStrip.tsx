@@ -56,7 +56,15 @@ export function OpponentStrip({
       {opponents.map((p) => {
         const isActing = actors.includes(p.id)
         return (
-          <OpponentChip key={p.id} state={state} player={p} isActing={isActing} onOpen={() => setOpenId(p.id)} />
+          // Chips fill the strip's height: 44 px on phones.
+          <OpponentChip
+            key={p.id}
+            state={state}
+            player={p}
+            isActing={isActing}
+            minHeight={height - 8}
+            onOpen={() => setOpenId(p.id)}
+          />
         )
       })}
       {openId !== null ? (

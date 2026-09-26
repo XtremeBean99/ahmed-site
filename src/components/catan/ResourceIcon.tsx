@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import { useT } from '@/lib/i18n/client'
 import type { Resource, ResourceCounts } from '@/lib/games/catan/types'
 import { RESOURCES } from '@/lib/games/catan/constants'
 import { PixelSprite } from './PixelSprite'
@@ -48,12 +49,18 @@ export function ResourceIcon({
 }
 
 export function CostIcons({ cost, size = 16 }: { cost: ResourceCounts; size?: number }) {
+  const t = useT()
   return (
     <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
       {RESOURCES.filter((r) => cost[r] > 0).map((r) => (
         <span key={r} style={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+          <span className="sr-only">{`${cost[r]} ${t.catan.resources[r]}`}</span>
           <ResourceIcon resource={r} size={size} />
-          {cost[r] > 1 ? <span style={{ fontSize: 10, color: '#e8d5b0' }}>{cost[r]}</span> : null}
+          {cost[r] > 1 ? (
+            <span aria-hidden style={{ fontSize: 10, color: '#e8d5b0' }}>
+              {cost[r]}
+            </span>
+          ) : null}
         </span>
       ))}
     </span>

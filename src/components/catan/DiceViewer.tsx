@@ -103,7 +103,7 @@ export function DiceViewer({
         <Muted>{d.noRoll}</Muted>
       )}
       {roll && total === 7 ? (
-        <span style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.danger, display: 'block', marginTop: 2 }}>{d.robber}</span>
+        <span style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.dangerText, display: 'block', marginTop: 2 }}>{d.robber}</span>
       ) : null}
       <DiceHistoryPanel state={state} />
     </Panel>

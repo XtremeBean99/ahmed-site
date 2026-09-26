@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import type { JSX, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useT } from '@/lib/i18n/client'
 import { RESOURCES } from '@/lib/games/catan/constants'
@@ -31,6 +31,7 @@ export function IncomingOffer(props: { game: GameState; human: PlayerId; apply: 
   const acceptRef = useRef<HTMLButtonElement | null>(null)
   const declineRef = useRef<HTMLButtonElement | null>(null)
   const wasActive = useRef(false)
+  const termsId = useId()
 
   const offer = game.phase.kind === 'trade' ? game.phase.offer : null
   const active = offer !== null && offer.to.includes(human) && offer.replies[human] === 'pending'
@@ -67,6 +68,7 @@ export function IncomingOffer(props: { game: GameState; human: PlayerId; apply: 
     <div
       role="alertdialog"
       aria-label={d.title}
+      aria-describedby={termsId}
       onKeyDown={onKeyDown}
       style={{
         position: 'absolute',
@@ -84,31 +86,35 @@ export function IncomingOffer(props: { game: GameState; human: PlayerId; apply: 
         boxShadow: '2px 2px 0 #1a0e04',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span
-          aria-hidden="true"
-          style={{
-            width: 14,
-            height: 14,
-            flexShrink: 0,
-            backgroundColor: PLAYER_HEX[proposer.color],
-            border: `2px solid ${COLORS.panelDark}`,
-          }}
-        />
-        <span style={{ ...PIXEL_FONT, fontSize: FONT.body, color: PLAYER_TEXT[proposer.color] }}>
-          {playerSubject(game, offer.from)}
-        </span>
-        <span style={{ ...PIXEL_FONT, fontSize: FONT.body, color: COLORS.text }}>{d.offersYou}</span>
+      <div id={termsId} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span
+            aria-hidden="true"
+            style={{
+              width: 14,
+              height: 14,
+              flexShrink: 0,
+              backgroundColor: PLAYER_HEX[proposer.color],
+              border: `2px solid ${COLORS.panelDark}`,
+            }}
+          />
+          <span style={{ ...PIXEL_FONT, fontSize: FONT.body, color: PLAYER_TEXT[proposer.color] }}>
+            {playerSubject(game, offer.from)}
+          </span>
+          <span style={{ ...PIXEL_FONT, fontSize: FONT.body, color: COLORS.text }}>{d.offersYou}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ ...PIXEL_FONT, fontSize: FONT.small, color: COLORS.text }}>{d.youGet}</span>
+          <CostIcons cost={mine.give} size={16} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ ...PIXEL_FONT, fontSize: FONT.small, color: COLORS.text }}>{d.youGive}</span>
+          <CostIcons cost={mine.get} size={16} />
+        </div>
+        {acceptDisabled ? (
+          <Muted>{fill(d.cannotAccept, { resources: missingText(missing, t.catan.resources) })}</Muted>
+        ) : null}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span style={{ ...PIXEL_FONT, fontSize: FONT.small, color: COLORS.text }}>{d.youGet}</span>
-        <CostIcons cost={mine.give} size={16} />
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span style={{ ...PIXEL_FONT, fontSize: FONT.small, color: COLORS.text }}>{d.youGive}</span>
-        <CostIcons cost={mine.get} size={16} />
-      </div>
-      {acceptDisabled ? <Muted>{fill(d.cannotAccept, { resources: missingText(missing, t.catan.resources) })}</Muted> : null}
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
         <PixelButton ref={acceptRef} variant="good" disabled={acceptDisabled} onClick={accept}>
           {d.accept}

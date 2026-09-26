@@ -52,6 +52,7 @@ function StatChip({ icon, label, value, danger = false }: { icon: 'cards' | 'dev
             fontVariantNumeric: 'tabular-nums',
           }}
         >
+          <span className="sr-only">{label} </span>
           {value}
         </span>
       </span>
@@ -142,7 +143,10 @@ export function OpponentCard({
         <Tooltip content={d.vp}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
             <PixelSprite name="icon-vp" scale={2} alt="" />
-            <span style={{ ...PIXEL_FONT, fontSize: 16, color: COLORS.text, fontVariantNumeric: 'tabular-nums' }}>{vp}</span>
+            <span style={{ ...PIXEL_FONT, fontSize: 16, color: COLORS.text, fontVariantNumeric: 'tabular-nums' }}>
+              <span className="sr-only">{d.vp} </span>
+              {vp}
+            </span>
           </span>
         </Tooltip>
       </div>
@@ -178,14 +182,17 @@ export function OpponentChip({
   state,
   player,
   isActing,
+  minHeight,
   onOpen,
 }: {
   state: GameState
   player: Player
   isActing: boolean
+  minHeight: number
   onOpen: () => void
 }) {
   const t = useT()
+  const d = t.catan.playersTable
   const vp = victoryPoints(state, player.id, false)
   const hand = totalCards(player.resources)
   return (
@@ -199,7 +206,7 @@ export function OpponentChip({
         alignItems: 'center',
         gap: 6,
         padding: '4px 8px',
-        minHeight: 40,
+        minHeight,
         backgroundColor: COLORS.panel,
         border: `2px solid ${isActing ? COLORS.accent : COLORS.panelBorder}`,
         color: COLORS.text,
@@ -229,11 +236,17 @@ export function OpponentChip({
       </span>
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
         <PixelSprite name="icon-vp" scale={1} alt="" />
-        <span style={{ fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>{vp}</span>
+        <span style={{ fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
+          <span className="sr-only">{d.vp} </span>
+          {vp}
+        </span>
       </span>
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
         <PixelSprite name="icon-cards" scale={1} alt="" />
-        <span style={{ fontSize: 10, color: isOverSeven(hand) ? COLORS.dangerText : COLORS.text }}>{hand}</span>
+        <span style={{ fontSize: 10, color: isOverSeven(hand) ? COLORS.dangerText : COLORS.text }}>
+          <span className="sr-only">{d.resources} </span>
+          {hand}
+        </span>
       </span>
       <span className="sr-only">{t.catan.layout.openPlayer}</span>
     </button>

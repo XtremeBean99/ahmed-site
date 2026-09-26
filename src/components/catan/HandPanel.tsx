@@ -78,7 +78,10 @@ function ResourceSlot({
       </Tooltip>
       {count > 0 ? <span className="catan-count-badge" style={BADGE_STYLE}>{count}</span> : null}
       {gain !== null && gain > 0 ? (
-        <span className="catan-flash-badge" style={{ ...BADGE_STYLE, right: undefined, left: -8, backgroundColor: '#7fb85a' }}>
+        <span
+          className="catan-flash-badge"
+          style={{ ...BADGE_STYLE, right: undefined, left: -8, backgroundColor: '#7fb85a', color: COLORS.panelDark }}
+        >
           +{gain}
         </span>
       ) : null}

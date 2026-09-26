@@ -138,14 +138,14 @@ export function Muted({ children, style }: { children: ReactNode; style?: CSSPro
   )
 }
 
-/** Fixed overlay for dialogs; square pixel corners, no blur. */
+/** Fixed overlay for dialogs; square pixel corners, no blur. Above sheets (60), the log drawer and popovers (55). */
 export function Overlay({ children, fullScreen = false }: { children: ReactNode; fullScreen?: boolean }) {
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 50,
+        zIndex: 70,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

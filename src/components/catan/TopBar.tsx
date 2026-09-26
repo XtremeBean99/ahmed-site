@@ -14,6 +14,18 @@ import { SettingsMenu } from './SettingsMenu'
 import { Tooltip } from './Tooltip'
 import { COLORS, FOCUS_CLASS, PIXEL_FONT, PixelButton } from './ui'
 
+/**
+ * Screen readers hear the status only when it asks you to act; the event announcer already
+ * narrates the bots' turns, and announcing every bot phase change as well doubled the chatter.
+ */
+function StatusPrompt({ statusText, mustAct }: { statusText: string; mustAct: boolean }) {
+  return (
+    <span role="status" className="sr-only">
+      {mustAct ? statusText : ''}
+    </span>
+  )
+}
+
 function StatusBanner({ statusText, statusPlayer, mustAct }: { statusText: string; statusPlayer: Player | null; mustAct: boolean }) {
   return (
     <div
@@ -49,7 +61,6 @@ function StatusBanner({ statusText, statusPlayer, mustAct }: { statusText: strin
         </span>
       ) : null}
       <span
-        role="status"
         style={{
           ...PIXEL_FONT,
           fontSize: 10,
@@ -61,6 +72,7 @@ function StatusBanner({ statusText, statusPlayer, mustAct }: { statusText: strin
       >
         {statusText}
       </span>
+      <StatusPrompt statusText={statusText} mustAct={mustAct} />
     </div>
   )
 }
@@ -227,6 +239,8 @@ export function StackTopBar({
   dice,
   canRoll,
   onRoll,
+  canUndo,
+  onUndo,
   onMenu,
 }: {
   statusText: string
@@ -235,6 +249,8 @@ export function StackTopBar({
   dice: [number, number] | null
   canRoll: boolean
   onRoll: () => void
+  canUndo: boolean
+  onUndo: () => void
   onMenu: () => void
 }) {
   const t = useT()
@@ -283,7 +299,6 @@ export function StackTopBar({
           />
         ) : null}
         <span
-          role="status"
           style={{
             ...PIXEL_FONT,
             fontSize: 10,
@@ -297,7 +312,13 @@ export function StackTopBar({
         >
           {statusText}
         </span>
+        <StatusPrompt statusText={statusText} mustAct={statusMustAct} />
       </div>
+      {canUndo ? (
+        <PixelButton onClick={onUndo} style={{ flexShrink: 0 }}>
+          {l.undo}
+        </PixelButton>
+      ) : null}
       <span data-catan-anchor="bank" style={{ display: 'inline-flex', flexShrink: 0 }}>
         <button
           type="button"
@@ -305,14 +326,19 @@ export function StackTopBar({
           data-catan-anchor="dice"
           disabled={!canRoll}
           onClick={onRoll}
-          aria-label={t.catan.diceViewer.title}
+          // Rolling names the button; otherwise its name is the dice image's, which reads the values.
+          aria-label={canRoll ? t.catan.actionBar.roll : undefined}
           style={{
+            minWidth: 44,
+            minHeight: 44,
             padding: 2,
             backgroundColor: COLORS.panel,
             border: `2px solid ${COLORS.panelBorder}`,
             cursor: canRoll ? 'pointer' : 'default',
             opacity: canRoll ? 1 : 0.6,
             display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <Dice dice={dice} label={t.catan.diceViewer.title} scale={1} />

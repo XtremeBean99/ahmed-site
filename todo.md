@@ -360,12 +360,12 @@ sizes) before merging into `feat/catan-overhaul`. Task files hold the full speci
 | CAT33 | 1 | Layouts, panels, controller split, undo, shortcuts, placeholders | Done, merged (+ typed board props, muted disabled actions, hand grid) |
 | CAT34 | 1 | Dialogs, game options, settings, rules | Done, merged |
 | CAT35 | 2 | Bots: levels, trade proposals and counters, stronger play | Done, merged (+ offers to the human throttled: 6.5 per game) |
-| CAT36 | 2 | Game feel: EffectsLayer animations, sounds, narration | Building |
-| CAT37 | 2 | Trade panel and incoming offers; remove the old `domesticTrade` path | Building |
-| CAT38 | 2 | Results screen with stats charts, rematch | Building |
-| CAT39 | 3 | Tutorial for the new layout, copy in `en.ts`, resume after reload | Building |
-| CAT40 | 4 | Claude Workflow review (correctness, UX, accessibility, performance) and fixes | Planned |
-| CAT41 | 4 | Docs (CLAUDE.md Catan section, SPEC.md), final verification, merge | Planned |
+| CAT36 | 2 | Game feel: EffectsLayer animations, sounds, narration | Done, merged |
+| CAT37 | 2 | Trade panel and incoming offers; remove the old `domesticTrade` path | Done, merged (+ the one bot loop answers the human's offers) |
+| CAT38 | 2 | Results screen with stats charts, rematch | Done, merged (+ a 7 is never the luckiest number) |
+| CAT39 | 3 | Tutorial for the new layout, copy in `en.ts`, resume after reload | Done, merged |
+| CAT40 | 4 | Claude Workflow review (correctness, UX, accessibility, performance) and fixes | Done (deepcode and Claude reviews, all real findings fixed) |
+| CAT41 | 4 | Docs (CLAUDE.md Catan section, SPEC.md), final verification, merge | Docs and verification done; merge awaits the owner |
 
 ### Build log
 - 25-26 September: refining questions answered; audits run (the Claude rules audit completed; the UI, rendering
@@ -379,4 +379,29 @@ sizes) before merging into `feat/catan-overhaul`. Task files hold the full speci
   overflowed the 270/280 px columns; rapid zoom clicks lost a step.
 - Bots: Hard 40.8% against three Normals, Normal 55% against three Easys, 100% against random; bots now ask the
   human at most once per turn, only for cards the human probably holds, and not within a round of a refusal.
+- Waves 2 and 3 browser pass (same three sizes): dice and production animations, bot-to-bot trades, the trade panel
+  with live replies and counters, a forced 7 (discard, robber, steal) from an injected state, the results tabs, the
+  tutorial resuming after a reload and exiting without touching the normal save, the phone trade sheet and coach.
+  Fixed on the way: the trade panel paused the bot loop and ran its own reply timer (now the one bot loop answers
+  offers at the chosen speed); a 7 could be named the luckiest number; hex targets drew rings over the number tokens
+  you choose the robber by; the phone action bar announced the status twice.
+- CAT40 deepcode second-opinion review: two real bugs fixed. The Trade button needed a legal bank trade, so a player
+  holding cards but no 4:1 could never open player offers; the robber targets ignored the friendly robber, offering
+  hexes the engine then refused. A reported tutorial save race was a false positive (one batched render, one effect).
+- CAT40 Claude review (two reviewers: interaction flows; UX, accessibility and performance; the first four-reviewer
+  run hit session limits). Fixed, and checked in the production build at 1408x768 and 390x844:
+  - Phones: choosing Road, Settlement or City left the Build sheet open over an inert board; dialogs (Play card, Rules,
+    New game, Discard, Steal, results) opened underneath sheets, the log drawer and popovers, whose focus traps then
+    fought the dialog's. Dialogs now sit above every transient layer, a dialog or a pending offer closes sheets,
+    drawers and menus in the same render (so the offer banner can take focus), and a panel inside an inert subtree
+    no longer traps Tab or takes Escape (the Menu popover left Tab stuck in New game on desktop too).
+  - Phones had no Undo control (now in the top bar), an ungated Trade button (now follows `canTrade`), a 24 px dice
+    button named only "Dice" (now 44 px, "Roll dice" or the rolled values), 40 px opponent chips (now 44 px) and
+    "Esc cancels" as the placement prompt (now a touch variant).
+  - Undo re-read the whole log to screen readers as "N events" and left the undone action's banners running.
+  - Contrast: red text (the robber, a rolled 7) was 1.80:1, log resource words 2.10-3.27:1, log player names in red
+    and blue about 2.5:1 (found while checking), the +N gain badge 1.64:1; all now at least 4.5:1.
+  - Screen readers: trade offer and rules costs read no resources, opponent stats were bare numbers, and the status
+    banner announced every bot phase change on top of the event narration (it now speaks only prompts for you).
+  - The phone Cards sheet showed its heading twice.
 

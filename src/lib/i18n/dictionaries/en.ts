@@ -1113,6 +1113,7 @@ export const en = {
       turnSeparator: 'Turn {turn} . {player}',
       newEvents: 'New events',
       buildModeStatus: 'Choose a spot on the board. Esc cancels',
+      buildModeStatusTouch: 'Tap a spot on the board, then confirm',
       diceRolls: '{n} rolls',
       announceSummary: '{player} turn: {count} events',
       cardNotPlayable: 'Playable next turn',

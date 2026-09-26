@@ -565,7 +565,10 @@ log: `todo.md` (CAT0-CAT9 v1, CAT10-CAT16 v2, CAT30-CAT41 v3 overhaul, September
   `useCatanController` (built from `useCatanGame` for state, saves and undo; `useBotLoop` for pacing, the
   900 ms post-roll pause and skip-to-my-turn; pure `selectors.ts`), `useShortcuts` (R, E, 1-4, T, P, U or
   Ctrl+Z, H, L, +/-/0, Escape, ? overlay) and `useEventAnnouncer` (aria-live narration). Dialogs (`ModalDialog`)
-  become full-screen sheets on the stack layout; buttons grow to 44 px on touch.
+  become full-screen sheets on the stack layout; buttons grow to 44 px on touch. Layering rule: dialogs (z-index 70)
+  sit above sheets (60), the log drawer and popovers (55); opening a dialog, or an offer reaching you, closes any
+  sheet, drawer or menu in the same render (`interrupted` in `CatanGame`), and `useModalBehavior` ignores panels
+  inside an inert subtree, so two focus traps never fight.
 - **Board** (`BoardCanvas.tsx`, `pixel-art.ts`, `board/`): an integer scale in device pixels for the island and
   harbour ring (`board/camera.ts` `fitScale`), so it renders at 3x on 1280-1408 px laptops and pixel-exact on
   phones; a tiled 32x32 sea fills the whole board area with a slow drift and a drawn shoreline. Wheel, pinch,

@@ -22,10 +22,13 @@ export function DevCardsPanel({
   state,
   human,
   onPlayCard,
+  titleId,
 }: {
   state: GameState
   human: PlayerId
   onPlayCard: (card: PlayableDevCard) => void
+  /** Lets a sheet use the panel's heading as its label. */
+  titleId?: string
 }) {
   const t = useT()
   const d = t.catan.devCardsPanel
@@ -40,7 +43,7 @@ export function DevCardsPanel({
 
   return (
     <Panel data-tutorial="dev-cards" style={{ borderWidth: '2px 0 0 0', padding: 8 }}>
-      <SectionTitle>{t.catan.devCards}</SectionTitle>
+      <SectionTitle id={titleId}>{t.catan.devCards}</SectionTitle>
       {groups.length === 0 ? (
         <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.muted }}>{d.empty}</span>
       ) : (

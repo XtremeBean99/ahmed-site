@@ -7,6 +7,7 @@ import type { Action, GameState } from '@/lib/games/catan/types'
 import { formatActionBlockReason } from './action-reasons'
 import type { BuildMode } from './ActionBar'
 import { describeHover, type HoverTarget } from './hover-info'
+import { useCatanLayout } from './layout'
 import {
   isTradePendingForHuman,
   selectBlockReasons,
@@ -115,6 +116,7 @@ export function useCatanController(options: CatanControllerOptions = {}) {
   const lastPlaced = useMemo(() => selectLastPlaced(game), [game])
   const blockReasons = useMemo(() => selectBlockReasons(game, human, humanActing), [game, human, humanActing])
 
+  const { coarse } = useCatanLayout()
   const statusMessages = useMemo(
     () => ({
       newGame: t.catan.newGame,
@@ -128,9 +130,9 @@ export function useCatanController(options: CatanControllerOptions = {}) {
       discard: t.catan.status.discard,
       gameOver: t.catan.status.gameOver,
       gameOverYou: t.catan.status.gameOverYou,
-      buildMode: t.catan.layout.buildModeStatus,
+      buildMode: coarse ? t.catan.layout.buildModeStatusTouch : t.catan.layout.buildModeStatus,
     }),
-    [t],
+    [t, coarse],
   )
 
   const statusInfo = useMemo(

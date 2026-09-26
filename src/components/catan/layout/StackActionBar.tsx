@@ -10,6 +10,7 @@ export function StackActionBar({
   canPrimary,
   primaryTutorialId,
   onBuild,
+  canTrade,
   onTrade,
   onCards,
   onLog,
@@ -20,6 +21,7 @@ export function StackActionBar({
   canPrimary: boolean
   primaryTutorialId: string | null
   onBuild: () => void
+  canTrade: boolean
   onTrade: () => void
   onCards: () => void
   onLog: () => void
@@ -42,7 +44,13 @@ export function StackActionBar({
       <PixelButton onClick={onBuild} aria-label={l.sheetTitles.build} style={{ flex: 1, minWidth: 0, height: 44 }}>
         {l.sheetTitles.build}
       </PixelButton>
-      <PixelButton data-tutorial="trade" onClick={onTrade} aria-label={t.catan.actionBar.trade} style={{ flex: 1, minWidth: 0, height: 44 }}>
+      <PixelButton
+        data-tutorial="trade"
+        disabled={!canTrade}
+        onClick={onTrade}
+        aria-label={t.catan.actionBar.trade}
+        style={{ flex: 1, minWidth: 0, height: 44 }}
+      >
         {t.catan.actionBar.trade}
       </PixelButton>
       <PixelButton data-tutorial="play-card" onClick={onCards} aria-label={l.sheetTitles.cards} style={{ flex: 1, minWidth: 0, height: 44 }}>

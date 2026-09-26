@@ -848,6 +848,11 @@ export function EffectsLayer(props: EffectsLayerProps): JSX.Element | null {
     if (prev === game) return
     const effects = effectsFor(prev, game, human)
     prevRef.current = game
+    if (prev && game.eventSeq < prev.eventSeq) {
+      // Undo or a new game: stop what the undone events started (banners, pop-ins, board overrides).
+      resetFx(s, true)
+      return
+    }
     if (effects.length === 0) return
     resetFx(s, true)
     runEffects(s, effects, prev, game)

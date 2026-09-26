@@ -30,22 +30,23 @@ export function useModalBehavior(
     }
   }, [panelRef, dismissable])
 
+  // A panel inside an inert subtree sits under a dialog: it must neither trap Tab nor take Escape.
   useEffect(() => {
     if (!dismissable || !onClose) return
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return
+      if (event.key !== 'Escape' || panelRef.current?.closest('[inert]')) return
       event.preventDefault()
       onClose()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [dismissable, onClose])
+  }, [panelRef, dismissable, onClose])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Tab') return
       const panel = panelRef.current
-      if (!panel) return
+      if (!panel || panel.closest('[inert]')) return
       const focusables = focusableElements(panel)
       if (focusables.length === 0) {
         event.preventDefault()

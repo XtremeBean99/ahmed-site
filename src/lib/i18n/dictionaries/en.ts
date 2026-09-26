@@ -752,6 +752,82 @@ export const en = {
       finish: 'Finish',
       notAllowed: 'The tutorial is waiting for a different action.',
       doAction: 'Make the highlighted move to continue',
+      collapse: 'Collapse the lesson text',
+      expand: 'Expand the lesson text',
+      verb: { click: 'Click', tap: 'Tap' },
+      verbLower: { click: 'click', tap: 'tap' },
+      steps: {
+        welcome: {
+          title: 'Welcome to Catan',
+          body:
+            'You are red, and the first player to {target} victory points wins. The status banner at the top shows whose turn it is and what to do. Use Next for each lesson step, or Exit to leave the lesson.',
+        },
+        board: {
+          title: 'The island',
+          body:
+            'Each hex produces one resource for nearby settlements when its number is rolled: lumber from green, wool from light green, grain from yellow, brick from red-brown, ore from grey. The dots under a number show how often it is rolled; 6 and 8 are most likely, so they are printed red. Zoom and pan the board with the + and - buttons, or drag it.',
+        },
+        'first-settlement': {
+          title: 'Your first settlement',
+          body:
+            '{verb} the highlighted corner of Grain 8 and Ore 5 to place your first settlement; it adds 9 pips of production. Then {verbLower} the highlighted edge to place the road next to it, toward the middle of the island.',
+        },
+        'bots-and-second': {
+          title: 'Bots place, then you',
+          body:
+            'Watch the bots place their starting settlements. When it is your turn again, place your second settlement on the highlighted corner of Brick 12 and Lumber 2, then its road. You collect one brick and one lumber for the hexes around that settlement.',
+        },
+        hand: {
+          title: 'Your hand and costs',
+          body:
+            'Your hand shows the resource cards you hold. A road costs 1 brick and 1 lumber, a settlement costs 1 brick, 1 lumber, 1 wool and 1 grain, a city costs 2 grain and 3 ore, and a development card costs 1 wool, 1 grain and 1 ore. The build buttons show these costs whenever you build.',
+        },
+        roll: {
+          title: 'Roll the dice',
+          body:
+            '{verb} Roll to roll the dice. Your first roll is an 8, and your settlement on Grain 8 pays you one grain. The log records every event.',
+        },
+        'build-road': {
+          title: 'Build a road',
+          body:
+            'You have 1 brick and 1 lumber, exactly the cost of a road. {verb} the Road build button, then {verbLower} the highlighted edge. Roads connect your settlements and count toward Longest Road.',
+        },
+        'end-turn': {
+          title: 'End your turn',
+          body:
+            'You have nothing else to do, so end your turn. The bots then take their turns; use Skip to jump back to yours, or change the bot speed in Settings. Hint (H) suggests a move, and Undo (U) takes back a build or bank trade.',
+        },
+        seven: {
+          title: 'The robber',
+          body:
+            '{verb} Roll. Your next roll is a 7, and the tutorial gives you extra grain so you hold more than 7 cards. Discard 10 grain, then move the robber to the highlighted hex and steal one card from Bram.',
+        },
+        'trade-settlement': {
+          title: 'Trade 4:1, then settle',
+          body:
+            'You have spare ore but no brick, and a settlement costs 1 brick. {verb} Trade and give 4 ore for 1 brick on the Bank tab. Then choose Settlement from the build buttons and place it on the highlighted corner.',
+        },
+        'buy-card': {
+          title: 'Buy a development card',
+          body:
+            'You have 1 wool, 1 grain and 1 ore, the cost of a development card. {verb} Buy card; it will be a Knight. Cards bought this turn wait until your next turn, so end your turn.',
+        },
+        knight: {
+          title: 'Play the Knight',
+          body:
+            'Before rolling, play your Knight card. Move the robber to the highlighted hex and steal a card. Play three Knights over the game to earn Largest Army, worth 2 victory points.',
+        },
+        winning: {
+          title: 'Longest Road, cities and winning',
+          body:
+            'The first player with a road of 5 or more connected segments holds Longest Road, worth 2 victory points. Cities upgrade settlements and produce double. Keep playing until someone reaches {target} victory points on their own turn.',
+        },
+        free: {
+          title: 'You are on your own now',
+          body:
+            'The lesson is over, so play this game freely from here. Bots may now offer you trades, and the Trade button opens offers from you to them. Hint (H) and Undo (U) stay available whenever you want help.',
+        },
+      },
     },
     trade: {
       title: 'Trade',

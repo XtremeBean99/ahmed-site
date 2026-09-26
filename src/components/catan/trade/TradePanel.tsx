@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect, useId, useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { useT } from '@/lib/i18n/client'
-import { chooseBotAction } from '@/lib/games/catan/ai'
 import { MAX_OFFERS_PER_TURN, RESOURCES } from '@/lib/games/catan/constants'
 import { emptyResources, maritimeRate, totalCards } from '@/lib/games/catan/helpers'
 import type { Action, GameState, PlayerId, Resource, ResourceCounts, TradeOffer } from '@/lib/games/catan/types'
@@ -85,26 +84,6 @@ export function TradePanel(props: {
   const offer = pendingOfferOf(game, human)
   const locked = offer !== null
   const animations = readPrefs(getCatanPrefsStorage()).animations && !reduceMotion
-
-  // The controller pauses the bot loop while a dialog is open, so the panel
-  // itself drives the recipients' replies while the human's offer is pending.
-  useEffect(() => {
-    if (!offer) return
-    const bot = offer.to.find((p) => game.players[p].isBot && offer.replies[p] === 'pending')
-    if (bot === undefined) return
-    const speed = readPrefs(getCatanPrefsStorage()).botSpeed
-    const delay = Math.max(250, speed)
-    const timer = setTimeout(() => {
-      let action: Action
-      try {
-        action = chooseBotAction(game, bot)
-      } catch {
-        return
-      }
-      applyRef.current(action)
-    }, delay)
-    return () => clearTimeout(timer)
-  }, [game, offer, human])
 
   const selectTab = (next: Tab) => {
     setTab(next)

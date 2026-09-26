@@ -60,7 +60,8 @@ export function useCatanController(options: CatanControllerOptions = {}) {
   const humanDiscard =
     game !== null && human >= 0 && game.phase.kind === 'discard' && game.phase.discards[human] > 0
   const tradePending = game !== null && human >= 0 && isTradePendingForHuman(game, human)
-  const mustAnswer = core.showNewGame || dialog === 'trade' || dialog === 'playCard' || humanSteal || humanDiscard || tradePending
+  // The trade panel does not pause the bots: they only act then to answer the human's own offer.
+  const mustAnswer = core.showNewGame || dialog === 'playCard' || humanSteal || humanDiscard || tradePending
   const modalOpen = core.showNewGame || dialog !== null || humanSteal || humanDiscard || game?.phase.kind === 'gameOver'
   const pauseBots = !game || mustAnswer || botStalled || botsPaused
 

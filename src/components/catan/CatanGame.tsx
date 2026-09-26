@@ -7,8 +7,19 @@ import { useRouter } from 'next/navigation'
 import { useReducedMotion } from 'framer-motion'
 import { useT } from '@/lib/i18n/client'
 import { applyAction } from '@/lib/games/catan/engine'
-import { clearGame, saveKeyFor } from '@/lib/games/catan/save'
-import { applyStepPrepare, createTutorialGame, isStepComplete, isTutorialActionLegal, TUTORIAL_STEPS } from '@/lib/games/catan/tutorial'
+import { clearGame, saveKeyFor, saveSchemaV2 } from '@/lib/games/catan/save'
+import {
+  applyStepPrepare,
+  createTutorialGame,
+  isStepComplete,
+  isTutorialActionLegal,
+  parseTutorialProgress,
+  serializeTutorialProgress,
+  TUTORIAL_PROGRESS_KEY,
+  TUTORIAL_STEPS,
+  tutorialSheetFor,
+} from '@/lib/games/catan/tutorial'
+import type { TutorialProgress } from '@/lib/games/catan/tutorial'
 import type { Action, GameState, Player } from '@/lib/games/catan/types'
 import { BOARD_WIDTH, edgePoint, hexCenter, vertexPoint } from './board-layout'
 import { BoardCanvas } from './BoardCanvas'
@@ -18,7 +29,6 @@ import { DevCardsPanel } from './DevCardsPanel'
 import { DiceViewer } from './DiceViewer'
 import { DiscardDialog } from './DiscardDialog'
 import { EffectsLayer, type BoardOverrides, type BoardView } from './effects/EffectsLayer'
-import { fill } from './event-text'
 import { GameLog } from './GameLog'
 import { HandPanel } from './HandPanel'
 import { describeHint } from './hint'
@@ -44,6 +54,7 @@ import { StackTopBar, TopBar } from './TopBar'
 import { IncomingOffer } from './trade/IncomingOffer'
 import { TradePanel } from './trade/TradePanel'
 import { TutorialCoach, TutorialSpotlight } from './TutorialCoach'
+import type { TutorialCoachPlacement } from './TutorialCoach'
 import type { TutorialHighlight } from '@/lib/games/catan/tutorial'
 import { useCatanSound } from './sound'
 import { COLORS, FOCUS_CLASS, PIXEL_FONT, PixelButton } from './ui'
@@ -151,13 +162,54 @@ function HintBoardHighlight({
 function removeTutorialSave(): void {
   try {
     window.localStorage.removeItem(saveKeyFor('tutorial'))
+    window.localStorage.removeItem(TUTORIAL_PROGRESS_KEY)
   } catch {
     // ignore storage failures
   }
 }
 
+function hasTutorialSave(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return window.localStorage.getItem(saveKeyFor('tutorial')) !== null
+  } catch {
+    return false
+  }
+}
+
+function readTutorialState(): GameState | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(saveKeyFor('tutorial'))
+    if (raw === null) return null
+    const parsed: unknown = JSON.parse(raw)
+    const result = saveSchemaV2.safeParse(parsed)
+    return result.success ? result.data : null
+  } catch {
+    return null
+  }
+}
+
+function readTutorialProgress(): TutorialProgress | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return parseTutorialProgress(window.localStorage.getItem(TUTORIAL_PROGRESS_KEY))
+  } catch {
+    return null
+  }
+}
+
+function writeTutorialProgress(progress: TutorialProgress): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(TUTORIAL_PROGRESS_KEY, serializeTutorialProgress(progress))
+  } catch {
+    // ignore quota / privacy-mode failures
+  }
+}
+
 export function CatanGame() {
-  const [mode, setMode] = useState<CatanMode>('normal')
+  const [mode, setMode] = useState<CatanMode>(() => (hasTutorialSave() ? 'tutorial' : 'normal'))
   const [session, setSession] = useState(0)
 
   const startTutorial = useCallback(() => {
@@ -167,7 +219,7 @@ export function CatanGame() {
   }, [])
 
   const exitTutorial = useCallback(() => {
-    // Only the tutorial's own key is removed; the normal game save survives.
+    // Only the tutorial's own keys are removed; the normal game save survives.
     removeTutorialSave()
     setMode('normal')
     setSession((s) => s + 1)
@@ -190,8 +242,9 @@ function CatanGameSession({
   const { layout } = useCatanLayout()
   const reduceMotion = useReducedMotion()
   const tutorialActive = mode === 'tutorial'
-  const [stepIndex, setStepIndex] = useState(0)
-  const [tutorialFinished, setTutorialFinished] = useState(false)
+  const [tutorialResume] = useState<TutorialProgress | null>(() => (tutorialActive ? readTutorialProgress() : null))
+  const [stepIndex, setStepIndex] = useState(() => tutorialResume?.step ?? 0)
+  const [tutorialFinished, setTutorialFinished] = useState(() => tutorialResume?.finished ?? false)
   const [hintVisible, setHintVisible] = useState(false)
   const [playPreselect, setPlayPreselect] = useState<PlayableDevCard | null>(null)
   const [sheet, setSheet] = useState<StackSheet>(null)
@@ -201,6 +254,7 @@ function CatanGameSession({
   const [helpOpen, setHelpOpen] = useState(false)
   const preparedRef = useRef(false)
   const boardWrapRef = useRef<HTMLDivElement | null>(null)
+  const boardAreaRef = useRef<HTMLDivElement | null>(null)
   const boardViewRef = useRef<BoardView | null>(null)
   const [boardOverrides, setBoardOverrides] = useState<BoardOverrides>({
     highlightHexes: [],
@@ -209,7 +263,10 @@ function CatanGameSession({
   })
 
   const step = TUTORIAL_STEPS[stepIndex]
-  const tutorialInitial = useMemo(() => (tutorialActive ? createTutorialGame() : null), [tutorialActive])
+  const tutorialInitial = useMemo(() => {
+    if (!tutorialActive) return null
+    return readTutorialState() ?? createTutorialGame()
+  }, [tutorialActive])
 
   const canHumanApply = useCallback(
     (state: GameState, action: Action): boolean => {
@@ -224,7 +281,7 @@ function CatanGameSession({
     initialState: tutorialInitial,
     canHumanApply: tutorialActive ? canHumanApply : undefined,
     botsPaused: tutorialActive && !tutorialFinished && step.completeWhen === 'next',
-    statusOverride: tutorialActive && !tutorialFinished ? step.title : null,
+    statusOverride: tutorialActive && !tutorialFinished ? t.catan.tutorial.steps[step.id].title : null,
     undoEnabled: !tutorialActive,
   })
 
@@ -237,6 +294,34 @@ function CatanGameSession({
   useEffect(() => {
     preparedRef.current = false
   }, [stepIndex, tutorialActive, tutorialFinished])
+
+  useEffect(() => {
+    if (!tutorialActive) return
+    writeTutorialProgress({ step: stepIndex, finished: tutorialFinished })
+  }, [tutorialActive, stepIndex, tutorialFinished])
+
+  const tutorialSheet = useMemo(() => {
+    if (!tutorialActive || tutorialFinished || layout !== 'stack') return null
+    if (!c.humanActing) return null
+    for (const id of step.highlight.ui ?? []) {
+      const sheetFor = tutorialSheetFor(id)
+      if (sheetFor) return sheetFor
+    }
+    return null
+  }, [tutorialActive, tutorialFinished, layout, step, c.humanActing])
+
+  const autoSheetRef = useRef<StackSheet>(null)
+  useEffect(() => {
+    const desired = tutorialSheet as StackSheet | null
+    const previous = autoSheetRef.current
+    if (desired === previous) return
+    autoSheetRef.current = desired
+    if (desired !== null) {
+      setSheet(desired)
+    } else if (previous !== null) {
+      setSheet((current) => (current === previous ? null : current))
+    }
+  }, [tutorialSheet])
 
   const hint = useMemo(() => {
     if ((tutorialActive && !tutorialFinished) || !c.game || c.human < 0) return null
@@ -293,11 +378,34 @@ function CatanGameSession({
 
   const handleCoachNext = () => {
     if (stepIndex >= TUTORIAL_STEPS.length - 1) {
+      const current = gameRef.current
+      if (current) c.replaceGame(applyStepPrepare(current, TUTORIAL_STEPS[TUTORIAL_STEPS.length - 1]))
       setTutorialFinished(true)
     } else {
       setStepIndex((i) => i + 1)
     }
   }
+
+  const coachPlacement: TutorialCoachPlacement =
+    layout === 'stack' ? (sheet !== null && sheet === tutorialSheet ? 'sheet' : 'dock') : 'board'
+
+  const coach =
+    tutorialActive && !tutorialFinished && c.game ? (
+      <TutorialCoach
+        step={step}
+        stepIndex={stepIndex}
+        totalSteps={TUTORIAL_STEPS.length}
+        canGoBack={canGoBack}
+        isLast={stepIndex === TUTORIAL_STEPS.length - 1}
+        canAdvance={step.completeWhen === 'next'}
+        placement={coachPlacement}
+        boardRef={boardAreaRef}
+        refreshKey={`${stepIndex}:${sheet ?? 'none'}:${c.game.phase.kind}:${layout}`}
+        onNext={handleCoachNext}
+        onBack={() => setStepIndex((i) => Math.max(i - 1, 0))}
+        onExit={onExitTutorial}
+      />
+    ) : null
 
   const buildMode = c.buildMode
   const cancelOverlay = useCallback(() => {
@@ -380,7 +488,7 @@ function CatanGameSession({
   }
 
   const boardArea = (
-    <main style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+    <main ref={boardAreaRef} style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
       {c.game ? (
         <div ref={boardWrapRef} data-tutorial="board" style={{ position: 'absolute', inset: 0 }}>
           <BoardCanvas
@@ -420,25 +528,7 @@ function CatanGameSession({
           </PixelButton>
         </Tooltip>
       ) : null}
-      {tutorialActive && !tutorialFinished && c.game ? (
-        <TutorialCoach
-          stepLabel={fill(t.catan.tutorial.step, { current: stepIndex + 1, total: TUTORIAL_STEPS.length })}
-          title={step.title}
-          body={step.body}
-          highlight={step.highlight}
-          canGoBack={canGoBack}
-          isLast={stepIndex === TUTORIAL_STEPS.length - 1}
-          nextLabel={t.catan.tutorial.next}
-          backLabel={t.catan.tutorial.back}
-          exitLabel={t.catan.tutorial.exit}
-          finishLabel={t.catan.tutorial.finish}
-          onNext={handleCoachNext}
-          onBack={() => setStepIndex((i) => Math.max(i - 1, 0))}
-          onExit={onExitTutorial}
-          canAdvance={step.completeWhen === 'next'}
-          actionPrompt={t.catan.tutorial.doAction}
-        />
-      ) : null}
+      {layout !== 'stack' ? coach : null}
     </main>
   )
 
@@ -653,6 +743,7 @@ function CatanGameSession({
               {boardArea}
               {rightColumn}
             </div>
+            {layout === 'stack' && coachPlacement === 'dock' ? coach : null}
             {layout === 'stack' && c.game && c.me ? <HandPanel state={c.game} human={c.human} variant="strip" /> : null}
             {layout === 'stack' && c.game ? (
               <StackActionBar
@@ -702,6 +793,7 @@ function CatanGameSession({
                 if (applyHuman(action)) {
                   c.setDialog(null)
                   setPlayPreselect(null)
+                  if (tutorialActive && !tutorialFinished) setSheet(null)
                 }
               }}
               onClose={() => {
@@ -751,6 +843,7 @@ function CatanGameSession({
               }
               onClose={() => setSheet(null)}
             >
+              {coachPlacement === 'sheet' ? coach : null}
               {sheet === 'build' && c.game && c.me ? (
                 <div>
                   <h2 id={buildSheetTitle} style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.text, margin: '0 0 8px' }}>
@@ -760,7 +853,10 @@ function CatanGameSession({
                     state={c.game}
                     human={c.human}
                     buildMode={c.buildMode}
-                    onBuildModeChange={c.setBuildMode}
+                    onBuildModeChange={(mode) => {
+                      c.setBuildMode(mode)
+                      if (tutorialActive && !tutorialFinished && mode !== null) setSheet(null)
+                    }}
                     canRoad={c.canRoad}
                     canSettlement={c.canSettlement}
                     canCity={c.canCity}
@@ -769,7 +865,9 @@ function CatanGameSession({
                     settlementReasonText={c.settlementReasonText}
                     cityReasonText={c.cityReasonText}
                     devReasonText={c.devReasonText}
-                    onBuyDev={() => applyHuman({ type: 'buyDevCard' })}
+                    onBuyDev={() => {
+                      if (applyHuman({ type: 'buyDevCard' }) && tutorialActive && !tutorialFinished) setSheet(null)
+                    }}
                   />
                 </div>
               ) : null}

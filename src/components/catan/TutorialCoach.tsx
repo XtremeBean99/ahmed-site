@@ -1,9 +1,13 @@
 'use client'
 
-import { useLayoutEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import type { CSSProperties, RefObject } from 'react'
 import { useReducedMotion } from 'framer-motion'
-import type { TutorialHighlight } from '@/lib/games/catan/tutorial'
+import { useT } from '@/lib/i18n/client'
+import { fill } from './event-text'
+import { useCatanLayout } from './layout'
+import type { TutorialStep } from '@/lib/games/catan/tutorial'
 import { COLORS, PIXEL_FONT, PixelButton } from './ui'
 
 interface SpotlightBox {
@@ -19,7 +23,6 @@ const SPOTLIGHT_CSS = `
   .catan-spotlight {
     position: fixed;
     pointer-events: none;
-    z-index: 40;
     outline: 2px solid rgba(245, 184, 61, 0.95);
     animation: catan-spotlight-pulse 1.1s ease-in-out infinite;
   }
@@ -28,7 +31,15 @@ const SPOTLIGHT_CSS = `
   }
 `
 
-export function TutorialSpotlight({ ids }: { ids: readonly string[] }) {
+export function TutorialSpotlight({
+  ids,
+  zIndex = 40,
+  refreshKey = '',
+}: {
+  ids: readonly string[]
+  zIndex?: number
+  refreshKey?: string | number
+}) {
   const reduceMotion = useReducedMotion()
   const [boxes, setBoxes] = useState<SpotlightBox[]>([])
   const idsKey = ids.join(',')
@@ -49,7 +60,7 @@ export function TutorialSpotlight({ ids }: { ids: readonly string[] }) {
       window.removeEventListener('resize', measure)
       window.removeEventListener('scroll', measure, true)
     }
-  }, [idsKey, ids])
+  }, [idsKey, ids, refreshKey])
 
   const rendered = boxes.map((box) => (
     <div
@@ -61,6 +72,7 @@ export function TutorialSpotlight({ ids }: { ids: readonly string[] }) {
         top: box.rect.top,
         width: box.rect.width,
         height: box.rect.height,
+        zIndex,
         animation: reduceMotion ? 'none' : undefined,
       }}
     />
@@ -74,81 +86,147 @@ export function TutorialSpotlight({ ids }: { ids: readonly string[] }) {
   )
 }
 
+export type TutorialCoachPlacement = 'board' | 'dock' | 'sheet'
+
 export interface TutorialCoachProps {
-  stepLabel: string
-  title: string
-  body: string
-  highlight: TutorialHighlight
+  step: TutorialStep
+  stepIndex: number
+  totalSteps: number
   canGoBack: boolean
   isLast: boolean
-  nextLabel: string
-  backLabel: string
-  exitLabel: string
-  finishLabel: string
+  canAdvance: boolean
+  placement: TutorialCoachPlacement
+  boardRef: RefObject<HTMLDivElement | null>
+  refreshKey: string | number
   onNext: () => void
   onBack: () => void
   onExit: () => void
-  /** False on steps that finish when the player makes the highlighted move. */
-  canAdvance: boolean
-  actionPrompt: string
 }
 
 export function TutorialCoach({
-  stepLabel,
-  title,
-  body,
-  highlight,
+  step,
+  stepIndex,
+  totalSteps,
   canGoBack,
   isLast,
-  nextLabel,
-  backLabel,
-  exitLabel,
-  finishLabel,
+  canAdvance,
+  placement,
+  boardRef,
+  refreshKey,
   onNext,
   onBack,
   onExit,
-  canAdvance,
-  actionPrompt,
 }: TutorialCoachProps) {
-  const ids = useMemo(() => highlight.ui ?? [], [highlight.ui])
+  const t = useT()
+  const d = t.catan.tutorial
+  const { coarse } = useCatanLayout()
+  const [collapsed, setCollapsed] = useState(false)
+  const [boardPlacement, setBoardPlacement] = useState<'top' | 'bottom'>('bottom')
+  const nextRef = useRef<HTMLButtonElement | null>(null)
+
+  const copy = d.steps[step.id]
+  const ids = useMemo(() => step.highlight.ui ?? [], [step.highlight.ui])
+  const verb = coarse ? d.verb.tap : d.verb.click
+  const verbLower = coarse ? d.verbLower.tap : d.verbLower.click
+  const body = fill(copy.body, { verb, verbLower, target: 10 })
+  const stepLabel = fill(d.step, { current: stepIndex + 1, total: totalSteps })
+
+  useLayoutEffect(() => {
+    if (placement !== 'board') return
+    const measure = () => {
+      const board = boardRef.current
+      if (!board) return
+      const boardRect = board.getBoundingClientRect()
+      let minTop = Infinity
+      let maxBottom = -Infinity
+      for (const id of ids) {
+        const el = document.querySelector<HTMLElement>(`[data-tutorial="${id}"]`)
+        if (!el) continue
+        const rect = el.getBoundingClientRect()
+        minTop = Math.min(minTop, rect.top)
+        maxBottom = Math.max(maxBottom, rect.bottom)
+      }
+      if (minTop === Infinity) {
+        setBoardPlacement('top')
+        return
+      }
+      const centerY = (minTop + maxBottom) / 2
+      const distanceToTop = centerY - boardRect.top
+      const distanceToBottom = boardRect.bottom - centerY
+      setBoardPlacement(distanceToTop >= distanceToBottom ? 'top' : 'bottom')
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('scroll', measure, true)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', measure, true)
+    }
+  }, [placement, boardRef, ids, refreshKey])
+
+  useEffect(() => {
+    if (canAdvance) nextRef.current?.focus({ preventScroll: true })
+  }, [canAdvance, step.id, placement])
+
+  const panelBase: CSSProperties = {
+    backgroundColor: COLORS.panel,
+    border: `2px solid ${COLORS.panelBorder}`,
+    color: COLORS.text,
+    padding: 8,
+    pointerEvents: 'auto',
+  }
+
+  const boardStyle: CSSProperties = {
+    position: 'absolute',
+    left: 12,
+    width: 360,
+    maxWidth: 'calc(100% - 24px)',
+    boxShadow: `4px 4px 0 ${COLORS.panelDark}`,
+    zIndex: 30,
+  }
+  if (boardPlacement === 'top') boardStyle.top = 12
+  else boardStyle.bottom = 12
+
+  const panelStyle: CSSProperties =
+    placement === 'board'
+      ? boardStyle
+      : {
+          boxShadow: `2px 2px 0 ${COLORS.panelDark}`,
+          flexShrink: 0,
+          margin: placement === 'sheet' ? '0 0 8px' : 0,
+        }
 
   return (
     <>
-      <TutorialSpotlight ids={ids} />
-      <div
-        style={{
-          position: 'absolute',
-          left: 12,
-          bottom: 12,
-          width: 360,
-          maxWidth: 'calc(100% - 24px)',
-          backgroundColor: COLORS.panel,
-          border: `2px solid ${COLORS.panelBorder}`,
-          boxShadow: `4px 4px 0 ${COLORS.panelDark}`,
-          color: COLORS.text,
-          padding: 10,
-          pointerEvents: 'auto',
-          zIndex: 30,
-        }}
-      >
+      <TutorialSpotlight ids={ids} zIndex={placement === 'sheet' ? 80 : 40} refreshKey={refreshKey} />
+      <div style={{ ...panelBase, ...panelStyle }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.accent, letterSpacing: 1 }}>
-            {stepLabel}
-          </span>
-          <h2 style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.text, margin: 0, flex: 1 }}>{title}</h2>
-          <PixelButton onClick={onExit} aria-label={exitLabel}>
-            {exitLabel}
+          <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.accent, letterSpacing: 1 }}>{stepLabel}</span>
+          <h2 style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.text, margin: 0, flex: 1 }}>{copy.title}</h2>
+          {placement !== 'board' ? (
+            <PixelButton
+              aria-pressed={collapsed}
+              aria-label={collapsed ? d.expand : d.collapse}
+              onClick={() => setCollapsed((value) => !value)}
+            >
+              {collapsed ? '+' : '-'}
+            </PixelButton>
+          ) : null}
+          <PixelButton onClick={onExit} aria-label={d.exit}>
+            {d.exit}
           </PixelButton>
         </div>
-        <p style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.text, lineHeight: 1.5, margin: '8px 0 0' }}>{body}</p>
+        {collapsed ? null : (
+          <p style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.text, lineHeight: 1.5, margin: '8px 0 0' }}>{body}</p>
+        )}
         <div style={{ display: 'flex', gap: 8, marginTop: 10, justifyContent: 'flex-end', alignItems: 'center' }}>
-          {canGoBack ? <PixelButton onClick={onBack}>{backLabel}</PixelButton> : null}
+          {canGoBack ? <PixelButton onClick={onBack}>{d.back}</PixelButton> : null}
           {canAdvance ? (
-            <PixelButton variant="primary" onClick={onNext}>
-              {isLast ? finishLabel : nextLabel}
+            <PixelButton ref={nextRef} variant="primary" onClick={onNext}>
+              {isLast ? d.finish : d.next}
             </PixelButton>
           ) : (
-            <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.accent }}>{actionPrompt}</span>
+            <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.accent }}>{d.doAction}</span>
           )}
         </div>
       </div>

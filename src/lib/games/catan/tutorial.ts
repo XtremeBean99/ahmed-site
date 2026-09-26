@@ -7,26 +7,71 @@ import { shuffle } from './rng'
 import { emptyStats } from './stats'
 import type { Action, DevCardType, GameState, ResourceCounts, Terrain } from './types'
 
-export type TutorialUiId =
-  | 'roll'
-  | 'end-turn'
-  | 'build-road'
-  | 'build-settlement'
-  | 'build-city'
-  | 'buy-card'
-  | 'trade'
-  | 'play-card'
-  | 'hand'
-  | 'dev-cards'
-  | 'dice'
-  | 'players'
-  | 'log'
-  | 'legend'
-  | 'settings'
-  | 'speed'
-  | 'skip'
-  | 'status'
-  | 'board'
+export const TUTORIAL_UI_IDS = [
+  'roll',
+  'end-turn',
+  'build-road',
+  'build-settlement',
+  'build-city',
+  'buy-card',
+  'trade',
+  'play-card',
+  'hand',
+  'dev-cards',
+  'dice',
+  'players',
+  'log',
+  'legend',
+  'settings',
+  'speed',
+  'skip',
+  'status',
+  'board',
+] as const
+
+export type TutorialUiId = (typeof TUTORIAL_UI_IDS)[number]
+
+export const TUTORIAL_STEP_IDS = [
+  'welcome',
+  'board',
+  'first-settlement',
+  'bots-and-second',
+  'hand',
+  'roll',
+  'build-road',
+  'end-turn',
+  'seven',
+  'trade-settlement',
+  'buy-card',
+  'knight',
+  'winning',
+  'free',
+] as const
+
+export type TutorialStepId = (typeof TUTORIAL_STEP_IDS)[number]
+
+/** Stack layout bottom sheet that holds a highlighted target, if any. */
+export type TutorialSheet = 'build' | 'cards' | 'log' | 'menu'
+
+export function tutorialSheetFor(id: TutorialUiId): TutorialSheet | null {
+  switch (id) {
+    case 'build-road':
+    case 'build-settlement':
+    case 'build-city':
+    case 'buy-card':
+      return 'build'
+    case 'dev-cards':
+      return 'cards'
+    case 'log':
+      return 'log'
+    case 'settings':
+    case 'speed':
+    case 'legend':
+      return 'menu'
+    default:
+      return null
+  }
+}
 
 export interface TutorialHighlight {
   ui?: TutorialUiId[]
@@ -36,13 +81,43 @@ export interface TutorialHighlight {
 }
 
 export interface TutorialStep {
-  id: string
-  title: string
-  body: string
+  id: TutorialStepId
   highlight: TutorialHighlight
   allows: (state: GameState, action: Action) => boolean
   completeWhen: 'next' | ((before: GameState, after: GameState, action: Action) => boolean)
   prepare?: (state: GameState) => GameState
+}
+
+export const TUTORIAL_PROGRESS_KEY = 'catan-tutorial-progress-v1'
+
+export interface TutorialProgress {
+  step: number
+  finished: boolean
+}
+
+export function serializeTutorialProgress(progress: TutorialProgress): string {
+  return JSON.stringify(progress)
+}
+
+/** Validates a persisted lesson position. Rejects out-of-range steps and bad shapes. */
+export function parseTutorialProgress(raw: string | null): TutorialProgress | null {
+  if (raw === null) return null
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (typeof parsed !== 'object' || parsed === null) return null
+    const { step, finished } = parsed as Record<string, unknown>
+    if (typeof step !== 'number' || !Number.isInteger(step)) return null
+    if (step < 0 || step >= TUTORIAL_STEP_IDS.length) return null
+    if (typeof finished !== 'boolean') return null
+    return { step, finished }
+  } catch {
+    return null
+  }
+}
+
+export function clampTutorialProgress(step: number, finished: boolean): TutorialProgress {
+  const clamped = Math.min(Math.max(Math.trunc(step), 0), TUTORIAL_STEP_IDS.length - 1)
+  return { step: clamped, finished: clamped === TUTORIAL_STEP_IDS.length - 1 ? finished : false }
 }
 
 export const TUTORIAL_SEED = 150
@@ -177,30 +252,28 @@ function prepareKnightCard(state: GameState): GameState {
   return next
 }
 
+function prepareFreePlay(state: GameState): GameState {
+  if (state.settings.botTrades) return state
+  const next = structuredClone(state)
+  next.settings = { ...next.settings, botTrades: true }
+  return next
+}
+
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to Catan',
-    body:
-      'You are red. The first player to 10 victory points wins. Settlements are worth 1 point, cities 2, the Longest Road and Largest Army are worth 2 each, and some development cards hide 1 point. You can only win on your own turn.',
     highlight: { ui: ['players', 'status'] },
     allows: () => false,
     completeWhen: 'next',
   },
   {
     id: 'board',
-    title: 'The island',
-    body:
-      'Each hex produces one resource when its number is rolled: lumber from green, wool from pale green, grain from yellow, brick from red-brown, ore from grey. The dots under a number show how often it is rolled; 6 and 8 are the most likely, which is why they are printed red and never touch. The robber starts on the desert.',
-    highlight: { ui: ['board', 'legend'], hexes: [7, 12, 2, 12] },
+    highlight: { ui: ['board'], hexes: [7, 12, 2, 12] },
     allows: () => false,
     completeWhen: 'next',
   },
   {
     id: 'first-settlement',
-    title: 'Your first settlement',
-    body:
-      'Place your first settlement on the highlighted corner of Grain 8 and Ore 5. It adds 9 pips of production. Then place the road next to it, toward the middle of the island.',
     highlight: { ui: ['board'], vertices: [FIRST_SETTLEMENT], edges: [FIRST_ROAD] },
     allows: (state, action) =>
       (action.type === 'placeSetupSettlement' && isSetupSettlement(state) && action.vertex === FIRST_SETTLEMENT) ||
@@ -210,9 +283,6 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'bots-and-second',
-    title: 'Bots place, then you',
-    body:
-      'Watch the bots place their starting settlements. When it is your turn again, place your second settlement on the highlighted corner of Brick 12 and Lumber 2, then its road. You collect one card for each hex around that second settlement: 1 brick and 1 lumber.',
     highlight: { ui: ['board', 'players'], vertices: [SECOND_SETTLEMENT], edges: [SECOND_ROAD] },
     allows: (state, action) =>
       (action.type === 'placeSetupSettlement' && isSetupSettlement(state) && action.vertex === SECOND_SETTLEMENT) ||
@@ -221,18 +291,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'hand',
-    title: 'Your hand and costs',
-    body:
-      'Your hand is in the right panel. A road costs 1 brick and 1 lumber. A settlement costs 1 brick, 1 lumber, 1 wool and 1 grain. A city costs 2 grain and 3 ore. A development card costs 1 wool, 1 grain and 1 ore.',
-    highlight: { ui: ['hand', 'build-road', 'build-settlement', 'build-city', 'buy-card'] },
+    highlight: { ui: ['hand'] },
     allows: () => false,
     completeWhen: 'next',
   },
   {
     id: 'roll',
-    title: 'Roll the dice',
-    body:
-      'Click Roll. Your first roll will be an 8. Your settlement sits on Grain 8, so the Grain 8 hex pays you 1 grain. Watch your hand and the game log.',
     highlight: { ui: ['roll', 'dice', 'hand'] },
     allows: ((state, action) => action.type === 'rollDice' && state.phase.kind === 'preRoll' && humanTurn(state)),
     completeWhen: (before, after, action) =>
@@ -240,9 +304,6 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'build-road',
-    title: 'Build a road',
-    body:
-      'You have 1 brick and 1 lumber, exactly the cost of a road. Click Build road, then the highlighted edge. Roads connect your settlements and count toward Longest Road.',
     highlight: { ui: ['build-road', 'board'], edges: [LESSON_ROAD] },
     allows: (state, action) =>
       action.type === 'buildRoad' && state.phase.kind === 'main' && humanTurn(state) && action.edge === LESSON_ROAD,
@@ -250,18 +311,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'end-turn',
-    title: 'End your turn',
-    body:
-      'You have nothing else to do, so end your turn. The bots will now take their turns at normal speed. You can change the speed at the top, or click Skip to jump to your turn, but for now just watch.',
-    highlight: { ui: ['end-turn', 'speed', 'skip'] },
+    highlight: { ui: ['end-turn'] },
     allows: ((state, action) => action.type === 'endTurn' && state.phase.kind === 'main' && humanTurn(state)),
     completeWhen: (before, after, action) => action.type === 'endTurn',
   },
   {
     id: 'seven',
-    title: 'The robber',
-    body:
-      'Your next roll is a 7. The tutorial gives you extra grain so you can see what happens when you hold more than 7 cards: you discard half of them, rounded down. For this lesson, discard 10 grain. Then move the robber to the highlighted hex and steal one card from Bram. The robber also blocks that hex from producing.',
     highlight: { ui: ['roll', 'hand', 'board'], hexes: [SEVEN_ROBBER_HEX] },
     allows: ((state, action) => {
       if (action.type === 'rollDice') return state.phase.kind === 'preRoll' && humanTurn(state)
@@ -280,10 +335,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'trade-settlement',
-    title: 'Trade 4:1, then settle',
-    body:
-      'You have spare ore but no brick, and a settlement costs 1 brick. Open Trade and, on the Bank tab, give 4 ore for 1 brick. Then build a settlement on the highlighted corner.',
-    highlight: { ui: ['trade', 'build-settlement', 'board'], vertices: [LESSON_SETTLEMENT] },
+    highlight: { ui: ['trade', 'board'], vertices: [LESSON_SETTLEMENT] },
     allows: ((state, action) => {
       if (action.type === 'maritimeTrade') {
         return state.phase.kind === 'main' && humanTurn(state) && action.give === 'ore' && action.get === 'brick'
@@ -297,10 +349,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'buy-card',
-    title: 'Buy a development card',
-    body:
-      'You have 1 wool, 1 grain and 1 ore, the cost of a development card. Buy one; it is a Knight. Cards bought this turn cannot be played until your next turn, so end your turn.',
-    highlight: { ui: ['buy-card', 'dev-cards'] },
+    highlight: { ui: ['buy-card'] },
     allows: ((state, action) => {
       if (!humanTurn(state)) return false
       if (action.type === 'buyDevCard') return state.phase.kind === 'main' && state.players[humanPlayer(state)].newDevCards.length === 0
@@ -312,10 +361,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'knight',
-    title: 'Play the Knight',
-    body:
-      'Before rolling, play your Knight card. Move the robber to the highlighted hex and steal a card. Play three knights and you earn Largest Army, worth 2 victory points.',
-    highlight: { ui: ['play-card', 'dev-cards', 'board'], hexes: [KNIGHT_ROBBER_HEX] },
+    highlight: { ui: ['dev-cards', 'board'], hexes: [KNIGHT_ROBBER_HEX] },
     allows: ((state, action) => {
       if (!humanTurn(state)) return false
       if (action.type === 'playKnight') {
@@ -333,21 +379,16 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'winning',
-    title: 'Longest Road, cities and winning',
-    body:
-      'The first player to build a road of 5 or more connected segments holds Longest Road (2 VP). Cities upgrade settlements and produce double. Keep playing until someone reaches 10 VP on their own turn.',
-    highlight: { ui: ['players', 'status', 'hand'] },
+    highlight: { ui: ['players', 'status'] },
     allows: () => false,
     completeWhen: 'next',
   },
   {
     id: 'free',
-    title: 'You are on your own now',
-    body:
-      'The tutorial is over. Play this game freely from here. The Hint button is available whenever you want a suggestion; everything else works exactly like a normal game.',
-    highlight: { ui: ['status', 'board'] },
+    highlight: { ui: ['status', 'trade'] },
     allows: () => true,
     completeWhen: 'next',
+    prepare: prepareFreePlay,
   },
 ]
 

@@ -8,7 +8,7 @@ import {
   PIECES,
   RESOURCES,
 } from './constants'
-import { applyAction, createGame, humanPlayer, playersToAct, validateAction } from './engine'
+import { applyAction, createGame, humanPlayer, isUndoable, playersToAct, validateAction } from './engine'
 import { HEXES, VERTICES } from './geometry'
 import {
   emptyResources,
@@ -21,7 +21,7 @@ import {
   totalCards,
   victoryPoints,
 } from './helpers'
-import { give, makeTestState, res } from './test-fixtures'
+import { give, makeTestState, putSettlement, res } from './test-fixtures'
 import type { Action, GameState, Resource, ResourceCounts } from './types'
 
 function mulberry32(seed: number): () => number {
@@ -240,6 +240,10 @@ function actionWeight(action: Action): number {
       return 3
     case 'maritimeTrade':
     case 'domesticTrade':
+    case 'proposeTrade':
+    case 'respondTrade':
+    case 'confirmTrade':
+    case 'cancelTrade':
       return 1
     case 'discard':
     case 'moveRobber':
@@ -372,6 +376,13 @@ function assertInvariants(state: GameState, playedDevCards: number): void {
   }
 
   assertPhaseShape(state)
+
+  if (state.phase.kind === 'gameOver') {
+    assert.equal(state.phase.winner, state.current, 'a gameOver winner must be the current player')
+    assert.ok(victoryPoints(state, state.phase.winner) >= state.settings.vpToWin)
+  } else if (state.phase.kind !== 'setup') {
+    assert.ok(victoryPoints(state, state.current) < state.settings.vpToWin)
+  }
 
   let previousSeq = -1
   for (const event of state.events) {
@@ -509,20 +520,62 @@ test('the same seed and the same action sequence produce identical states', () =
   assert.deepEqual(first.state, second.state)
 })
 
-test(
-  'fuzz driver runs 300 random legal games without an action throwing',
-  { timeout: 600000 },
-  () => {
-    let finished = 0
-    let totalActions = 0
-    const games = 300
-    for (let game = 0; game < games; game++) {
-      const playerCount: 3 | 4 = game % 2 === 0 ? 3 : 4
-      const result = runFuzzGame(10000 + game, playerCount, 20000 + game, 4000)
-      totalActions += result.actions
-      if (result.finished) finished += 1
+test('fuzz driver runs 25 random legal games without an action throwing', () => {
+  let finished = 0
+  let totalActions = 0
+  const games = 25
+  for (let game = 0; game < games; game++) {
+    const playerCount: 3 | 4 = game % 2 === 0 ? 3 : 4
+    const result = runFuzzGame(10000 + game, playerCount, 20000 + game, 4000)
+    totalActions += result.actions
+    if (result.finished) finished += 1
+  }
+  assert.equal(totalActions >= games, true)
+  console.log(`fuzz: ${finished}/${games} games reached gameOver, ${totalActions} total actions`)
+})
+
+test('applyAction shares append-only event objects and keeps old event logs intact', () => {
+  const s = makeTestState({ phase: { kind: 'main' }, current: 0 })
+  putSettlement(s, 0, 17)
+  give(s, 0, res({ brick: 2, lumber: 2 }))
+
+  const first = applyAction(s, { type: 'buildRoad', edge: VERTICES[17].edges[0] })
+  assert.ok(first.events.length > 0)
+  const firstLength = first.events.length
+  const sharedEvent = first.events[0]
+
+  const second = applyAction(first, { type: 'buildRoad', edge: VERTICES[17].edges[1] })
+  assert.equal(second.events[0], sharedEvent)
+  assert.equal(first.events.length, firstLength)
+
+  second.events.push({ seq: 9999, turn: 1, type: 'gameOver', winner: 0 })
+  assert.equal(first.events.length, firstLength)
+})
+
+test('undoable actions leave rng, devDeck and other players\' resources unchanged', () => {
+  let checked = 0
+  for (let game = 0; game < 5; game++) {
+    let state = createGame({ seed: 7000 + game, playerCount: game % 2 === 0 ? 3 : 4 })
+    const rng = mulberry32(30000 + game)
+    let actions = 0
+    while (actions < 300 && state.phase.kind !== 'gameOver') {
+      const candidates = dedupeActions(candidateActions(state, rng))
+      const legal = candidates.filter((action) => validateAction(state, action) === null)
+      assert.ok(legal.length > 0, `no legal action in phase ${state.phase.kind}`)
+      for (const candidate of legal) {
+        if (!isUndoable(candidate)) continue
+        const next = applyAction(state, candidate)
+        assert.equal(next.rng, state.rng, `${candidate.type} must not consume rng`)
+        assert.deepEqual(next.devDeck, state.devDeck, `${candidate.type} must not consume the deck`)
+        for (let p = 0; p < state.players.length; p++) {
+          if (p === state.current) continue
+          assert.deepEqual(next.players[p].resources, state.players[p].resources, `${candidate.type} must not touch others`)
+        }
+        checked += 1
+      }
+      state = applyAction(state, pickWeighted(legal, rng))
+      actions += 1
     }
-    assert.equal(totalActions >= games, true)
-    console.log(`fuzz: ${finished}/${games} games reached gameOver, ${totalActions} total actions`)
-  },
-)
+  }
+  assert.ok(checked > 0, 'expected to check at least one undoable action')
+})

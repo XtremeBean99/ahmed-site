@@ -2,11 +2,12 @@
 
 import { useId } from 'react'
 import { useT } from '@/lib/i18n/client'
-import { totalCards } from '@/lib/games/catan/helpers'
+import { totalCards, victoryPoints } from '@/lib/games/catan/helpers'
 import type { GameState, PlayerId } from '@/lib/games/catan/types'
 import { fill, playerSubject } from './event-text'
-import { Tooltip } from './Tooltip'
-import { ModalDialog, Muted, PIXEL_FONT, PixelButton, SectionTitle } from './ui'
+import { PixelSprite } from './PixelSprite'
+import { PLAYER_HEX, PLAYER_TEXT } from './player-colors'
+import { COLORS, FONT, ModalDialog, Muted, PIXEL_FONT, PixelButton, SectionTitle } from './ui'
 
 export function StealDialog({
   state,
@@ -22,43 +23,57 @@ export function StealDialog({
   const thief = state.current
 
   return (
-    <ModalDialog labelledBy={titleId} dismissable={false} style={{ width: 380 }}>
+    <ModalDialog labelledBy={titleId} dismissable={false} style={{ width: 460 }}>
       <SectionTitle id={titleId}>{d.title}</SectionTitle>
-      <p style={{ ...PIXEL_FONT, fontSize: 10, color: '#e8d5b0', margin: '12px 0 8px' }}>
+      <p style={{ ...PIXEL_FONT, fontSize: FONT.small, color: COLORS.text, margin: '12px 0 8px' }}>
         {fill(d.prompt, { player: playerSubject(state, thief) })}
       </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {candidates.map((victim) => {
-            const p = state.players[victim]
-            return (
-              <Tooltip key={victim} content={fill(d.choose, { name: p.name })}>
-                <PixelButton onClick={() => onSteal(victim)} style={{ justifyContent: 'flex-start' }}>
-                <span
-                  style={{
-                    width: 12,
-                    height: 12,
-                    backgroundColor: {
-                      red: '#c0392b',
-                      blue: '#2e6fb7',
-                      white: '#e8e0d0',
-                      orange: '#e07b2a',
-                    }[p.color],
-                    border: '1px solid #1a1410',
-                    display: 'inline-block',
-                    flexShrink: 0,
-                  }}
-                />
-                <span style={{ ...PIXEL_FONT, fontSize: 10, color: '#e8d5b0', flex: 1, textAlign: 'left' }}>
-                  {fill(d.choose, { name: p.name })}
-                </span>
-                <Muted>
-                  {totalCards(p.resources)} {totalCards(p.resources) === 1 ? t.catan.card : t.catan.cards}
-                </Muted>
-              </PixelButton>
-              </Tooltip>
-            )
-          })}
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {candidates.map((victim) => {
+          const p = state.players[victim]
+          const held = totalCards(p.resources)
+          const shown = Math.min(held, 7)
+          const extra = held - shown
+          return (
+            <PixelButton
+              key={victim}
+              onClick={() => onSteal(victim)}
+              aria-label={fill(d.choose, { name: p.name })}
+              style={{ width: '100%', justifyContent: 'flex-start', gap: 12, padding: '10px 12px' }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 20,
+                  height: 20,
+                  flexShrink: 0,
+                  backgroundColor: PLAYER_HEX[p.color],
+                  border: `2px solid ${COLORS.panelDark}`,
+                }}
+              />
+              <span style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+                <span style={{ ...PIXEL_FONT, fontSize: FONT.body, color: PLAYER_TEXT[p.color] }}>{p.name}</span>
+                <Muted>{fill(d.vp, { vp: victoryPoints(state, victim, false) })}</Muted>
+              </span>
+              <span aria-hidden="true" style={{ display: 'flex', alignItems: 'center' }}>
+                {Array.from({ length: shown }, (_, i) => (
+                  <PixelSprite
+                    key={i}
+                    name="card-back-resource"
+                    scale={2}
+                    alt=""
+                    style={{ marginLeft: i === 0 ? 0 : -30 }}
+                  />
+                ))}
+                {extra > 0 ? (
+                  <span style={{ ...PIXEL_FONT, fontSize: FONT.small, color: COLORS.text, marginLeft: 6 }}>+{extra}</span>
+                ) : null}
+              </span>
+              <Muted>{held === 1 ? d.cardHeld : fill(d.cardsHeld, { count: held })}</Muted>
+            </PixelButton>
+          )
+        })}
+      </div>
     </ModalDialog>
   )
 }

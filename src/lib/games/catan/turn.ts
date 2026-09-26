@@ -19,20 +19,23 @@ import {
 } from './helpers'
 import { nextInt } from './rng'
 import { startSevenResolution } from './robber'
-import type { GameState, Handler, HandlerMap } from './types'
+import type { GameState, Handler, HandlerMap, Resource } from './types'
 
 export function produceResources(state: GameState, roll: number): void {
   const owed = state.players.map(() => emptyResources())
+  const blocked = state.players.map(() => emptyResources())
   for (const hex of HEXES) {
     const tile = state.tiles[hex.id]
-    if (tile.number !== roll || tile.terrain === 'desert' || hex.id === state.robber) continue
+    if (tile.number !== roll || tile.terrain === 'desert') continue
+    const target = hex.id === state.robber ? blocked : owed
     for (const v of hex.vertices) {
       const building = state.buildings[v]
       if (!building) continue
-      owed[building.owner][tile.terrain] += building.kind === 'city' ? 2 : 1
+      target[building.owner][tile.terrain] += building.kind === 'city' ? 2 : 1
     }
   }
   const gains = state.players.map(() => emptyResources())
+  const shortage: Resource[] = []
   for (const r of RESOURCES) {
     const owedTotal = owed.reduce((sum, o) => sum + o[r], 0)
     if (owedTotal === 0) continue
@@ -51,10 +54,13 @@ export function produceResources(state: GameState, roll: number): void {
         gains[p][r] += state.bank[r]
         state.players[p].resources[r] += state.bank[r]
         state.bank[r] = 0
+      } else {
+        shortage.push(r)
       }
     }
   }
-  if (gains.some((g) => totalCards(g) > 0)) pushEvent(state, { type: 'produce', gains })
+  const anything = [...gains, ...blocked].some((g) => totalCards(g) > 0) || shortage.length > 0
+  if (anything) pushEvent(state, { type: 'produce', gains, blocked, shortage })
 }
 
 function inMain(state: GameState): string | null {
@@ -66,7 +72,8 @@ const rollDice: Handler<'rollDice'> = {
     return state.phase.kind === 'preRoll' ? null : 'Roll only before the main phase'
   },
   apply(state) {
-    const dice: [number, number] = [nextInt(state, 6) + 1, nextInt(state, 6) + 1]
+    const scripted = state.scriptedRolls && state.scriptedRolls.length > 0 ? state.scriptedRolls.shift() : undefined
+    const dice: [number, number] = scripted ?? [nextInt(state, 6) + 1, nextInt(state, 6) + 1]
     state.dice = dice
     pushEvent(state, { type: 'roll', player: state.current, dice })
     if (dice[0] + dice[1] === 7) {
@@ -221,6 +228,7 @@ const endTurn: Handler<'endTurn'> = {
     player.newDevCards = []
     state.devCardPlayedThisTurn = false
     state.dice = null
+    state.offersThisTurn = 0
     pushEvent(state, { type: 'turnEnded', player: state.current })
     state.current = (state.current + 1) % state.players.length
     state.turn += 1

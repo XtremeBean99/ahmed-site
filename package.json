@@ -9,6 +9,7 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test:catan": "tsx --test \"src/lib/games/catan/**/*.test.ts\" \"src/components/catan/**/*.test.ts\"",
+    "test:catan:long": "tsx --test \"src/lib/games/catan/**/*.longtest.ts\"",
     "test:snake": "tsx --test \"src/lib/games/snake-engine.test.ts\"",
     "test:games": "tsx --test \"src/lib/games/*.test.ts\"",
     "test:terminal": "tsx --test \"src/lib/terminal/**/*.test.ts\"",

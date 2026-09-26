@@ -8,10 +8,13 @@ import {
   useId,
   useRef,
   useState,
+  type PointerEvent as ReactPointerEvent,
   type ReactElement,
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { tooltipGesture } from './dialog-logic'
+import { useCatanLayout } from './layout'
 
 const TooltipsEnabled = createContext(true)
 
@@ -34,6 +37,10 @@ interface Position {
 
 const GAP = 6
 const MAX_WIDTH = 240
+const LONG_PRESS_DELAY = 450
+const LONG_PRESS_DISMISS = 2500
+const MOVE_TOLERANCE = 10
+const TAP_FOCUS_SUPPRESSION = 600
 
 function place(rect: DOMRect, side: TooltipSide): Position {
   const half = MAX_WIDTH / 2
@@ -53,6 +60,7 @@ function place(rect: DOMRect, side: TooltipSide): Position {
 /**
  * Hover/focus tooltip for a single element child. When tooltips are disabled it renders the child
  * untouched, so accessible names never depend on it: put essential text in the control itself.
+ * On coarse pointers it opens on long-press instead of hover and never blocks the tap.
  */
 export function Tooltip({
   content,
@@ -66,12 +74,25 @@ export function Tooltip({
   delay?: number
 }) {
   const enabled = useContext(TooltipsEnabled)
+  const { coarse } = useCatanLayout()
   const id = useId()
   const wrapper = useRef<HTMLSpanElement>(null)
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const hoverTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const longPressTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const autoDismissTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const pressStart = useRef<{ x: number; y: number } | null>(null)
+  const gesture = useRef<ReturnType<typeof tooltipGesture>>({ kind: 'idle' })
+  const suppressFocusUntil = useRef(0)
   const [position, setPosition] = useState<Position | null>(null)
 
-  useEffect(() => () => clearTimeout(timer.current), [])
+  useEffect(
+    () => () => {
+      clearTimeout(hoverTimer.current)
+      clearTimeout(longPressTimer.current)
+      clearTimeout(autoDismissTimer.current)
+    },
+    [],
+  )
 
   useEffect(() => {
     if (!enabled) setPosition(null)
@@ -93,28 +114,75 @@ export function Tooltip({
 
   if (!enabled || content === null || content === undefined || content === false || content === '') return children
 
-  const show = () => {
-    clearTimeout(timer.current)
-    timer.current = setTimeout(() => {
-      // The wrapper is display: contents (no box of its own), so measure the wrapped element.
-      const target = wrapper.current?.firstElementChild
-      if (target) setPosition(place(target.getBoundingClientRect(), side))
-    }, delay)
+  const showNow = () => {
+    // The wrapper is display: contents (no box of its own), so measure the wrapped element.
+    const target = wrapper.current?.firstElementChild
+    if (target) setPosition(place(target.getBoundingClientRect(), side))
   }
+
   const hide = () => {
-    clearTimeout(timer.current)
+    clearTimeout(hoverTimer.current)
+    clearTimeout(longPressTimer.current)
+    clearTimeout(autoDismissTimer.current)
+    pressStart.current = null
+    gesture.current = { kind: 'idle' }
     setPosition(null)
   }
 
+  const show = () => {
+    if (coarse && Date.now() < suppressFocusUntil.current) return
+    clearTimeout(hoverTimer.current)
+    hoverTimer.current = setTimeout(showNow, delay)
+  }
+
+  const onPointerDown = (event: ReactPointerEvent) => {
+    suppressFocusUntil.current = Date.now() + TAP_FOCUS_SUPPRESSION
+    pressStart.current = { x: event.clientX, y: event.clientY }
+    gesture.current = tooltipGesture(gesture.current, 'down')
+    clearTimeout(longPressTimer.current)
+    clearTimeout(autoDismissTimer.current)
+    longPressTimer.current = setTimeout(() => {
+      gesture.current = tooltipGesture(gesture.current, 'longpress')
+      if (gesture.current.kind === 'open') {
+        showNow()
+        clearTimeout(autoDismissTimer.current)
+        autoDismissTimer.current = setTimeout(() => {
+          gesture.current = tooltipGesture(gesture.current, 'dismiss')
+          setPosition(null)
+        }, LONG_PRESS_DISMISS)
+      }
+    }, LONG_PRESS_DELAY)
+  }
+
+  const onPointerMove = (event: ReactPointerEvent) => {
+    if (gesture.current.kind !== 'pressed' || !pressStart.current) return
+    const dx = event.clientX - pressStart.current.x
+    const dy = event.clientY - pressStart.current.y
+    if (dx * dx + dy * dy <= MOVE_TOLERANCE * MOVE_TOLERANCE) return
+    gesture.current = tooltipGesture(gesture.current, 'move')
+    clearTimeout(longPressTimer.current)
+  }
+
+  const onPointerUp = () => {
+    suppressFocusUntil.current = Date.now() + TAP_FOCUS_SUPPRESSION
+    gesture.current = tooltipGesture(gesture.current, 'up')
+    hide()
+  }
+
+  const touchProps = coarse
+    ? {
+        onPointerDown,
+        onPointerMove,
+        onPointerUp,
+        onPointerCancel: onPointerUp,
+      }
+    : {
+        onPointerEnter: show,
+        onPointerLeave: hide,
+      }
+
   return (
-    <span
-      ref={wrapper}
-      style={{ display: 'contents' }}
-      onPointerEnter={show}
-      onPointerLeave={hide}
-      onFocus={show}
-      onBlur={hide}
-    >
+    <span ref={wrapper} style={{ display: 'contents' }} onFocus={show} onBlur={hide} {...touchProps}>
       {cloneElement(children, { 'aria-describedby': position ? id : undefined })}
       {position && typeof document !== 'undefined'
         ? createPortal(

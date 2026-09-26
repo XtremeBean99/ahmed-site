@@ -48,6 +48,8 @@ test('formatEvent marks players, dice and resources in a roll and produce', () =
         { brick: 0, lumber: 0, wool: 0, grain: 1, ore: 0 },
         { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 },
       ],
+      blocked: [{ brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 }, { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 }, { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 }, { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 }],
+      shortage: [],
     }),
     en,
   )
@@ -104,6 +106,6 @@ test('formatEvent marks robber, cards and vp events', () => {
 
 test('formatEventText joins segments back into the full sentence', () => {
   const state = makeTestState()
-  const e = event({ type: 'monopoly', player: 1, resource: 'wool', taken: 3 })
+  const e = event({ type: 'monopoly', player: 1, resource: 'wool', taken: 3, takenFrom: [3, 0, 0, 0] })
   assert.equal(formatEventText(state, e, en), 'Bot 1 monopolised wool, taking 3')
 })

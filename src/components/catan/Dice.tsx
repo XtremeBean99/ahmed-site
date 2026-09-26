@@ -7,7 +7,11 @@ import { DIE_SIZE, type UiSpriteName } from './ui-sprites'
 export function Dice({ dice, label, scale = 1 }: { dice: [number, number] | null; label: string; scale?: number }) {
   const size = DIE_SIZE * scale
   return (
-    <span role="img" aria-label={label} style={{ display: 'inline-flex', gap: 4 * scale, alignItems: 'center' }}>
+    <span
+      role="img"
+      aria-label={dice ? `${label}: ${dice[0]}, ${dice[1]}` : label}
+      style={{ display: 'inline-flex', gap: 4 * scale, alignItems: 'center' }}
+    >
       {dice ? (
         <>
           <PixelSprite name={`die-${dice[0]}` as UiSpriteName} scale={scale} />

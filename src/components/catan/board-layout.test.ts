@@ -12,8 +12,8 @@ import {
   hexCenter,
   vertexPoint,
 } from './board-layout'
-import { CITY_SIZE, SETTLEMENT_SIZE, TILE_MASK_OFFSETS, createBuffer, drawBoard, harborPlateRect } from './pixel-art'
-import { TILE_ANCHOR_X, TILE_ANCHOR_Y, TILE_MASK_HEIGHT, TILE_MASK_WIDTH } from './sprites'
+import { TILE_MASK_OFFSETS, createBuffer, drawBoard, harborPlateRect } from './pixel-art'
+import { SPRITES, TILE_ANCHOR_X, TILE_ANCHOR_Y, TILE_MASK_HEIGHT, TILE_MASK_WIDTH } from './sprites'
 import type { PixelBuffer } from './pixel-art'
 
 function changedPixels(a: PixelBuffer, b: PixelBuffer): { x: number; y: number }[] {
@@ -152,7 +152,7 @@ test('sea pixels return null', () => {
   assert.equal(hexAtPixel(BOARD_WIDTH - 1, BOARD_HEIGHT - 1), null)
 })
 
-test('rasterising a fixture state fills every pixel and is deterministic', () => {
+test('rasterising a fixture state is deterministic, with opaque land and transparent open sea', () => {
   const state = makeTestState()
   const a = createBuffer(BOARD_WIDTH, BOARD_HEIGHT)
   const b = createBuffer(BOARD_WIDTH, BOARD_HEIGHT)
@@ -161,9 +161,27 @@ test('rasterising a fixture state fills every pixel and is deterministic', () =>
   for (let i = 0; i < a.data.length; i++) {
     assert.equal(a.data[i], b.data[i], `pixel data differs at byte ${i}`)
   }
-  for (let i = 3; i < a.data.length; i += 4) {
-    assert.equal(a.data[i], 255, `pixel ${(i - 3) / 4} is transparent`)
+  let opaqueSea = 0
+  for (let y = 0; y < BOARD_HEIGHT; y++) {
+    for (let x = 0; x < BOARD_WIDTH; x++) {
+      const i = (y * BOARD_WIDTH + x) * 4
+      if (hexAtPixel(x, y) !== null) {
+        assert.equal(a.data[i + 3], 255, `land pixel ${x},${y} is transparent`)
+      } else if (a.data[i + 3] !== 0) {
+        opaqueSea += 1
+      }
+    }
   }
+  for (const corner of [
+    [0, 0],
+    [BOARD_WIDTH - 1, 0],
+    [0, BOARD_HEIGHT - 1],
+    [BOARD_WIDTH - 1, BOARD_HEIGHT - 1],
+  ] as const) {
+    const i = (corner[1] * BOARD_WIDTH + corner[0]) * 4
+    assert.equal(a.data[i + 3], 0, `open sea corner ${corner[0]},${corner[1]} should be transparent`)
+  }
+  assert.ok(opaqueSea > 0, 'the procedural shoreline should draw opaque pixels in the sea')
 })
 
 test('settlement, city, road and robber only change pixels near their positions', () => {
@@ -191,12 +209,7 @@ test('settlement, city, road and robber only change pixels near their positions'
   assert.ok(changedPixels(a, b).length > 0, 'nothing changed')
 })
 
-test('harbour label plates stay inside the canvas and clear of coastal corner pieces', () => {
-  const intersects = (
-    a: { x: number; y: number; width: number; height: number },
-    b: { x0: number; y0: number; x1: number; y1: number },
-  ) => a.x <= b.x1 && b.x0 <= a.x + a.width - 1 && a.y <= b.y1 && b.y0 <= a.y + a.height - 1
-
+test('harbour label plates stay inside the canvas and entirely at sea', () => {
   for (const edge of PORT_EDGES) {
     for (const type of ['any', 'brick'] as const) {
       const plate = harborPlateRect(edge, type)
@@ -205,26 +218,29 @@ test('harbour label plates stay inside the canvas and clear of coastal corner pi
         plate.x + plate.width <= BOARD_WIDTH - 1 && plate.y + plate.height <= BOARD_HEIGHT - 1,
         `label for port ${edge} out of bounds: ${JSON.stringify(plate)}`,
       )
-
-      for (const vertex of VERTICES) {
-        const p = vertexPoint(vertex.id)
-        const settlement = {
-          x0: Math.round(p.x - (SETTLEMENT_SIZE.w - 1) / 2),
-          y0: Math.round(p.y - (SETTLEMENT_SIZE.h - 1) / 2),
-          x1: Math.round(p.x + (SETTLEMENT_SIZE.w - 1) / 2),
-          y1: Math.round(p.y + (SETTLEMENT_SIZE.h - 1) / 2),
+      for (let y = plate.y; y < plate.y + plate.height; y++) {
+        for (let x = plate.x; x < plate.x + plate.width; x++) {
+          assert.equal(hexAtPixel(x, y), null, `label for port ${edge} covers land at ${x},${y}`)
         }
-        const city = {
-          x0: Math.round(p.x - (CITY_SIZE.w - 1) / 2),
-          y0: Math.round(p.y - (CITY_SIZE.h - 1) / 2),
-          x1: Math.round(p.x + (CITY_SIZE.w - 1) / 2),
-          y1: Math.round(p.y + (CITY_SIZE.h - 1) / 2),
-        }
-        const marker = { x0: p.x - 6, y0: p.y - 6, x1: p.x + 5, y1: p.y + 5 }
-        assert.ok(!intersects(plate, settlement), `label for port ${edge} covers settlement at vertex ${vertex.id}`)
-        assert.ok(!intersects(plate, city), `label for port ${edge} covers city at vertex ${vertex.id}`)
-        assert.ok(!intersects(plate, marker), `label for port ${edge} covers marker at vertex ${vertex.id}`)
       }
     }
   }
 })
+
+test('harbour label plates never sit under a city on their own corners', () => {
+  const city = SPRITES.city
+  for (const edge of PORT_EDGES) {
+    for (const type of ['any', 'ore'] as const) {
+      const plate = harborPlateRect(edge, type)
+      for (const v of EDGES[edge].vertices) {
+        const c = vertexPoint(v)
+        const x0 = c.x - city.anchorX
+        const y0 = c.y - city.anchorY
+        const overlapX = Math.min(x0 + city.width, plate.x + plate.width) - Math.max(x0, plate.x)
+        const overlapY = Math.min(y0 + city.height, plate.y + plate.height) - Math.max(y0, plate.y)
+        assert.ok(overlapX <= 0 || overlapY <= 0, `plate for port ${edge} overlaps a city on vertex ${v}`)
+      }
+    }
+  }
+})
+

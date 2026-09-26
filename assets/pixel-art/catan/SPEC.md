@@ -11,30 +11,34 @@ All files are PNG RGBA at 1x; one image pixel equals one logical board pixel. Al
 - Sea border: 44 px on all sides of the island vertex span
 - Tile mask: 38 x 43, anchor (19, 21)
 
+## Sea and shoreline
+
+The canvases are transparent outside the island. The sea is not composited into the board; the viewport fills with `sea.png` as a CSS background tiled from the board origin at the camera scale. A procedural shoreline is drawn on the static layer around the island's outer edge: 1 px #1a1410 just outside the land, then 1 px #cfe3ea foam outside that.
+
 ## Files
 
 | File | Size | Anchor | Placed on | Recolor |
 |---|---|---|---|---|
-| sea.png | 279 x 265 | (0, 0) | board origin (0,0) | no |
+| sea.png | 32 x 32 | (0, 0) | CSS sea tile from board origin, tiled (not composited) | no |
 | tile-brick.png | 38 x 43 | (19, 21) | hex centre | no |
 | tile-lumber.png | 38 x 43 | (19, 21) | hex centre | no |
 | tile-wool.png | 38 x 43 | (19, 21) | hex centre | no |
 | tile-grain.png | 38 x 43 | (19, 21) | hex centre | no |
 | tile-ore.png | 38 x 43 | (19, 21) | hex centre | no |
 | tile-desert.png | 38 x 43 | (19, 21) | hex centre | no |
-| token-2.png | 11 x 11 | (5, 5) | hex centre | no |
-| token-3.png | 11 x 11 | (5, 5) | hex centre | no |
-| token-4.png | 11 x 11 | (5, 5) | hex centre | no |
-| token-5.png | 11 x 11 | (5, 5) | hex centre | no |
-| token-6.png | 11 x 11 | (5, 5) | hex centre | no |
-| token-8.png | 11 x 11 | (5, 5) | hex centre | no |
-| token-9.png | 11 x 11 | (5, 5) | hex centre | no |
-| token-10.png | 11 x 11 | (5, 5) | hex centre | no |
-| token-11.png | 11 x 11 | (5, 5) | hex centre | no |
-| token-12.png | 11 x 11 | (5, 5) | hex centre | no |
-| robber.png | 7 x 10 | (3, 4) | hex centre | no |
-| settlement.png | 9 x 9 | (4, 4) | vertex point | yes |
-| city.png | 13 x 11 | (6, 5) | vertex point | yes |
+| token-2.png | 13 x 13 | (6, 6) | hex centre | no |
+| token-3.png | 13 x 13 | (6, 6) | hex centre | no |
+| token-4.png | 13 x 13 | (6, 6) | hex centre | no |
+| token-5.png | 13 x 13 | (6, 6) | hex centre | no |
+| token-6.png | 13 x 13 | (6, 6) | hex centre | no |
+| token-8.png | 13 x 13 | (6, 6) | hex centre | no |
+| token-9.png | 13 x 13 | (6, 6) | hex centre | no |
+| token-10.png | 13 x 13 | (6, 6) | hex centre | no |
+| token-11.png | 13 x 13 | (6, 6) | hex centre | no |
+| token-12.png | 13 x 13 | (6, 6) | hex centre | no |
+| robber.png | 9 x 13 | (4, 6) | hex centre | no |
+| settlement.png | 11 x 11 | (5, 5) | vertex point | yes |
+| city.png | 15 x 13 | (7, 6) | vertex point | yes |
 | road-vertical.png | 5 x 21 | (2, 10) | edge midpoint rounded down | yes |
 | road-rising.png | 18 x 12 | (8, 5) | edge midpoint rounded down | yes |
 | road-falling.png | 18 x 12 | (8, 5) | edge midpoint rounded down | yes |
@@ -48,6 +52,15 @@ All files are PNG RGBA at 1x; one image pixel equals one logical board pixel. Al
 | pier-rising.png | 22 x 14 | (10, 6) | seaward-offset edge midpoint | no |
 | pier-falling.png | 22 x 14 | (10, 6) | seaward-offset edge midpoint | no |
 | tile-mask.png | 38 x 43 | (19, 21) | guide only, not rendered | no |
+
+## Changed in v3
+
+- sea.png: 279 x 265 full-canvas sprite became a 32 x 32 seamless tile, anchor (0, 0), used only as a tiled CSS background.
+- token-*.png: 11 x 11 became 13 x 13, anchor (5, 5) became (6, 6).
+- settlement.png: 9 x 9 became 11 x 11, anchor (4, 4) became (5, 5).
+- city.png: 13 x 11 became 15 x 13, anchor (6, 5) became (7, 6).
+- robber.png: 7 x 10 became 9 x 13, anchor (3, 4) became (4, 6).
+- Harbour plates moved 6 px closer to the coast (label offset 28 to 22); roads, piers and harbour plate sizes are unchanged.
 
 ## Player-colour key
 

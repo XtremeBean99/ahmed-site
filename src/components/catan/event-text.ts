@@ -216,6 +216,26 @@ export function formatEvent(state: GameState, event: GameEvent, t: Dictionary): 
         player: [playerSeg(state, event.player)],
         partner: [playerObjectSeg(state, event.partner)],
       })
+    case 'tradeProposed':
+      return compose(log.tradeProposed, {
+        player: [playerSeg(state, event.player)],
+        give: formatResourceSegments(event.give, t),
+        get: formatResourceSegments(event.get, t),
+      })
+    case 'tradeReplied':
+      if (event.reply === 'counter' && event.counter) {
+        // counter terms are from the proposer's side, so the replier gives `get` and asks for `give`
+        return compose(log.tradeCountered, {
+          player: [playerSeg(state, event.player)],
+          give: formatResourceSegments(event.counter.get, t),
+          get: formatResourceSegments(event.counter.give, t),
+        })
+      }
+      return compose(event.reply === 'accept' ? log.tradeAccepted : log.tradeDeclined, {
+        player: [playerSeg(state, event.player)],
+      })
+    case 'tradeCancelled':
+      return compose(log.tradeCancelled, { player: [playerSeg(state, event.player)] })
     case 'longestRoad':
       if (event.player === null) return [{ kind: 'vp', text: log.longestRoadLost }]
       return [playerSeg(state, event.player), seg(' took '), { kind: 'vp', text: log.longestRoadName }]

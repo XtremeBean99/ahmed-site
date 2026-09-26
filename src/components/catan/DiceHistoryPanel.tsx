@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useT } from '@/lib/i18n/client'
 import type { GameState } from '@/lib/games/catan/types'
-import { diceStats } from './dice-stats'
+import { diceStatsFromRollCounts } from './dice-stats'
 import { fill } from './event-text'
 import { COLORS, Muted, PIXEL_FONT, PixelButton } from './ui'
 
@@ -14,7 +14,7 @@ export function DiceHistoryPanel({ state }: { state: GameState }) {
   const t = useT()
   const d = t.catan.dicePanel
   const [open, setOpen] = useState(false)
-  const stats = diceStats(state.events)
+  const stats = diceStatsFromRollCounts(state.stats.rolls)
   const max = Math.max(1, ...stats.counts.slice(2), ...stats.expected.slice(2).map((n) => Math.ceil(n)))
 
   return (
@@ -30,7 +30,7 @@ export function DiceHistoryPanel({ state }: { state: GameState }) {
       </PixelButton>
       {open ? (
         <div id={PANEL_ID} style={{ marginTop: 6 }}>
-          <Muted>{fill(d.lastRolls, { n: stats.rolls })}</Muted>
+          <Muted>{fill(t.catan.layout.diceRolls, { n: stats.rolls })}</Muted>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4 }}>
             {TOTALS.map((total) => {
               const actual = stats.counts[total]
@@ -39,23 +39,19 @@ export function DiceHistoryPanel({ state }: { state: GameState }) {
               const expectedWidth = expected > 0 ? Math.max(1, Math.round((expected / max) * 90)) : 0
               return (
                 <div key={total} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.muted, width: 16, textAlign: 'right' }}>
-                    {total}
-                  </span>
+                  <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.muted, width: 16, textAlign: 'right' }}>{total}</span>
                   <svg width={96} height={10} shapeRendering="crispEdges" aria-hidden="true" style={{ flexShrink: 0 }}>
                     <rect x={0} y={1} width={actualWidth} height={3} fill={COLORS.accent} />
                     <rect x={0} y={6} width={expectedWidth} height={3} fill={COLORS.muted} />
                   </svg>
-                  <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.text, width: 20, textAlign: 'right' }}>
-                    {actual}
-                  </span>
+                  <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.text, width: 20, textAlign: 'right' }}>{actual}</span>
                 </div>
               )
             })}
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-            <span style={{ ...PIXEL_FONT, fontSize: 9, color: COLORS.accent }}>{d.rolled}</span>
-            <span style={{ ...PIXEL_FONT, fontSize: 9, color: COLORS.muted }}>{d.expected}</span>
+            <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.accent }}>{d.rolled}</span>
+            <span style={{ ...PIXEL_FONT, fontSize: 10, color: COLORS.muted }}>{d.expected}</span>
           </div>
           <table className="sr-only">
             <caption>{d.title}</caption>

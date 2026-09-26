@@ -2,7 +2,7 @@
 
 import type { Resource } from '@/lib/games/catan/types'
 import { ResourceIcon } from './ResourceIcon'
-import { PIXEL_FONT, PixelButton } from './ui'
+import { COLORS, FONT, PIXEL_FONT, PixelButton } from './ui'
 
 export function ResourceStepper({
   resource,
@@ -31,7 +31,7 @@ export function ResourceStepper({
       }}
     >
       <ResourceIcon resource={resource} size={16} />
-      <span style={{ ...PIXEL_FONT, fontSize: 10, color: '#e8d5b0', width: 56 }}>{label}</span>
+      <span style={{ ...PIXEL_FONT, fontSize: FONT.small, color: COLORS.text, width: 56 }}>{label}</span>
       <PixelButton
         aria-label={`Decrease ${label}`}
         disabled={disabled || value <= min}
@@ -40,7 +40,7 @@ export function ResourceStepper({
       >
         -
       </PixelButton>
-      <span style={{ ...PIXEL_FONT, fontSize: 12, color: '#e8d5b0', width: 20, textAlign: 'center' }}>
+      <span style={{ ...PIXEL_FONT, fontSize: FONT.body, color: COLORS.text, width: 20, textAlign: 'center' }}>
         {value}
       </span>
       <PixelButton

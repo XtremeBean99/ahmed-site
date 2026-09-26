@@ -1,11 +1,22 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { en } from '@/lib/i18n/dictionaries/en'
 import { chooseBotAction } from './ai'
 import { RESOURCES } from './constants'
 import { applyAction, humanPlayer, playersToAct, validateAction } from './engine'
 import { emptyResources, totalCards } from './helpers'
 import { loadGame, saveGame } from './save'
-import { applyStepPrepare, createTutorialGame, isStepComplete, TUTORIAL_STEPS } from './tutorial'
+import {
+  applyStepPrepare,
+  clampTutorialProgress,
+  createTutorialGame,
+  isStepComplete,
+  parseTutorialProgress,
+  serializeTutorialProgress,
+  TUTORIAL_STEPS,
+  TUTORIAL_UI_IDS,
+  tutorialSheetFor,
+} from './tutorial'
 import type { Action, GameState, ResourceCounts } from './types'
 
 const store = new Map<string, string>()
@@ -119,7 +130,22 @@ test('createTutorialGame builds a valid, deterministic tutorial state', () => {
     state.ports.map((port) => port.edge),
     [33, 10, 1, 5, 22, 48, 71, 68, 62],
   )
-  assert.equal(state.devDeck[state.devDeck.length - 1], 'knight')
+  assert.deepEqual(
+    state.scriptedRolls,
+    [
+      [5, 3],
+      [6, 5],
+      [2, 3],
+      [1, 6],
+      [5, 1],
+      [2, 2],
+    ],
+  )
+  const deckCounts: Record<string, number> = {}
+  for (const card of state.devDeck) deckCounts[card] = (deckCounts[card] ?? 0) + 1
+  assert.deepEqual(deckCounts, { knight: 14, victoryPoint: 5, roadBuilding: 2, yearOfPlenty: 2, monopoly: 2 })
+  const grouped = [...state.devDeck.filter((c) => c !== 'knight'), ...state.devDeck.filter((c) => c === 'knight')]
+  assert.notDeepEqual(state.devDeck, grouped)
   const first = createTutorialGame()
   const second = createTutorialGame()
   assert.deepEqual(first, second)
@@ -197,7 +223,8 @@ test('the full scripted lesson plays through the real engine', () => {
   assert.deepEqual(firstRolls, [8])
   assert.deepEqual(secondRolls, [7])
   assert.equal(state.players[human].knightsPlayed, 1)
-  assert.equal(state.devDeck[state.devDeck.length - 1], 'knight')
+  const groupedRemaining = [...state.devDeck.filter((c) => c !== 'knight'), ...state.devDeck.filter((c) => c === 'knight')]
+  assert.notDeepEqual(state.devDeck, groupedRemaining)
   assert.ok(totalCards(state.players[human].resources) >= 0)
   for (const resource of RESOURCES) {
     const total = state.bank[resource] + state.players.reduce((sum, player) => sum + player.resources[resource], 0)
@@ -206,12 +233,52 @@ test('the full scripted lesson plays through the real engine', () => {
   assertValidSave(state)
 })
 
-test('every tutorial step has an id, copy and a next or completion rule', () => {
+test('every step has copy in en.ts and highlights only known tutorial ui ids', () => {
   assert.ok(TUTORIAL_STEPS.length >= 14)
   for (const step of TUTORIAL_STEPS) {
     assert.ok(step.id.length > 0)
-    assert.ok(step.title.length > 0)
-    assert.ok(step.body.length > 0)
     assert.ok(step.completeWhen === 'next' || typeof step.completeWhen === 'function')
+    const copy = en.catan.tutorial.steps[step.id]
+    assert.ok(copy, `missing copy for step ${step.id}`)
+    assert.ok(copy.title.length > 0, `step ${step.id} title should not be empty`)
+    assert.ok(copy.body.length > 0, `step ${step.id} body should not be empty`)
+    for (const id of step.highlight.ui ?? []) {
+      assert.ok((TUTORIAL_UI_IDS as readonly string[]).includes(id), `unknown tutorial ui id ${id}`)
+    }
   }
+})
+
+test('tutorial progress round-trips and rejects bad shapes', () => {
+  assert.deepEqual(parseTutorialProgress(serializeTutorialProgress({ step: 4, finished: false })), {
+    step: 4,
+    finished: false,
+  })
+  assert.deepEqual(parseTutorialProgress('{"step":13,"finished":true}'), { step: 13, finished: true })
+  assert.equal(parseTutorialProgress(null), null)
+  assert.equal(parseTutorialProgress(''), null)
+  assert.equal(parseTutorialProgress('not json'), null)
+  assert.equal(parseTutorialProgress('{}'), null)
+  assert.equal(parseTutorialProgress('{"step":-1,"finished":false}'), null)
+  assert.equal(parseTutorialProgress('{"step":99,"finished":false}'), null)
+  assert.equal(parseTutorialProgress('{"step":1.5,"finished":false}'), null)
+  assert.equal(parseTutorialProgress('{"step":2,"finished":"yes"}'), null)
+  assert.deepEqual(clampTutorialProgress(-3, true), { step: 0, finished: false })
+  assert.deepEqual(clampTutorialProgress(99, true), { step: TUTORIAL_STEPS.length - 1, finished: true })
+})
+
+test('tutorialSheetFor maps sheet-bound targets and leaves free targets alone', () => {
+  assert.equal(tutorialSheetFor('build-road'), 'build')
+  assert.equal(tutorialSheetFor('build-settlement'), 'build')
+  assert.equal(tutorialSheetFor('build-city'), 'build')
+  assert.equal(tutorialSheetFor('buy-card'), 'build')
+  assert.equal(tutorialSheetFor('dev-cards'), 'cards')
+  assert.equal(tutorialSheetFor('log'), 'log')
+  assert.equal(tutorialSheetFor('settings'), 'menu')
+  assert.equal(tutorialSheetFor('speed'), 'menu')
+  assert.equal(tutorialSheetFor('legend'), 'menu')
+  assert.equal(tutorialSheetFor('roll'), null)
+  assert.equal(tutorialSheetFor('trade'), null)
+  assert.equal(tutorialSheetFor('play-card'), null)
+  assert.equal(tutorialSheetFor('hand'), null)
+  assert.equal(tutorialSheetFor('board'), null)
 })

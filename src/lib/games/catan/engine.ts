@@ -1,9 +1,9 @@
-import { VP_TO_WIN } from './constants'
 import { devCardHandlers, updateLargestArmy } from './devcards'
 import { pushEvent, victoryPoints } from './helpers'
 import { updateLongestRoad } from './longest-road'
 import { robberHandlers } from './robber'
 import { setupHandlers } from './setup'
+import { tradeHandlers } from './trade'
 import { turnHandlers } from './turn'
 import type { Action, ActionType, GameState, Handler, HandlerMap, PlayerId } from './types'
 
@@ -14,6 +14,7 @@ const HANDLERS: HandlerMap<ActionType> = {
   ...turnHandlers,
   ...robberHandlers,
   ...devCardHandlers,
+  ...tradeHandlers,
 }
 
 function handlerFor(action: Action): Handler<ActionType> | undefined {
@@ -34,7 +35,10 @@ export function validateAction(state: GameState, action: Action): string | null 
 export function applyAction(state: GameState, action: Action): GameState {
   const reason = validateAction(state, action)
   if (reason !== null) throw new Error(reason)
-  const next = structuredClone(state)
+  // Events are append-only after pushEvent creates them, so sharing them is safe.
+  const { events, ...rest } = state
+  const next = structuredClone(rest) as GameState
+  next.events = events.slice()
   handlerFor(action)!.apply(next, action)
   updateLongestRoad(next)
   updateLargestArmy(next)
@@ -42,22 +46,42 @@ export function applyAction(state: GameState, action: Action): GameState {
   return next
 }
 
+/** Actions safe to undo with a simple state snapshot (no hidden information revealed or consumed). */
+export function isUndoable(action: Action): boolean {
+  switch (action.type) {
+    case 'buildRoad':
+    case 'buildSettlement':
+    case 'buildCity':
+    case 'maritimeTrade':
+    case 'playRoadBuilding':
+    case 'playYearOfPlenty':
+      return true
+    default:
+      return false
+  }
+}
+
 /** Only the player whose turn it is can win, so a player pushed to 10 elsewhere wins when their turn starts. */
 function checkVictory(state: GameState): void {
   if (state.phase.kind === 'setup' || state.phase.kind === 'gameOver') return
-  if (victoryPoints(state, state.current) >= VP_TO_WIN) {
+  if (victoryPoints(state, state.current) >= state.settings.vpToWin) {
     state.phase = { kind: 'gameOver', winner: state.current }
     pushEvent(state, { type: 'gameOver', winner: state.current })
   }
 }
 
-/** Players who must act before the game can continue (several at once only while discarding). */
+/** Players who must act before the game can continue (several at once while discarding or answering a trade offer). */
 export function playersToAct(state: GameState): PlayerId[] {
   switch (state.phase.kind) {
     case 'gameOver':
       return []
     case 'discard':
       return state.phase.discards.flatMap((n, p) => (n > 0 ? [p] : []))
+    case 'trade': {
+      const { offer } = state.phase
+      const pending = offer.to.filter((p) => offer.replies[p] === 'pending')
+      return pending.length > 0 ? pending : [offer.from]
+    }
     default:
       return [state.current]
   }

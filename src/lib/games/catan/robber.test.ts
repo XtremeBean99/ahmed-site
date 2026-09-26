@@ -1,5 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { HEXES } from './geometry'
+import { legalRobberHexes, robberVictims } from './helpers'
 import { makeTestState, give, putSettlement, res, resourceTotals } from './test-fixtures'
 import { robberHandlers, startSevenResolution } from './robber'
 import type { ActionOf, Resource } from './types'
@@ -65,7 +67,7 @@ test('discard only works in the discard phase', () => {
 
 test('moveRobber requires a different valid hex, and the desert is allowed', () => {
   const state = makeTestState({ phase: { kind: 'moveRobber', returnTo: 'main' } })
-  assert.equal(robberHandlers.moveRobber.validate(state, { type: 'moveRobber', hex: state.robber }), 'Must move the robber to a different hex')
+  assert.equal(robberHandlers.moveRobber.validate(state, { type: 'moveRobber', hex: state.robber }), 'The robber cannot move there')
   assert.equal(robberHandlers.moveRobber.validate(state, { type: 'moveRobber', hex: 19 }), 'Invalid hex')
   assert.equal(robberHandlers.moveRobber.validate(state, { type: 'moveRobber', hex: 1.5 }), 'Invalid hex')
 
@@ -180,4 +182,52 @@ test('robber validate never mutates state', () => {
   robberHandlers.steal.validate(state, { type: 'steal', victim: 0 })
 
   assert.deepEqual(state, before)
+})
+
+test('friendly robber falls back to every non-robber hex when no free hex exists', () => {
+  const state = makeTestState({ phase: { kind: 'moveRobber', returnTo: 'main' }, current: 0 })
+  state.settings.friendlyRobber = true
+  // Six protected settlements (two per opponent) cover every non-robber hex.
+  const cover = [8, 14, 22, 31, 39, 45]
+  const owners = [1, 1, 2, 2, 3, 3]
+  cover.forEach((vertex, i) => {
+    state.buildings[vertex] = { owner: owners[i], kind: 'settlement' }
+  })
+
+  const legal = legalRobberHexes(state)
+  assert.deepEqual(legal, HEXES.filter((hex) => hex.id !== state.robber).map((hex) => hex.id))
+  assert.equal(legal.length, 18)
+})
+
+test('friendly robber keeps the single free hex and rejects the others', () => {
+  const state = makeTestState({ phase: { kind: 'moveRobber', returnTo: 'main' }, current: 0 })
+  state.settings.friendlyRobber = true
+  // Six protected settlements cover every non-robber hex except hex 4.
+  const cover = [4, 14, 22, 31, 39, 45]
+  const owners = [1, 1, 2, 2, 3, 3]
+  cover.forEach((vertex, i) => {
+    state.buildings[vertex] = { owner: owners[i], kind: 'settlement' }
+  })
+
+  assert.deepEqual(legalRobberHexes(state), [4])
+  assert.equal(robberHandlers.moveRobber.validate(state, { type: 'moveRobber', hex: 4 }), null)
+  assert.equal(
+    robberHandlers.moveRobber.validate(state, { type: 'moveRobber', hex: 0 }),
+    'The robber cannot move there',
+  )
+})
+
+test('friendly robber only robs the unprotected opponent on a shared hex', () => {
+  const state = makeTestState({ phase: { kind: 'moveRobber', returnTo: 'main' }, current: 0 })
+  state.settings.friendlyRobber = true
+  const hex = HEXES[0]
+  const protectedOpponent = 1
+  const leader = 2
+  state.buildings[hex.vertices[0]] = { owner: protectedOpponent, kind: 'settlement' }
+  state.buildings[hex.vertices[1]] = { owner: leader, kind: 'settlement' }
+  for (const vertex of [30, 33]) state.buildings[vertex] = { owner: leader, kind: 'settlement' }
+  give(state, protectedOpponent, res({ brick: 1 }))
+  give(state, leader, res({ wool: 1 }))
+
+  assert.deepEqual(robberVictims(state, hex.id, 0), [leader])
 })

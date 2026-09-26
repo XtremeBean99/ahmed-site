@@ -1,8 +1,22 @@
-import type { DevCardType, PlayerColor, PortType, Resource, ResourceCounts, Terrain } from './types'
+import type { DevCardType, GameSettings, PlayerColor, PortType, Resource, ResourceCounts, Terrain } from './types'
 
 export const RESOURCES: readonly Resource[] = ['brick', 'lumber', 'wool', 'grain', 'ore']
 
+/** Default target; the game reads state.settings.vpToWin. */
 export const VP_TO_WIN = 10
+export const MIN_VP_TO_WIN = 8
+export const MAX_VP_TO_WIN = 13
+/** Public VP at or below which the friendly robber protects a player. */
+export const FRIENDLY_ROBBER_MAX_VP = 2
+/** Trade proposals the current player may make in one turn. */
+export const MAX_OFFERS_PER_TURN = 5
+
+export const DEFAULT_SETTINGS: GameSettings = {
+  vpToWin: VP_TO_WIN,
+  friendlyRobber: false,
+  board: 'balanced',
+  botTrades: true,
+}
 export const MIN_LONGEST_ROAD = 5
 export const MIN_LARGEST_ARMY = 3
 export const DISCARD_THRESHOLD = 7

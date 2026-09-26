@@ -71,7 +71,7 @@ function tileMaskBuffer() {
 }
 
 function placedOn(name: SpriteName): string {
-  if (name === 'sea') return 'board origin (0,0)'
+  if (name === 'sea') return 'CSS sea tile from board origin, tiled (not composited)'
   if (name.startsWith('tile-')) return 'hex centre'
   if (name.startsWith('token-')) return 'hex centre'
   if (name === 'robber') return 'hex centre'
@@ -125,12 +125,25 @@ All files are PNG RGBA at 1x; one image pixel equals one logical board pixel. Al
 - Sea border: 44 px on all sides of the island vertex span
 - Tile mask: ${TILE_MASK_WIDTH} x ${TILE_MASK_HEIGHT}, anchor (${TILE_ANCHOR_X}, ${TILE_ANCHOR_Y})
 
+## Sea and shoreline
+
+The canvases are transparent outside the island. The sea is not composited into the board; the viewport fills with \`sea.png\` as a CSS background tiled from the board origin at the camera scale. A procedural shoreline is drawn on the static layer around the island's outer edge: 1 px #1a1410 just outside the land, then 1 px #cfe3ea foam outside that.
+
 ## Files
 
 | File | Size | Anchor | Placed on | Recolor |
 |---|---|---|---|---|
 ${rows}
 | ${TILE_MASK_FILE} | ${TILE_MASK_WIDTH} x ${TILE_MASK_HEIGHT} | (${TILE_ANCHOR_X}, ${TILE_ANCHOR_Y}) | guide only, not rendered | no |
+
+## Changed in v3
+
+- sea.png: 279 x 265 full-canvas sprite became a 32 x 32 seamless tile, anchor (0, 0), used only as a tiled CSS background.
+- token-*.png: 11 x 11 became 13 x 13, anchor (5, 5) became (6, 6).
+- settlement.png: 9 x 9 became 11 x 11, anchor (4, 4) became (5, 5).
+- city.png: 13 x 11 became 15 x 13, anchor (6, 5) became (7, 6).
+- robber.png: 7 x 10 became 9 x 13, anchor (3, 4) became (4, 6).
+- Harbour plates moved 6 px closer to the coast (label offset 28 to 22); roads, piers and harbour plate sizes are unchanged.
 
 ## Player-colour key
 

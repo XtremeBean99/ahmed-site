@@ -67,7 +67,9 @@ const PIER: RGB = [128, 90, 54]
 const PIER_DARK: RGB = [84, 58, 34]
 const SEA_BASE: RGB = [47, 93, 124]
 const SEA_DARK: RGB = [36, 74, 99]
+const SEA_LIGHT: RGB = [62, 118, 152]
 const COAST: RGB = [26, 20, 16]
+const FOAM: RGB = [207, 227, 234]
 
 /** Player-colour key: base, highlight and shade are replaced at composition time. */
 const RECOLOR_BASE: RGB = [255, 0, 255]
@@ -91,6 +93,22 @@ const TERRAIN_DARK: Record<Terrain, RGB> = {
   ore: [90, 93, 104],
   desert: [184, 156, 98],
 }
+
+const LUMBER_DEEP: RGB = [30, 62, 34]
+const LUMBER_LIGHT: RGB = [96, 146, 76]
+const TRUNK: RGB = [92, 60, 36]
+const GRASS_TUFT: RGB = [178, 214, 120]
+const SHEEP_CREAM: RGB = [238, 227, 207]
+const SHEEP_HEAD: RGB = [58, 58, 66]
+const GRAIN_FURROW: RGB = [176, 138, 46]
+const GRAIN_HEADS: RGB = [240, 210, 122]
+const BRICK_STRATA: RGB = [120, 54, 34]
+const ORE_LIGHT: RGB = [168, 171, 184]
+const ORE_SHADOW: RGB = [90, 93, 104]
+const SNOW: RGB = [232, 236, 242]
+const DUNE_CREST: RGB = [242, 224, 176]
+const DUNE_TROUGH: RGB = [184, 156, 98]
+const CACTUS: RGB = [56, 96, 52]
 
 const TERRAIN_SEED: Record<Terrain, number> = {
   lumber: 1,
@@ -136,48 +154,138 @@ function setPixel(buffer: PixelBuffer, x: number, y: number, color: RGB, alpha =
 
 // --- Small deterministic textures -------------------------------------------------
 
+/** Seamless 32 px sea tile: waves are periodic in both axes, so edges wrap. */
 function seaColor(x: number, y: number): RGB {
-  return hash3(x, y, 99) % 11 === 0 ? SEA_DARK : SEA_BASE
+  const mx = ((x % 32) + 32) % 32
+  const my = ((y % 32) + 32) % 32
+  const h = hash3(mx, my, 99)
+  if (h % 17 === 0) return SEA_DARK
+  if (h % 23 === 0) return SEA_LIGHT
+  if ((mx + my * 3) % 16 === 0) return SEA_DARK
+  return SEA_BASE
 }
 
-function terrainColor(terrain: Terrain, x: number, y: number): RGB {
-  const h = hash3(x, y, TERRAIN_SEED[terrain])
+/** The 15x15 box centred on the hex centre stays calm: the number token sits there. */
+function inTokenBox(dx: number, dy: number): boolean {
+  return Math.abs(dx) <= 7 && Math.abs(dy) <= 7
+}
+
+const PINE_ROWS = ['..G..', '.GLG.', '.GLG.', 'GLLLG', 'GLLLG', '.GGG.', '..T..']
+const PINE_COLORS: Record<string, RGB> = { G: LUMBER_DEEP, L: LUMBER_LIGHT, T: TRUNK }
+const PINE_CENTERS = [
+  { x: -11, y: -12 },
+  { x: 11, y: -12 },
+  { x: -11, y: 12 },
+  { x: 11, y: 12 },
+]
+
+function pineColor(dx: number, dy: number): RGB | null {
+  for (const center of PINE_CENTERS) {
+    const px = dx - (center.x - 2)
+    const py = dy - (center.y - 3)
+    if (px < 0 || py < 0 || px >= 5 || py >= PINE_ROWS.length) continue
+    const ch = PINE_ROWS[py][px]
+    if (ch !== '.') return PINE_COLORS[ch]
+  }
+  return null
+}
+
+const SHEEP_CENTERS = [
+  { x: 0, y: -12 },
+  { x: 0, y: 12 },
+]
+
+function sheepColor(dx: number, dy: number): RGB | null {
+  for (const center of SHEEP_CENTERS) {
+    const px = dx - center.x
+    const py = dy - center.y
+    if ((px === -3 || px === -2) && (py === -1 || py === 0)) return SHEEP_HEAD
+    if ((px === -1 || px === 1) && py === 2) return SHEEP_HEAD
+    if (Math.abs(px) <= 2 && Math.abs(py) <= 1) return SHEEP_CREAM
+  }
+  return null
+}
+
+function brickStackColor(dx: number, dy: number): RGB | null {
+  const px = dx
+  const py = dy + 14
+  if (Math.abs(px) <= 3 && py >= -2 && py <= 2) {
+    if (py === -2 || py === 2) return OUTLINE
+    return ((px + py) & 1) === 0 ? TERRAIN_BASE.brick : TERRAIN_DARK.brick
+  }
+  return null
+}
+
+function orePeakColor(dx: number, dy: number, apexX: number, apexY: number, baseY: number, halfWidth: number): RGB | null {
+  if (dy < apexY || dy > baseY) return null
+  const half = Math.max(0, Math.round(((dy - apexY) / (baseY - apexY)) * halfWidth))
+  if (Math.abs(dx - apexX) > half) return null
+  return dx <= apexX ? ORE_LIGHT : ORE_SHADOW
+}
+
+function oreMountainColor(dx: number, dy: number): RGB | null {
+  const left = orePeakColor(dx, dy, -6, -16, -9, 5)
+  if (left) return left
+  const right = orePeakColor(dx, dy, 6, -18, -9, 6)
+  if (right) return right
+  if ((dy === -18 || dy === -17) && Math.abs(dx - 6) <= 1) return SNOW
+  return null
+}
+
+function cactusColor(dx: number, dy: number): RGB | null {
+  const px = dx - 10
+  const py = dy - 13
+  if (px === 0 && py >= -2 && py <= 2) return CACTUS
+  if (px === -1 && py === 0) return CACTUS
+  if (px === 1 && py === -1) return CACTUS
+  return null
+}
+
+function terrainColor(terrain: Terrain, dx: number, dy: number): RGB {
+  if (inTokenBox(dx, dy)) return TERRAIN_BASE[terrain]
+  const h = hash3(dx, dy, TERRAIN_SEED[terrain])
   switch (terrain) {
     case 'lumber': {
-      // Scattered 2x3 dark tree marks on a 6x7 anchor grid.
-      const cellX = Math.floor(x / 6)
-      const cellY = Math.floor(y / 7)
-      const lx = x - cellX * 6
-      const ly = y - cellY * 7
-      if (hash3(cellX, cellY, 71) % 3 === 0 && lx < 2 && ly < 3) return TERRAIN_DARK.lumber
+      const pine = pineColor(dx, dy)
+      if (pine) return pine
+      if (h % 5 === 0) return LUMBER_DEEP
       return TERRAIN_BASE.lumber
     }
     case 'wool': {
-      if (h % 13 === 0) return TERRAIN_DARK.wool
-      if (h % 29 === 0) return mix(TERRAIN_BASE.wool, [232, 213, 176], 0.5)
+      const sheep = sheepColor(dx, dy)
+      if (sheep) return sheep
+      if (h % 7 === 0) return GRASS_TUFT
       return TERRAIN_BASE.wool
     }
     case 'grain': {
-      if ((x + y) % 8 < 2 || h % 17 === 0) return TERRAIN_DARK.grain
+      const band = (((dx * 2 + dy) % 14) + 14) % 14
+      if (band < 2) return GRAIN_FURROW
+      if (band >= 5 && band < 7) return GRAIN_HEADS
       return TERRAIN_BASE.grain
     }
     case 'brick': {
-      const course = Math.floor(y / 4)
-      const row = y - course * 4
+      const stack = brickStackColor(dx, dy)
+      if (stack) return stack
+      const course = Math.floor(dy / 4)
+      const row = dy - course * 4
       const offset = (course % 2) * 4
-      if (row === 0) return TERRAIN_DARK.brick
-      if (((x - offset) % 8 + 8) % 8 === 0) return TERRAIN_DARK.brick
-      if (h % 19 === 0) return TERRAIN_DARK.brick
+      if (row === 0) return BRICK_STRATA
+      if ((((dx - offset) % 8) + 8) % 8 === 0) return TERRAIN_DARK.brick
       return TERRAIN_BASE.brick
     }
     case 'ore': {
-      if (h % 7 === 0 || (x + 2 * y) % 11 === 0) return TERRAIN_DARK.ore
-      if (h % 23 === 0) return mix(TERRAIN_BASE.ore, [168, 171, 184], 0.4)
+      const mountain = oreMountainColor(dx, dy)
+      if (mountain) return mountain
+      if (h % 7 === 0 || (dx + 2 * dy) % 11 === 0) return ORE_SHADOW
+      if (h % 23 === 0) return ORE_LIGHT
       return TERRAIN_BASE.ore
     }
     case 'desert': {
-      if (h % 7 === 0) return TERRAIN_DARK.desert
-      if (h % 17 === 0) return mix(TERRAIN_BASE.desert, [242, 224, 176], 0.5)
+      const cactus = cactusColor(dx, dy)
+      if (cactus) return cactus
+      const band = (((dx * 2 + dy) % 16) + 16) % 16
+      if (band < 2) return DUNE_CREST
+      if (band >= 5 && band < 7) return DUNE_TROUGH
       return TERRAIN_BASE.desert
     }
   }
@@ -280,46 +388,53 @@ function drawText(buffer: PixelBuffer, x: number, y: number, text: string, color
 
 // --- Sprites -----------------------------------------------------------------------
 
-export const SETTLEMENT_SIZE = { w: 9, h: 9 } as const
-export const CITY_SIZE = { w: 13, h: 11 } as const
+export const SETTLEMENT_SIZE = { w: 11, h: 11 } as const
+export const CITY_SIZE = { w: 15, h: 13 } as const
 
 const SETTLEMENT_SPRITE = [
-  '..OOOOO..',
-  '.OHHHHHO.',
-  'OHPPPPPHO',
-  'OHPPWPPHO',
-  'OPPPPPPPO',
-  'OPPWPWPPO',
-  'OPPWPWPPO',
-  'OPPPPPPPO',
-  '.OOOOOOO.',
+  '.....O.....',
+  '....OHO....',
+  '...OHHHO...',
+  '..ORRRRRO..',
+  '..OPPPPPO..',
+  '..OPWWPPO..',
+  '..OPPWPPO..',
+  '..OPPPPPO..',
+  '..OPWPPPO..',
+  '..OPPPPPO..',
+  '..OOOOOOO..',
 ]
 
 const CITY_SPRITE = [
-  '....OOOOO....',
-  '...OHHHHHO...',
-  '..OHPPPPPHO..',
-  '..OPPPPPPPO..',
-  '.OPWWPPPWWPO.',
-  '.OPPPPPPPPPO.',
-  '.OPWWPPPWWPO.',
-  '.OPPPPPPPPPO.',
-  '.OPWWPPPWWPO.',
-  '.OPPPPPPPPPO.',
-  '..OOOOOOOOO..',
+  '.....OOO......',
+  '....OHHHO.....',
+  '....ORRRO.....',
+  '...ORRRRO......',
+  '...OPPPPO......',
+  '...OPWPPO......',
+  '...OPPPPO......',
+  '..OPPPPPPPO.....',
+  '..OPPPPPPPO.....',
+  '..OPWWPPWPO.....',
+  '..OPPPPPPPO.....',
+  '..OPWWPPWPO.....',
+  '..OOOOOOOOO.....',
 ]
 
 const ROBBER_SPRITE = [
-  '..OOO..',
-  '.OGGGO.',
-  'OGGGGGO',
-  'OGHGGGO',
-  'OGGGGGO',
-  'OGGEGGO',
-  'OGGEGGO',
-  '.OGGGO.',
-  '.OGGGO.',
-  '.OOOOO.',
+  '....O....',
+  '...OGO...',
+  '..OGGGO..',
+  '..OGGGO..',
+  '.OGGGGGO.',
+  '.OGGGGGO.',
+  '.OHGGGGO.',
+  '.OGGGGGO.',
+  '.OGGGGGO.',
+  '.OGGEGGO.',
+  '.OGGEGGO.',
+  '..OGGGO..',
+  '..OOOOO..',
 ]
 
 const RECOLOR_PALETTE: Record<string, RGB> = {
@@ -498,24 +613,31 @@ function drawPierShape(buffer: PixelBuffer, edge: number): void {
   drawLine(buffer, p1, p2, PIER, 0)
 }
 
+/** Pixel rect of a pier sprite in logical board coordinates. */
+export function pierSpriteRect(edge: number): Rect {
+  const target = pierGeometry(edge).target
+  const meta = SPRITES[`pier-${edgeOrientation(edge)}`]
+  return { x: target.x - meta.anchorX, y: target.y - meta.anchorY, width: meta.width, height: meta.height }
+}
+
 function drawNumberTokenAt(buffer: PixelBuffer, center: { x: number; y: number }, number: number): void {
-  const x0 = center.x - 5
-  const y0 = center.y - 5
-  for (let y = 0; y < 11; y++) {
-    for (let x = 0; x < 11; x++) {
-      const dist = Math.hypot(x - 5, y - 5)
+  const x0 = center.x - 6
+  const y0 = center.y - 6
+  for (let y = 0; y < 13; y++) {
+    for (let x = 0; x < 13; x++) {
+      const dist = Math.hypot(x - 6, y - 6)
       if (dist <= 5) setPixel(buffer, x0 + x, y0 + y, TOKEN_CREAM)
       else if (dist <= 6) setPixel(buffer, x0 + x, y0 + y, INK)
     }
   }
   const text = String(number)
   const color = number === 6 || number === 8 ? TOKEN_RED : INK
-  drawText(buffer, center.x - Math.floor(textWidth(text) / 2), center.y - 3, text, color)
+  drawText(buffer, center.x - Math.floor(textWidth(text) / 2), center.y - 2, text, color)
   const dots = pips(number)
   if (dots > 0) {
     const rowW = dots * 2 - 1
     const startX = center.x - Math.floor(rowW / 2)
-    for (let i = 0; i < dots; i++) setPixel(buffer, startX + i * 2, center.y + 3, INK)
+    for (let i = 0; i < dots; i++) setPixel(buffer, startX + i * 2, center.y + 4, INK)
   }
 }
 
@@ -523,7 +645,9 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }
 
-const HARBOR_LABEL_OFFSET = 28
+/** Plates start this far out along the edge normal and move out further only to clear pieces. */
+const HARBOR_LABEL_OFFSET = 22
+const HARBOR_LABEL_MAX_OFFSET = 32
 const HARBOR_LABEL_HEIGHT = 11
 
 export interface Rect {
@@ -533,7 +657,25 @@ export interface Rect {
   height: number
 }
 
-/** Pixel rect of a harbour label plate, placed seaward along the edge normal. */
+function rectsOverlap(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
+}
+
+/** The largest piece (a city) standing on each of the edge's two corners, with a 1 px gap. */
+function portPieceRects(edge: number): Rect[] {
+  const city = SPRITES.city
+  return edgeEndpoints(edge).map((p) => ({
+    x: p.x - city.anchorX - 1,
+    y: p.y - city.anchorY - 1,
+    width: city.width + 2,
+    height: city.height + 2,
+  }))
+}
+
+/**
+ * Pixel rect of a harbour label plate, placed seaward along the edge normal: as close to the coast
+ * as it can be without touching a city on either of the harbour's corners.
+ */
 export function harborPlateRect(edge: number, type: PortType): Rect {
   const [a, b] = edgeEndpoints(edge)
   const mx = (a.x + b.x) / 2
@@ -556,9 +698,15 @@ export function harborPlateRect(edge: number, type: PortType): Rect {
   const swatchW = isAny ? 0 : 5
   const gap = isAny ? 0 : 2
   const width = 2 + textWidth(text) + gap + swatchW + 2
-  const x = clamp(Math.round(mx + dx * HARBOR_LABEL_OFFSET - width / 2), 1, BOARD_WIDTH - width - 1)
-  const y = clamp(Math.round(my + dy * HARBOR_LABEL_OFFSET - HARBOR_LABEL_HEIGHT / 2), 1, BOARD_HEIGHT - HARBOR_LABEL_HEIGHT - 1)
-  return { x, y, width, height: HARBOR_LABEL_HEIGHT }
+  const pieces = portPieceRects(edge)
+  let rect: Rect = { x: 0, y: 0, width, height: HARBOR_LABEL_HEIGHT }
+  for (let offset = HARBOR_LABEL_OFFSET; offset <= HARBOR_LABEL_MAX_OFFSET; offset++) {
+    const x = clamp(Math.round(mx + dx * offset - width / 2), 1, BOARD_WIDTH - width - 1)
+    const y = clamp(Math.round(my + dy * offset - HARBOR_LABEL_HEIGHT / 2), 1, BOARD_HEIGHT - HARBOR_LABEL_HEIGHT - 1)
+    rect = { x, y, width, height: HARBOR_LABEL_HEIGHT }
+    if (!pieces.some((piece) => rectsOverlap(rect, piece))) break
+  }
+  return rect
 }
 
 function drawHarborPlateShape(buffer: PixelBuffer, plate: Rect, type: PortType): void {
@@ -647,18 +795,7 @@ export function renderProceduralSprite(name: SpriteName): PixelBuffer {
 
   if (name === 'sea') {
     for (let y = 0; y < buffer.height; y++) {
-      for (let x = 0; x < buffer.width; x++) {
-        const hex = hexAtPixel(x, y)
-        let color = seaColor(x, y)
-        if (hex === null) {
-          const right = x + 1 < buffer.width ? hexAtPixel(x + 1, y) : null
-          const left = x > 0 ? hexAtPixel(x - 1, y) : null
-          const down = y + 1 < buffer.height ? hexAtPixel(x, y + 1) : null
-          const up = y > 0 ? hexAtPixel(x, y - 1) : null
-          if (right !== null || left !== null || down !== null || up !== null) color = COAST
-        }
-        setPixel(buffer, x, y, color)
-      }
+      for (let x = 0; x < buffer.width; x++) setPixel(buffer, x, y, seaColor(x, y))
     }
     proceduralCache.set(name, buffer)
     return buffer
@@ -725,10 +862,46 @@ export function renderProceduralSprite(name: SpriteName): PixelBuffer {
   throw new Error(`unknown sprite ${name}`)
 }
 
-// --- Public drawing functions --------------------------------------------------------
+// --- Layers --------------------------------------------------------------------------
 
-export function drawBoard(buffer: PixelBuffer, state: GameState, sprites?: SpriteSet): void {
-  compositeSprite(buffer, getSprite('sea', sprites), SPRITES.sea, { x: 0, y: 0 })
+/** Pixel mask of the island (1 = land), precomputed once. */
+const ISLAND_MASK = new Uint8Array(BOARD_WIDTH * BOARD_HEIGHT)
+for (let y = 0; y < BOARD_HEIGHT; y++) {
+  for (let x = 0; x < BOARD_WIDTH; x++) {
+    if (hexAtPixel(x, y) !== null) ISLAND_MASK[y * BOARD_WIDTH + x] = 1
+  }
+}
+
+/**
+ * Procedural shoreline around the island's outer edge: 1 px dark just outside
+ * the land, then 1 px of foam outside that. It is an effect, not a sprite.
+ */
+function drawShoreline(buffer: PixelBuffer): void {
+  const dark = new Uint8Array(BOARD_WIDTH * BOARD_HEIGHT)
+  const landAt = (x: number, y: number) => x >= 0 && y >= 0 && x < BOARD_WIDTH && y < BOARD_HEIGHT && ISLAND_MASK[y * BOARD_WIDTH + x] === 1
+  for (let y = 0; y < BOARD_HEIGHT; y++) {
+    for (let x = 0; x < BOARD_WIDTH; x++) {
+      const i = y * BOARD_WIDTH + x
+      if (ISLAND_MASK[i] === 1) continue
+      if (landAt(x - 1, y) || landAt(x + 1, y) || landAt(x, y - 1) || landAt(x, y + 1)) {
+        dark[i] = 1
+        setPixel(buffer, x, y, COAST)
+      }
+    }
+  }
+  for (let y = 0; y < BOARD_HEIGHT; y++) {
+    for (let x = 0; x < BOARD_WIDTH; x++) {
+      const i = y * BOARD_WIDTH + x
+      if (ISLAND_MASK[i] === 1 || dark[i] === 1) continue
+      const darkAt = (dx: number, dy: number) => dx >= 0 && dy >= 0 && dx < BOARD_WIDTH && dy < BOARD_HEIGHT && dark[dy * BOARD_WIDTH + dx] === 1
+      if (darkAt(x - 1, y) || darkAt(x + 1, y) || darkAt(x, y - 1) || darkAt(x, y + 1)) setPixel(buffer, x, y, FOAM)
+    }
+  }
+}
+
+/** Static layer: shoreline, tiles, number tokens, harbour plates and piers. */
+export function drawStaticLayer(buffer: PixelBuffer, state: GameState, sprites?: SpriteSet): void {
+  drawShoreline(buffer)
 
   for (let h = 0; h < HEXES.length; h++) {
     const name = TILE_SPRITES[state.tiles[h].terrain]
@@ -753,10 +926,23 @@ export function drawBoard(buffer: PixelBuffer, state: GameState, sprites?: Sprit
     const name = `pier-${edgeOrientation(port.edge)}` as SpriteName
     compositeSprite(buffer, getSprite(name, sprites), SPRITES[name], pierGeometry(port.edge).target)
   }
+}
+
+export interface PieceOverrides {
+  /** Where to draw the robber (undefined = state.robber, null = hidden). */
+  robberHex?: number | null
+  /** Pieces not drawn yet, so a placement animation can pop them in. */
+  hiddenPieces?: { vertices: number[]; edges: number[] }
+}
+
+/** Pieces layer: roads, buildings and the robber. */
+export function drawPiecesLayer(buffer: PixelBuffer, state: GameState, opts: PieceOverrides = {}, sprites?: SpriteSet): void {
+  const hiddenVertices = new Set(opts.hiddenPieces?.vertices ?? [])
+  const hiddenEdges = new Set(opts.hiddenPieces?.edges ?? [])
 
   for (let e = 0; e < state.roads.length; e++) {
     const owner = state.roads[e]
-    if (owner === null) continue
+    if (owner === null || hiddenEdges.has(e)) continue
     const name = `road-${edgeOrientation(e)}` as SpriteName
     const color = PLAYER_COLORS[state.players[owner].color]
     compositeSprite(buffer, getSprite(name, sprites), SPRITES[name], edgePoint(e), color)
@@ -764,17 +950,98 @@ export function drawBoard(buffer: PixelBuffer, state: GameState, sprites?: Sprit
 
   for (let v = 0; v < state.buildings.length; v++) {
     const building = state.buildings[v]
-    if (building === null) continue
+    if (building === null || hiddenVertices.has(v)) continue
     const name = building.kind === 'city' ? 'city' : 'settlement'
     const color = PLAYER_COLORS[state.players[building.owner].color]
     compositeSprite(buffer, getSprite(name, sprites), SPRITES[name], vertexPoint(v), color)
   }
 
-  compositeSprite(buffer, getSprite('robber', sprites), SPRITES.robber, hexCenter(state.robber))
+  const robberHex = opts.robberHex === undefined ? state.robber : opts.robberHex
+  if (robberHex !== null) {
+    compositeSprite(buffer, getSprite('robber', sprites), SPRITES.robber, hexCenter(robberHex))
+  }
+}
+
+/** Whole-board composition (static + pieces), kept for the composing tests. */
+export function drawBoard(buffer: PixelBuffer, state: GameState, sprites?: SpriteSet): void {
+  drawStaticLayer(buffer, state, sprites)
+  drawPiecesLayer(buffer, state, {}, sprites)
+}
+
+/** Key for the static layer; it only changes with tiles, ports or loaded sprites. */
+export function staticLayerKey(state: GameState, sprites: SpriteSet): string {
+  return JSON.stringify({
+    tiles: state.tiles,
+    ports: state.ports,
+    sprites: Object.keys(sprites).sort(),
+  })
+}
+
+/** Key for the pieces layer; it only changes with pieces or piece overrides. */
+export function piecesLayerKey(state: GameState, opts: PieceOverrides = {}): string {
+  return JSON.stringify({
+    buildings: state.buildings,
+    roads: state.roads,
+    robberHex: opts.robberHex === undefined ? state.robber : opts.robberHex,
+    hidden: opts.hiddenPieces ?? null,
+    colors: state.players.map((player) => player.color),
+  })
+}
+
+export interface TouchSelection {
+  kind: 'vertex' | 'edge' | 'hex'
+  id: number
+}
+
+function drawTouchSelectionShape(buffer: PixelBuffer, selection: TouchSelection): void {
+  const color: RGB = [240, 224, 184]
+  if (selection.kind === 'vertex') {
+    drawSquareOutline(buffer, vertexPoint(selection.id), 9, color)
+  } else if (selection.kind === 'edge') {
+    const [a, b] = edgeEndpoints(selection.id)
+    drawLine(buffer, a, b, color, 0)
+  } else {
+    const vertices = HEXES[selection.id].vertices
+    for (let i = 0; i < 6; i++) {
+      drawLine(buffer, vertexPoint(vertices[i]), vertexPoint(vertices[(i + 1) % 6]), color, 0)
+    }
+  }
+}
+
+export interface OverlayOpts {
+  targets: TargetShapes
+  ghost: GhostPiece | null
+  highlightHexes: number[]
+  highlightBright: boolean
+  lastPlaced: { kind: 'vertex' | 'edge'; id: number } | null
+  touchSelection: TouchSelection | null
+}
+
+const AMBER_DIM: RGB = [148, 104, 38]
+
+/** Overlay layer: targets, highlight pulses, ghost, last-placed blink, touch selection. */
+export function drawOverlayLayer(buffer: PixelBuffer, opts: OverlayOpts, sprites?: SpriteSet): void {
+  drawTargets(buffer, opts.targets)
+  for (const hex of opts.highlightHexes) {
+    const color = opts.highlightBright ? AMBER : AMBER_DIM
+    const vertices = HEXES[hex].vertices
+    for (let i = 0; i < 6; i++) {
+      drawLine(buffer, vertexPoint(vertices[i]), vertexPoint(vertices[(i + 1) % 6]), color, 2)
+    }
+  }
+  if (opts.ghost) drawGhost(buffer, opts.ghost, sprites)
+  if (opts.lastPlaced) drawLastPlaced(buffer, opts.lastPlaced)
+  if (opts.touchSelection) drawTouchSelectionShape(buffer, opts.touchSelection)
+}
+
+/** A solid 5x5 amber square with a dark rim: readable at every scale, including phones. */
+function drawTargetDot(buffer: PixelBuffer, center: { x: number; y: number }): void {
+  drawRectFill(buffer, center.x - 3, center.y - 3, 7, 7, OUTLINE)
+  drawRectFill(buffer, center.x - 2, center.y - 2, 5, 5, AMBER)
 }
 
 export function drawTargets(buffer: PixelBuffer, targets: TargetShapes): void {
-  for (const vertex of targets.vertices) drawSquareOutline(buffer, vertexPoint(vertex), 5, AMBER)
+  for (const vertex of targets.vertices) drawTargetDot(buffer, vertexPoint(vertex))
   for (const edge of targets.edges) {
     const [a, b] = edgeEndpoints(edge)
     const dx = b.x - a.x
@@ -786,6 +1053,7 @@ export function drawTargets(buffer: PixelBuffer, targets: TargetShapes): void {
     const p1 = { x: Math.round(a.x + ux * 4), y: Math.round(a.y + uy * 4) }
     const p2 = { x: Math.round(b.x - ux * 4), y: Math.round(b.y - uy * 4) }
     drawLine(buffer, p1, p2, AMBER, 0)
+    drawTargetDot(buffer, edgePoint(edge))
   }
   for (const hex of targets.hexes) {
     const vertices = HEXES[hex].vertices
@@ -795,19 +1063,15 @@ export function drawTargets(buffer: PixelBuffer, targets: TargetShapes): void {
   }
 }
 
-export function drawLastPlaced(buffer: PixelBuffer, state: GameState, lastPlaced: { kind: 'vertex' | 'edge'; id: number }): void {
+export function drawLastPlaced(buffer: PixelBuffer, lastPlaced: { kind: 'vertex' | 'edge'; id: number }): void {
   if (lastPlaced.kind === 'vertex') {
-    const building = state.buildings[lastPlaced.id]
-    if (building === null) return
+    const size = SETTLEMENT_SIZE
     const center = vertexPoint(lastPlaced.id)
-    const size = building.kind === 'city' ? CITY_SIZE : SETTLEMENT_SIZE
     const x0 = Math.round(center.x - (size.w - 1) / 2) - 1
     const y0 = Math.round(center.y - (size.h - 1) / 2) - 1
     drawRectOutline(buffer, x0, y0, size.w + 2, size.h + 2, AMBER)
     return
   }
-  const owner = state.roads[lastPlaced.id]
-  if (owner === null) return
   const [a, b] = edgeEndpoints(lastPlaced.id)
   const dx = b.x - a.x
   const dy = b.y - a.y
@@ -818,7 +1082,6 @@ export function drawLastPlaced(buffer: PixelBuffer, state: GameState, lastPlaced
   const p1 = { x: Math.round(a.x + ux * 3), y: Math.round(a.y + uy * 3) }
   const p2 = { x: Math.round(b.x - ux * 3), y: Math.round(b.y - uy * 3) }
   drawLine(buffer, p1, p2, AMBER, 2)
-  drawLine(buffer, p1, p2, PLAYER_COLORS[state.players[owner].color], 1)
 }
 
 export function drawGhost(buffer: PixelBuffer, ghost: GhostPiece, sprites?: SpriteSet): void {

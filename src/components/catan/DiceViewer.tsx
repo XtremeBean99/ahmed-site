@@ -8,9 +8,9 @@ import { Dice } from './Dice'
 import { DiceHistoryPanel } from './DiceHistoryPanel'
 import { diceOddsText } from './dice-odds'
 import { playerSubject } from './event-text'
-import { PLAYER_HEX } from './player-colors'
+import { PLAYER_TEXT } from './player-colors'
 import { Tooltip } from './Tooltip'
-import { COLORS, Muted, PIXEL_FONT, Panel, SectionTitle } from './ui'
+import { COLORS, Muted, PIXEL_FONT, Panel, PixelButton, SectionTitle } from './ui'
 
 interface RollInfo {
   seq: number
@@ -26,7 +26,19 @@ function lastRoll(state: GameState): RollInfo | null {
   return null
 }
 
-export function DiceViewer({ state }: { state: GameState }) {
+export function DiceViewer({
+  state,
+  inPreRoll,
+  humanActing,
+  canRoll,
+  onRoll,
+}: {
+  state: GameState
+  inPreRoll: boolean
+  humanActing: boolean
+  canRoll: boolean
+  onRoll: () => void
+}) {
   const t = useT()
   const d = t.catan.diceViewer
   const reduce = useReducedMotion()
@@ -60,20 +72,27 @@ export function DiceViewer({ state }: { state: GameState }) {
   return (
     <Panel data-tutorial="dice" style={{ borderWidth: '2px 0 0 0', padding: 8 }}>
       <SectionTitle>{d.title}</SectionTitle>
-      <Tooltip content={total !== null ? diceOddsText(total) : d.noRoll}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
-          <Dice dice={display} label={d.title} scale={3} />
-          <span style={{ ...PIXEL_FONT, fontSize: 24, color: COLORS.text, fontVariantNumeric: 'tabular-nums' }}>
-            {total ?? '?'}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+        <Tooltip content={total !== null ? diceOddsText(total) : d.noRoll}>
+          <span data-catan-anchor="dice" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <Dice dice={display} label={d.title} scale={3} />
+            <span style={{ ...PIXEL_FONT, fontSize: 24, color: COLORS.text, fontVariantNumeric: 'tabular-nums' }}>{total ?? '?'}</span>
           </span>
-        </div>
-      </Tooltip>
+        </Tooltip>
+        {inPreRoll && humanActing ? (
+          <Tooltip content={t.catan.tooltips.roll}>
+            <PixelButton data-tutorial="roll" variant="primary" size="lg" disabled={!canRoll} onClick={onRoll} style={{ marginLeft: 'auto' }}>
+              {t.catan.actionBar.roll}
+            </PixelButton>
+          </Tooltip>
+        ) : null}
+      </div>
       {roll ? (
         <span
           style={{
             ...PIXEL_FONT,
             fontSize: 10,
-            color: PLAYER_HEX[state.players[roll.player].color],
+            color: PLAYER_TEXT[state.players[roll.player].color],
             display: 'block',
             marginTop: 2,
           }}
@@ -84,9 +103,7 @@ export function DiceViewer({ state }: { state: GameState }) {
         <Muted>{d.noRoll}</Muted>
       )}
       {roll && total === 7 ? (
-        <span style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.danger, display: 'block', marginTop: 2 }}>
-          {d.robber}
-        </span>
+        <span style={{ ...PIXEL_FONT, fontSize: 12, color: COLORS.dangerText, display: 'block', marginTop: 2 }}>{d.robber}</span>
       ) : null}
       <DiceHistoryPanel state={state} />
     </Panel>

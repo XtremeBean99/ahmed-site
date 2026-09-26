@@ -2,19 +2,32 @@
 
 import { forwardRef, useEffect, useRef } from 'react'
 import type { ButtonHTMLAttributes, CSSProperties, HTMLAttributes, ReactNode } from 'react'
+import { hitSize, useCatanLayout } from './layout'
 
 export const PIXEL_FONT = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const
 
+/** Text colours are checked against panel and bg at WCAG AA (4.5:1) or better. */
 export const COLORS = {
   bg: '#2a2220',
   panel: '#3d2e1e',
+  panelRaised: '#4a3826',
   panelBorder: '#5a4430',
   panelDark: '#1a0e04',
   text: '#e8d5b0',
-  muted: '#a09080',
+  muted: '#b8a890',
   accent: '#e0a040',
-  danger: '#c0503a',
+  accentDark: '#b87a20',
+  /** Fill for destructive buttons (text on it 5.0:1); use dangerText for red text on panels. */
+  danger: '#9a3424',
+  dangerText: '#ec8266',
+  /** Fill for accept buttons, with panelDark text. */
+  good: '#a8c878',
+  goodText: '#a8c878',
+  sea: '#2f5d7c',
 } as const
+
+/** Pixel font sizes: the only sizes Catan uses. */
+export const FONT = { small: 10, body: 12, title: 16, big: 24 } as const
 
 export const FOCUS_CLASS =
   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(200,184,154,0.7)]'
@@ -24,20 +37,34 @@ export function pixelStyle(extra?: CSSProperties): CSSProperties {
 }
 
 export interface PixelButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'primary' | 'danger' | 'ghost'
+  variant?: 'default' | 'primary' | 'danger' | 'good' | 'ghost'
+  /** sm keeps the old compact look; md and lg are for primary game actions. All grow to 44 px on touch. */
+  size?: 'sm' | 'md' | 'lg'
   selected?: boolean
 }
 
+const BUTTON_SIZES = {
+  sm: { fontSize: FONT.small, minHeight: 28, padding: '6px 8px' },
+  md: { fontSize: FONT.body, minHeight: 34, padding: '8px 10px' },
+  lg: { fontSize: FONT.title, minHeight: 44, padding: '10px 14px' },
+} as const
+
 export const PixelButton = forwardRef<HTMLButtonElement, PixelButtonProps>(function PixelButton(
-  { children, variant = 'default', selected = false, className = '', style, type = 'button', ...props },
+  { children, variant = 'default', size = 'sm', selected = false, className = '', style, type = 'button', ...props },
   ref,
 ) {
+  const { coarse } = useCatanLayout()
   const palette = {
     default: { bg: COLORS.panel, border: COLORS.panelBorder, color: COLORS.text },
     primary: { bg: COLORS.accent, border: COLORS.panelDark, color: COLORS.panelDark },
     danger: { bg: COLORS.danger, border: COLORS.panelDark, color: COLORS.text },
+    good: { bg: COLORS.good, border: COLORS.panelDark, color: COLORS.panelDark },
     ghost: { bg: 'transparent', border: COLORS.panelBorder, color: COLORS.muted },
   }[variant]
+  // A disabled call to action must not still look like one: coloured variants fall back to a muted panel.
+  const coloured = variant === 'primary' || variant === 'good' || variant === 'danger'
+  const look = props.disabled && coloured ? { bg: COLORS.panelDark, border: COLORS.panelBorder, color: COLORS.muted } : palette
+  const sizing = BUTTON_SIZES[size]
 
   return (
     <button
@@ -46,14 +73,16 @@ export const PixelButton = forwardRef<HTMLButtonElement, PixelButtonProps>(funct
       className={`${FOCUS_CLASS} ${className}`}
       style={{
         ...PIXEL_FONT,
-        fontSize: 10,
-        padding: '6px 8px',
-        backgroundColor: palette.bg,
-        color: palette.color,
-        border: `2px solid ${palette.border}`,
+        fontSize: sizing.fontSize,
+        padding: sizing.padding,
+        minHeight: Math.max(sizing.minHeight, hitSize(coarse)),
+        minWidth: coarse ? hitSize(true) : undefined,
+        backgroundColor: look.bg,
+        color: look.color,
+        border: `2px solid ${look.border}`,
         boxShadow: selected ? `0 0 0 2px ${COLORS.accent}` : undefined,
         cursor: props.disabled ? 'default' : 'pointer',
-        opacity: props.disabled ? 0.45 : 1,
+        opacity: props.disabled ? (coloured ? 0.8 : 0.45) : 1,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -109,19 +138,19 @@ export function Muted({ children, style }: { children: ReactNode; style?: CSSPro
   )
 }
 
-/** Fixed overlay for dialogs; square pixel corners, no blur. */
-export function Overlay({ children }: { children: ReactNode }) {
+/** Fixed overlay for dialogs; square pixel corners, no blur. Above sheets (60), the log drawer and popovers (55). */
+export function Overlay({ children, fullScreen = false }: { children: ReactNode; fullScreen?: boolean }) {
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 50,
+        zIndex: 70,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'rgba(26, 14, 4, 0.72)',
-        padding: 16,
+        padding: fullScreen ? 0 : 16,
       }}
     >
       {children}
@@ -179,6 +208,8 @@ export function ModalDialog({
   style?: CSSProperties
 }) {
   const panelRef = useRef<HTMLDivElement | null>(null)
+  const { layout } = useCatanLayout()
+  const fullScreen = layout === 'stack'
 
   useEffect(() => {
     const previous = document.activeElement
@@ -231,8 +262,18 @@ export function ModalDialog({
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
+  const sheet: CSSProperties = fullScreen
+    ? {
+        width: '100%',
+        height: '100dvh',
+        maxWidth: 'none',
+        maxHeight: 'none',
+        boxShadow: 'none',
+        padding: 'max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom))',
+      }
+    : {}
   return (
-    <Overlay>
+    <Overlay fullScreen={fullScreen}>
       <div
         ref={panelRef}
         role="dialog"
@@ -241,7 +282,7 @@ export function ModalDialog({
         tabIndex={-1}
         style={{
           ...PIXEL_FONT,
-          fontSize: 10,
+          fontSize: FONT.body,
           backgroundColor: COLORS.panel,
           border: `2px solid ${COLORS.panelBorder}`,
           boxShadow: `4px 4px 0 ${COLORS.panelDark}`,
@@ -251,6 +292,7 @@ export function ModalDialog({
           maxHeight: '88vh',
           overflowY: 'auto',
           ...style,
+          ...sheet,
         }}
       >
         {children}

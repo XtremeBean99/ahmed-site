@@ -76,6 +76,8 @@ function fallbackHint(state: GameState): Hint {
       return { text: 'Build, trade or buy a development card.', highlight: { ui: ['hand'] } }
     case 'roadBuilding':
       return { text: 'Place your free roads.', highlight: { ui: ['board'] } }
+    case 'trade':
+      return { text: 'Answer the trade offer.', highlight: { ui: ['trade'] } }
     case 'gameOver':
       return { text: 'The game is over.', highlight: {} }
   }
@@ -115,6 +117,14 @@ export function describeHintAction(state: GameState, human: PlayerId, action: Ac
       return { text: describeMaritime(state, human, action), highlight: { ui: ['trade'] } }
     case 'domesticTrade':
       return { text: `Offer a trade to ${state.players[action.partner]?.name ?? 'an opponent'}.`, highlight: { ui: ['trade'] } }
+    case 'proposeTrade':
+      return { text: 'Offer a trade to the other players.', highlight: { ui: ['trade'] } }
+    case 'respondTrade':
+      return { text: action.reply === 'accept' ? 'Accept the trade offer.' : 'Decline the trade offer.', highlight: { ui: ['trade'] } }
+    case 'confirmTrade':
+      return { text: `Trade with ${state.players[action.partner]?.name ?? 'an opponent'}.`, highlight: { ui: ['trade'] } }
+    case 'cancelTrade':
+      return { text: 'Withdraw your trade offer.', highlight: { ui: ['trade'] } }
     case 'endTurn':
       return { text: 'End your turn.', highlight: { ui: ['end-turn'] } }
   }
@@ -123,7 +133,7 @@ export function describeHintAction(state: GameState, human: PlayerId, action: Ac
 export function describeHint(state: GameState, human: PlayerId): Hint {
   if (human < 0 || human >= state.players.length) return { text: 'No hint available.', highlight: {} }
   try {
-    return describeHintAction(state, human, chooseBotAction(state, human))
+    return describeHintAction(state, human, chooseBotAction(state, human, { level: 'hard' }))
   } catch {
     return fallbackHint(state)
   }

@@ -1,23 +1,11 @@
 /** Deterministic hand-built states for unit tests. Independent of board.ts so modules test in isolation. */
-import { BANK_PER_RESOURCE, DEV_DECK_COUNTS, PIECES, PLAYER_COLORS, PORT_TYPES, RESOURCES } from './constants'
+import { BANK_PER_RESOURCE, DEFAULT_SETTINGS, DEV_DECK_COUNTS, PIECES, PLAYER_COLORS, PORT_TYPES, RESOURCES } from './constants'
 import { EDGES, PORT_EDGES } from './geometry'
 import { emptyResources } from './helpers'
-import type { DevCardType, GameState, Phase, PlayerId, ResourceCounts, Terrain } from './types'
+import { STARTER_NUMBERS, STARTER_TERRAINS } from './presets'
+import { emptyStats } from './stats'
+import type { DevCardType, GameState, Phase, PlayerId, ResourceCounts } from './types'
 
-const TERRAINS: Terrain[] = [
-  'ore', 'wool', 'lumber',
-  'grain', 'brick', 'wool', 'brick',
-  'grain', 'lumber', 'desert', 'lumber', 'ore',
-  'lumber', 'ore', 'grain', 'wool',
-  'brick', 'grain', 'wool',
-]
-const NUMBERS: (number | null)[] = [
-  10, 2, 9,
-  12, 6, 4, 10,
-  9, 11, null, 3, 8,
-  8, 3, 4, 5,
-  5, 6, 11,
-]
 export const FIXTURE_DESERT = 9
 
 export function makeTestState(options: { playerCount?: 3 | 4; phase?: Phase; current?: PlayerId } = {}): GameState {
@@ -27,9 +15,13 @@ export function makeTestState(options: { playerCount?: 3 | 4; phase?: Phase; cur
     for (let i = 0; i < count; i++) devDeck.push(card)
   }
   return {
-    version: 1,
+    version: 2,
+    settings: { ...DEFAULT_SETTINGS, board: 'starter' },
+    stats: emptyStats(playerCount),
+    offersThisTurn: 0,
+    tradeSeq: 0,
     rng: 12345,
-    tiles: TERRAINS.map((terrain, i) => ({ terrain, number: NUMBERS[i] })),
+    tiles: STARTER_TERRAINS.map((terrain, i) => ({ terrain, number: STARTER_NUMBERS[i] })),
     ports: PORT_EDGES.map((edge, i) => ({ edge, type: PORT_TYPES[i] })),
     robber: FIXTURE_DESERT,
     buildings: Array(54).fill(null),
@@ -39,6 +31,7 @@ export function makeTestState(options: { playerCount?: 3 | 4; phase?: Phase; cur
       name: id === 0 ? 'You' : `Bot ${id}`,
       color: PLAYER_COLORS[id],
       isBot: id !== 0,
+      level: 'normal',
       resources: emptyResources(),
       devCards: [],
       newDevCards: [],

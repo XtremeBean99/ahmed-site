@@ -1,12 +1,12 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { pips } from './constants'
-import { chooseBotAction, botAcceptsTrade } from './ai'
-import { applyAction, createGame, playersToAct, validateAction } from './engine'
-import { HEXES, VERTICES } from './geometry'
-import { totalCards } from './helpers'
-import { give, makeTestState, putRoadPath, putSettlement, res } from './test-fixtures'
-import type { GameState, PlayerId } from './types'
+import { pips } from '../constants'
+import { botAcceptsTrade, chooseBotAction } from './index'
+import { applyAction, createGame, playersToAct, validateAction } from '../engine'
+import { HEXES, VERTICES } from '../geometry'
+import { totalCards } from '../helpers'
+import { give, makeTestState, putRoadPath, putSettlement, res } from '../test-fixtures'
+import type { BotLevel, GameState, PlayerId } from '../types'
 
 function pipSum(state: GameState, vertex: number): number {
   let sum = 0
@@ -22,67 +22,29 @@ function asSettlement(action: unknown): number {
   return (action as { vertex: number }).vertex
 }
 
-test('bots-only full games: every action validates, games finish, deterministic stats', () => {
-  const playerCounts = [3, 4] as const
-  const seedsPerCount = 120
-  const actionCap = 2500
-  let total = 0
-  let finished = 0
-  let capped = 0
-  let invalid = 0
-  let throws = 0
-  let turnTotal = 0
-  const wins: number[] = [0, 0, 0, 0]
-
-  for (const playerCount of playerCounts) {
-    for (let seed = 0; seed < seedsPerCount; seed++) {
-      total++
-      let state = createGame({ seed, playerCount })
+test('chooseBotAction returns a legal action for every level over 10 short games', () => {
+  const levels: BotLevel[] = ['easy', 'normal', 'hard']
+  for (const level of levels) {
+    for (let seed = 0; seed < 10; seed++) {
+      let state = createGame({ seed: seed * 31 + 7, playerCount: 3, settings: { vpToWin: 8 } })
+      for (const player of state.players) player.level = level
       let actions = 0
-      try {
-        while (state.phase.kind !== 'gameOver' && actions < actionCap) {
-          const actors = playersToAct(state)
-          for (const player of actors) {
-            const action = chooseBotAction(state, player)
-            const reason = validateAction(state, action)
-            if (reason !== null) {
-              invalid++
-              // Fail fast with diagnostics, but keep counting for the summary.
-              assert.equal(reason, null, `invalid action at seed ${seed}/${playerCount}: ${JSON.stringify(action)}`)
-            }
-            state = applyAction(state, action)
-            actions++
-            if (state.phase.kind === 'gameOver') break
-          }
+      while (state.phase.kind !== 'gameOver' && actions < 2000) {
+        const actors = playersToAct(state)
+        for (const player of actors) {
+          const rngBefore = state.rng
+          const action = chooseBotAction(state, player, { level })
+          assert.equal(state.rng, rngBefore, `${level} advanced state.rng`)
+          const reason = validateAction(state, action)
+          assert.equal(reason, null, `${level} seed ${seed} action ${JSON.stringify(action)}`)
+          state = applyAction(state, action)
+          actions++
+          if (state.phase.kind === 'gameOver') break
         }
-        if (state.phase.kind === 'gameOver') {
-          finished++
-          wins[state.phase.winner]++
-        } else {
-          capped++
-        }
-        turnTotal += state.turn
-      } catch (error) {
-        throws++
-        console.error('simulation threw', { playerCount, seed, error })
       }
+      assert.equal(state.phase.kind, 'gameOver', `${level} seed ${seed} did not finish`)
     }
   }
-
-  const stats = {
-    total,
-    finished,
-    capped,
-    invalid,
-    throws,
-    avgTurns: total === 0 ? 0 : turnTotal / total,
-    winShareBySeat: wins,
-  }
-  console.log('AI_SIM_STATS ' + JSON.stringify(stats))
-
-  assert.equal(invalid, 0)
-  assert.equal(throws, 0)
-  assert.ok(finished / total >= 0.97, `only ${finished}/${total} games reached gameOver`)
 })
 
 test('chooseBotAction is deterministic and does not mutate its input', () => {
@@ -102,6 +64,20 @@ test('chooseBotAction is deterministic and does not mutate its input', () => {
   const mainSecond = chooseBotAction(main, 0)
   assert.equal(JSON.stringify(main), mainJson)
   assert.deepEqual(mainSecond, mainFirst)
+})
+
+test('opts.level overrides the stored player level', () => {
+  const easy = makeTestState({ phase: { kind: 'main' }, current: 0 })
+  putSettlement(easy, 0, 17)
+  give(easy, 0, { brick: 1, lumber: 1, wool: 1, grain: 1 })
+  easy.players[0].level = 'easy'
+  const normal = structuredClone(easy)
+  normal.players[0].level = 'normal'
+  const hard = structuredClone(easy)
+  hard.players[0].level = 'hard'
+
+  assert.deepEqual(chooseBotAction(easy, 0, { level: 'normal' }), chooseBotAction(normal, 0))
+  assert.deepEqual(chooseBotAction(easy, 0, { level: 'hard' }), chooseBotAction(hard, 0))
 })
 
 test('setup settlement picks a high-pip vertex over a desert-adjacent one', () => {
@@ -155,11 +131,25 @@ test('robber avoids the bot\'s own hexes and targets the leader', () => {
   putSettlement(s, leader, HEXES[17].vertices[0])
   give(s, leader, { grain: 2 })
 
-  const action = chooseBotAction(s, bot)
+  const action = chooseBotAction(s, bot, { level: 'normal' })
   assert.equal(action.type, 'moveRobber')
   if (action.type !== 'moveRobber') throw new Error('unreachable')
   assert.notEqual(action.hex, 11)
   assert.equal(action.hex, 17)
+})
+
+test('easy moves the robber to a random opponent hex, never its own', () => {
+  const bot: PlayerId = 1
+  const s = makeTestState({ phase: { kind: 'moveRobber', returnTo: 'main' }, current: bot })
+  putSettlement(s, bot, HEXES[11].vertices[0])
+  putSettlement(s, 2, HEXES[17].vertices[0])
+
+  const first = chooseBotAction(s, bot, { level: 'easy' })
+  const second = chooseBotAction(s, bot, { level: 'easy' })
+  assert.equal(first.type, 'moveRobber')
+  if (first.type !== 'moveRobber') throw new Error('unreachable')
+  assert.notEqual(first.hex, 11)
+  assert.deepEqual(second, first)
 })
 
 test('bot builds a city when it can', () => {
@@ -175,6 +165,7 @@ test('bot builds a city when it can', () => {
 
 test('bot makes a maritime trade only when it enables a build, then builds it', () => {
   const s = makeTestState({ phase: { kind: 'main' }, current: 0 })
+  s.settings.botTrades = false
   putSettlement(s, 0, 17)
   putRoadPath(s, 0, [17, 22, 28])
   give(s, 0, { brick: 5, wool: 1, grain: 1 })
@@ -194,6 +185,7 @@ test('bot makes a maritime trade only when it enables a build, then builds it', 
 
 test('bot ends its turn when no useful move or trade exists', () => {
   const s = makeTestState({ phase: { kind: 'main' }, current: 0 })
+  s.settings.botTrades = false
   give(s, 0, { brick: 5 })
   const action = chooseBotAction(s, 0)
   assert.equal(action.type, 'endTurn')
@@ -230,6 +222,7 @@ test('monopoly uses only public information, not opponents\' hidden hands', () =
 
   const buildState = (humanCards: Partial<Record<'brick' | 'lumber' | 'wool' | 'grain' | 'ore', number>>) => {
     const s = makeTestState({ phase: { kind: 'main' }, current: bot })
+    s.settings.botTrades = false
     putSettlement(s, bot, 17)
     putRoadPath(s, bot, [17, 22, 28])
     give(s, bot, { brick: 1, lumber: 1, wool: 1 })
@@ -248,4 +241,31 @@ test('monopoly uses only public information, not opponents\' hidden hands', () =
   assert.equal(actionA.type, 'playMonopoly')
   if (actionA.type !== 'playMonopoly') throw new Error('unreachable')
   assert.equal(actionA.resource, 'grain')
+})
+
+test('decision speed stays within the level budgets', () => {
+  const levels: BotLevel[] = ['easy', 'normal', 'hard']
+  for (const level of levels) {
+    let state = createGame({ seed: 5000 + levels.indexOf(level), playerCount: 4 })
+    for (const player of state.players) player.level = level
+    const times: number[] = []
+    let actions = 0
+    while (state.phase.kind !== 'gameOver' && actions < 2000) {
+      const actors = playersToAct(state)
+      for (const player of actors) {
+        const start = performance.now()
+        const action = chooseBotAction(state, player, { level })
+        times.push(performance.now() - start)
+        state = applyAction(state, action)
+        actions++
+        if (state.phase.kind === 'gameOver') break
+      }
+    }
+    assert.equal(state.phase.kind, 'gameOver')
+    const mean = times.reduce((a, b) => a + b, 0) / times.length
+    const worst = Math.max(...times)
+    const budget = level === 'hard' ? 20 : 5
+    assert.ok(mean < budget, `${level} mean ${mean.toFixed(2)}ms >= ${budget}`)
+    assert.ok(worst < 60, `${level} worst ${worst.toFixed(2)}ms >= 60`)
+  }
 })

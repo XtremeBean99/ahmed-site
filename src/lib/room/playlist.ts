@@ -20,12 +20,6 @@ export const PLAYLIST: Track[] = [
     cover: '/audio/covers/summer-days.jpg',
   },
   {
-    id: 'sky-restaurant',
-    title: 'Sky Restaurant',
-    src: '/audio/sky-restaurant.mp3',
-    cover: '/audio/covers/sky-restaurant.jpg',
-  },
-  {
     id: 'teresa-no-tameiki',
     title: 'Teresa no Tameiki',
     artist: 'Yasushi Miyagawa',
@@ -109,20 +103,6 @@ export const PLAYLIST: Track[] = [
     cover: '/audio/covers/year-of-the-cat.jpg',
   },
   {
-    id: 'havalie-haram',
-    title: 'Havalie Haram',
-    artist: 'Hossein Taheri',
-    src: '/audio/havalie-haram.mp3',
-    cover: '/audio/covers/havalie-haram.jpg',
-  },
-  {
-    id: 'manam-bayad-beram',
-    title: 'Manam Bayad Beram',
-    artist: 'Hossein Taheri',
-    src: '/audio/manam-bayad-beram.mp3',
-    cover: '/audio/covers/manam-bayad-beram.jpg',
-  },
-  {
     id: 'shut-up-my-moms-calling',
     title: 'Shut up My Moms Calling',
     artist: 'Hotel Ugly',
@@ -149,27 +129,6 @@ export const PLAYLIST: Track[] = [
     artist: 'Kid Cudi',
     src: '/audio/day-n-nite-nightmare.mp3',
     cover: '/audio/covers/day-n-nite-nightmare.jpg',
-  },
-  {
-    id: 'zivjela-bosna',
-    title: 'Živjela Bosna',
-    artist: 'Mahir Bureković',
-    src: '/audio/zivjela-bosna.mp3',
-    cover: '/audio/covers/zivjela-bosna.jpg',
-  },
-  {
-    id: 'gisoo',
-    title: 'Gisoo',
-    artist: 'Mahmoud Karimi',
-    src: '/audio/gisoo.mp3',
-    cover: '/audio/covers/gisoo.jpg',
-  },
-  {
-    id: 'ghadam-ghadam',
-    title: 'Ghadam Ghadam',
-    artist: 'Majid Bani Fatemeh',
-    src: '/audio/ghadam-ghadam.mp3',
-    cover: '/audio/covers/ghadam-ghadam.jpg',
   },
   {
     id: 'cosmic-gloom',

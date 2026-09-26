@@ -13,6 +13,8 @@ interface RoomStageProps {
   zoomOriginY?: number
   panX?: number
   panY?: number
+  /** Disable native touch gestures on the stage so drag-to-pan can own the pointer. */
+  touchNone?: boolean
 }
 
 /** Two-element transform: outer centres + fit-scales + pans, inner zooms about monitor point. */
@@ -24,12 +26,13 @@ export function RoomStage({
   zoomOriginY = STAGE_H / 2,
   panX = 0,
   panY = 0,
+  touchNone = false,
 }: RoomStageProps) {
   return (
     <div
       style={{
         width: '100%',
-        height: '100vh',
+        height: '100dvh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -43,6 +46,7 @@ export function RoomStage({
           transform: `translate(${panX}px, ${panY}px) scale(${scale})`,
           transformOrigin: 'center center',
           flexShrink: 0,
+          touchAction: touchNone ? 'none' : 'auto',
         }}
       >
         <motion.div

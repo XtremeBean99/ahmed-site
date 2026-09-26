@@ -23,7 +23,10 @@ export function DiscoveriesBadge({ title, discoveryLabels }: DiscoveriesBadgePro
   }, [])
 
   return (
-    <div className="fixed bottom-14 right-4 z-30">
+    <div
+      className="fixed right-4 z-30"
+      style={{ bottom: 'calc(3.5rem + env(safe-area-inset-bottom, 0px))' }}
+    >
       <button
         type="button"
         onClick={() => setOpen(!open)}

@@ -21,6 +21,8 @@ export function isMobileViewport(): boolean {
 /** Computes the fit scale for the 1408x768 stage in the viewport.
  *  On mobile (coarse pointer or narrow viewport), uses fill-height scale. */
 export function useStageScale(): StageScale {
+  // SSR-safe initial value: the effect corrects it on the client before the
+  // splash finishes, so the one-frame desktop fit scale is never visible.
   const [state, setState] = useState<StageScale>({ scale: 1, mobile: false, fillScale: 1 })
   const mobileRef = useRef(false)
   const fillScaleRef = useRef(1)

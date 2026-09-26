@@ -40,6 +40,27 @@ const DESK_SPEAKER_HOLES_RIGHT = [
 const MOUSE_X_MIN = 975; const MOUSE_X_MAX = 1140
 const MOUSE_Y_MIN = 572; const MOUSE_Y_MAX = 635
 const MOUSE_REST_X = 1007; const MOUSE_REST_Y = 608
+
+const SCREEN_CX = SCREEN_X + SCREEN_W / 2
+const SCREEN_CY = SCREEN_Y + SCREEN_H / 2
+
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v))
+
+/** Mobile desk layout: scale the stage so the whole monitor screen fits the
+ *  viewport with a small margin, then centre the screen area in view. The desk
+ *  art around it stays pannable within the stage edges. */
+function mobileDeskLayout(vw: number, vh: number) {
+  const s = Math.max(0.2, Math.min((vw - 12) / SCREEN_W, (vh - 12) / SCREEN_H))
+  const slackX = Math.abs(STAGE_W * s - vw) / 2
+  const slackY = Math.abs(STAGE_H * s - vh) / 2
+  const cx = -(SCREEN_CX - STAGE_W / 2) * s
+  const cy = -(SCREEN_CY - STAGE_H / 2) * s
+  return {
+    scale: s,
+    pan: { x: clamp(cx, -slackX, slackX), y: clamp(cy, -slackY, slackY) },
+    slack: { x: slackX, y: slackY },
+  }
+}
 type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'snake' | 'blackjack' | 'solitaire' | 'pong' | 'breakout' | 'readme' | 'music' | 'legal' | 'guestbook' | 'settings' | 'terminal' | 'movie'
 
 interface DeskViewProps {
@@ -107,7 +128,7 @@ interface DeskViewProps {
 }
 export function DeskView(props: DeskViewProps) {
   const { shortcuts, backLabel, clickAgainLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
-  const { scale } = useStageScale()
+  const { scale, mobile } = useStageScale()
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
   const [showDesktop, setShowDesktop] = useState(false)
@@ -125,6 +146,79 @@ export function DeskView(props: DeskViewProps) {
   const mouseCurrent = useRef({ x: MOUSE_REST_X, y: MOUSE_REST_Y })
   const rafRef = useRef(0)
   const idleTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  // Mobile: the desk scales to fit the monitor screen, centred, and the desk
+  // around it pans by dragging. Desktop keeps the whole-desk fit scale.
+  // SSR-safe default; the effect below applies the real mobile layout on the
+  // client while the splash is still covering the page.
+  const [deskLayout, setDeskLayout] = useState({ scale: 1, pan: { x: 0, y: 0 }, slack: { x: 0, y: 0 } })
+  const deskLayoutRef = useRef(deskLayout)
+  const deskPanRef = useRef(deskLayout.pan)
+  const deskDragRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null)
+  const deskRafRef = useRef(0)
+  const draggedRef = useRef(false)
+
+  useEffect(() => {
+    deskLayoutRef.current = deskLayout
+    deskPanRef.current = deskLayout.pan
+  }, [deskLayout])
+
+  useEffect(() => {
+    if (!mobile) return
+    const apply = () => setDeskLayout(mobileDeskLayout(window.innerWidth, window.innerHeight))
+    apply()
+    window.addEventListener('resize', apply)
+    window.addEventListener('orientationchange', apply)
+    return () => {
+      window.removeEventListener('resize', apply)
+      window.removeEventListener('orientationchange', apply)
+    }
+  }, [mobile])
+
+  // Drag to pan around the desk. Only on mobile and only when the drag starts
+  // outside the screen area and controls, so apps keep their own gestures.
+  useEffect(() => {
+    if (!mobile) return
+    const onDown = (e: PointerEvent) => {
+      const el = e.target as HTMLElement
+      if (el.closest('[data-screen-area],a,button,[tabindex],[role="button"],input,textarea,select')) return
+      draggedRef.current = false
+      deskDragRef.current = { x: e.clientX, y: e.clientY, px: deskPanRef.current.x, py: deskPanRef.current.y }
+    }
+    const onMove = (e: PointerEvent) => {
+      if (!deskDragRef.current) return
+      const dx = e.clientX - deskDragRef.current.x
+      const dy = e.clientY - deskDragRef.current.y
+      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) draggedRef.current = true
+      const { slack } = deskLayoutRef.current
+      const pan = {
+        x: clamp(deskDragRef.current.px + dx, -slack.x, slack.x),
+        y: clamp(deskDragRef.current.py + dy, -slack.y, slack.y),
+      }
+      deskPanRef.current = pan
+      cancelAnimationFrame(deskRafRef.current)
+      deskRafRef.current = requestAnimationFrame(() => {
+        setDeskLayout((prev) => ({ ...prev, pan }))
+      })
+    }
+    const onUp = () => {
+      deskDragRef.current = null
+      // The click after a drag fires before this timeout, so it is still
+      // suppressed; the timeout clears the flag when no click follows.
+      setTimeout(() => { draggedRef.current = false }, 0)
+    }
+    window.addEventListener('pointerdown', onDown, { passive: true })
+    window.addEventListener('pointermove', onMove, { passive: true })
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+    return () => {
+      window.removeEventListener('pointerdown', onDown)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+      cancelAnimationFrame(deskRafRef.current)
+    }
+  }, [mobile])
 
   // Live clock, in the visitor's 12/24-hour choice (the strip clock toggles it)
   useEffect(() => {
@@ -290,9 +384,17 @@ export function DeskView(props: DeskViewProps) {
     width: SCREEN_W, height: SCREEN_H, overflow: 'hidden',
   }
 
+  const deskTransform = mobile
+    ? `translate(calc(-50% + ${deskLayout.pan.x}px), calc(-50% + ${deskLayout.pan.y}px)) scale(${deskLayout.scale})`
+    : `translate(-50%, -50%) scale(${scale})`
+
   return (
-    <div className="relative room-cursor" style={{ width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}
+    <div className="relative room-cursor" style={{ width: '100%', height: '100dvh', overflow: 'hidden', backgroundColor: '#000' }}
       onClick={(e) => {
+        if (draggedRef.current) {
+          draggedRef.current = false
+          return
+        }
         if ((e.target as HTMLElement).closest('[data-screen-area]')) return
         if (screensaver) {
           setScreensaver(false)
@@ -312,7 +414,7 @@ export function DeskView(props: DeskViewProps) {
       }}>
       <motion.div style={{
         width: STAGE_W, height: STAGE_H, position: 'absolute', top: '50%', left: '50%',
-        transform: `translate(-50%, -50%) scale(${scale})`, transformOrigin: 'center center',
+        transform: deskTransform, transformOrigin: 'center center',
       }} initial={reduce ? undefined : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
         {/* Lamp-off close-up */}
         {/* eslint-disable-next-line @next/next/no-img-element */}

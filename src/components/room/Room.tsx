@@ -15,7 +15,6 @@ import {
   WINDOW_GLASS,
 } from '@/lib/room/objects'
 import { useStageScale } from '@/lib/room/useStageScale'
-import { MobileGate } from './MobileGate'
 import { loadPrefs, savePrefs } from '@/lib/room/storage'
 import { RoomStage } from './RoomStage'
 import { RoomHud } from './RoomHud'
@@ -187,47 +186,60 @@ export function Room({ dict, readmeContent }: RoomProps) {
 
   const sfx = useSfx()
 
-  // Mobile drag-to-pan
+  // Mobile drag-to-pan: the fill-height scale makes the stage wider than the
+  // viewport, so a drag slides the view across the room. Pan lives in React
+  // state (the old version wrote straight to the DOM and lost the offset on
+  // the next re-render).
+  const STAGE_W = 1408
+  const STAGE_H = 768
+  const [pan, setPan] = useState({ x: 0, y: 0 })
   const panXRef = useRef(0)
-  const panYRef = useRef(0)
-  const dragStartRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null)
+  const dragStartRef = useRef<{ x: number; y: number; px: number } | null>(null)
   const panRafRef = useRef(0)
+
+  const clampPanX = useCallback((px: number) => {
+    const stageWidth = STAGE_W * (window.innerHeight / STAGE_H)
+    const maxX = Math.max(0, (stageWidth - window.innerWidth) / 2)
+    return Math.max(-maxX, Math.min(maxX, px))
+  }, [])
+
   useEffect(() => {
     if (!mobile) return
-    const STAGE_W = 1408, STAGE_H = 768
     const onDown = (e: PointerEvent) => {
+      if (view !== 'room') return
       const el = e.target as HTMLElement
-      if (el.closest('a,button,[tabindex],[role="button"]')) return
+      if (el.closest('a,button,[tabindex],[role="button"],input,textarea,select')) return
       if (el.closest('#room-stage-outer') === null) return
-      dragStartRef.current = { x: e.clientX, y: e.clientY, px: panXRef.current, py: panYRef.current }
+      dragStartRef.current = { x: e.clientX, y: e.clientY, px: panXRef.current }
     }
     const onMove = (e: PointerEvent) => {
       if (!dragStartRef.current) return
-      const fillScale = window.innerHeight / STAGE_H
-      const stageWidth = STAGE_W * fillScale
-      panXRef.current = dragStartRef.current.px + (e.clientX - dragStartRef.current.x)
-      panYRef.current = dragStartRef.current.py + (e.clientY - dragStartRef.current.y)
-      // Clamp so stage edges stay in viewport (fill-height: Y is always flush)
-      const maxX = Math.max(0, (stageWidth - window.innerWidth) / 2)
-      panXRef.current = Math.max(-maxX, Math.min(maxX, panXRef.current))
-      panYRef.current = 0
+      const next = clampPanX(dragStartRef.current.px + (e.clientX - dragStartRef.current.x))
+      panXRef.current = next
       cancelAnimationFrame(panRafRef.current)
-      panRafRef.current = requestAnimationFrame(() => {
-        const el = document.getElementById('room-stage-outer')
-        if (el) el.style.transform = `translate(${panXRef.current}px, ${panYRef.current}px) scale(${fillScale})`
-      })
+      panRafRef.current = requestAnimationFrame(() => setPan({ x: next, y: 0 }))
     }
     const onUp = () => { dragStartRef.current = null }
     window.addEventListener('pointerdown', onDown, { passive: true })
     window.addEventListener('pointermove', onMove, { passive: true })
     window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
     return () => {
       window.removeEventListener('pointerdown', onDown)
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
       cancelAnimationFrame(panRafRef.current)
     }
-  }, [mobile])
+  }, [mobile, view, clampPanX])
+
+  // Keep the panned offset valid across rotations and window resizes.
+  useEffect(() => {
+    if (!mobile) return
+    const onResize = () => setPan({ x: clampPanX(panXRef.current), y: 0 })
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [mobile, clampPanX])
 
   // Preload desk close-up art on idle so entering the desk is instant
   useEffect(() => {
@@ -324,7 +336,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const enterDesk = useCallback(() => {
     clearTimeouts()
     panXRef.current = 0
-    panYRef.current = 0
+    setPan({ x: 0, y: 0 })
     setView('desk')
     window.history.pushState({ view: 'desk' }, '', '#desk')
     navigatingRef.current = false
@@ -524,8 +536,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const screenCenterX = monitorObj.x + 125
   const screenCenterY = monitorObj.y + 74
 
-  const STAGE_W = 1408
-  const STAGE_H = 768
   const glowX = (screenCenterX / STAGE_W) * 100
   const glowY = (screenCenterY / STAGE_H) * 100
   // A 5x3 grid: about the site, then tools and media, then a full row of games.
@@ -546,12 +556,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
     { id: 'pong', kind: 'app', target: 'pong', label: t.desk.pong, tooltip: t.desk.pongTip, icon: ICON_PONG },
     { id: 'breakout', kind: 'app', target: 'breakout', label: t.desk.breakout, tooltip: t.desk.breakoutTip, icon: ICON_BREAKOUT },
   ]
-
-  // Mobile: the pixel-art room needs a mouse, not a touchscreen. Show a static
-  // gate instead of the interactive experience.
-  if (mobile) {
-    return <MobileGate />
-  }
 
   // Desk view
   if (view === 'desk') {
@@ -608,7 +612,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
 
   return (
     <RoomAudioProvider>
-    <div className="relative w-full h-screen overflow-hidden bg-[#1a1210] room-cursor">
+    <div className="relative w-full h-dvh overflow-hidden bg-[#1a1210] room-cursor">
       <RoomHud
         hintLabel={t.room.hint}
         skipLabel={t.room.skip}
@@ -623,6 +627,9 @@ export function Room({ dict, readmeContent }: RoomProps) {
           zoomScale={view === 'zooming' && !reduce ? 3.2 : 1}
           zoomOriginX={screenCenterX}
           zoomOriginY={screenCenterY}
+          panX={pan.x}
+          panY={pan.y}
+          touchNone={mobile}
         >
           {/* Lamp-off background (always present, behind lamp-on) */}
           {/* eslint-disable-next-line @next/next/no-img-element */}

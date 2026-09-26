@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Analytics } from '@vercel/analytics/next'
@@ -15,6 +15,13 @@ const minecraft = localFont({
 })
 
 const baseUrl = 'https://ahmedyhussain.com'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#1a1210',
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),

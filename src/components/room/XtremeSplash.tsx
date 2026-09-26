@@ -98,7 +98,7 @@ export function XtremeSplash({ children }: Props) {
               draggable={false}
               width={DISPLAY_SIZE}
               height={DISPLAY_SIZE}
-              style={{ imageRendering: 'pixelated' }}
+              style={{ imageRendering: 'pixelated', width: 'min(512px, 88vw)', height: 'min(512px, 88vw)' }}
             />
           </motion.div>
         )}

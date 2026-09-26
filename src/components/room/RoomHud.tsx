@@ -29,10 +29,11 @@ export function RoomHud({ hintLabel, skipLabel }: RoomHudProps) {
 
       {/* Bottom-right HUD */}
       <div
-        className="absolute bottom-4 right-4 z-20 flex flex-col items-end gap-1 text-[11px]"
+        className="absolute right-4 z-20 flex flex-col items-end gap-1 text-[11px]"
         style={{
           fontFamily: 'var(--font-pixel), "Courier New", monospace',
           textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+          bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
         }}
       >
         {showHint && (

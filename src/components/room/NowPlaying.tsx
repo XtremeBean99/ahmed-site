@@ -61,10 +61,13 @@ export function NowPlaying({ labels, embedded }: NowPlayingProps) {
 
   return (
     <div
-      className={`${embedded ? 'min-w-0' : 'fixed bottom-4 left-4 z-30'} flex items-center gap-2`}
+      className={`${embedded ? 'min-w-0' : 'fixed left-4 z-30'} flex items-center gap-2`}
       role="region"
       aria-label={labels.nowPlaying}
-      style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace' }}
+      style={{
+        fontFamily: 'var(--font-pixel), "Courier New", monospace',
+        ...(embedded ? {} : { bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }),
+      }}
       onKeyDown={keepKeys}
       onKeyUp={keepKeys}
     >

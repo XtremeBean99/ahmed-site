@@ -19,9 +19,10 @@ The conventional site pages (`/home`, `/games`, `/projects`, `/tutoring`, `/lega
 retired in Spec 1 (July 2026) and 301-redirect to `/`. Their source code is archived under
 `_archive/` — not part of the build, recoverable via `git mv`.
 
-## Current State (23 September 2026)
+## Current State (26 September 2026)
 
-Latest: one consistent desk chrome, fullscreen with a music bar, Blackjack tutorial, reactive keyboard (v20 below).
+Latest: Pixel Catan v3 overhaul, playable on phones and tablets (v21 below; details in the Pixel Catan section).
+Before that: one consistent desk chrome, fullscreen with a music bar, Blackjack tutorial, reactive keyboard (v20).
 
 
 Pixel OS v1 desk launcher (Home/Paint/Minesweeper icons with bubble tooltips; Paint app
@@ -439,6 +440,14 @@ sky-restaurant ⚠ commercial. Covers: sky-restaurant.jpg, summer-days.jpg.
   keys). Room README popup removed. UI audit fixes: Paint clear needs a second click, Music app on the
   room palette, contrast fixes, focus returns to the launching icon, hint pulses inside `RoomStage`,
   splash skippable (click/key, instant on reduced motion), terminal and screensaver discoveries fire.
+
+- **v21** `26 September 2026`: **Pixel Catan v3.** `/catan` works on desktop, tablet and phone (three layouts,
+  bottom sheets, touch placement; `MobileGate` no longer blocks it) with game settings (points to win, friendly
+  robber, board presets), Easy/Normal/Hard bots that trade with each other and with you, a trade panel, a results
+  screen with charts, animations and Web Audio sounds, undo, keyboard shortcuts and a rebuilt tutorial. Saves moved
+  to `catan-save-v2` (v1 saves migrate). Board sprite sizes changed with the owner's permission (SPEC.md lists
+  them). Built by parallel deepcode builders in worktrees, reviewed by deepcode and a Claude workflow; design and
+  task log in `todo.md` (CAT30-CAT41), architecture in the Pixel Catan section below.
 
 
 - **v6 (security hardening)** `7 July 2026`: Deleted live Vercel OIDC token from

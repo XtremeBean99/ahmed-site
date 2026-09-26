@@ -1,14 +1,15 @@
 import { COSTS, RESOURCES } from '@/lib/games/catan/constants'
 import { playersToAct, validateAction } from '@/lib/games/catan/engine'
-import { HEXES } from '@/lib/games/catan/geometry'
 import {
   hasResources,
   legalCities,
+  legalRobberHexes,
   legalRoads,
   legalSettlements,
   legalSetupRoads,
   legalSetupSettlements,
   maritimeRate,
+  totalCards,
 } from '@/lib/games/catan/helpers'
 import type { Action, GameState, PlayerId } from '@/lib/games/catan/types'
 import { actionBlockReason } from './action-reasons'
@@ -98,9 +99,8 @@ export function selectBoardTargets(
         kind: 'robber',
         vertices: [],
         edges: [],
-        hexes: HEXES.map((h) => h.id).filter(
-          (id) => id !== state.robber && humanAllowed(state, { type: 'moveRobber', hex: id }, canHumanApply),
-        ),
+        // The engine's legal set, so the friendly robber's protected hexes are never offered.
+        hexes: legalRobberHexes(state).filter((id) => humanAllowed(state, { type: 'moveRobber', hex: id }, canHumanApply)),
       }
     case 'roadBuilding':
       return {
@@ -182,8 +182,10 @@ export function selectCanFlags(
     : []
   const citySpots = inMain ? legalCities(state, human).filter((v) => allowed({ type: 'buildCity', vertex: v })) : []
 
-  let canTrade = false
-  if (inMain) {
+  // Any card can go into a player offer, so outside the tutorial the panel opens whenever you hold one;
+  // the tutorial allows only specific trades, so there it needs an allowed bank trade.
+  let canTrade = inMain && !canHumanApply && totalCards(me.resources) > 0
+  if (inMain && canHumanApply) {
     for (const give of RESOURCES) {
       const rate = maritimeRate(state, human, give)
       if (me.resources[give] < rate) continue

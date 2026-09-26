@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { makeTestState, give, res } from '@/lib/games/catan/test-fixtures'
+import { makeTestState, give, putSettlement, res } from '@/lib/games/catan/test-fixtures'
+import { validateAction } from '@/lib/games/catan/engine'
 import {
   isTradePendingForHuman,
   selectBoardTargets,
@@ -57,7 +58,7 @@ test('selectCanFlags gates on resources, spots and turn', () => {
   assert.equal(flags.canBuyDev, false)
   assert.equal(flags.canEndTurn, true)
   assert.equal(flags.canRoll, false)
-  assert.equal(flags.canTrade, false)
+  assert.equal(flags.canTrade, true, 'any card can go into a player offer')
 
   const preRoll = makeTestState({ phase: { kind: 'preRoll' }, current: 0 })
   assert.equal(selectCanFlags(preRoll, 0).canRoll, true)
@@ -115,3 +116,27 @@ test('selectLastPlaced finds the most recent board placement', () => {
   assert.deepEqual(selectLastPlaced(state), { kind: 'edge', id: 5 })
   assert.equal(selectLastPlaced(null), null)
 })
+
+test('robber targets are the engine legal hexes, so the friendly robber protects low-score players', () => {
+  const state = makeTestState({ phase: { kind: 'moveRobber', returnTo: 'main' }, current: 0 })
+  state.settings.friendlyRobber = true
+  putSettlement(state, 1, 4)
+  putSettlement(state, 2, 40)
+  putSettlement(state, 2, 44)
+  putSettlement(state, 2, 50)
+  const targets = selectBoardTargets(state, 0, null)
+  assert.ok(targets.hexes.length > 0)
+  for (const hex of targets.hexes) assert.equal(validateAction(state, { type: 'moveRobber', hex }), null)
+  assert.ok(targets.hexes.length < 18, 'protected hexes are left out')
+})
+
+test('Trade opens for player offers even when no bank trade is possible', () => {
+  const state = makeTestState({ phase: { kind: 'main' }, current: 0 })
+  give(state, 0, { brick: 1, wool: 1, grain: 2 })
+  assert.equal(selectCanFlags(state, 0).canTrade, true)
+  for (const r of ['brick', 'lumber', 'wool', 'grain', 'ore'] as const) state.bank[r] = 0
+  assert.equal(selectCanFlags(state, 0).canTrade, true)
+  const emptyHanded = makeTestState({ phase: { kind: 'main' }, current: 0 })
+  assert.equal(selectCanFlags(emptyHanded, 0).canTrade, false)
+})
+

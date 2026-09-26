@@ -103,6 +103,7 @@ interface RoomProps {
     }
     desk: {
       back: string
+      clickAgain: string
       desktop: string
       screenLabel: string
       linkedin: string
@@ -136,14 +137,13 @@ interface RoomProps {
       breakoutApp: BreakoutLabels
       music: string
       settingsApp: { title: string; sfx: string; sfxVolume: string; musicVolume: string; clock: string; clock12: string; clock24: string; on: string; off: string; close: string }
-      paintApp: { pencil: string; eraser: string; fill: string; clear: string; download: string; color: string; canvas: string }
+      paintApp: { pencil: string; eraser: string; fill: string; clear: string; clearConfirm: string; download: string; color: string; canvas: string }
       mines: { board: string; cell: string; minesLeft: string; time: string; best: string; reset: string; won: string; lost: string }
       snakeApp: SnakeLabels
       musicTip: string
       musicApp: { title: string; nowPlaying: string; select: string }
       readmeApp: { title: string; close: string }
       legalApp: { title: string; privacyTab: string; termsTab: string; close: string }
-      readmePopup: string
       guestbook: string
       guestbookTip: string
       guestbookApp: { title: string; close: string; namePh: string; messagePh: string; sign: string; empty: string; posting: string; error: string }
@@ -285,20 +285,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
   }, [light])
 
   useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); setSfxEnabled(p.sfx); setSfxVolumeState(p.sfxVolume); setHintPulses(p.visitCount <= 1); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
-
-  // First-visit README popup: shown once, persisted in localStorage.
-  const [showReadmePopup, setShowReadmePopup] = useState(false)
-  useEffect(() => {
-    const KEY = 'room-readme-seen'
-    try {
-      if (localStorage.getItem(KEY)) return
-    } catch { return }
-    const id = setTimeout(() => {
-      setShowReadmePopup(true)
-      try { localStorage.setItem(KEY, '1') } catch {}
-    }, 2000)
-    return () => clearTimeout(id)
-  }, [])
 
   // Timeout refs
   const safetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -574,6 +560,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
         <DeskView
           shortcuts={deskShortcuts}
           backLabel={t.desk.back}
+          clickAgainLabel={t.desk.clickAgain}
           screenLabel={t.desk.screenLabel}
           desktopLabel={t.desk.desktop}
           speakersLabel={t.room.audio.speakersLabel}
@@ -932,29 +919,30 @@ export function Room({ dict, readmeContent }: RoomProps) {
           {/* iPod on the desk, click skips to a fresh track (starts music if stopped) */}
           <RoomIpod label={t.room.ipodLabel} obj={ipodObj} onActivate={() => discover('ipod', t.room.discoveryLabels.ipod)} />
 
-        </RoomStage>
+          {/* First-visit hint pulses: inside the stage so the outlines track the
+              stage scale, zoom and letterboxing with the objects they mark. */}
+          {hintPulses && view === 'room' && (
+            <div aria-hidden className="absolute inset-0 z-10 pointer-events-none">
+              {ROOM_OBJECTS.filter(o => o.id !== 'clock').map((obj, i) => (
+                <div
+                  key={obj.id}
+                  className="absolute animate-[hint-pulse_2s_ease-in-out_infinite]"
+                  style={{
+                    left: obj.x,
+                    top: obj.y,
+                    width: obj.w,
+                    height: obj.h,
+                    outline: '2px solid rgba(200,184,154,0.5)',
+                    outlineOffset: '4px',
+                    borderRadius: '2px',
+                    animationDelay: `${i * 0.3}s`,
+                  }}
+                />
+              ))}
+            </div>
+          )}
 
-      {/* First-visit hint pulses */}
-      {hintPulses && view === 'room' && (
-        <div aria-hidden className="fixed inset-0 z-10 pointer-events-none">
-          {ROOM_OBJECTS.filter(o => o.id !== 'clock').map((obj, i) => (
-            <div
-              key={obj.id}
-              className="absolute animate-[hint-pulse_2s_ease-in-out_infinite]"
-              style={{
-                left: obj.x,
-                top: obj.y,
-                width: obj.w,
-                height: obj.h,
-                outline: '2px solid rgba(200,184,154,0.5)',
-                outlineOffset: '4px',
-                borderRadius: '2px',
-                animationDelay: `${i * 0.3}s`,
-              }}
-            />
-          ))}
-        </div>
-      )}
+        </RoomStage>
 
         </LightingProvider>
       </nav>
@@ -1026,52 +1014,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
           }}
         />
       )}
-      {/* First-visit README popup, styled like room tooltips */}
-      <AnimatePresence>
-        {showReadmePopup && view === 'room' && (
-          <motion.div
-            className="fixed z-50"
-            style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div
-              className="relative px-6 py-5 border-2 max-w-[420px]"
-              style={{
-                backgroundColor: '#3d2e1e',
-                borderColor: '#5a4430',
-                borderRadius: '3px',
-                fontFamily: 'var(--font-pixel), "Courier New", monospace',
-                fontSize: '11px',
-                color: '#e8d5b0',
-                lineHeight: '1.6',
-                textShadow: '1px 1px 0 #1a0e04',
-                maxHeight: '60vh',
-                overflowY: 'auto',
-              }}
-            >
-              <button
-                onClick={() => setShowReadmePopup(false)}
-                className="absolute top-1 right-2 text-[#a09080] hover:text-[#e8d5b0] transition-colors"
-                style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace', fontSize: '12px' }}
-                aria-label="Close"
-              >
-                ✕
-              </button>
-              <p className="text-center text-[#c8b89a] mb-2" style={{ fontSize: '12px' }}>README</p>
-              <div className="text-[10px] leading-relaxed whitespace-pre-wrap">
-                {readmeContent}
-              </div>
-              <p className="mt-3 text-[9px] text-[#a09080] text-center">
-                {t.desk.readmePopup}
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Discoveries badge */}
       {view === 'room' && (
         <DiscoveriesBadge

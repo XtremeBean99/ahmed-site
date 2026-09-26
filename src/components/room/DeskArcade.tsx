@@ -2,51 +2,27 @@
 'use client'
 
 /**
- * Shared kit for the desk arcade (Blackjack, Solitaire, Pong, Breakout): the
- * full-screen frame, the canvas scale hook, the palette and the room-style
- * controls, so the four games read as one set.
+ * Shared kit for the desk games (Blackjack, Solitaire, Pong, Breakout, Paint,
+ * Minesweeper, Snake): the full-screen frame, the canvas scale hook, the
+ * palette and the room-style controls, so the games read as one set.
  */
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import type { CardNameLabels } from '@/lib/games/cards'
-import { ScreenStrip, StripButton } from './ScreenStrip'
+import { useT } from '@/lib/i18n/client'
+import { ScreenStrip } from './ScreenStrip'
+import { NowPlaying } from './NowPlaying'
+import { ARCADE, PIXEL_FONT } from './pixel-ui'
+
+export { ARCADE, ArcadeButton, PIXEL_FONT } from './pixel-ui'
 
 /** The desk monitor glass, in CSS pixels before the stage scale. */
 export const SCREEN_W = 536
 export const SCREEN_H = 308
 /** Height under the 28px ScreenStrip. */
 export const APP_H = SCREEN_H - 28
-
-export const PIXEL_FONT = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const
-
-/** Room-palette retro: warm chrome, muted felt, a warm CRT. */
-export const ARCADE = {
-  ink: '#3a3028',
-  inkSoft: '#8a7a68',
-  paper: '#faf8f5',
-  strip: '#e8e0d8',
-  stripBorder: '#c8b8a8',
-  panel: '#3d2e1e',
-  panelDark: '#2d2116',
-  panelBorder: '#5a4430',
-  panelText: '#e8d5b0',
-  panelShadow: '#1a0e04',
-  felt: '#35553a',
-  feltDark: '#27402c',
-  feltLight: '#4a6e4e',
-  feltLine: '#6f9270',
-  feltText: '#cfe0c0',
-  crt: '#140e0a',
-  phosphor: '#f0dcb4',
-  phosphorGlow: 'rgba(240,196,130,0.55)',
-  phosphorDim: '#6a5a48',
-  rust: '#b3372c',
-  amber: '#e8a83a',
-  gold: '#d8a038',
-  olive: '#7a9a4a',
-  teal: '#4a8a86',
-  slate: '#5a6a9a',
-  plum: '#8a3a5a',
-} as const
+/** The music bar under a full-screen app. */
+const FS_BAR_H = 52
+const FS_BG = '#0e0a08'
 
 export interface ArcadeLabels {
   fullscreen: string
@@ -86,7 +62,7 @@ export function useFullscreen(): Fullscreen {
     const update = () => {
       const on = ref.current !== null && document.fullscreenElement === ref.current
       setActive(on)
-      setScale(on ? Math.min(window.innerWidth / SCREEN_W, window.innerHeight / SCREEN_H) : 1)
+      setScale(on ? Math.min(window.innerWidth / SCREEN_W, (window.innerHeight - FS_BAR_H) / SCREEN_H) : 1)
     }
     document.addEventListener('fullscreenchange', update)
     window.addEventListener('resize', update)
@@ -106,34 +82,51 @@ export function useFullscreen(): Fullscreen {
 
 /**
  * The app's root. Normally it fills the monitor glass; in full screen it becomes
- * the full-screen element and scales its fixed 536x308 content to fit.
+ * the full-screen element, scales its fixed 536x308 content into the space above
+ * a music bar (the page's own player is outside the full-screen element, so it
+ * would vanish), and the tree stays the same so the app keeps its state.
  */
 export function ArcadeFrame({ fs, background = ARCADE.paper, children }: { fs: Fullscreen; background?: string; children: ReactNode }) {
+  const t = useT()
   return (
     <div
       ref={fs.ref}
-      className="absolute inset-0 flex items-center justify-center overflow-hidden"
-      style={{ backgroundColor: fs.active ? '#0e0a08' : background }}
+      className="absolute inset-0 flex flex-col overflow-hidden"
+      style={{ backgroundColor: fs.active ? FS_BG : background }}
     >
-      <div
-        className="relative flex flex-col flex-shrink-0 overflow-hidden"
-        style={{
-          width: SCREEN_W,
-          height: SCREEN_H,
-          backgroundColor: background,
-          transform: fs.active ? `scale(${fs.scale})` : undefined,
-          transformOrigin: 'center center',
-        }}
-      >
-        {children}
+      <div className="flex-1 min-h-0 flex items-center justify-center">
+        <div
+          className="relative flex flex-col flex-shrink-0 overflow-hidden"
+          style={{
+            width: SCREEN_W,
+            height: SCREEN_H,
+            backgroundColor: background,
+            transform: fs.active ? `scale(${fs.scale})` : undefined,
+            transformOrigin: 'center center',
+          }}
+        >
+          {children}
+        </div>
       </div>
+      {fs.active && (
+        <div
+          className="flex items-center justify-between gap-4 flex-shrink-0 px-4"
+          style={{ height: FS_BAR_H, backgroundColor: FS_BG, borderTop: `1px solid ${ARCADE.panelBorder}` }}
+        >
+          <NowPlaying labels={t.room.audio} embedded />
+          <span className="flex-shrink-0" style={{ ...PIXEL_FONT, fontSize: 10, color: ARCADE.inkSoft }}>
+            {t.desk.arcade.escHint}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
 
-/** The standard strip for an arcade app: clock, extra controls, full screen, Desktop, Room. */
+/** The strip for an app with full screen: ScreenStrip with the Full screen button. */
 export function ArcadeStrip({
   time,
+  title,
   fs,
   arcade,
   desktopLabel,
@@ -143,6 +136,7 @@ export function ArcadeStrip({
   children,
 }: {
   time: string
+  title?: string
   fs: Fullscreen
   arcade: ArcadeLabels
   desktopLabel: string
@@ -151,19 +145,18 @@ export function ArcadeStrip({
   onBack: (e: React.MouseEvent) => void
   children?: ReactNode
 }) {
-  const leaveFullscreen = () => {
-    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {})
-  }
   return (
-    <ScreenStrip time={time}>
+    <ScreenStrip
+      time={time}
+      title={title}
+      fs={fs}
+      fsLabels={arcade}
+      desktopLabel={desktopLabel}
+      onDesktop={onDesktop}
+      backLabel={backLabel}
+      onBack={onBack}
+    >
       {children}
-      {fs.supported && (
-        <StripButton onClick={fs.toggle}>
-          {fs.active ? arcade.exitFullscreen : arcade.fullscreen}
-        </StripButton>
-      )}
-      <StripButton onClick={() => { leaveFullscreen(); onDesktop() }}>{desktopLabel}</StripButton>
-      <StripButton onClick={(e) => { leaveFullscreen(); onBack(e) }} ariaLabel={backLabel}>← {backLabel}</StripButton>
     </ScreenStrip>
   )
 }
@@ -229,75 +222,6 @@ export function CrtOverlay() {
         boxShadow: 'inset 0 0 18px rgba(0,0,0,0.6)',
       }}
     />
-  )
-}
-
-type ButtonTone = 'cream' | 'dark'
-type ButtonSize = 'sm' | 'md' | 'lg'
-const SIZES: Record<ButtonSize, { font: number; padX: number; h: number; notch: number; border: number }> = {
-  sm: { font: 9, padX: 6, h: 18, notch: 3, border: 2 },
-  md: { font: 10, padX: 9, h: 22, notch: 4, border: 2 },
-  lg: { font: 12, padX: 12, h: 28, notch: 5, border: 3 },
-}
-
-/** Pixel button in the room's style: cream bevel (like "To Room") or the dark bubble. */
-export function ArcadeButton({
-  onClick,
-  children,
-  tone = 'cream',
-  size = 'md',
-  disabled,
-  pressed,
-  ariaLabel,
-  title,
-  className,
-}: {
-  onClick: (e: React.MouseEvent) => void
-  children: ReactNode
-  tone?: ButtonTone
-  size?: ButtonSize
-  disabled?: boolean
-  pressed?: boolean
-  ariaLabel?: string
-  title?: string
-  className?: string
-}) {
-  const s = SIZES[size]
-  const n = s.notch
-  const cream = tone === 'cream'
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={ariaLabel}
-      aria-pressed={pressed}
-      title={title}
-      className={`relative inline-flex items-center justify-center whitespace-nowrap outline-none transition-[filter,transform] duration-75 enabled:hover:brightness-110 enabled:active:translate-y-px disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-1 ${cream ? 'focus-visible:outline-[#3a2820]' : 'focus-visible:outline-[#e8d5b0]'} ${className ?? ''}`}
-      style={{
-        ...PIXEL_FONT,
-        height: s.h,
-        padding: `0 ${s.padX}px`,
-        fontSize: s.font,
-        lineHeight: 1,
-        color: cream ? '#3a2820' : ARCADE.panelText,
-        textShadow: cream ? '1px 1px 0 rgba(255,255,255,0.45)' : `1px 1px 0 ${ARCADE.panelShadow}`,
-        background: cream
-          ? pressed
-            ? 'linear-gradient(180deg, #d8c098 0%, #e8d4b0 100%)'
-            : 'linear-gradient(180deg, #fffaf0 0%, #f0e0c0 45%, #d8c098 100%)'
-          : pressed
-            ? ARCADE.panelDark
-            : `linear-gradient(180deg, #4a3826 0%, ${ARCADE.panel} 100%)`,
-        border: `${s.border}px solid ${cream ? '#3a2820' : ARCADE.panelBorder}`,
-        clipPath: `polygon(${n}px 0, calc(100% - ${n}px) 0, 100% ${n}px, 100% calc(100% - ${n}px), calc(100% - ${n}px) 100%, ${n}px 100%, 0 calc(100% - ${n}px), 0 ${n}px)`,
-        boxShadow: cream
-          ? 'inset 1px 1px 0 rgba(255,255,255,0.7), inset -2px -2px 0 rgba(0,0,0,0.22)'
-          : 'inset 1px 1px 0 rgba(255,230,190,0.12), inset -2px -2px 0 rgba(0,0,0,0.3)',
-      }}
-    >
-      {children}
-    </button>
   )
 }
 

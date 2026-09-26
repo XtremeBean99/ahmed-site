@@ -718,6 +718,8 @@ test('download saves files and dl is an alias', async () => {
 
 test('clock prints a locale string', async () => {
   const t = makeCtx()
+  const before = new Date().toLocaleString() + '\n'
   assert.equal(await t.run('clock', []), 0)
-  assert.equal(t.out(), new Date().toLocaleString() + '\n')
+  // The run can cross a second boundary, so either side of it is correct.
+  assert.ok([before, new Date().toLocaleString() + '\n'].includes(t.out()), t.out())
 })

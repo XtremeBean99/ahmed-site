@@ -1,7 +1,7 @@
 // src/components/room/DeskBlackjack.tsx
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
   ARCADE,
@@ -17,7 +17,7 @@ import {
   type DeskGameProps,
 } from './DeskArcade'
 import { CARD_H, CARD_W, PlayingCard, cardUrl } from './PlayingCard'
-import { cardName, type Card } from '@/lib/games/cards'
+import { cardName, type Card, type CardNameLabels, type Rank, type Suit } from '@/lib/games/cards'
 import {
   CHIP_VALUES,
   MIN_BET,
@@ -48,9 +48,21 @@ const PLAY_W = SCREEN_W
 const DEALER_Y = 10
 const HAND_Y = 138
 const HAND_Y_ACTIVE = 134
+/** A hand's total badge sits this far above its cards. */
+const BADGE_ABOVE = 19
+/** The band between the dealer's cards and the player badges: felt printing and result banner. */
+const MID_Y = DEALER_Y + CARD_H
+const MID_H = HAND_Y_ACTIVE - BADGE_ABOVE - MID_Y
 const STAKE_Y = 210
+/** Chips drawn per stack, so a stack never runs under the 40px bottom bar at y 240. */
+const STACK_MAX = 6
+/** Horizontal step between overlapping cards, the gap between split hands, and the felt margin. */
+const FAN = 14
+const HAND_GAP = 24
+const EDGE = 12
 const CIRCLE = { x: 268, y: 222, r: 14 }
 const SHOE_ORIGIN = { x: 493, y: 21 }
+const TUTORIAL_KEY = 'blackjack-tutorial-seen'
 
 const STAGGER = 180
 const FLY = 220
@@ -95,7 +107,7 @@ function fewestChips(amount: number): number[] {
 
 function stackHeight(amount: number): number {
   const n = fewestChips(amount).length
-  return n === 0 ? 0 : Math.min(n, 10) * 5 - 2
+  return n === 0 ? 0 : Math.min(n, STACK_MAX) * 5 - 2
 }
 
 export interface BlackjackLabels {
@@ -118,7 +130,6 @@ export interface BlackjackLabels {
   rebuy: string
   shuffling: string
   blackjackPays: string
-  dealerRule: string
   sixDecks: string
   soft: string
   chip: string
@@ -137,6 +148,23 @@ export interface BlackjackLabels {
   resultSplitWin: string
   resultSplitLoss: string
   resultSplitEven: string
+  tutorial: BlackjackTutorialLabels
+}
+
+export interface BlackjackTutorialLabels {
+  button: string
+  title: string
+  close: string
+  back: string
+  next: string
+  start: string
+  page: string
+  goal: { title: string; body: string; dealer: string; you: string }
+  values: { title: string; body: string; blackjack: string; soft: string; bust: string }
+  betting: { title: string; body: string; clear: string; deal: string }
+  turn: { title: string; body: string; hit: string; stand: string; double: string; split: string }
+  dealer: { title: string; body: string; insurance: string; yes: string; no: string }
+  payouts: { title: string; body: string; rows: { term: string; pays: string }[]; saved: string }
 }
 
 const fmt = (n: number) =>
@@ -157,13 +185,13 @@ function ChipSide({ value, top }: { value: number; top: number }) {
 function BetStack({ amount, left, top, zIndex = 1 }: { amount: number; left: number; top: number; zIndex?: number }) {
   if (amount <= 0) return null
   const chips = fewestChips(amount)
-  const shown = chips.slice(0, 10)
+  const shown = chips.slice(0, STACK_MAX)
   return (
     <div className="absolute" style={{ left, top, width: 12, height: shown.length * 5 - 2, zIndex }} aria-hidden>
       {shown.map((v, i) => (
         <ChipSide key={i} value={v} top={i * 5} />
       ))}
-      {chips.length > 10 && (
+      {chips.length > STACK_MAX && (
         <span className="absolute" style={{ left: 13, top: shown.length * 5 - 11, ...PIXEL_FONT, fontSize: 8, color: ARCADE.feltText }}>
           +
         </span>
@@ -276,24 +304,6 @@ function FlyCard({ card, slotX, slotY, delay }: { card: Card; slotX: number; slo
   )
 }
 
-function DiscardTray({ discards }: { discards: number }) {
-  const strips = Math.min(10, Math.floor(discards / 26))
-  return (
-    <div
-      className="absolute"
-      style={{ left: 14, top: 10, width: 30, height: 12, backgroundColor: ARCADE.panelDark, border: `1px solid ${ARCADE.panelBorder}` }}
-      aria-hidden
-    >
-      {Array.from({ length: strips }, (_, i) => (
-        <div
-          key={i}
-          style={{ position: 'absolute', left: 2, top: 19 - i, width: 26, height: 2, backgroundColor: ARCADE.rust, border: '1px solid #2a2520' }}
-        />
-      ))}
-    </div>
-  )
-}
-
 function Shoe({ label }: { label: string }) {
   return (
     <div className="absolute" style={{ left: 470, top: 8, width: 46, height: 34 }} aria-hidden>
@@ -351,6 +361,279 @@ function ActivePointer({ centerX }: { centerX: number }) {
   )
 }
 
+const cardOf = (rank: Rank, suit: Suit): Card => ({ rank, suit })
+
+function KeyCap({ children }: { children: ReactNode }) {
+  return (
+    <kbd
+      style={{
+        ...PIXEL_FONT,
+        display: 'inline-block',
+        minWidth: 15,
+        padding: '2px 4px 1px',
+        fontSize: 9,
+        lineHeight: 1,
+        textAlign: 'center',
+        color: ARCADE.panelText,
+        backgroundColor: ARCADE.panelDark,
+        border: `1px solid ${ARCADE.panelBorder}`,
+        borderBottomWidth: 2,
+        borderRadius: 2,
+      }}
+    >
+      {children}
+    </kbd>
+  )
+}
+
+/** Key caps, a gold name and a plain description, one row each. */
+function KeyRows({ rows, top = 10 }: { rows: { keys: string[]; name?: string; text: string }[]; top?: number }) {
+  const named = rows.some((row) => row.name)
+  return (
+    <div className="grid items-center" style={{ gridTemplateColumns: named ? 'auto auto 1fr' : 'auto 1fr', columnGap: 8, rowGap: 6, marginTop: top }}>
+      {rows.map((row) => (
+        <div key={row.text} className="contents">
+          <span className="flex gap-1">
+            {row.keys.map((k) => (
+              <KeyCap key={k}>{k}</KeyCap>
+            ))}
+          </span>
+          {named && <span style={{ color: ARCADE.gold }}>{row.name}</span>}
+          <span>{row.text}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** A few example hands laid on a strip of felt, each with a caption. */
+function FeltExamples({ hands, names }: { hands: { cards: Card[]; caption: string }[]; names: CardNameLabels }) {
+  return (
+    <div
+      className="flex items-end justify-center"
+      style={{ gap: 28, marginTop: 10, padding: '6px 12px', backgroundColor: ARCADE.felt, border: `1px solid ${ARCADE.feltLine}`, borderRadius: 3 }}
+    >
+      {hands.map((hand) => (
+        <figure key={hand.caption} className="m-0 flex flex-col items-center" style={{ gap: 4 }}>
+          <div className="relative" style={{ width: CARD_W + FAN * (hand.cards.length - 1), height: CARD_H }}>
+            {hand.cards.map((c, i) => (
+              <PlayingCard key={i} card={c} alt={cardName(c, names)} style={{ position: 'absolute', left: i * FAN, top: 0 }} />
+            ))}
+          </div>
+          <figcaption style={{ fontSize: 9, lineHeight: 1, color: ARCADE.feltText }}>{hand.caption}</figcaption>
+        </figure>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * The paged How to play dialog. Escape is caught on the window's capture phase so
+ * it closes only this dialog and never reaches DeskView's leave-the-app handler.
+ */
+function BlackjackTutorial({ labels, names, onClose }: { labels: BlackjackLabels; names: CardNameLabels; onClose: () => void }) {
+  const t = labels.tutorial
+  const [page, setPage] = useState(0)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const nextRef = useRef<HTMLSpanElement>(null)
+  const titleId = useId()
+  const bodyId = useId()
+
+  const pages: { title: string; body: string; extra: ReactNode }[] = [
+    {
+      ...t.goal,
+      extra: (
+        <FeltExamples
+          names={names}
+          hands={[
+            { cards: [cardOf(9, 'C'), cardOf(9, 'D')], caption: t.goal.dealer },
+            { cards: [cardOf(10, 'S'), cardOf(12, 'H')], caption: t.goal.you },
+          ]}
+        />
+      ),
+    },
+    {
+      ...t.values,
+      extra: (
+        <FeltExamples
+          names={names}
+          hands={[
+            { cards: [cardOf(1, 'S'), cardOf(13, 'H')], caption: t.values.blackjack },
+            { cards: [cardOf(1, 'D'), cardOf(6, 'C')], caption: t.values.soft },
+            { cards: [cardOf(10, 'H'), cardOf(5, 'S'), cardOf(9, 'D')], caption: t.values.bust },
+          ]}
+        />
+      ),
+    },
+    {
+      ...t.betting,
+      extra: (
+        <div className="flex items-center justify-center" style={{ gap: 24, marginTop: 12 }}>
+          <div className="flex" style={{ gap: 12 }}>
+            {CHIP_VALUES.map((value, i) => (
+              <div key={value} className="flex flex-col items-center" style={{ gap: 3 }}>
+                <ChipSvg value={value} />
+                <span style={{ fontSize: 9, lineHeight: 1 }}>{value}</span>
+                <KeyCap>{i + 1}</KeyCap>
+              </div>
+            ))}
+          </div>
+          <KeyRows
+            top={0}
+            rows={[
+              { keys: ['Backspace'], text: t.betting.clear },
+              { keys: ['Space', 'Enter'], text: t.betting.deal },
+            ]}
+          />
+        </div>
+      ),
+    },
+    {
+      ...t.turn,
+      extra: (
+        <KeyRows
+          rows={[
+            { keys: ['H'], name: labels.hit, text: t.turn.hit },
+            { keys: ['S'], name: labels.stand, text: t.turn.stand },
+            { keys: ['D'], name: labels.double, text: t.turn.double },
+            { keys: ['P'], name: labels.split, text: t.turn.split },
+          ]}
+        />
+      ),
+    },
+    {
+      ...t.dealer,
+      extra: (
+        <>
+          <p style={{ margin: '8px 0 0' }}>{t.dealer.insurance}</p>
+          <KeyRows
+            rows={[
+              { keys: ['I', 'Y'], text: t.dealer.yes },
+              { keys: ['N'], text: t.dealer.no },
+            ]}
+          />
+        </>
+      ),
+    },
+    {
+      ...t.payouts,
+      extra: (
+        <>
+          <div className="grid" style={{ gridTemplateColumns: 'auto 1fr', columnGap: 16, rowGap: 4, margin: '8px 0 0 12px' }}>
+            {t.payouts.rows.map((row) => (
+              <div key={row.term} className="contents">
+                <span style={{ color: ARCADE.gold }}>{row.term}</span>
+                <span>{row.pays}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ margin: '10px 0 0' }}>{t.payouts.saved}</p>
+        </>
+      ),
+    },
+  ]
+  const last = pages.length - 1
+  const current = pages[page]
+
+  const go = useCallback((delta: number) => setPage((p) => Math.min(last, Math.max(0, p + delta))), [last])
+
+  // Focus lands on Next when the dialog opens, and again if the focused Back button disables itself on page 1.
+  useEffect(() => {
+    const active = document.activeElement
+    const lost = !dialogRef.current?.contains(active) || (active instanceof HTMLButtonElement && active.disabled)
+    if (lost) nextRef.current?.querySelector('button')?.focus()
+  }, [page])
+
+  useEffect(() => {
+    const stop = (e: KeyboardEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      e.stopImmediatePropagation()
+    }
+    const onKey = (e: KeyboardEvent) => {
+      const dialog = dialogRef.current
+      if (!dialog) return
+      if (e.key === 'Escape') {
+        stop(e)
+        onClose()
+      } else if (e.key === 'Tab') {
+        // Keep Tab inside the dialog, wrapping at both ends.
+        const els = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'))
+        if (els.length === 0) return
+        const i = els.indexOf(document.activeElement as HTMLButtonElement)
+        const to = e.shiftKey ? (i <= 0 ? els.length - 1 : i - 1) : i === -1 || i === els.length - 1 ? 0 : i + 1
+        stop(e)
+        els[to].focus()
+      } else if (e.ctrlKey || e.metaKey || e.altKey) {
+        return
+      } else if (e.key === 'ArrowRight') {
+        stop(e)
+        go(1)
+      } else if (e.key === 'ArrowLeft') {
+        stop(e)
+        go(-1)
+      } else if (e.key === 'Enter' && !(e.target instanceof HTMLButtonElement)) {
+        // Enter on a focused button clicks it; anywhere else it turns the page.
+        stop(e)
+        if (page === last) onClose()
+        else go(1)
+      }
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [go, last, onClose, page])
+
+  return (
+    <ArcadeOverlay tint="rgba(12,8,6,0.7)">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={bodyId}
+        tabIndex={-1}
+        className="outline-none"
+      >
+        <ArcadePanel style={{ width: 448, padding: '10px 12px' }}>
+          <div className="flex items-center justify-between" style={{ height: 18 }}>
+            <h2 id={titleId} style={{ fontSize: 9, lineHeight: 1, letterSpacing: 1, textTransform: 'uppercase', color: ARCADE.gold }}>
+              {t.title}
+            </h2>
+            <ArcadeButton tone="dark" size="sm" onClick={onClose} title={`${t.close} (Esc)`}>
+              {t.close}
+            </ArcadeButton>
+          </div>
+          <h3 style={{ fontSize: 12, lineHeight: '14px', margin: '4px 0 6px' }}>{current.title}</h3>
+          <div id={bodyId} aria-live="polite" style={{ height: 144, fontSize: 10, lineHeight: '14px' }}>
+            <p style={{ margin: 0 }}>{current.body}</p>
+            {current.extra}
+          </div>
+          <div className="grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr', marginTop: 8 }}>
+            <div className="justify-self-start">
+              <ArcadeButton tone="dark" onClick={() => go(-1)} disabled={page === 0} title={`${t.back} (Left)`}>
+                {t.back}
+              </ArcadeButton>
+            </div>
+            <div className="flex items-center" style={{ gap: 8 }}>
+              <span className="flex" style={{ gap: 3 }} aria-hidden>
+                {pages.map((_, i) => (
+                  <span key={i} style={{ width: 4, height: 4, backgroundColor: i === page ? ARCADE.amber : ARCADE.panelBorder }} />
+                ))}
+              </span>
+              <span style={{ fontSize: 9, lineHeight: 1 }}>{t.page.replace('{n}', String(page + 1)).replace('{total}', String(pages.length))}</span>
+            </div>
+            <span ref={nextRef} className="justify-self-end">
+              <ArcadeButton onClick={() => (page === last ? onClose() : go(1))} title={page === last ? t.start : `${t.next} (Right)`}>
+                {page === last ? t.start : t.next}
+              </ArcadeButton>
+            </span>
+          </div>
+        </ArcadePanel>
+      </div>
+    </ArcadeOverlay>
+  )
+}
+
 interface SaveShape {
   bankroll?: unknown
   handsPlayed?: unknown
@@ -390,6 +673,11 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
   const [busy, setBusy] = useState(false)
   const [dealOrder, setDealOrder] = useState<Record<string, number>>({})
   const [dealSeq, setDealSeq] = useState(0)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const helpButtonRef = useRef<HTMLSpanElement>(null)
+  // Only a keyboard-opened tutorial hands focus back to its button; otherwise Space (Deal) would reopen it.
+  const helpByKeyRef = useRef(false)
+  const feltRef = useRef<HTMLDivElement>(null)
 
   const tableRef = useRef(table)
   const busyRef = useRef(busy)
@@ -409,6 +697,19 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
 
   useEffect(() => {
     setBest(getBest(BEST_KEYS.blackjack))
+  }, [])
+
+  // The tutorial opens by itself the first time a visitor ever opens Blackjack.
+  useEffect(() => {
+    if (readJson(TUTORIAL_KEY) === true) return
+    writeJson(TUTORIAL_KEY, true)
+    setHelpOpen(true)
+  }, [])
+
+  const closeHelp = useCallback(() => {
+    setHelpOpen(false)
+    if (helpByKeyRef.current) helpButtonRef.current?.querySelector('button')?.focus()
+    else (document.activeElement as HTMLElement | null)?.blur()
   }, [])
 
   const later = useCallback((fn: () => void, ms: number) => {
@@ -655,11 +956,16 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
   }, [table, busy, later, showResult, tone])
 
   useEffect(() => {
+    // The tutorial owns the keyboard while it is open.
+    if (helpOpen) return
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return
       if (busyRef.current) return
       const s = tableRef.current
       const k = e.key.toLowerCase()
+      // Space and Enter on a strip button (How to play, Full screen...) press that button, not Deal.
+      const stripButton = e.target instanceof HTMLButtonElement && !feltRef.current?.contains(e.target)
+      if ((k === ' ' || k === 'enter') && stripButton) return
       if (k >= '1' && k <= '4') {
         if (s.phase !== 'betting') return
         e.preventDefault()
@@ -704,27 +1010,33 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onChip, onClear, startDeal, doRebet, doInsure, doHit, doStand, doDouble, doSplit])
+  }, [helpOpen, onChip, onClear, startDeal, doRebet, doInsure, doHit, doStand, doDouble, doSplit])
 
-  const dealerWidth = table.dealer.length > 0 ? CARD_W + 14 * (table.dealer.length - 1) : 0
+  const dealerWidth = table.dealer.length > 0 ? CARD_W + FAN * (table.dealer.length - 1) : 0
   const dealerLeft = Math.round((PLAY_W - dealerWidth) / 2)
 
+  // Every x here is on the felt (0 to PLAY_W): hands sit centred as one row.
   const handsLayout = useMemo(() => {
-    if (table.hands.length === 0) return []
-    const widths = table.hands.map((h) => CARD_W + 14 * (h.cards.length - 1))
-    const totalW = widths.reduce((a, b) => a + b, 0) + 24 * (table.hands.length - 1)
+    const hands = table.hands
+    if (hands.length === 0) return []
+    const overlaps = hands.reduce((n, h) => n + h.cards.length - 1, 0)
+    const fixed = CARD_W * hands.length + HAND_GAP * (hands.length - 1)
+    // Tighten the fan only if four long split hands would run off the felt.
+    const step = overlaps > 0 ? Math.min(FAN, Math.floor((PLAY_W - 2 * EDGE - fixed) / overlaps)) : FAN
+    const widths = hands.map((h) => CARD_W + step * (h.cards.length - 1))
+    const totalW = widths.reduce((a, b) => a + b, 0) + HAND_GAP * (hands.length - 1)
     let left = Math.round((PLAY_W - totalW) / 2)
     const active = table.phase === 'player' ? table.active : -1
-    return table.hands.map((hand, i) => {
+    return hands.map((hand, i) => {
       const layout = {
         hand,
         index: i,
         left,
-        width: widths[i],
+        step,
         top: i === active ? HAND_Y_ACTIVE : HAND_Y,
         centerX: Math.round(left + widths[i] / 2),
       }
-      left += widths[i] + 24
+      left += widths[i] + HAND_GAP
       return layout
     })
   }, [table.hands, table.active, table.phase])
@@ -844,37 +1156,42 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
 
   return (
     <ArcadeFrame fs={fs} background={ARCADE.felt}>
-      <ArcadeStrip time={time} fs={fs} arcade={arcade} desktopLabel={desktopLabel} backLabel={backLabel} onDesktop={onDesktop} onBack={onBack} />
+      <ArcadeStrip time={time} fs={fs} arcade={arcade} desktopLabel={desktopLabel} backLabel={backLabel} onDesktop={onDesktop} onBack={onBack}>
+        <span ref={helpButtonRef} className="contents">
+          <ArcadeButton tone="dark" size="sm" onClick={(e) => { helpByKeyRef.current = e.detail === 0; setHelpOpen(true) }}>
+            {labels.tutorial.button}
+          </ArcadeButton>
+        </span>
+      </ArcadeStrip>
 
-      <div role="group" aria-label={labels.table} className="relative flex-1 overflow-hidden" style={FELT_STYLE}>
-        {/* Felt printing */}
-        <div aria-hidden className="absolute" style={{ left: 0, right: 0, top: 86, height: 28 }}>
-          <div className="absolute" style={{ left: 90, right: 90, top: 0, height: 1, backgroundColor: ARCADE.feltLine }} />
-          <div className="absolute" style={{ left: 90, right: 90, top: 27, height: 1, backgroundColor: ARCADE.feltLine }} />
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
-            <span style={{ ...PIXEL_FONT, fontSize: 10, color: ARCADE.feltText, opacity: 0.75, letterSpacing: 1 }}>{labels.blackjackPays}</span>
-            <span style={{ ...PIXEL_FONT, fontSize: 8, color: ARCADE.feltText, opacity: 0.55 }}>{labels.dealerRule}</span>
-          </div>
+      <div ref={feltRef} role="group" aria-label={labels.table} className="relative flex-1 overflow-hidden" style={FELT_STYLE}>
+        {/* Felt printing, centred between the dealer's cards and the player's hands; the result banner takes its place */}
+        <div
+          aria-hidden
+          className="absolute flex items-center justify-center"
+          style={{ left: 0, right: 0, top: MID_Y, height: MID_H, opacity: banner ? 0 : 1, transition: 'opacity 150ms' }}
+        >
+          <span style={{ ...PIXEL_FONT, fontSize: 10, lineHeight: 1, color: ARCADE.feltText, opacity: 0.75, letterSpacing: 1 }}>{labels.blackjackPays}</span>
         </div>
 
-        {/* Dealer zone */}
+        {/* Dealer zone. Like the hands, the group starts at the felt origin, so every child uses felt x and y. */}
         {table.dealer.length > 0 && (
-          <div className="absolute" style={{ left: 0, top: DEALER_Y, width: PLAY_W, height: CARD_H }} role="group" aria-label={dealerAria}>
+          <div className="absolute" style={{ left: 0, top: 0, width: PLAY_W, height: DEALER_Y + CARD_H }} role="group" aria-label={dealerAria}>
             <div
               className="absolute"
-              style={{ left: dealerLeft - 8, top: 22, transform: 'translateX(-100%)' }}
+              style={{ left: dealerLeft - 8, top: DEALER_Y + 22, transform: 'translateX(-100%)' }}
               aria-hidden
             >
-              <ArcadePanel style={{ fontSize: 9, padding: '1px 5px' }}>{dealerBadge}</ArcadePanel>
+              <ArcadePanel style={{ fontSize: 9, lineHeight: 1, padding: '2px 5px' }}>{dealerBadge}</ArcadePanel>
             </div>
             {table.dealer.map((card, i) => {
-              const slotX = dealerLeft + i * 14
+              const slotX = dealerLeft + i * FAN
               if (i === 1) {
                 return (
                   <motion.div
                     key={`${dealSeq}-d-1`}
                     className="absolute"
-                    style={{ left: slotX, top: 0 }}
+                    style={{ left: slotX, top: DEALER_Y }}
                     initial={{ x: SHOE_ORIGIN.x - slotX, y: SHOE_ORIGIN.y - DEALER_Y, opacity: 0 }}
                     animate={{ x: 0, y: 0, opacity: 1 }}
                     transition={{ duration: reduce ? 0 : FLY / 1000, delay: reduce ? 0 : dealDelay('d-1') / 1000, ease: 'easeOut' }}
@@ -889,7 +1206,6 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
         )}
 
         <Shoe label={labels.sixDecks} />
-        <DiscardTray discards={table.discards} />
 
         {/* Betting circle with the pending stack */}
         {table.phase === 'betting' && (
@@ -902,18 +1218,19 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
         )}
 
         {/* Player hands */}
-        {handsLayout.map(({ hand, index, left, width, top, centerX }) => {
+        {handsLayout.map(({ hand, index, left, step, top, centerX }) => {
           const v = handValue(hand.cards)
           const badgeText = hand.outcome === 'bust' ? labels.resultBust : v.soft ? labels.soft.replace('{n}', String(v.total)) : String(v.total)
           const loses = table.phase === 'settled' && (hand.outcome === 'lose' || hand.outcome === 'bust')
           const wins = table.phase === 'settled' && (hand.outcome === 'win' || hand.outcome === 'blackjack')
+          // The group spans the whole felt so its cards, badge, stake and pointer all use felt x.
           return (
-            <div key={index} className="absolute" style={{ left, top: 0, width, height: CARD_H + 46 }} role="group" aria-label={handLabel(hand)}>
-              <div className="absolute" style={{ left: 0, top: top - 16 }} aria-hidden>
-                <ArcadePanel style={{ fontSize: 9, padding: '1px 5px' }}>{badgeText}</ArcadePanel>
+            <div key={index} className="absolute inset-0 pointer-events-none" role="group" aria-label={handLabel(hand)}>
+              <div className="absolute" style={{ left, top: top - BADGE_ABOVE }} aria-hidden>
+                <ArcadePanel style={{ fontSize: 9, lineHeight: 1, padding: '2px 5px' }}>{badgeText}</ArcadePanel>
               </div>
-              {hand.cards.map((card, ci) => (
-                <FlyCard key={`${dealSeq}-p${index}-${ci}`} card={card} slotX={left + ci * 14} slotY={top} delay={dealDelay(`p${index}-${ci}`)} />
+              {hand.cards.map((c, ci) => (
+                <FlyCard key={`${dealSeq}-p${index}-${ci}`} card={c} slotX={left + ci * step} slotY={top} delay={dealDelay(`p${index}-${ci}`)} />
               ))}
               {table.phase === 'player' && index === table.active && <ActivePointer centerX={centerX} />}
 
@@ -942,7 +1259,8 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
                   transition={{ duration: reduce ? 0 : 0.3, delay: reduce ? 0 : 0.1, ease: 'easeOut' }}
                   aria-hidden
                 >
-                  <BetStack amount={Math.floor((hand.payout ?? 0) / 5) * 5} left={centerX - 6} top={STAKE_Y} />
+                  {/* Winnings land beside the stake so both stay visible. */}
+                  <BetStack amount={Math.floor((hand.payout ?? 0) / 5) * 5} left={centerX + 14} top={STAKE_Y} />
                 </motion.div>
               )}
             </div>
@@ -952,8 +1270,8 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
         {/* Result banner */}
         {banner && (
           <motion.div
-            className="absolute left-0 right-0 flex justify-center"
-            style={{ top: 88, zIndex: 15 }}
+            className="absolute left-0 right-0 flex items-center justify-center"
+            style={{ top: MID_Y, height: MID_H, zIndex: 15 }}
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: reduce ? 0 : 0.15 }}
@@ -984,6 +1302,8 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
             </ArcadePanel>
           </ArcadeOverlay>
         )}
+
+        {helpOpen && <BlackjackTutorial labels={labels} names={arcade.cards} onClose={closeHelp} />}
 
         <div className="sr-only" aria-live="polite">
           {announce}

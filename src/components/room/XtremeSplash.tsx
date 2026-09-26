@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import type { ReactNode } from 'react'
 
 const TOTAL_FRAMES = 28
@@ -18,6 +18,7 @@ export function XtremeSplash({ children }: Props) {
   const [phase, setPhase] = useState<'firstFrame' | 'playing' | 'holding' | 'done'>('firstFrame')
   const [frame, setFrame] = useState(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const reduce = useReducedMotion()
 
   // Hold first frame for FIRST_HOLD_MS before playing
   useEffect(() => {
@@ -54,6 +55,28 @@ export function XtremeSplash({ children }: Props) {
     }
   }, [])
 
+  // Reduced-motion visitors skip the splash entirely.
+  useEffect(() => {
+    if (reduce) setPhase('done')
+  }, [reduce])
+
+  // Any key or pointer press skips the splash. Escape and pointer presses stop
+  // here (Escape would leave the desk); other keys go on, so the skip key still
+  // counts as the gesture that unlocks the room's music (RoomAudioProvider).
+  useEffect(() => {
+    if (phase === 'done') return
+    const skip = (e: Event) => {
+      if (e.type === 'pointerdown' || (e as KeyboardEvent).key === 'Escape') e.stopPropagation()
+      setPhase('done')
+    }
+    window.addEventListener('keydown', skip, true)
+    window.addEventListener('pointerdown', skip, true)
+    return () => {
+      window.removeEventListener('keydown', skip, true)
+      window.removeEventListener('pointerdown', skip, true)
+    }
+  }, [phase])
+
   const showSplash = phase !== 'done'
 
   return (
@@ -64,7 +87,8 @@ export function XtremeSplash({ children }: Props) {
             key="splash"
             className="fixed inset-0 z-50 flex items-center justify-center"
             style={{ backgroundColor: '#e8d5b0' }}
-            exit={{ opacity: 0 }}
+            // The fading overlay must not eat clicks meant for the revealed room.
+            exit={{ opacity: 0, pointerEvents: 'none' }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}

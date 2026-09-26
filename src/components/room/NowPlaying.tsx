@@ -13,9 +13,21 @@ interface NowPlayingProps {
     nowPlaying: string
     volume: string
   }
+  /** Render in normal flow (the full-screen music bar) instead of pinned to the page corner. */
+  embedded?: boolean
 }
 
-export function NowPlaying({ labels }: NowPlayingProps) {
+// Keys pressed on a player control belong to it: the games read keys from the
+// window, so without this Space would toggle the music and pause the game at once.
+const keepKeys = (e: React.KeyboardEvent) => {
+  if (e.key !== 'Escape') e.stopPropagation()
+}
+// A mouse click hands focus back to the page so the game keeps its arrows and Space.
+const releaseAfterClick = (e: React.MouseEvent<HTMLElement>) => {
+  if (e.detail > 0) e.currentTarget.blur()
+}
+
+export function NowPlaying({ labels, embedded }: NowPlayingProps) {
   const { playing, trackIndex, volume, toggle, nextTrack, setVolume } = useRoomAudio()
   const [coverError, setCoverError] = useState(false)
   const [embeddedCover, setEmbeddedCover] = useState<string | null>(null)
@@ -49,10 +61,12 @@ export function NowPlaying({ labels }: NowPlayingProps) {
 
   return (
     <div
-      className="fixed bottom-4 left-4 z-30 flex items-center gap-2"
+      className={`${embedded ? 'min-w-0' : 'fixed bottom-4 left-4 z-30'} flex items-center gap-2`}
       role="region"
       aria-label={labels.nowPlaying}
       style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace' }}
+      onKeyDown={keepKeys}
+      onKeyUp={keepKeys}
     >
       {/* Album cover or placeholder */}
       {coverSrc && !coverError ? (
@@ -98,7 +112,7 @@ export function NowPlaying({ labels }: NowPlayingProps) {
       </div>
 
       {/* Play/pause */}
-      <button onClick={toggle} aria-label={playing ? labels.pause : labels.play}
+      <button onClick={(e) => { releaseAfterClick(e); toggle() }} aria-label={playing ? labels.pause : labels.play}
         className="flex-shrink-0 p-0.5 text-[#c8b89a] hover:text-[#e0d0b0] transition-colors outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#c8b89a]">
         <svg width="18" height="18" viewBox="0 0 16 16" shapeRendering="crispEdges">
           {playing ? (
@@ -110,7 +124,7 @@ export function NowPlaying({ labels }: NowPlayingProps) {
       </button>
 
       {/* Skip */}
-      <button onClick={nextTrack} aria-label={labels.skip}
+      <button onClick={(e) => { releaseAfterClick(e); nextTrack() }} aria-label={labels.skip}
         className="flex-shrink-0 p-0.5 text-[#c8b89a] hover:text-[#e0d0b0] transition-colors outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#c8b89a]">
         <svg width="18" height="18" viewBox="0 0 16 16" shapeRendering="crispEdges">
           <polygon points="3,2 11,8 3,14" fill="currentColor" />
@@ -126,6 +140,7 @@ export function NowPlaying({ labels }: NowPlayingProps) {
         step={0.05}
         value={volume}
         onChange={(e) => setVolume(Number(e.target.value))}
+        onPointerUp={(e) => e.currentTarget.blur()}
         aria-label={labels.volume}
         className="flex-shrink-0 cursor-pointer outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#c8b89a]"
         style={{ width: 56, height: 14, accentColor: '#c8b89a' }}

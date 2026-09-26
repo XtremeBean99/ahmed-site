@@ -15,6 +15,8 @@ export interface DesktopShortcut {
 
 interface DeskDesktopProps {
   time: string
+  backLabel: string
+  onBack: (e: React.MouseEvent) => void
   screenLabel: string
   shortcuts: DesktopShortcut[]
   screensaver: boolean
@@ -22,6 +24,8 @@ interface DeskDesktopProps {
   screenW: number
   screenH: number
   onShortcutClick: (e: React.MouseEvent, s: DesktopShortcut) => void
+  /** Shortcut id to auto-focus on mount (the app the visitor just left). */
+  focusId?: string | null
   /** Files saved to ~/Desktop from the Terminal app */
   files?: { name: string; path: string }[]
   onFileClick?: (path: string) => void
@@ -40,6 +44,8 @@ const ICON_FILE = (
 
 export function DeskDesktop({
   time,
+  backLabel,
+  onBack,
   screenLabel,
   shortcuts,
   screensaver,
@@ -49,10 +55,11 @@ export function DeskDesktop({
   onShortcutClick,
   files,
   onFileClick,
+  focusId,
 }: DeskDesktopProps) {
   return (
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#faf8f5' }}>
-      <ScreenStrip time={time} />
+      <ScreenStrip time={time} backLabel={backLabel} onBack={onBack} />
       <nav aria-label={screenLabel} className="flex-1 flex items-center justify-center">
         <div className="grid grid-cols-5 gap-x-7 gap-y-4 px-4">
           {shortcuts.map((s) => (
@@ -64,6 +71,7 @@ export function DeskDesktop({
               icon={s.icon}
               iconSize={s.iconSize}
               onClick={(e) => onShortcutClick(e, s)}
+              autoFocus={s.id === focusId}
             />
           ))}
         </div>

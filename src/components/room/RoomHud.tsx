@@ -36,7 +36,7 @@ export function RoomHud({ hintLabel, skipLabel }: RoomHudProps) {
         }}
       >
         {showHint && (
-          <span className="text-[#a09080] animate-fade-in opacity-60">
+          <span className="text-[#a09080] animate-fade-in">
             {hintLabel}
           </span>
         )}

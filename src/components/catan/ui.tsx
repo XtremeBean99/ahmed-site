@@ -61,6 +61,9 @@ export const PixelButton = forwardRef<HTMLButtonElement, PixelButtonProps>(funct
     good: { bg: COLORS.good, border: COLORS.panelDark, color: COLORS.panelDark },
     ghost: { bg: 'transparent', border: COLORS.panelBorder, color: COLORS.muted },
   }[variant]
+  // A disabled call to action must not still look like one: coloured variants fall back to a muted panel.
+  const coloured = variant === 'primary' || variant === 'good' || variant === 'danger'
+  const look = props.disabled && coloured ? { bg: COLORS.panelDark, border: COLORS.panelBorder, color: COLORS.muted } : palette
   const sizing = BUTTON_SIZES[size]
 
   return (
@@ -74,12 +77,12 @@ export const PixelButton = forwardRef<HTMLButtonElement, PixelButtonProps>(funct
         padding: sizing.padding,
         minHeight: Math.max(sizing.minHeight, hitSize(coarse)),
         minWidth: coarse ? hitSize(true) : undefined,
-        backgroundColor: palette.bg,
-        color: palette.color,
-        border: `2px solid ${palette.border}`,
+        backgroundColor: look.bg,
+        color: look.color,
+        border: `2px solid ${look.border}`,
         boxShadow: selected ? `0 0 0 2px ${COLORS.accent}` : undefined,
         cursor: props.disabled ? 'default' : 'pointer',
-        opacity: props.disabled ? 0.45 : 1,
+        opacity: props.disabled ? (coloured ? 0.8 : 0.45) : 1,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',

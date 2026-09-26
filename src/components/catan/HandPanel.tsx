@@ -114,16 +114,20 @@ export function HandPanel({
     return () => clearTimeout(id)
   }, [lastEvent, human])
 
+  // The panel spreads the five cards across whatever width the column has (270 to 300 px); the strip scrolls.
   const cards = (
     <div
-      style={{
-        display: 'flex',
-        gap: 10,
-        overflowX: variant === 'strip' ? 'auto' : 'visible',
-        overflowY: 'hidden',
-        alignItems: 'flex-start',
-        paddingBottom: 8,
-      }}
+      style={
+        variant === 'strip'
+          ? { display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden', alignItems: 'flex-start', paddingBottom: 8 }
+          : {
+              display: 'grid',
+              gridTemplateColumns: `repeat(${RESOURCES.length}, ${CARD_W}px)`,
+              justifyContent: 'space-between',
+              alignItems: 'start',
+              paddingBottom: 8,
+            }
+      }
     >
       {RESOURCES.map((r) => {
         const count = me.resources[r]

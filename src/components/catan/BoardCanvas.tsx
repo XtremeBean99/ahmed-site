@@ -291,6 +291,8 @@ export function BoardCanvas(props: BoardCanvasProps): JSX.Element {
     }
     const cam = cameraRef.current
     const next = zoomAtPoint(cam.k, cam.offsetX, cam.offsetY, a.w, a.h, d, viewX, viewY, clamped)
+    // Update the ref now, so a second zoom before the next render builds on this one.
+    cameraRef.current = clampPan(next.k, next.offsetX, next.offsetY, a.w, a.h, d)
     setUserCam({ k: next.k, offsetX: next.offsetX, offsetY: next.offsetY })
   }, [])
 

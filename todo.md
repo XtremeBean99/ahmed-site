@@ -356,14 +356,14 @@ sizes) before merging into `feat/catan-overhaul`. Task files hold the full speci
 | CAT30b | 0 | UI kit: `useCatanLayout`, accessible palette, button sizes, full-screen dialogs on phones, prefs v2 | Done (orchestrator) |
 | CAT30c | 0 | Seams: `NewGameSetup` new-game flow, settings props and inline variant, Web Audio `sound.ts` | Done (orchestrator) |
 | CAT31 | 1 | Engine v2: speed, settings, presets, friendly robber, trade offers, stats, save v2, tutorial fixes, undo | Done, merged |
-| CAT32 | 1 | Board renderer and placeholder art v2 | Building |
-| CAT33 | 1 | Layouts, panels, controller split, undo, shortcuts, placeholders | Building |
-| CAT34 | 1 | Dialogs, game options, settings, rules | Building |
-| CAT35 | 2 | Bots: levels, trade proposals and counters, stronger play | Planned |
-| CAT36 | 2 | Game feel: EffectsLayer animations, sounds, narration | Planned |
-| CAT37 | 2 | Trade panel and incoming offers; remove the old `domesticTrade` path | Planned |
-| CAT38 | 2 | Results screen with stats charts, rematch | Planned |
-| CAT39 | 3 | Tutorial for the new layout, copy in `en.ts`, resume after reload | Planned |
+| CAT32 | 1 | Board renderer and placeholder art v2 | Done, merged (+ fixes: zoom scroll, plates clear of cities, visible touch targets) |
+| CAT33 | 1 | Layouts, panels, controller split, undo, shortcuts, placeholders | Done, merged (+ typed board props, muted disabled actions, hand grid) |
+| CAT34 | 1 | Dialogs, game options, settings, rules | Done, merged |
+| CAT35 | 2 | Bots: levels, trade proposals and counters, stronger play | Done, merged (+ offers to the human throttled: 6.5 per game) |
+| CAT36 | 2 | Game feel: EffectsLayer animations, sounds, narration | Building |
+| CAT37 | 2 | Trade panel and incoming offers; remove the old `domesticTrade` path | Building |
+| CAT38 | 2 | Results screen with stats charts, rematch | Building |
+| CAT39 | 3 | Tutorial for the new layout, copy in `en.ts`, resume after reload | Building |
 | CAT40 | 4 | Claude Workflow review (correctness, UX, accessibility, performance) and fixes | Planned |
 | CAT41 | 4 | Docs (CLAUDE.md Catan section, SPEC.md), final verification, merge | Planned |
 
@@ -372,3 +372,11 @@ sizes) before merging into `feat/catan-overhaul`. Task files hold the full speci
   and bots audits hit usage limits three times and were replaced by the orchestrator's own measurements, and the
   deepcode audit stopped when the DeepSeek balance ran out, since topped up).
 - CAT31 review fix: a migrated save keeps the v1 event counter, so event numbers never go backwards.
+- Wave 1 browser pass (1408x768, 1024x768, 390x844 touch): board at 3x, 2x and k=3 device px respectively, pixel-exact;
+  setup, rolling, building, undo, bot turns and the phone's tap-then-confirm placement all work. Fixed on the way: the
+  zoomed board viewport scrolled when a button took focus; two harbour plates sat under cities on their corners;
+  touch targets were nearly invisible (the ring pulse faded to nothing); disabled End turn looked pressable; the hand
+  overflowed the 270/280 px columns; rapid zoom clicks lost a step.
+- Bots: Hard 40.8% against three Normals, Normal 55% against three Easys, 100% against random; bots now ask the
+  human at most once per turn, only for cards the human probably holds, and not within a round of a refusal.
+

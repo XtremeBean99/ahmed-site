@@ -838,3 +838,8 @@ verification; ask the owner before merging into `master` (a push deploys).
 - Final checks: `npm run build` green, `/` 73.2 kB page and 179 kB First Load JS (was 240 and 345); test:room 37,
   test:snake 9, test:games 135, test:terminal 518, test:catan 348, all passing; lint 0 errors (all 29 warnings are
   pre-existing, in terminal-engine files this branch does not touch).
+- MOB10b deepcode review of Blackjack and Breakout: two findings, both confirmed and fixed (`e55127b`): Breakout
+  mapped touches against the court's container instead of the scaled canvas (after rotating a landscape game the
+  right 40% of the court was unreachable; the paddle drifted from the finger on every portrait phone); the
+  Blackjack active-hand marker could overlap the stake circle with split hands in two rows at h 440.
+- Status: MOB0-MOB11 done on `feat/mobile`. Merging into `master` (which deploys) waits for the owner.

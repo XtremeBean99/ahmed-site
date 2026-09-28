@@ -161,3 +161,29 @@
   .room-cursor { cursor: url('/room/cursor/pointer.png') 2 2, auto; }
   .room-cursor a, .room-cursor button, .room-cursor [role="button"] { cursor: url('/room/cursor/grab.png') 8 4, pointer; }
 }
+
+/* Phones: a swipe in a game never pulls to refresh or bounces the page, taps
+   never flash grey or wait for a double-tap zoom, and text fields are 16px so
+   iOS does not zoom into them (it ignores the room's transform scale). */
+html,
+body {
+  overscroll-behavior: none;
+}
+.room-cursor,
+.room-cursor * {
+  -webkit-tap-highlight-color: transparent;
+}
+.room-cursor a,
+.room-cursor button,
+.room-cursor [role="button"] {
+  touch-action: manipulation;
+}
+@media (pointer: coarse) {
+  .room-cursor input:not([type]),
+  .room-cursor input[type="text"],
+  .room-cursor input[type="search"],
+  .room-cursor input[type="email"],
+  .room-cursor textarea {
+    font-size: 16px !important;
+  }
+}

@@ -450,7 +450,7 @@ Desktop at 1408x768 and 1920x1080 stays pixel-identical; landscape phones and ta
   If `h` would fall under 440 (short phones with browser bars), `s` shrinks to fit 440 and the screen centres.
   Apps design in logical px exactly as they do for 536x308, so canvases, pointer maths and pixel coordinates keep
   working. Minimums in portrait: body text 12 logical px (about 14 CSS px), labels 10, tap targets 38 (about 44).
-- **Shell.** Full viewport, black, safe-area padding; the bezel (8 px sides, 10 px top, 22 px chin with the LED,
+- **Shell.** Full viewport, black, safe-area padding; the bezel (10 px sides, 12 px top, 26 px chin with the LED,
   CSS px, colours sampled from the monitor art) around the scaled screen; a 56 px music bar under the bezel holds
   `NowPlaying embedded` (Room stops rendering its fixed player in this mode). No desk art, desk pan, mouse
   follower, "click again to return" or desk clicks in portrait.
@@ -591,7 +591,7 @@ Waves: MOB0 alone; wave 1 = MOB1, MOB2, MOB4, MOB7; wave 2 = MOB3, MOB5, MOB6, M
 
 **Interfaces produced (every builder relies on these):**
 - `src/lib/room/desk-screen.ts`: `SCREEN_W = 536`, `SCREEN_H = 308`, `PORTRAIT_W = 320`, `PORTRAIT_MIN_H = 440`,
-  `BEZEL = { side: 8, top: 10, chin: 22 }`, `MUSIC_BAR_H = 56`, `isPortraitPhone(vw, vh, mobile): boolean`,
+  `BEZEL = { side: 10, top: 12, chin: 26 }`, `MUSIC_BAR_H = 56`, `isPortraitPhone(vw, vh, mobile): boolean`,
   `portraitGeometry(availW, availH): { scale, w, h, left, top }`.
 - `useStageScale()` returns `{ scale, mobile, fillScale, portrait }`.
 - `ScreenStrip.tsx`: `interface DeskScreen { w: number; h: number; portrait: boolean }`, `DeskScreenContext`,
@@ -620,9 +620,9 @@ test('portrait phones get the portrait screen, everything else keeps the desk', 
 test('a 390x700 phone fills the width', () => {
   const g = portraitGeometry(390, 700)
   assert.equal(g.w, PORTRAIT_W)
-  assert.ok(Math.abs(g.scale - 374 / 320) < 1e-9)
+  assert.ok(Math.abs(g.scale - 370 / 320) < 1e-9)
   assert.equal(g.h, Math.floor((700 - BEZEL.top - BEZEL.chin - MUSIC_BAR_H) / g.scale))
-  assert.equal(g.left, 8)
+  assert.equal(g.left, BEZEL.side)
 })
 
 test('a short phone clamps to the minimum height and centres', () => {
@@ -653,7 +653,7 @@ export const SCREEN_H = 308
 export const PORTRAIT_W = 320
 export const PORTRAIT_MIN_H = 440
 /** Portrait shell chrome in CSS px. */
-export const BEZEL = { side: 8, top: 10, chin: 22 } as const
+export const BEZEL = { side: 10, top: 12, chin: 26 } as const
 export const MUSIC_BAR_H = 56
 
 /** A portrait viewport where the landscape screen would render below 0.9x. */

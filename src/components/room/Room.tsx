@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
 import {
   ROOM_OBJECTS,
@@ -24,7 +25,7 @@ import { Monitor } from './Monitor'
 import { RoomSpeakers } from './RoomSpeakers'
 import { AnimatedSprite } from './AnimatedSprite'
 import { ShelfBooks } from './ShelfBooks'
-import { RoomReader, type ReaderLabels } from './RoomReader'
+import type { ReaderLabels } from './RoomReader'
 import type { MovieLabels } from './DeskMovie'
 import type { SnakeLabels } from './DeskSnake'
 import type { BlackjackLabels } from './DeskBlackjack'
@@ -62,6 +63,9 @@ import type { DesktopShortcut } from './DeskDesktop'
 import { DURATION } from '@/lib/motion'
 import type { Dictionary } from '@/lib/i18n/dictionaries/en'
 import { useLightingClock, LightingProvider, lightingSrc, LIGHTING_STATES, type LightingState } from '@/lib/room/lighting'
+
+// The e-reader is only needed once a book is opened.
+const RoomReader = dynamic(() => import('./RoomReader').then((m) => m.RoomReader), { ssr: false })
 
 type View = 'room' | 'zooming' | 'desk' | 'leaving'
 
@@ -158,7 +162,7 @@ interface RoomProps {
 export function Room({ dict, readmeContent }: RoomProps) {
   const t = dict
   const reduce = useReducedMotion()
-  const { scale, mobile } = useStageScale()
+  const { scale, mobile, portrait } = useStageScale()
   const [view, setView] = useState<View>('desk')
   const [lampOn, setLampOn] = useState(true)
   const [lampFlicker, setLampFlicker] = useState(false)
@@ -604,8 +608,10 @@ export function Room({ dict, readmeContent }: RoomProps) {
           onInitialAppHandled={() => setPendingApp(null)}
           konamiOpen={konamiOpen}
           onKonamiHandled={() => setKonamiOpen(false)}
+          nowPlayingLabels={t.room.audio}
         />
-        <NowPlaying labels={t.room.audio} />
+        {/* A portrait phone shows the player in the desk's own music bar */}
+        {!portrait && <NowPlaying labels={t.room.audio} />}
       </RoomAudioProvider>
     )
   }

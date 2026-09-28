@@ -9,15 +9,16 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import type { CardNameLabels } from '@/lib/games/cards'
 import { useT } from '@/lib/i18n/client'
-import { ScreenStrip } from './ScreenStrip'
+import { SCREEN_H, SCREEN_W } from '@/lib/room/desk-screen'
+import { DeskScreenContext, ScreenStrip, useDeskScreen, type DeskScreen } from './ScreenStrip'
 import { NowPlaying } from './NowPlaying'
 import { ARCADE, PIXEL_FONT } from './pixel-ui'
 
 export { ARCADE, ArcadeButton, PIXEL_FONT } from './pixel-ui'
 
 /** The desk monitor glass, in CSS pixels before the stage scale. */
-export const SCREEN_W = 536
-export const SCREEN_H = 308
+export { SCREEN_W, SCREEN_H }
+const DESK_SCREEN: DeskScreen = { w: SCREEN_W, h: SCREEN_H, portrait: false }
 /** Height under the 28px ScreenStrip. */
 export const APP_H = SCREEN_H - 28
 /** The music bar under a full-screen app. */
@@ -50,8 +51,12 @@ export interface Fullscreen {
   toggle: () => void
 }
 
-/** Real browser full screen for one app; the app keeps its React state across the switch. */
+/**
+ * Real browser full screen for one app; the app keeps its React state across the switch.
+ * Unsupported on a portrait phone, where the app already fills the screen.
+ */
 export function useFullscreen(): Fullscreen {
+  const { portrait } = useDeskScreen()
   const ref = useRef<HTMLDivElement>(null)
   const [active, setActive] = useState(false)
   const [scale, setScale] = useState(1)
@@ -72,12 +77,19 @@ export function useFullscreen(): Fullscreen {
     }
   }, [])
 
+  // A phone turned to portrait while this app was full screen: the portrait screen takes over.
+  useEffect(() => {
+    if (portrait && ref.current !== null && document.fullscreenElement === ref.current) {
+      void document.exitFullscreen().catch(() => {})
+    }
+  }, [portrait])
+
   const toggle = useCallback(() => {
     if (document.fullscreenElement) void document.exitFullscreen().catch(() => {})
     else void ref.current?.requestFullscreen?.().catch(() => {})
   }, [])
 
-  return { ref, active, scale, supported, toggle }
+  return { ref, active, scale, supported: supported && !portrait, toggle }
 }
 
 /**
@@ -85,27 +97,45 @@ export function useFullscreen(): Fullscreen {
  * the full-screen element, scales its fixed 536x308 content into the space above
  * a music bar (the page's own player is outside the full-screen element, so it
  * would vanish), and the tree stays the same so the app keeps its state.
+ * On a portrait phone an app that passes `portrait` gets the whole w x h screen
+ * and lays out from useDeskScreen(); any other app keeps its 536x308 layout,
+ * scaled to the screen width, and sees the desk screen in the context.
  */
-export function ArcadeFrame({ fs, background = ARCADE.paper, children }: { fs: Fullscreen; background?: string; children: ReactNode }) {
+export function ArcadeFrame({
+  fs,
+  background = ARCADE.paper,
+  portrait = false,
+  children,
+}: {
+  fs: Fullscreen
+  background?: string
+  /** The app has a portrait layout. */
+  portrait?: boolean
+  children: ReactNode
+}) {
   const t = useT()
+  const screen = useDeskScreen()
+  const native = screen.portrait && portrait
+  const compat = screen.portrait && !portrait
   return (
     <div
       ref={fs.ref}
-      className="absolute inset-0 flex flex-col overflow-hidden"
-      style={{ backgroundColor: fs.active ? FS_BG : background }}
+      className="absolute inset-0 flex flex-col overflow-hidden select-none"
+      style={{ backgroundColor: fs.active ? FS_BG : background, WebkitTouchCallout: 'none' }}
     >
       <div className="flex-1 min-h-0 flex items-center justify-center">
         <div
           className="relative flex flex-col flex-shrink-0 overflow-hidden"
           style={{
-            width: SCREEN_W,
-            height: SCREEN_H,
+            width: native ? screen.w : SCREEN_W,
+            height: native ? screen.h : SCREEN_H,
             backgroundColor: background,
-            transform: fs.active ? `scale(${fs.scale})` : undefined,
+            transform: fs.active ? `scale(${fs.scale})` : compat ? `scale(${screen.w / SCREEN_W})` : undefined,
             transformOrigin: 'center center',
           }}
         >
-          {children}
+          {/* Always present, so switching layouts never remounts the app. */}
+          <DeskScreenContext.Provider value={compat ? DESK_SCREEN : screen}>{children}</DeskScreenContext.Provider>
         </div>
       </div>
       {fs.active && (

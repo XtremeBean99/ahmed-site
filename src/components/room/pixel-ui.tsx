@@ -41,11 +41,13 @@ export const ARCADE = {
 } as const
 
 type ButtonTone = 'cream' | 'dark'
-type ButtonSize = 'sm' | 'md' | 'lg'
+type ButtonSize = 'sm' | 'md' | 'lg' | 'xl'
 const SIZES: Record<ButtonSize, { font: number; padX: number; h: number; notch: number; border: number }> = {
   sm: { font: 9, padX: 6, h: 18, notch: 3, border: 2 },
   md: { font: 10, padX: 9, h: 22, notch: 4, border: 2 },
   lg: { font: 12, padX: 12, h: 28, notch: 5, border: 3 },
+  // Portrait phone screens: 38 logical px is about 44 CSS px on a 390 px phone.
+  xl: { font: 12, padX: 10, h: 38, notch: 5, border: 3 },
 }
 
 /**

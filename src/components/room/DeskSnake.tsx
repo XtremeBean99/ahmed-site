@@ -46,6 +46,7 @@ export interface SnakeLabels {
   won: string
   paused: string
   resume: string
+  start: string
   hint: string
   pause: string
   hintTouch: string
@@ -71,6 +72,10 @@ export function DeskSnake({ time, backLabel, desktopLabel, labels, onBack, onDes
   const [game, setGame] = useState(() => createGame(COLS, ROWS))
   const [best, setBest] = useState(0)
   const [paused, setPaused] = useState(false)
+  // On a touch screen a new game waits for the first swipe, D-pad press, tap or Start:
+  // on the desk it starts at once (the keys are at hand), but a phone visitor
+  // would hit the wall before finding the controls.
+  const [waiting, setWaiting] = useState(false)
   const swipeStart = useRef<{ x: number; y: number; steered: boolean } | null>(null)
 
   // Portrait phones steer with swipes or the D-pad; touch landscape gets the
@@ -81,22 +86,33 @@ export function DeskSnake({ time, backLabel, desktopLabel, labels, onBack, onDes
     setBest(getBest(BEST_KEYS.snake))
   }, [])
 
+  useEffect(() => {
+    if (touch) setWaiting(true)
+  }, [touch])
+
   const reset = useCallback(() => {
     setGame(createGame(COLS, ROWS))
     setPaused(false)
-  }, [])
+    setWaiting(touch)
+  }, [touch])
 
   const steer = useCallback((dir: Dir) => {
     setGame((s) => turn(s, dir))
     setPaused(false)
+    setWaiting(false)
   }, [])
+
+  const startGame = () => {
+    setPaused(false)
+    setWaiting(false)
+  }
 
   // The interval is rebuilt on each score change so the game speeds up.
   useEffect(() => {
-    if (game.status !== 'playing' || paused) return
+    if (game.status !== 'playing' || paused || waiting) return
     const id = setInterval(() => setGame((s) => step(s)), tickMs(game.score))
     return () => clearInterval(id)
-  }, [game.status, game.score, paused])
+  }, [game.status, game.score, paused, waiting])
 
   useEffect(() => {
     if (game.status !== 'playing' && setBestIfHigher(BEST_KEYS.snake, game.score)) setBest(game.score)
@@ -151,6 +167,7 @@ export function DeskSnake({ time, backLabel, desktopLabel, labels, onBack, onDes
     if (dir) steer(dir)
     // Only a plain tap restarts: lifting the finger after a swipe that ended the game must not.
     else if (!start.steered && game.status !== 'playing') reset()
+    else if (!start.steered && waiting) startGame()
   }
   const onBoardPointerCancel = () => {
     swipeStart.current = null
@@ -159,6 +176,13 @@ export function DeskSnake({ time, backLabel, desktopLabel, labels, onBack, onDes
   const pixelFont = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const
   const overlay =
     game.status === 'over' ? labels.over : game.status === 'won' ? labels.won : paused ? labels.paused : ''
+  // The status line keeps to game states; the board card also tells a touch player how to start.
+  const starting = waiting && game.status === 'playing'
+  const card = starting
+    ? { text: labels.hintTouch, button: labels.start, onClick: startGame }
+    : paused && game.status === 'playing'
+      ? { text: overlay, button: labels.resume, onClick: () => setPaused(false) }
+      : { text: overlay, button: labels.reset, onClick: reset }
   const dpadLabels = { up: labels.dpadUp, down: labels.dpadDown, left: labels.dpadLeft, right: labels.dpadRight }
 
   // Portrait: cells as big as fit, up to 20px, after the strip, toolbar, score
@@ -224,19 +248,19 @@ export function DeskSnake({ time, backLabel, desktopLabel, labels, onBack, onDes
         />
       ))}
 
-      {overlay && (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: 'rgba(232,224,216,0.75)' }}>
+      {card.text && (
+        // Before the start the card sits low and undimmed, so the snake and its heading stay in view.
+        <div
+          className={`absolute inset-0 flex justify-center ${starting ? 'items-end pb-2' : 'items-center'}`}
+          style={{ backgroundColor: starting ? undefined : 'rgba(232,224,216,0.75)' }}
+        >
           <div
             className="border-2 px-4 py-2 text-center"
             style={{ backgroundColor: '#3d2e1e', borderColor: '#5a4430', borderRadius: '3px', color: '#e8d5b0', ...pixelFont }}
           >
-            <p style={{ fontSize: portrait ? 14 : 12 }}>{overlay}</p>
-            <ArcadeButton
-              size={portrait ? 'xl' : 'sm'}
-              className="mt-1.5"
-              onClick={() => (paused && game.status === 'playing' ? setPaused(false) : reset())}
-            >
-              {paused && game.status === 'playing' ? labels.resume : labels.reset}
+            <p className="text-balance" style={{ fontSize: portrait ? 14 : 12 }}>{card.text}</p>
+            <ArcadeButton size={portrait ? 'xl' : 'sm'} className="mt-1.5" onClick={card.onClick}>
+              {card.button}
             </ArcadeButton>
           </div>
         </div>

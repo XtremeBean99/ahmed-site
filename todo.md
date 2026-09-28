@@ -842,4 +842,8 @@ verification; ask the owner before merging into `master` (a push deploys).
   mapped touches against the court's container instead of the scaled canvas (after rotating a landscape game the
   right 40% of the court was unreachable; the paddle drifted from the finger on every portrait phone); the
   Blackjack active-hand marker could overlap the stake circle with split hands in two rows at h 440.
-- Status: MOB0-MOB11 done on `feat/mobile`. Merging into `master` (which deploys) waits for the owner.
+- Status: MOB0-MOB11 done on `feat/mobile`, merged to `master` as `8e27eca` and live on 29 September 2026.
+- Follow-up found in the live phone check: Snake started on mount, so a phone visitor hit the wall about 1.5 s in,
+  before finding the D-pad. On touch screens a new game (on open and after New game) now waits for the first swipe,
+  D-pad press, board tap or Start, with the card low and undimmed so the snake stays in view; the desk with a mouse
+  still starts at once (its Game over card matched live at SSIM 1.000000).

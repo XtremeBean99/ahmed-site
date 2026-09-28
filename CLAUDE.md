@@ -193,7 +193,8 @@ localStorage), `snake` (`DeskSnake.tsx`: square 14×14 board at 16 px cells — 
 padding box by the border and knock the last row and column out of step with the grid; pure engine in
 `src/lib/games/snake-engine.ts`, walls kill, arrows/WASD read from the **window** so a desk
 click cannot break the controls, Space pauses, Enter restarts, auto-pause on tab hide,
-best score in games storage), `readme` (`DeskReadme.tsx`: renders `site-text.txt`), `music`
+best score in games storage; on touch screens a new game waits for the first swipe, D-pad press, board tap or
+Start, while the desk with a mouse starts at once), `readme` (`DeskReadme.tsx`: renders `site-text.txt`), `music`
 (`DeskMusic.tsx`: playlist picker), `legal` (`DeskLegal.tsx`: privacy/terms tabs, scrollable
 legal doc). The `browser` mode was removed (Spec 1, July 2026). Escape ladder app→desktop→room.
 Speakers (left 190,265 175×300; right 1005,270 215×300) are mute-toggle buttons with

@@ -1426,6 +1426,7 @@ export const en = {
       won: 'Perfect run!',
       paused: 'Paused',
       resume: 'Resume',
+      start: 'Start',
       hint: 'Arrows or WASD  ·  Space pauses  ·  Enter restarts',
       pause: 'Pause',
       hintTouch: 'Swipe the board or use the D-pad',

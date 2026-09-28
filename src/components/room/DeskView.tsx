@@ -6,6 +6,7 @@ import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
 import { useStageScale, STAGE_W, STAGE_H } from '@/lib/room/useStageScale'
 import { MUSIC_BAR_H, SCREEN_H, SCREEN_W, portraitGeometry, type PortraitGeometry } from '@/lib/room/desk-screen'
 import { useT } from '@/lib/i18n/client'
+import type { Dictionary } from '@/lib/i18n/dictionaries/en'
 import { useRoomAudio } from './RoomAudioProvider'
 import { DeskDesktop, type DesktopShortcut } from './DeskDesktop'
 import { DeskClockContext, DeskScreenContext, type DeskScreen } from './ScreenStrip'
@@ -111,9 +112,9 @@ interface DeskViewProps {
   /** Shared by the arcade apps: full-screen button and card names */
   arcadeLabels: ArcadeLabels
   /** Labels for the readme popup */
-  readmeLabels: { title: string; close: string }
+  readmeLabels: Dictionary['desk']['readmeApp']
   /** Labels for the music player */
-  musicLabels: { title: string; nowPlaying: string; select: string }
+  musicLabels: Dictionary['desk']['musicApp']
   /** Labels for the Legal app */
   legalLabels: LegalLabels
   /** Structured privacy policy content */

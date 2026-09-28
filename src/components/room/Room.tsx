@@ -26,13 +26,6 @@ import { RoomSpeakers } from './RoomSpeakers'
 import { AnimatedSprite } from './AnimatedSprite'
 import { ShelfBooks } from './ShelfBooks'
 import type { ReaderLabels } from './RoomReader'
-import type { MovieLabels } from './DeskMovie'
-import type { SnakeLabels } from './DeskSnake'
-import type { BlackjackLabels } from './DeskBlackjack'
-import type { SolitaireLabels } from './DeskSolitaire'
-import type { PongLabels } from './DeskPong'
-import type { BreakoutLabels } from './DeskBreakout'
-import type { ArcadeLabels } from './DeskArcade'
 import { SHELF_BOOKS } from '@/lib/room/books'
 import { DeskView } from './DeskView'
 import { SideTableClock } from './SideTableClock'
@@ -104,56 +97,8 @@ interface RoomProps {
       discoveryLocked: string
       discoveryLabels: Record<string, string>
     }
-    desk: {
-      back: string
-      clickAgain: string
-      desktop: string
-      screenLabel: string
-      linkedin: string
-      github: string
-      readme: string
-      readmeTip: string
-      linkedinTip: string
-      githubTip: string
-      legal: string
-      legalTip: string
-      settings: string
-      settingsTip: string
-      paint: string
-      minesweeper: string
-      snake: string
-      paintTip: string
-      minesweeperTip: string
-      snakeTip: string
-      blackjack: string
-      blackjackTip: string
-      solitaire: string
-      solitaireTip: string
-      pong: string
-      pongTip: string
-      breakout: string
-      breakoutTip: string
-      arcade: ArcadeLabels
-      blackjackApp: BlackjackLabels
-      solitaireApp: SolitaireLabels
-      pongApp: PongLabels
-      breakoutApp: BreakoutLabels
-      music: string
-      settingsApp: { title: string; sfx: string; sfxVolume: string; musicVolume: string; clock: string; clock12: string; clock24: string; on: string; off: string; close: string }
-      paintApp: { pencil: string; eraser: string; fill: string; clear: string; clearConfirm: string; download: string; color: string; canvas: string }
-      mines: { board: string; cell: string; minesLeft: string; time: string; best: string; reset: string; won: string; lost: string }
-      snakeApp: SnakeLabels
-      musicTip: string
-      musicApp: { title: string; nowPlaying: string; select: string }
-      readmeApp: { title: string; close: string }
-      legalApp: { title: string; privacyTab: string; termsTab: string; close: string }
-      guestbook: string
-      guestbookTip: string
-      guestbookApp: { title: string; close: string; namePh: string; messagePh: string; sign: string; empty: string; posting: string; error: string }
-      movie: string
-      movieTip: string
-      movieApp: MovieLabels
-    }
+    // Derived from en.ts, so an app's new copy flows through without touching this file.
+    desk: Dictionary['desk']
     legal: Dictionary['legal']
   }
   readmeContent: string

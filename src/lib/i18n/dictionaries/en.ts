@@ -1360,6 +1360,8 @@ export const en = {
       normal: 'Normal',
       hard: 'Hard',
       hint: 'P1: W/S or mouse   P2: Up/Down   Space pauses',
+      touchHint: 'Drag to move\nTap to start',
+      pause: 'Pause',
       bestRally: 'Best rally {n}',
       paused: 'Paused',
       resume: 'Resume',

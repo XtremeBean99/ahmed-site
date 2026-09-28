@@ -1341,7 +1341,10 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
               {hand.cards.map((c, ci) => (
                 <FlyCard key={`${dealSeq}-p${index}-${ci}`} card={c} slotX={left + ci * step} slotY={top} delay={dealDelay(`p${index}-${ci}`)} fromX={layout.shoeOrigin.x} fromY={layout.shoeOrigin.y} />
               ))}
-              {table.phase === 'player' && index === table.active && <ActivePointer centerX={centerX} top={top + CARD_H + 4} />}
+              {table.phase === 'player' && index === table.active && (
+                // Portrait: a second row of split hands can sit just above the stake circle; keep the marker clear of it.
+                <ActivePointer centerX={centerX} top={portrait ? Math.min(top + CARD_H + 4, layout.circle.y - 19) : top + CARD_H + 4} />
+              )}
 
               {!portrait && (
                 loses ? (

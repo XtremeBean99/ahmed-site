@@ -597,12 +597,14 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
     return () => cancelAnimationFrame(raf)
   }, [k, handleEvents, syncView])
 
+  // Through the canvas's own box: it is scaled and centred inside the container on a portrait
+  // phone, and a court kept across a rotation can be much wider than the screen.
   const courtToLocal = (clientX: number) => {
-    const el = courtRef.current
-    if (!el) return 0
-    const r = el.getBoundingClientRect()
-    const s = r.width / el.offsetWidth
-    return (clientX - r.left) / s
+    const c = canvasRef.current
+    if (!c) return 0
+    const r = c.getBoundingClientRect()
+    if (r.width <= 0) return 0
+    return ((clientX - r.left) / r.width) * stateRef.current.geo.courtW
   }
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -613,6 +615,8 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault()
+    // A finger that slides past the court's edge keeps steering the paddle.
+    if (e.pointerType !== 'mouse') e.currentTarget.setPointerCapture(e.pointerId)
     doLaunch()
   }
 

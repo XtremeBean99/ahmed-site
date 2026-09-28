@@ -1,6 +1,6 @@
 // src/components/room/DeskDesktop.tsx
 import { DeskIcon } from './DeskIcon'
-import { ScreenStrip } from './ScreenStrip'
+import { ScreenStrip, useDeskScreen } from './ScreenStrip'
 
 export interface DesktopShortcut {
   id: string
@@ -57,11 +57,13 @@ export function DeskDesktop({
   onFileClick,
   focusId,
 }: DeskDesktopProps) {
+  const { portrait } = useDeskScreen()
+  const hasFiles = files && files.length > 0
   return (
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#faf8f5' }}>
       <ScreenStrip time={time} backLabel={backLabel} onBack={onBack} />
-      <nav aria-label={screenLabel} className="flex-1 flex items-center justify-center">
-        <div className="grid grid-cols-5 gap-x-7 gap-y-4 px-4">
+      <nav aria-label={screenLabel} className="flex-1 flex items-center justify-center" style={portrait && hasFiles ? { paddingBottom: 54 } : undefined}>
+        <div className={portrait ? 'grid grid-cols-4 gap-x-[5px] gap-y-3 px-2' : 'grid grid-cols-5 gap-x-7 gap-y-4 px-4'}>
           {shortcuts.map((s) => (
             <DeskIcon
               key={s.id}
@@ -78,14 +80,15 @@ export function DeskDesktop({
       </nav>
 
       {files && files.length > 0 && (
-        <div aria-label="Desktop files" className="absolute bottom-1 left-2 right-2 flex gap-3 overflow-hidden">
-          {files.slice(0, 8).map((f) => (
+        <div aria-label="Desktop files" className={`absolute bottom-1 left-2 right-2 flex overflow-hidden ${portrait ? 'gap-2' : 'gap-3'}`}>
+          {files.slice(0, portrait ? 4 : 8).map((f) => (
             <DeskIcon
               key={f.path}
               label={f.name.length > 10 ? f.name.slice(0, 9) + '…' : f.name}
               tooltip={f.name}
               icon={ICON_FILE}
               iconSize={24}
+              portraitSize={32}
               onClick={(e) => { e.preventDefault(); onFileClick?.(f.path) }}
             />
           ))}

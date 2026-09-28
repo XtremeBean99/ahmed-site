@@ -184,6 +184,34 @@ export function move(s: SolitaireState, from: Loc, to: Loc): SolitaireState | nu
   return next
 }
 
+/**
+ * Best tap destination for the card (or tableau run) at `from`: the first
+ * foundation that accepts it, else the lowest-index tableau column that
+ * accepts it. A king-headed run from an otherwise empty column never shifts
+ * into another empty column (a pointless move).
+ */
+export function bestMove(s: SolitaireState, from: Loc): Loc | null {
+  for (let i = 0; i < FOUNDATION_COUNT; i++) {
+    const to: Loc = { pile: 'foundation', index: i }
+    if (canMove(s, from, to)) return to
+  }
+  const pointlessKingShift =
+    from.pile === 'tableau' &&
+    from.card === 0 &&
+    s.tableau[from.index] !== undefined &&
+    s.tableau[from.index].down.length === 0 &&
+    s.tableau[from.index].up.length > 0 &&
+    s.tableau[from.index].up[0]?.rank === 13
+  for (let i = 0; i < TABLEAU_COUNT; i++) {
+    const to: Loc = { pile: 'tableau', index: i, card: 0 }
+    if (!canMove(s, from, to)) continue
+    const target = s.tableau[i]
+    if (pointlessKingShift && target.up.length === 0 && target.down.length === 0) continue
+    return to
+  }
+  return null
+}
+
 /** Best double-click destination: a foundation if legal, else the first legal tableau pile (non-empty first). */
 export function autoTarget(s: SolitaireState, from: Loc): Loc | null {
   for (let i = 0; i < FOUNDATION_COUNT; i++) {

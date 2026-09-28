@@ -73,13 +73,25 @@ export function RoomReader({ book, labels, onClose }: RoomReaderProps) {
   const [spread, setSpread] = useState(false)
   const [toc, setToc] = useState(false)
   const [direction, setDirection] = useState(1)
+  const [touch, setTouch] = useState(false)
   const frameRef = useRef<HTMLDivElement>(null)
   const paperRef = useRef<HTMLDivElement>(null)
+  const swipeRef = useRef<{ id: number; x: number; y: number; horiz: boolean } | null>(null)
+  const swipedRef = useRef(false)
 
   // Two pages side by side once there is room for two comfortable measures.
   useEffect(() => {
     const mq = matchMedia('(min-width: 1100px)')
     const apply = () => setSpread(mq.matches)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
+
+  // On touch the reader grows its controls and adds swipe/tap page turns.
+  useEffect(() => {
+    const mq = matchMedia('(pointer: coarse)')
+    const apply = () => setTouch(mq.matches)
     apply()
     mq.addEventListener('change', apply)
     return () => mq.removeEventListener('change', apply)
@@ -129,6 +141,71 @@ export function RoomReader({ book, labels, onClose }: RoomReaderProps) {
     setPage(to)
     setToc(false)
   }, [])
+
+  // Phone gestures on the paper: a horizontal swipe turns a page, and a tap in
+  // the left or right third does the same. Vertical scrolling still works.
+  const handlePaperPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (!touch || e.pointerType === 'mouse' || toc) return
+      swipeRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY, horiz: false }
+    },
+    [touch, toc],
+  )
+
+  const handlePaperPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      const s = swipeRef.current
+      if (!s || e.pointerId !== s.id) return
+      const dx = e.clientX - s.x
+      const dy = e.clientY - s.y
+      if (!s.horiz && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) {
+        s.horiz = Math.abs(dx) > Math.abs(dy)
+      }
+    },
+    [],
+  )
+
+  const handlePaperPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      const s = swipeRef.current
+      swipeRef.current = null
+      if (!s || e.pointerId !== s.id || !s.horiz) return
+      const dx = e.clientX - s.x
+      if (dx <= -40) {
+        swipedRef.current = true
+        go(1)
+      } else if (dx >= 40) {
+        swipedRef.current = true
+        go(-1)
+      }
+      if (swipedRef.current) {
+        setTimeout(() => { swipedRef.current = false }, 350)
+      }
+    },
+    [go],
+  )
+
+  const handlePaperPointerCancel = useCallback(() => {
+    swipeRef.current = null
+  }, [])
+
+  const handlePaperClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!touch) return
+      if (swipedRef.current) {
+        swipedRef.current = false
+        return
+      }
+      if (toc) return
+      if ((e.target as HTMLElement).closest('button, a')) return
+      const rect = paperRef.current?.getBoundingClientRect()
+      if (!rect) return
+      const x = e.clientX - rect.left
+      if (x < rect.width / 3) go(-1)
+      else if (x > (rect.width * 2) / 3) go(1)
+    },
+    [touch, toc, go],
+  )
 
   // Remember the place (and the type size) as the reader moves.
   useEffect(() => {
@@ -197,7 +274,7 @@ export function RoomReader({ book, labels, onClose }: RoomReaderProps) {
         transition={{ duration: 0.22, ease: 'easeOut' }}
         style={{
           width: 'min(96vw, 1180px)',
-          height: 'min(92vh, 820px)',
+          height: 'min(92dvh, 820px)',
           backgroundColor: BEZEL,
           border: `3px solid ${BEZEL_EDGE}`,
           borderRadius: 6,
@@ -214,13 +291,14 @@ export function RoomReader({ book, labels, onClose }: RoomReaderProps) {
             <span style={{ opacity: 0.6 }}> · {book.author}</span>
           </span>
           <div className="ml-auto flex items-center gap-2">
-            <ChromeButton onClick={() => setToc((v) => !v)} pressed={toc} label={labels.contents}>
+            <ChromeButton onClick={() => setToc((v) => !v)} pressed={toc} label={labels.contents} touch={touch}>
               ☰ {labels.contents}
             </ChromeButton>
             <ChromeButton
               onClick={() => setSize(SIZES[Math.max(sizeIndex - 1, 0)])}
               label={labels.smaller}
               disabled={sizeIndex <= 0}
+              touch={touch}
             >
               A-
             </ChromeButton>
@@ -228,10 +306,11 @@ export function RoomReader({ book, labels, onClose }: RoomReaderProps) {
               onClick={() => setSize(SIZES[Math.min(sizeIndex + 1, SIZES.length - 1)])}
               label={labels.larger}
               disabled={sizeIndex >= SIZES.length - 1}
+              touch={touch}
             >
               A+
             </ChromeButton>
-            <ChromeButton onClick={onClose} label={labels.close}>✕</ChromeButton>
+            <ChromeButton onClick={onClose} label={labels.close} touch={touch}>✕</ChromeButton>
           </div>
         </div>
 
@@ -258,7 +337,20 @@ export function RoomReader({ book, labels, onClose }: RoomReaderProps) {
           )}
 
           {data && (
-            <div ref={paperRef} className="absolute inset-0 overflow-y-auto">
+            <div
+              ref={paperRef}
+              className="absolute inset-0 overflow-y-auto"
+              style={{
+                touchAction: touch ? 'pan-y' : undefined,
+                userSelect: touch ? 'none' : undefined,
+                WebkitUserSelect: touch ? 'none' : undefined,
+              }}
+              onPointerDown={handlePaperPointerDown}
+              onPointerMove={handlePaperPointerMove}
+              onPointerUp={handlePaperPointerUp}
+              onPointerCancel={handlePaperPointerCancel}
+              onClick={handlePaperClick}
+            >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={page}
@@ -337,7 +429,14 @@ export function RoomReader({ book, labels, onClose }: RoomReaderProps) {
                         type="button"
                         onClick={() => jump(c.page)}
                         className="w-full text-left py-1 hover:underline"
-                        style={{ ...SERIF, fontSize: 15, color: INK }}
+                        style={{
+                          ...SERIF,
+                          fontSize: 15,
+                          color: INK,
+                          minHeight: touch ? 44 : undefined,
+                          paddingTop: touch ? 10 : undefined,
+                          paddingBottom: touch ? 10 : undefined,
+                        }}
                       >
                         {c.title}
                         <span style={{ ...PIXEL, fontSize: 9, opacity: 0.55, float: 'right' }}>
@@ -354,10 +453,10 @@ export function RoomReader({ book, labels, onClose }: RoomReaderProps) {
 
         {/* Footer: page turn, progress, colophon */}
         <div className="flex items-center gap-3 px-1 pt-2" style={{ ...PIXEL, fontSize: 10, color: '#e8d5b0' }}>
-          <ChromeButton onClick={() => go(-1)} label={labels.prev} disabled={page <= 0}>
+          <ChromeButton onClick={() => go(-1)} label={labels.prev} disabled={page <= 0} touch={touch}>
             ◀
           </ChromeButton>
-          <ChromeButton onClick={() => go(1)} label={labels.next} disabled={!total || page >= total - step}>
+          <ChromeButton onClick={() => go(1)} label={labels.next} disabled={!total || page >= total - step} touch={touch}>
             ▶
           </ChromeButton>
           <span aria-live="polite" style={{ opacity: 0.85 }}>
@@ -383,12 +482,14 @@ function ChromeButton({
   label,
   pressed,
   disabled,
+  touch,
 }: {
   onClick: () => void
   children: React.ReactNode
   label: string
   pressed?: boolean
   disabled?: boolean
+  touch?: boolean
 }) {
   return (
     <button
@@ -400,11 +501,16 @@ function ChromeButton({
       className="px-2 py-1 transition-colors disabled:opacity-35 disabled:cursor-default outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#e8d5b0]"
       style={{
         ...PIXEL,
-        fontSize: 10,
+        fontSize: touch ? 12 : 10,
         color: '#e8d5b0',
         backgroundColor: pressed ? '#5a4430' : '#4a3726',
         border: '1px solid #6a5240',
         borderRadius: 2,
+        minWidth: touch ? 44 : undefined,
+        minHeight: touch ? 44 : undefined,
+        display: touch ? 'inline-flex' : undefined,
+        alignItems: touch ? 'center' : undefined,
+        justifyContent: touch ? 'center' : undefined,
       }}
     >
       {children}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { isPortraitPhone } from './desk-screen'
 
 const STAGE_W = 1408
 const STAGE_H = 768
@@ -9,6 +10,8 @@ export interface StageScale {
   scale: number
   mobile: boolean
   fillScale: number
+  /** A portrait phone: the desk shows the portrait screen instead of the scaled desk. */
+  portrait: boolean
 }
 
 /** No mouse or trackpad at all, or a narrow viewport — same signal used everywhere mobile is gated.
@@ -23,7 +26,7 @@ export function isMobileViewport(): boolean {
 export function useStageScale(): StageScale {
   // SSR-safe initial value: the effect corrects it on the client before the
   // splash finishes, so the one-frame desktop fit scale is never visible.
-  const [state, setState] = useState<StageScale>({ scale: 1, mobile: false, fillScale: 1 })
+  const [state, setState] = useState<StageScale>({ scale: 1, mobile: false, fillScale: 1, portrait: false })
   const mobileRef = useRef(false)
   const fillScaleRef = useRef(1)
 
@@ -31,7 +34,12 @@ export function useStageScale(): StageScale {
     const fillScale = window.innerHeight / STAGE_H
     const fitScale = Math.min(window.innerWidth / STAGE_W, fillScale)
     fillScaleRef.current = fillScale
-    setState({ scale: mobileRef.current ? fillScale : fitScale, mobile: mobileRef.current, fillScale })
+    setState({
+      scale: mobileRef.current ? fillScale : fitScale,
+      mobile: mobileRef.current,
+      fillScale,
+      portrait: isPortraitPhone(window.innerWidth, window.innerHeight, mobileRef.current),
+    })
   }, [])
 
   useEffect(() => {

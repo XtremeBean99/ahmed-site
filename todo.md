@@ -405,3 +405,441 @@ sizes) before merging into `feat/catan-overhaul`. Task files hold the full speci
     banner announced every bot phase change on top of the event narration (it now speaks only prompts for you).
   - The phone Cards sheet showed its heading twice.
 
+
+---
+
+## APPROVED DESIGN — Mobile, full optimisation of the room and desk (`/`)
+
+Requested 28 September 2026: "Full optimise the main site for mobile, ask refining questions first then proceed
+using deepcode agents". Branch `feat/mobile` in the worktree `ahmed-site/.claude/worktrees/mobile` (its
+`node_modules` is a junction: `cmd /c rmdir` it before any cleanup). Each deepcode builder gets its own worktree
+`mob-<key>` on branch `mobile/<key>` off `feat/mobile`, merged back after review. Catan is out of scope (done in v3).
+
+### Owner decisions (refining questions)
+- **Portrait-native.** On a portrait phone the monitor becomes a tall portrait screen and every desk app gets a
+  portrait layout (the landscape 536x308 screen can only render at about 0.7x on a 390 px wide phone).
+- **Monitor bezel.** The portrait screen sits inside a thin pixel bezel in the monitor's colours with the green
+  power LED in the chin, so it still reads as the computer; the room is one tap away (← Room).
+- **Terminal stays desktop-only** (konami code). If a phone does open it (a `~/Desktop` file), it must render and
+  accept the phone keyboard, nothing more.
+- **Music untouched** (no re-encoding). Covers and sound effects still get lighter.
+
+### Findings that shaped it (live site at 390x844, 28 September)
+- Phones land on the desk README (deliberate, `55ddfae`) but the screen is 378x217 px: README text about 7-8 px,
+  desktop icons and labels tiny, strip buttons about 20 px tall; most of the phone is desk art or black.
+- Landscape phones are fine for size (the screen renders at about 1.1-1.2x, larger than on a 1408x768 laptop).
+- Snake has no touch input at all; Pong is keys plus mouse; iPhone has no element full screen (the button hides);
+  the guestbook inputs are under 16 px so iOS zooms the page; room tooltips are mouse-hover only; the room's
+  "Click around to explore" hint overlaps the music bar; the NowPlaying volume slider does nothing on iOS (media
+  volume is read-only there).
+- The `/` page chunk is 699 KB decoded (1.2 MB of JS in total): every desk app and the terminal engine ship with
+  the landing page. Each sound effect is downloaded 3-4 times at startup (a pool of `new Audio()` elements, about
+  600 KB); cover thumbnails shown at 36 px are 20-300 KB JPEGs.
+
+### Goal
+A phone visitor in portrait gets a readable, touch-first version of the same site: the README landing, the pixel
+desktop, every app and game playable with fingers, the room explorable by drag and tap, and a lighter first load.
+Desktop at 1408x768 and 1920x1080 stays pixel-identical; landscape phones and tablets keep the diegetic desk.
+
+### A. The portrait screen (the contract, MOB0)
+- **Mode.** `isPortraitPhone(vw, vh, mobile)`: mobile (the existing `isMobileViewport`) and `vh > vw` and the
+  landscape screen would render below 0.9x (`min((vw-12)/536, (vh-12)/308) < 0.9`). So 360-430 px phones in
+  portrait get the portrait screen; iPads, foldables and every landscape viewport keep today's desk.
+- **Logical screen.** 320 logical px wide, `h` logical px tall (between 440 and about 700, from the phone), scaled
+  as one unit by `s = (available width - bezel) / 320` (about 1.06x on 360 px phones, 1.16x on 390, 1.28x on 430).
+  If `h` would fall under 440 (short phones with browser bars), `s` shrinks to fit 440 and the screen centres.
+  Apps design in logical px exactly as they do for 536x308, so canvases, pointer maths and pixel coordinates keep
+  working. Minimums in portrait: body text 12 logical px (about 14 CSS px), labels 10, tap targets 38 (about 44).
+- **Shell.** Full viewport, black, safe-area padding; the bezel (10 px sides, 12 px top, 26 px chin with the LED,
+  CSS px, colours sampled from the monitor art) around the scaled screen; a 56 px music bar under the bezel holds
+  `NowPlaying embedded` (Room stops rendering its fixed player in this mode). No desk art, desk pan, mouse
+  follower, "click again to return" or desk clicks in portrait.
+- **Rotation keeps state.** DeskView keeps one element tree in both modes (the screen element never changes
+  parent or position among its siblings; the desk art and the bezel are conditional siblings), so rotating the
+  phone swaps layouts without remounting the open app or losing a game.
+- **Context.** `DeskScreenContext` / `useDeskScreen()` (next to `DeskClockContext` in `ScreenStrip.tsx`) gives
+  `{ w, h, portrait }`: `{536, 308, false}` on the desk, `{320, h, true}` in portrait.
+- **ArcadeFrame.** New `portrait` prop: the app has a portrait layout. In portrait with the prop, the frame is
+  `w x h` and the app lays out from `useDeskScreen()`; without it (compat, for apps not yet migrated) the 536x308
+  frame scales to 320 wide and centres, so everything keeps working mid-migration. Full screen reports
+  unsupported in portrait (the app already fills the phone). The frame root is `select-none` with no touch
+  callout, so long-presses never select text or open menus.
+- **ScreenStrip.** In portrait the strip is 44 logical px (clock, title, Desktop, ← Room with `xl` buttons);
+  app controls passed as children move to a second 44 px toolbar row under it (scrolls sideways if crowded).
+  `ArcadeButton` gains an `xl` size (38 px tall); `StripButton` picks `sm` on the desk and `xl` in portrait.
+- **Global touch CSS.** No tap highlight in the room and desk, `touch-action: manipulation` on their buttons,
+  `overscroll-behavior: none` on the document so a swipe in a game never pulls to refresh.
+- **Inputs.** Every text input and textarea in the desk renders at 16 px computed font size on touch devices so
+  iOS never zooms (the logical-px scale is a transform, which iOS ignores for this).
+
+### B. Desk apps in portrait (each builder owns its files)
+- **Desktop grid:** 4 columns, larger icons and labels, desktop files row and screensaver sized from `w x h`.
+- **README, Legal, Guestbook, Settings, Music, Movie:** they are already flex layouts; portrait bumps type to the
+  minimums, makes rows and tabs full-width touch targets, stacks the guestbook form (focused input scrolled into
+  view above the phone keyboard), hides the music volume slider where volume is read-only (iOS), and fits the
+  video to the width with the controls below.
+- **Terminal:** reflows its character grid to the portrait width; inputs at 16 px; no extra-keys row.
+- **Snake:** portrait board scaled to the width with a pixel D-pad under it; swipes on the board steer too; on
+  touch in landscape the D-pad sits beside the board (the owner's "touchpad for snake" idea).
+- **Minesweeper:** bigger cells in portrait and a Reveal/Flag mode toggle (long-press still flags).
+- **Paint:** the 107x50 canvas at the full width, tools and a larger palette under it.
+- **Blackjack:** dealer at the top, hands in the middle, chips and Hit/Stand/Double/Split as big buttons at the
+  bottom; the tutorial dialog fits the portrait screen.
+- **Solitaire:** classic phone layout (stock, waste, gap, four foundations over seven columns) with cards scaled
+  to fit, more vertical fan room, and tap-to-move (a tap sends a card to its best legal destination; drag stays).
+- **Pong:** the court turns vertical in portrait (the engine stays as is; the view transposes x and y): you at the
+  bottom, the CPU at the top, drag anywhere on your half; two players hold the top and bottom halves. Touch drag
+  works in landscape as well.
+- **Breakout:** the engine's court geometry becomes state chosen at game start (landscape 536x280 as today; a
+  portrait court about 300 wide) with the same 14-column levels on narrower bricks and speeds scaled to the court;
+  drag anywhere to move the paddle. A game started in one orientation keeps its court when the phone rotates (the
+  view scales it to fit) until the next game.
+
+### C. The room on phones (MOB8)
+Initial pan centred on the monitor; momentum when a drag is released; faint edge chevrons until the first drag;
+touch copy for the hint ("Tap things to explore, drag to look around") placed clear of the music bar; tooltips on
+tap (touch shows the object's tooltip for about 1.6 s alongside its action; hover handlers only react to a mouse,
+which also avoids iOS's tap-twice behaviour when hover changes content); the e-reader in `dvh` with one page,
+swipe and tap-zone page turns and 44 px controls; the discoveries badge and popup fitting a 320 px screen.
+
+### D. Lighter first load (MOB0, MOB9)
+- Desk apps (all but README and the desktop), the terminal and the e-reader become `next/dynamic` chunks, fetched
+  on idle after the landing is interactive (skipped with Save-Data), so opening an app stays instant.
+  `desktopFiles` reads the saved file system without importing the terminal engine.
+- Sound effects move to Web Audio: each file fetched and decoded once, played through a buffer source with a gain
+  node, the context unlocked on the first gesture (iOS), same `useSfx()` API.
+- Cover art: originals move to `assets/audio-covers/`; `npm run covers` (ffmpeg) writes 128x128 thumbnails to
+  `public/audio/covers/`. The stale cover preload is removed.
+
+### Verification
+Viewports: 390x844, 360x800, 430x932 and 375x667 portrait with touch emulation; 844x390 landscape; 768x1024 and
+1024x768 tablet; 1408x768 and 1920x1080 desktop (screenshots before and after must match). Every app in portrait at
+`h = 440` and `h = 640`, playable by touch; a rotation mid-game keeps state; no horizontal overflow; no input zoom;
+`npm run type-check`, `npm run lint`, `npm run build` and every test suite green; First Load JS for `/` measured
+before and after.
+
+### Deliberately skipped
+Catan; a phone-specific terminal (extra keys row, touch konami); re-encoding the music; new art (the bezel is drawn
+in CSS from sampled colours); the archived `(site)` pages; the README "desktop only" note from `ideas.txt` (nothing
+visible stays desktop-only now); ideas.txt items other than the Snake touchpad.
+
+---
+
+## Mobile Implementation Plan
+
+> **For agentic workers:** MOB1-MOB8 are deepcode builders (owner's choice), each in its own worktree
+> `ahmed-site/.claude/worktrees/mob-<key>` on branch `mobile/<key>` off `feat/mobile`, with a `node_modules`
+> junction and a task file in `.agents-work/` (gitignored) that holds the full specification; the shared briefing
+> is `.agents-work/mobile-context.md`. The orchestrator (Claude) does MOB0 and MOB9-MOB11 and verifies every
+> builder branch (tests, type-check, lint, browser at the viewport matrix) before merging it into `feat/mobile`.
+
+**Goal:** the room and desk at `/` become portrait-native and touch-first on phones, lighter to load, and unchanged
+on desktop.
+
+**Architecture:** a pure geometry module picks the mode and the portrait screen size; `DeskView` renders one stable
+element tree that is either today's scaled desk or a bezel shell around a 320 x h logical screen; a
+`DeskScreenContext` tells every app which screen it has, and `ArcadeFrame`/`ScreenStrip` adapt, with a compat
+fallback so unmigrated apps keep working. Each app then gets its own portrait layout in parallel. Desk apps load as
+`next/dynamic` chunks prefetched on idle.
+
+**Tech stack:** Next.js 15 App Router, React 19, strict TypeScript, Tailwind 3, Framer Motion 11, `node:test` via
+`tsx`, ffmpeg (covers only). No new npm dependencies.
+
+**Spec:** "APPROVED DESIGN — Mobile, full optimisation of the room and desk" above.
+
+### Global Constraints
+- Desktop at 1408x768 and 1920x1080 renders pixel-identical to `master`; landscape phones and tablets keep the desk.
+- Portrait screen: 320 logical px wide, `h` from 440 to about 700; body text >= 12 logical px, labels >= 10,
+  tap targets >= 38 (about 44 CSS px on a 390 px phone).
+- Room palette, the pixel font (`PIXEL_FONT`), `ARCADE` colours and kit buttons only; no emoji, no system fonts,
+  no rounded pills, no blur shadows; integer logical-px coordinates.
+- Copy in `src/lib/i18n/dictionaries/en.ts`, English only, no em dashes.
+- Reduced motion disables decorative animation only, never a control or gameplay.
+- Every control is a real button (or `ArcadeButton`) with an accessible name and a visible focus ring.
+- No new asset files except the cover thumbnails; no new dependencies; CSP-safe (no eval, no external URLs).
+- Code style: no semicolons, single quotes, 2-space indent, named exports, no `any`, minimal comments.
+
+### Review Focus
+1. Rotating a phone mid-game: the open app keeps its state (no remount) and re-lays out; a Breakout game keeps its
+   court until the next game. Pinned by the stable-tree rule in MOB0 and checked in MOB9 (start Snake, rotate
+   twice, score and snake unchanged).
+2. Short phones with browser bars (375x548 visible): the portrait screen clamps to h = 440, nothing overflows or
+   hides the music bar. Pinned by `portraitGeometry` tests in MOB0 and a 375x548 pass in MOB9.
+3. Swipes and drags in games (Snake, Pong, Breakout, Paint, the room pan) never scroll the page, pull to refresh or
+   select text. Pinned by MOB0's global CSS and each board's `touch-action: none`; checked in MOB9 with touch drags.
+4. A lazily loaded app chunk that fails on a flaky network shows a retry message inside the screen instead of
+   crashing the page. Pinned by MOB0's screen error boundary; checked in MOB9 by blocking one chunk.
+5. The phone keyboard over a focused input (guestbook): the input stays visible and the page does not stay zoomed.
+   Pinned by the 16 px input rule in MOB0 and MOB1's scroll-into-view; checked in MOB9 at 390x844 and 390x500.
+
+### Files and owners
+| Task | Owns |
+|---|---|
+| MOB0 | `src/lib/room/desk-screen.ts` (+test), `src/lib/room/media.ts` (+test), `src/lib/room/useStageScale.ts`, `src/components/room/ScreenStrip.tsx`, `pixel-ui.tsx`, `DeskArcade.tsx`, `DeskView.tsx`, `PortraitBezel.tsx` (new), `AppBoundary.tsx` (new), `src/app/globals.css`, `package.json` scripts; Room.tsx lines for NowPlaying placement and the dynamic e-reader |
+| MOB1 | `DeskDesktop.tsx`, `DeskIcon.tsx`, `DeskReadme.tsx`, `DeskLegal.tsx`, `DeskGuestbook.tsx`, `DeskSettings.tsx`, `DeskMusic.tsx`, `DeskMovie.tsx`, `DeskTerminal.tsx`, `TermEditor.tsx`, their `en.ts` keys |
+| MOB2 | `DeskSnake.tsx`, `DeskMinesweeper.tsx`, `DeskPaint.tsx`, new `DeskDpad.tsx`, new `src/lib/room/gestures.ts` (+test), their `en.ts` blocks |
+| MOB3 | `DeskBlackjack.tsx`, `desk.blackjackApp` in `en.ts` |
+| MOB4 | `DeskSolitaire.tsx`, `solitaire-engine.ts` (+test, a `bestMove` helper), `desk.solitaireApp` |
+| MOB5 | `DeskPong.tsx`, new `src/lib/games/pong-view.ts` (+test), `desk.pongApp` |
+| MOB6 | `DeskBreakout.tsx`, `breakout-engine.ts` (+test), `desk.breakoutApp` |
+| MOB7 | `Room.tsx` (pan and hint only), `RoomObject.tsx`, `AnimatedSprite.tsx`, `ShelfBooks.tsx`, `RoomHud.tsx`, `DiscoveriesBadge.tsx`, `RoomReader.tsx`, new `src/lib/room/pan.ts` (+test), `room.*` keys in `en.ts` |
+| MOB8 | `RoomSfxProvider.tsx`, `NowPlaying.tsx`, `RoomAudioProvider.tsx`, `playlist.ts`, new `scripts/generate-covers.mjs`, `assets/audio-covers/`, `public/audio/covers/` |
+
+Waves: MOB0 alone; wave 1 = MOB1, MOB2, MOB4, MOB7; wave 2 = MOB3, MOB5, MOB6, MOB8; then MOB9-MOB11.
+
+### MOB0: portrait contract, shell, code splitting, touch CSS (orchestrator)
+
+**Interfaces produced (every builder relies on these):**
+- `src/lib/room/desk-screen.ts`: `SCREEN_W = 536`, `SCREEN_H = 308`, `PORTRAIT_W = 320`, `PORTRAIT_MIN_H = 440`,
+  `BEZEL = { side: 10, top: 12, chin: 26 }`, `MUSIC_BAR_H = 56`, `isPortraitPhone(vw, vh, mobile): boolean`,
+  `portraitGeometry(availW, availH): { scale, w, h, left, top }`.
+- `useStageScale()` returns `{ scale, mobile, fillScale, portrait }`.
+- `ScreenStrip.tsx`: `interface DeskScreen { w: number; h: number; portrait: boolean }`, `DeskScreenContext`,
+  `useDeskScreen(): DeskScreen`, `PORTRAIT_STRIP_H = 44`; in portrait `children` render in a second 44 px toolbar.
+- `pixel-ui.tsx`: `ArcadeButton size="xl"` (38 px tall, 12 px font); `StripButton` is `xl` in portrait.
+- `DeskArcade.tsx`: `ArcadeFrame` prop `portrait?: boolean`; `useFullscreen().supported` is false in portrait.
+- `src/lib/room/media.ts`: `isMediaVolumeReadOnly(probe?: { volume: number }): boolean` (iOS ignores
+  `HTMLMediaElement.volume`), used by Settings (MOB1) and NowPlaying (MOB8); node-tested with fake probes.
+
+- [ ] **Step 1: failing tests for the geometry** in `src/lib/room/desk-screen.test.ts`:
+
+```ts
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { isPortraitPhone, portraitGeometry, PORTRAIT_MIN_H, PORTRAIT_W, BEZEL, MUSIC_BAR_H } from './desk-screen'
+
+test('portrait phones get the portrait screen, everything else keeps the desk', () => {
+  assert.equal(isPortraitPhone(390, 844, true), true)
+  assert.equal(isPortraitPhone(360, 800, true), true)
+  assert.equal(isPortraitPhone(430, 932, true), true)
+  assert.equal(isPortraitPhone(844, 390, true), false)
+  assert.equal(isPortraitPhone(768, 1024, true), false)
+  assert.equal(isPortraitPhone(390, 844, false), false)
+})
+
+test('a 390x700 phone fills the width', () => {
+  const g = portraitGeometry(390, 700)
+  assert.equal(g.w, PORTRAIT_W)
+  assert.ok(Math.abs(g.scale - 370 / 320) < 1e-9)
+  assert.equal(g.h, Math.floor((700 - BEZEL.top - BEZEL.chin - MUSIC_BAR_H) / g.scale))
+  assert.equal(g.left, BEZEL.side)
+})
+
+test('a short phone clamps to the minimum height and centres', () => {
+  const g = portraitGeometry(375, 548)
+  assert.equal(g.h, PORTRAIT_MIN_H)
+  assert.ok(g.w * g.scale <= 375 - 2 * BEZEL.side)
+  assert.ok(g.left > BEZEL.side)
+})
+
+test('the screen always fits its box', () => {
+  for (let w = 300; w <= 480; w += 7) {
+    for (let h = 480; h <= 1000; h += 13) {
+      const g = portraitGeometry(w, h)
+      assert.ok(g.h >= PORTRAIT_MIN_H)
+      assert.ok(g.w * g.scale <= w - 2 * BEZEL.side + 1e-6)
+      assert.ok(g.h * g.scale <= h - BEZEL.top - BEZEL.chin - MUSIC_BAR_H + 1e-6)
+    }
+  }
+})
+```
+
+- [ ] **Step 2:** `npx tsx --test src/lib/room/desk-screen.test.ts`; expect failure (module missing).
+- [ ] **Step 3: implement `desk-screen.ts`:**
+
+```ts
+export const SCREEN_W = 536
+export const SCREEN_H = 308
+export const PORTRAIT_W = 320
+export const PORTRAIT_MIN_H = 440
+/** Portrait shell chrome in CSS px. */
+export const BEZEL = { side: 10, top: 12, chin: 26 } as const
+export const MUSIC_BAR_H = 56
+
+/** A portrait viewport where the landscape screen would render below 0.9x. */
+export function isPortraitPhone(vw: number, vh: number, mobile: boolean): boolean {
+  if (!mobile || vh <= vw) return false
+  return Math.min((vw - 12) / SCREEN_W, (vh - 12) / SCREEN_H) < 0.9
+}
+
+export interface PortraitGeometry { scale: number; w: number; h: number; left: number; top: number }
+
+/** The 320-wide logical screen inside the bezel, above the music bar, in a box with safe areas removed. */
+export function portraitGeometry(availW: number, availH: number): PortraitGeometry {
+  const maxW = Math.max(1, availW - 2 * BEZEL.side)
+  const maxH = Math.max(1, availH - BEZEL.top - BEZEL.chin - MUSIC_BAR_H)
+  let scale = maxW / PORTRAIT_W
+  let h = Math.floor(maxH / scale)
+  if (h < PORTRAIT_MIN_H) {
+    scale = Math.min(scale, maxH / PORTRAIT_MIN_H)
+    h = PORTRAIT_MIN_H
+  }
+  return { scale, w: PORTRAIT_W, h, left: Math.round((availW - PORTRAIT_W * scale) / 2), top: BEZEL.top }
+}
+```
+
+- [ ] **Step 4:** tests pass; add `"test:room": "tsx --test \"src/lib/room/*.test.ts\""` to `package.json`.
+- [ ] **Step 5: the contract.** `useStageScale` adds `portrait` (recomputed on every resize);
+  `DeskScreenContext`/`useDeskScreen`/portrait strip in `ScreenStrip.tsx`; `xl` in `pixel-ui.tsx`; `ArcadeFrame`
+  `portrait` prop with the compat scale `320 / 536`, `select-none` and no touch callout; `useFullscreen` reports
+  unsupported in portrait and leaves full screen if the phone turns to portrait.
+- [ ] **Step 6: the shell.** `DeskView`: root gets safe-area padding in portrait; a stable inner wrapper measured
+  by a `ResizeObserver` feeds `portraitGeometry`; the stage is untransformed in portrait; desk art, lamp,
+  speakers, notes, mouse and the "click again" bubble render only on the desk (one conditional slot);
+  `PortraitBezel` renders only in portrait (one slot); the screen element keeps its place and switches between
+  the stage rect and `left/top/w/h + scale(s)`; the music bar renders `NowPlaying embedded` in portrait (new
+  `nowPlayingLabels` prop, Room skips its fixed player then); desk drag-pan, desk clicks and the landscape
+  mobile layout are off in portrait. `DeskDesktop` gets `screenW/screenH` from the context.
+- [ ] **Step 7: code splitting.** Every app but README and the desktop, plus `RoomReader` in Room, via
+  `next/dynamic` (`ssr: false`, a pixel "Loading" state); idle prefetch of all app chunks unless Save-Data or a
+  2g connection; `AppBoundary` error boundary around the screen content shows a pixel message with a reload
+  button if a chunk fails.
+- [ ] **Step 8: touch CSS** in `globals.css`: `overscroll-behavior: none` on html and body; no tap highlight in
+  `.room-cursor`; `touch-action: manipulation` on its buttons and links; on `(pointer: coarse)` text inputs and
+  textareas in `.room-cursor` get a 16 px font size.
+- [ ] **Step 9: verify.** `npm run test:room`, `npm run type-check`, `npm run lint`, `npm run build` (First Load
+  JS for `/` against the baseline), browser at 390x844 (bezel, README readable, compat games work), 844x390 and
+  1408x768 (screenshots identical to `master`), rotate mid-Snake keeps state.
+- [ ] **Step 10: commit** "Add the portrait desk shell and mobile contract".
+
+### MOB1: desktop grid, text apps and terminal (deepcode)
+Portrait layouts for the desktop grid (4 columns, 40-48 px icons, 10-11 px labels; files row and screensaver from
+the context), README (12-13 px body, generous padding), Legal (full-width tabs, 12 px text), Guestbook (stacked
+form, inputs 16 px on touch in both modes without breaking the landscape layout, focused input scrolled into view,
+list below), Settings (full-width rows, big toggles and sliders, music slider hidden when media volume is
+read-only), Music (44 px rows, 32 px covers), Movie (video at the full width, controls under it), Terminal and
+TermEditor (character grid reflows to the portrait width; the visible input stays 16 px computed on touch and
+matches the grid visually through a scale; no extra keys). Desktop layouts unchanged. The read-only volume check
+is MOB0's `isMediaVolumeReadOnly()`. Acceptance: every screen at 320 x 440 and 320 x 640 with nothing clipped or
+overflowing sideways, and the landscape desk unchanged.
+
+### MOB2: Snake, Minesweeper, Paint, the D-pad (deepcode)
+`src/lib/room/gestures.ts`: `swipeDirection(dx, dy, minDist = 24): 'up' | 'down' | 'left' | 'right' | null`
+(dominant axis, null under the threshold) with node tests. `DeskDpad.tsx`: a pixel D-pad (four 44-56 px arrow
+buttons in a cross, pointer down fires once and repeats never; `aria-label`s), reused by Snake only. Snake: portrait
+board at 20 px cells (280 px) under a score row, D-pad below, swipes on the board steer, Pause and New game in the
+toolbar; on a touch device in landscape the D-pad sits right of the board. Minesweeper: portrait cells 32 px, a
+Reveal/Flag toggle (pressed state, keyboard reachable) used on tap; long-press still flags. Paint: canvas at 3 px
+per pixel (321 wide, scaled to fit), tools as `xl` buttons, a 5x2 palette of 28 px swatches and a 38 px custom
+colour button. All three opt into `ArcadeFrame portrait`.
+
+### MOB3: Blackjack (deepcode)
+Portrait table: dealer hand and shoe at the top, messages in the middle, player hands below (splits stack
+vertically or overlap more, never off-table), chips and stake above an action row of `xl` buttons (Hit, Stand,
+Double, Split, Deal); the 6-page tutorial dialog fits 320 x 440. Landscape unchanged. Opts into `ArcadeFrame portrait`.
+
+### MOB4: Solitaire (deepcode)
+`bestMove(state, from: Loc): Loc | null` in `solitaire-engine.ts` (foundation first, then a tableau column that
+accepts it, lowest index; null when nothing is legal) with node tests; a tap (no drag) moves the card there, in
+both orientations. Portrait layout: stock, waste, gap, four foundations over seven columns, cards at a scale that
+fits seven columns in 320 px with at least 3 px gaps, fan steps sized to `h`. Drag still works. Opts into
+`ArcadeFrame portrait`.
+
+### MOB5: Pong (deepcode)
+`src/lib/games/pong-view.ts`: pure `toView(x, y, portrait)` and `fromViewPaddle(clientAxis, portrait)` maps between
+the engine's 536x280 court and the portrait view (x and y transposed: the engine's left paddle is the bottom one)
+with node tests. Portrait: the court drawn vertical at the largest fit, menus and score laid out for portrait;
+pointer events everywhere (`touch-action: none`): in one-player mode a drag anywhere moves your paddle; in
+two-player mode each half of the court drives its own paddle (multi-touch). Landscape gains pointer (touch) drag.
+Opts into `ArcadeFrame portrait`.
+
+### MOB6: Breakout (deepcode)
+Engine: court geometry (`courtW`, `courtH`, `brickW`, `gridX`, speeds scaled by court height) moves from module
+constants into state set at `createGame(options)`, defaulting to today's landscape values so every existing test
+passes unchanged; a portrait preset (about 300 x 440 with 14 columns of narrower bricks) with new tests (bricks fit
+the court, a ball never leaves it, the same level strings parse). View: portrait canvas at the largest fit, HUD
+above, drag anywhere to move the paddle, a game keeps its court across rotation until the next game. Opts into
+`ArcadeFrame portrait`.
+
+### MOB7: the room on phones (deepcode)
+`src/lib/room/pan.ts`: pure momentum (`step(velocity, dt)` decay, release velocity from recent samples, clamp) with
+node tests. Room: initial pan centred on the monitor on phones, momentum after a drag, edge chevrons until the
+first drag, touch hint copy clear of the music bar. `RoomObject`/`AnimatedSprite`/`ShelfBooks`: hover state only
+for `pointerType === 'mouse'`; on touch a tap plays the highlight, shows the tooltip for about 1.6 s and acts.
+`RoomReader`: `dvh`, one page on phones, swipe and tap zones to turn pages, 44 px controls. `DiscoveriesBadge`:
+44 px target, popup fits 320 px. Desktop unchanged.
+
+### MOB8: audio and covers (deepcode)
+`RoomSfxProvider` plays sound effects through Web Audio (fetch and decode each file once, a buffer source per play
+through a gain node, context resumed on the first gesture, falls back silently), same `useSfx()` API and prefs.
+`NowPlaying`: the volume slider hides where media volume is read-only (iOS); the cover renders after mount so the
+server HTML does not preload a cover for a track that will not play. Covers: originals move to
+`assets/audio-covers/`; `scripts/generate-covers.mjs` (`npm run covers`, ffmpeg) writes 128x128 JPEG thumbnails
+(quality about 85) into `public/audio/covers/` with the same names.
+
+### MOB9: integration and the viewport matrix (orchestrator)
+Merge each builder branch after its own checks; run every suite, type-check, lint and a production build; walk
+the matrix (390x844, 360x800, 430x932, 375x667 and 375x548 portrait with touch; 844x390; 768x1024; 1024x768;
+1408x768 and 1920x1080 compared with `master`), every app at h 440 and 640, plus the Review Focus checks.
+
+### MOB10: reviews (orchestrator plus deepcode)
+A read-only deepcode second-opinion review of `feat/mobile` against this plan and a Claude review; verify every
+finding before fixing; fix the real ones.
+
+### MOB11: docs and handover (orchestrator)
+CLAUDE.md: v22 entry and a "Phones" section with the portrait contract for future apps; the build log below; final
+verification; ask the owner before merging into `master` (a push deploys).
+
+### Build log
+- 28 September: refining questions answered (portrait-native, monitor bezel, terminal desktop-only, music
+  untouched); design and plan written. Baseline build: `/` 240 kB page, 345 kB First Load JS.
+- MOB0 done (`6f345b9`, `7f6bccf`): geometry module and tests, `DeskScreenContext`, portrait strip and toolbar,
+  `xl` buttons, `ArcadeFrame` portrait and compat modes, the bezel shell (bezel widened to 10/12/26 px so the
+  sampled rim and body read at phone size), the music bar, per-app error boundaries, code splitting with idle
+  prefetch, touch CSS. `/` is now 71.4 kB page, **177 kB First Load JS** (was 345). Checked at 390x844 (320 x 648
+  logical screen at 1.156x, 44 px strip buttons, no sideways overflow), a compat game in portrait, and rotation
+  390x844 -> 844x390 -> 390x844 mid-game keeping the Snake state. Room and DeskView now take the desk copy types
+  from `Dictionary`, so a builder's new strings never touch files it does not own.
+- The browser pane reports a touch screen with no fine pointer even at 1408x768, so it always runs the mobile
+  paths; master and `feat/mobile` give identical screen and stage rects there (1024x768). The exact desktop
+  (mouse) comparison is done in MOB9 with a temporary local override of `isMobileViewport` on both branches.
+- Wave 1 launched (MOB1 desktop and text apps, MOB2 Snake/Minesweeper/Paint, MOB4 Solitaire, MOB7 room); MOB7
+  also owns `Monitor.tsx`, `RoomSpeakers.tsx` and `SideTableClock.tsx` for tap tooltips; MOB5 also owns
+  `pong-engine.ts` (a `rightTarget` input for two-player touch). Wave 2 waits for memory (15 GB, 2.4 GB free).
+- Three of four wave 1 builders died on DeepSeek "Request timed out" (the deepcode-cli OpenAI client: 10 min per
+  request, 2 retries). `run.ps1` now retries up to 5 times with a fresh session and a resume note (partial work stays
+  in the worktree); every later run finished on its first attempt.
+- Visual checks now use a headless Edge driven over the DevTools protocol (a scratchpad script): exact viewports,
+  touch emulation, taps and swipes, and a real mouse for the desktop regression. The browser pane cannot emulate a
+  fine pointer and freezes animation frames while hidden.
+- MOB2 merged (Snake, Minesweeper, Paint). Review fixes: the D-pad shrinks to 40 px before Snake's board drops under
+  13 px cells on short phones (it was 10 px at h 440); swipes chain turns and a finger lifted after a swipe no
+  longer restarts; the portrait Minesweeper result was screen-reader-only; the D-pad arrows got matching heads;
+  Paint strokes join their pointer samples (`lineCells`, tested) because finger strokes left dotted gaps.
+- MOB4 merged (Solitaire portrait, tap-to-move replacing double-click). MOB1 merged (desktop grid, text apps,
+  terminal); review fixes: a focus outline the builder added to the terminal input would have shown on desktop;
+  portrait icon labels did not share a line; the Movie seek bar pushed the full-screen button off the screen (the
+  picture and controls are now centred in black).
+- MOB8 merged (Web Audio effects, 128x128 covers: 2.6 MB to 133 kB). Review fix: the builder unlocked the context
+  on a touch `pointerdown`, which is not a user activation, so phones would have stayed silent; it now listens to
+  pointerup, touchend, click and keydown until the context runs, and `play()` resumes it.
+- MOB7 merged (room on phones). Found in the browser: the room opens on the desk, where the monitor and speakers
+  fill most of the view, and a drag that started on any object was ignored, so the room barely panned. Drags now
+  start anywhere, become a pan past 8 px and swallow the object's click.
+- MOB5 merged (Pong vertical in portrait, touch in both orientations). Review fix: the portrait scores sat in the
+  CPU paddle's band; they now flank the net.
+- Landscape phones: the fixed music player covered the open app on an 844x390 phone; the mobile desk now fits the
+  screen above it. A paused Snake survives 844x390 -> 390x844 -> 844x390.
+- Desktop regression (headless Edge, mouse, 1408x768, SSIM against the live site): the app area is identical
+  (1.000000) for README, the desktop grid, Minesweeper, Paint, Pong, Settings and Legal; the others differ only by
+  random content (Snake's apple, the deal, the current track, live guestbook entries, the film's loaded frame);
+  the room 0.9987 (clock and animations).
+- MOB6 merged (Breakout: court geometry in the engine state, a 304x400 portrait court, touch play); one copy fix
+  (the touch menu said Tap to launch twice). MOB3 merged (Blackjack: a pure tested layout, portrait table, tutorial).
+  Desktop SSIM against the live site 1.000000 for Breakout, the Blackjack tutorial and the Blackjack table.
+- MOB10 deepcode review of the merged branch: four findings, all confirmed and fixed (`e7006a2`): music never
+  auto-started on a phone's first tap (the fallback used touchstart, not a user activation, and removed its other
+  listeners after that failure; pre-existing); a mouse click in Solitaire auto-moved the card instead of selecting
+  it (desktop behaviour restored, fingers keep tap-to-move); the landscape desk ignored drags that began on the lamp
+  or speakers and let the browser claim the gesture (it now pans from anywhere with touch-action none); a
+  Minesweeper long-press left over from a cancelled touch swallowed the next tap.
+- Matrix: 390x844, 360x800, 430x932, 375x548 portrait; 844x390 landscape; 768x1024 and 1024x768 tablets (the desk at
+  1.41x and 1.89x); no sideways overflow anywhere.
+- Final checks: `npm run build` green, `/` 73.2 kB page and 179 kB First Load JS (was 240 and 345); test:room 37,
+  test:snake 9, test:games 135, test:terminal 518, test:catan 348, all passing; lint 0 errors (all 29 warnings are
+  pre-existing, in terminal-engine files this branch does not touch).
+- MOB10b deepcode review of Blackjack and Breakout: two findings, both confirmed and fixed (`e55127b`): Breakout
+  mapped touches against the court's container instead of the scaled canvas (after rotating a landscape game the
+  right 40% of the court was unreachable; the paddle drifted from the finger on every portrait phone); the
+  Blackjack active-hand marker could overlap the stake circle with split hands in two rows at h 440.
+- Status: MOB0-MOB11 done on `feat/mobile`. Merging into `master` (which deploys) waits for the owner.

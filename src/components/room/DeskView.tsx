@@ -1,31 +1,60 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
+import dynamic from 'next/dynamic'
 import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
 import { useStageScale, STAGE_W, STAGE_H } from '@/lib/room/useStageScale'
+import { MUSIC_BAR_H, SCREEN_H, SCREEN_W, portraitGeometry, type PortraitGeometry } from '@/lib/room/desk-screen'
+import { useT } from '@/lib/i18n/client'
+import type { Dictionary } from '@/lib/i18n/dictionaries/en'
 import { useRoomAudio } from './RoomAudioProvider'
 import { DeskDesktop, type DesktopShortcut } from './DeskDesktop'
-import { DeskClockContext } from './ScreenStrip'
-import { DeskPaint, type PaintLabels } from './DeskPaint'
-import { DeskMinesweeper, type MinesLabels } from './DeskMinesweeper'
-import { DeskSnake, type SnakeLabels } from './DeskSnake'
-import { DeskBlackjack, type BlackjackLabels } from './DeskBlackjack'
-import { DeskSolitaire, type SolitaireLabels } from './DeskSolitaire'
-import { DeskPong, type PongLabels } from './DeskPong'
-import { DeskBreakout, type BreakoutLabels } from './DeskBreakout'
+import { DeskClockContext, DeskScreenContext, type DeskScreen } from './ScreenStrip'
+import type { PaintLabels } from './DeskPaint'
+import type { MinesLabels } from './DeskMinesweeper'
+import type { SnakeLabels } from './DeskSnake'
+import type { BlackjackLabels } from './DeskBlackjack'
+import type { SolitaireLabels } from './DeskSolitaire'
+import type { PongLabels } from './DeskPong'
+import type { BreakoutLabels } from './DeskBreakout'
 import type { ArcadeLabels } from './DeskArcade'
 import { DeskReadme } from './DeskReadme'
-import { DeskMusic } from './DeskMusic'
-import { DeskLegal, type LegalLabels } from './DeskLegal'
-import { DeskSettings, type SettingsLabels } from './DeskSettings'
-import { DeskTerminal } from './DeskTerminal'
+import type { LegalLabels } from './DeskLegal'
+import type { SettingsLabels } from './DeskSettings'
 import { desktopFiles } from '@/lib/terminal/session'
-import { DeskGuestbook, type GuestbookLabels } from './DeskGuestbook'
-import { DeskMovie, type MovieLabels } from './DeskMovie'
+import type { GuestbookLabels } from './DeskGuestbook'
+import type { MovieLabels } from './DeskMovie'
 import { MusicNotes } from './MusicNotes'
 import { DeskKeyboard } from './DeskKeyboard'
+import { NowPlaying } from './NowPlaying'
+import { PortraitBezel } from './PortraitBezel'
+import { AppBoundary, AppLoading } from './AppBoundary'
 
-const SCREEN_X = 436; const SCREEN_Y = 152; const SCREEN_W = 536; const SCREEN_H = 308
+// Every app but the README landing and the desktop is its own chunk, so the
+// first load stays small on phones; they are prefetched once the page is idle.
+const DeskPaint = dynamic(() => import('./DeskPaint').then((m) => m.DeskPaint), { ssr: false, loading: AppLoading })
+const DeskMinesweeper = dynamic(() => import('./DeskMinesweeper').then((m) => m.DeskMinesweeper), { ssr: false, loading: AppLoading })
+const DeskSnake = dynamic(() => import('./DeskSnake').then((m) => m.DeskSnake), { ssr: false, loading: AppLoading })
+const DeskBlackjack = dynamic(() => import('./DeskBlackjack').then((m) => m.DeskBlackjack), { ssr: false, loading: AppLoading })
+const DeskSolitaire = dynamic(() => import('./DeskSolitaire').then((m) => m.DeskSolitaire), { ssr: false, loading: AppLoading })
+const DeskPong = dynamic(() => import('./DeskPong').then((m) => m.DeskPong), { ssr: false, loading: AppLoading })
+const DeskBreakout = dynamic(() => import('./DeskBreakout').then((m) => m.DeskBreakout), { ssr: false, loading: AppLoading })
+const DeskMusic = dynamic(() => import('./DeskMusic').then((m) => m.DeskMusic), { ssr: false, loading: AppLoading })
+const DeskLegal = dynamic(() => import('./DeskLegal').then((m) => m.DeskLegal), { ssr: false, loading: AppLoading })
+const DeskSettings = dynamic(() => import('./DeskSettings').then((m) => m.DeskSettings), { ssr: false, loading: AppLoading })
+const DeskTerminal = dynamic(() => import('./DeskTerminal').then((m) => m.DeskTerminal), { ssr: false, loading: AppLoading })
+const DeskGuestbook = dynamic(() => import('./DeskGuestbook').then((m) => m.DeskGuestbook), { ssr: false, loading: AppLoading })
+const DeskMovie = dynamic(() => import('./DeskMovie').then((m) => m.DeskMovie), { ssr: false, loading: AppLoading })
+const APP_CHUNKS = [
+  () => import('./DeskPaint'), () => import('./DeskMinesweeper'), () => import('./DeskSnake'),
+  () => import('./DeskBlackjack'), () => import('./DeskSolitaire'), () => import('./DeskPong'),
+  () => import('./DeskBreakout'), () => import('./DeskMusic'), () => import('./DeskLegal'),
+  () => import('./DeskSettings'), () => import('./DeskTerminal'), () => import('./DeskGuestbook'),
+  () => import('./DeskMovie'),
+]
+
+const SCREEN_X = 436; const SCREEN_Y = 152
+const DESK_SCREEN: DeskScreen = { w: SCREEN_W, h: SCREEN_H, portrait: false }
 const SPEAKER_LEFT = { x: 190, y: 265, w: 175, h: 300 }
 const SPEAKER_RIGHT = { x: 1005, y: 270, w: 215, h: 300 }
 // Desk-speaker driver holes (tweeter + woofer), stage coords, measured from desk-closeup art.
@@ -48,13 +77,15 @@ const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(ma
 
 /** Mobile desk layout: scale the stage so the whole monitor screen fits the
  *  viewport with a small margin, then centre the screen area in view. The desk
- *  art around it stays pannable within the stage edges. */
+ *  art around it stays pannable within the stage edges. The fixed music player
+ *  runs along the bottom, so the screen fits (and centres) in the space above
+ *  it; that only bites on landscape phones, where the height is the limit. */
 function mobileDeskLayout(vw: number, vh: number) {
-  const s = Math.max(0.2, Math.min((vw - 12) / SCREEN_W, (vh - 12) / SCREEN_H))
+  const s = Math.max(0.2, Math.min((vw - 12) / SCREEN_W, (vh - MUSIC_BAR_H - 12) / SCREEN_H))
   const slackX = Math.abs(STAGE_W * s - vw) / 2
   const slackY = Math.abs(STAGE_H * s - vh) / 2
   const cx = -(SCREEN_CX - STAGE_W / 2) * s
-  const cy = -(SCREEN_CY - STAGE_H / 2) * s
+  const cy = -(SCREEN_CY - STAGE_H / 2) * s - MUSIC_BAR_H / 2
   return {
     scale: s,
     pan: { x: clamp(cx, -slackX, slackX), y: clamp(cy, -slackY, slackY) },
@@ -83,9 +114,9 @@ interface DeskViewProps {
   /** Shared by the arcade apps: full-screen button and card names */
   arcadeLabels: ArcadeLabels
   /** Labels for the readme popup */
-  readmeLabels: { title: string; close: string }
+  readmeLabels: Dictionary['desk']['readmeApp']
   /** Labels for the music player */
-  musicLabels: { title: string; nowPlaying: string; select: string }
+  musicLabels: Dictionary['desk']['musicApp']
   /** Labels for the Legal app */
   legalLabels: LegalLabels
   /** Structured privacy policy content */
@@ -125,10 +156,18 @@ interface DeskViewProps {
   onKonamiHandled: () => void
   onToggleLamp: () => void
   onBack: () => void
+  /** The music bar under the portrait phone screen */
+  nowPlayingLabels: React.ComponentProps<typeof NowPlaying>['labels']
 }
+
+// On a portrait phone the shell pads itself clear of notches and the home indicator.
+const SAFE_PADDING = 'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)'
+const PORTRAIT_STAGE: React.CSSProperties = { position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', transform: 'none' }
+
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, clickAgainLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack } = props
-  const { scale, mobile } = useStageScale()
+  const { shortcuts, backLabel, clickAgainLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack, nowPlayingLabels } = props
+  const { scale, mobile, portrait } = useStageScale()
+  const t = useT().desk
   const reduce = useReducedMotion()
   const { playing, toggle } = useRoomAudio()
   const [showDesktop, setShowDesktop] = useState(false)
@@ -163,8 +202,24 @@ export function DeskView(props: DeskViewProps) {
     deskPanRef.current = deskLayout.pan
   }, [deskLayout])
 
+  // Portrait phone: the shell's content box (safe areas are its padding) sets the
+  // screen geometry. Measured before paint, so a rotation never shows a wrong frame.
+  const shellRef = useRef<HTMLDivElement>(null)
+  const [geo, setGeo] = useState<PortraitGeometry | null>(null)
+  useLayoutEffect(() => {
+    const el = shellRef.current
+    if (!portrait || !el) return
+    const measure = () => setGeo(portraitGeometry(el.clientWidth, el.clientHeight))
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [portrait])
+  const g = portrait ? geo : null
+  const screen = useMemo<DeskScreen>(() => (g ? { w: g.w, h: g.h, portrait: true } : DESK_SCREEN), [g])
+
   useEffect(() => {
-    if (!mobile) return
+    if (!mobile || portrait) return
     const apply = () => setDeskLayout(mobileDeskLayout(window.innerWidth, window.innerHeight))
     apply()
     window.addEventListener('resize', apply)
@@ -173,15 +228,23 @@ export function DeskView(props: DeskViewProps) {
       window.removeEventListener('resize', apply)
       window.removeEventListener('orientationchange', apply)
     }
-  }, [mobile])
+  }, [mobile, portrait])
 
-  // Drag to pan around the desk. Only on mobile and only when the drag starts
-  // outside the screen area and controls, so apps keep their own gestures.
+  // Drag to pan around the desk. Only on a mobile desk (a portrait phone has no
+  // desk art) and only when the drag starts outside the screen area and
+  // controls, so apps keep their own gestures.
   useEffect(() => {
-    if (!mobile) return
+    if (!mobile || portrait) return
+    // Like the room, a drag may start on the lamp or a speaker (they cover most of
+    // the desk art on a phone): it pans past 6px, and then that button's click is swallowed.
+    const swallowClick = () => {
+      const stop = (ev: MouseEvent) => { ev.stopPropagation(); ev.preventDefault() }
+      window.addEventListener('click', stop, { capture: true, once: true })
+      setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 400)
+    }
     const onDown = (e: PointerEvent) => {
       const el = e.target as HTMLElement
-      if (el.closest('[data-screen-area],a,button,[tabindex],[role="button"],input,textarea,select')) return
+      if (el.closest('[data-screen-area],input,textarea,select')) return
       draggedRef.current = false
       deskDragRef.current = { x: e.clientX, y: e.clientY, px: deskPanRef.current.x, py: deskPanRef.current.y }
     }
@@ -189,7 +252,10 @@ export function DeskView(props: DeskViewProps) {
       if (!deskDragRef.current) return
       const dx = e.clientX - deskDragRef.current.x
       const dy = e.clientY - deskDragRef.current.y
-      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) draggedRef.current = true
+      if (!draggedRef.current) {
+        if (Math.abs(dx) <= 6 && Math.abs(dy) <= 6) return
+        draggedRef.current = true
+      }
       const { slack } = deskLayoutRef.current
       const pan = {
         x: clamp(deskDragRef.current.px + dx, -slack.x, slack.x),
@@ -202,7 +268,9 @@ export function DeskView(props: DeskViewProps) {
       })
     }
     const onUp = () => {
+      if (!deskDragRef.current) return
       deskDragRef.current = null
+      if (draggedRef.current) swallowClick()
       // The click after a drag fires before this timeout, so it is still
       // suppressed; the timeout clears the flag when no click follows.
       setTimeout(() => { draggedRef.current = false }, 0)
@@ -218,7 +286,21 @@ export function DeskView(props: DeskViewProps) {
       window.removeEventListener('pointercancel', onUp)
       cancelAnimationFrame(deskRafRef.current)
     }
-  }, [mobile])
+  }, [mobile, portrait])
+
+  // Warm every app chunk once the landing is idle, so opening one is instant
+  // (skipped when the visitor asks to save data or is on 2g).
+  useEffect(() => {
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
+    if (conn?.saveData || /2g/.test(conn?.effectiveType ?? '')) return
+    const run = () => { for (const load of APP_CHUNKS) void load().catch(() => {}) }
+    if (typeof requestIdleCallback !== 'undefined') {
+      const id = requestIdleCallback(run, { timeout: 5000 })
+      return () => cancelIdleCallback(id)
+    }
+    const id = setTimeout(run, 2500)
+    return () => clearTimeout(id)
+  }, [])
 
   // Live clock, in the visitor's 12/24-hour choice (the strip clock toggles it)
   useEffect(() => {
@@ -388,9 +470,19 @@ export function DeskView(props: DeskViewProps) {
     ? `translate(calc(-50% + ${deskLayout.pan.x}px), calc(-50% + ${deskLayout.pan.y}px)) scale(${deskLayout.scale})`
     : `translate(-50%, -50%) scale(${scale})`
 
+  // Wraps each app so one that fails (a chunk on a flaky connection) cannot take the page down.
+  const boundary = (node: ReactNode) => (
+    <AppBoundary message={t.appError} reloadLabel={t.appReload} desktopLabel={desktopLabel} onDesktop={goDesktop}>{node}</AppBoundary>
+  )
+
+  // One element tree for both modes: the desk art and the bezel are conditional
+  // siblings of the screen element, which never moves, so rotating a phone swaps
+  // layouts without remounting the open app.
   return (
-    <div className="relative room-cursor" style={{ width: '100%', height: '100dvh', overflow: 'hidden', backgroundColor: '#000' }}
+    <div className="relative room-cursor"
+      style={{ width: '100%', height: '100dvh', overflow: 'hidden', backgroundColor: '#000', padding: portrait ? SAFE_PADDING : undefined }}
       onClick={(e) => {
+        if (portrait) return
         if (draggedRef.current) {
           draggedRef.current = false
           return
@@ -412,10 +504,14 @@ export function DeskView(props: DeskViewProps) {
         setBackPending(false)
         onBack()
       }}>
-      <motion.div style={{
+      <div ref={shellRef} className="relative w-full h-full">
+      <motion.div style={portrait ? PORTRAIT_STAGE : {
         width: STAGE_W, height: STAGE_H, position: 'absolute', top: '50%', left: '50%',
         transform: deskTransform, transformOrigin: 'center center',
+        // The mobile desk pans by drag like the room; the browser must not claim the gesture (pointercancel).
+        touchAction: mobile ? 'none' : undefined,
       }} initial={reduce ? undefined : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+        {!portrait && (<>
         {/* Lamp-off close-up */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/room/desk-closeup-lamp-off.png" alt="" draggable={false} className="absolute inset-0 w-full h-full" style={{ imageRendering: 'pixelated' }} />
@@ -490,16 +586,22 @@ export function DeskView(props: DeskViewProps) {
             className={`block ${mouseJitter && !reduce ? 'animate-[mouse-jitter_0.3s_ease-out]' : ''}`}
             style={{ imageRendering: 'pixelated' }} />
         </div>
+        </>)}
 
-        {/* Screen area */}
-        <div data-screen-area style={screenStyle}>
+        {g && <PortraitBezel geo={g} />}
+
+        {/* Screen area: the monitor glass, or the portrait phone screen scaled into the bezel */}
+        <div data-screen-area style={g
+          ? { position: 'absolute', left: g.left, top: g.top, width: g.w, height: g.h, overflow: 'hidden', transform: `scale(${g.scale})`, transformOrigin: '0 0' }
+          : { ...screenStyle, visibility: portrait ? 'hidden' : undefined }}>
+          <DeskScreenContext.Provider value={screen}>
           <DeskClockContext.Provider value={clock}>
           <AnimatePresence mode="wait">
             {screenMode === 'desktop' && showDesktop && (
               <motion.div key="desktop" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.3 }}>
-                <DeskDesktop
+                {boundary(<DeskDesktop
                   time={time}
                   backLabel={backLabel}
                   onBack={backToRoom}
@@ -507,22 +609,22 @@ export function DeskView(props: DeskViewProps) {
                   shortcuts={shortcuts}
                   screensaver={screensaver}
                   reduce={reduce}
-                  screenW={SCREEN_W}
-                  screenH={SCREEN_H}
+                  screenW={screen.w}
+                  screenH={screen.h}
                   onShortcutClick={handleShortcutClick}
                   files={deskFiles}
                   onFileClick={openDeskFile}
                   focusId={lastAppRef.current}
-                />
+                />)}
               </motion.div>
             )}
             {screenMode === 'paint' && (
               <motion.div key="paint" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskPaint time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                {boundary(<DeskPaint time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={paintLabels} onDesktop={goDesktop}
-                  onBack={backToRoom} />
+                  onBack={backToRoom} />)}
               </motion.div>
             )}
 
@@ -530,9 +632,9 @@ export function DeskView(props: DeskViewProps) {
               <motion.div key="minesweeper" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskMinesweeper time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                {boundary(<DeskMinesweeper time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={minesLabels} onDesktop={goDesktop}
-                  onBack={backToRoom} />
+                  onBack={backToRoom} />)}
               </motion.div>
             )}
 
@@ -540,9 +642,9 @@ export function DeskView(props: DeskViewProps) {
               <motion.div key="snake" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskSnake time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                {boundary(<DeskSnake time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={snakeLabels} onDesktop={goDesktop}
-                  onBack={backToRoom} />
+                  onBack={backToRoom} />)}
               </motion.div>
             )}
 
@@ -550,9 +652,9 @@ export function DeskView(props: DeskViewProps) {
               <motion.div key="blackjack" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskBlackjack time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                {boundary(<DeskBlackjack time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={blackjackLabels} arcade={arcadeLabels} onDesktop={goDesktop}
-                  onBack={backToRoom} />
+                  onBack={backToRoom} />)}
               </motion.div>
             )}
 
@@ -560,9 +662,9 @@ export function DeskView(props: DeskViewProps) {
               <motion.div key="solitaire" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskSolitaire time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                {boundary(<DeskSolitaire time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={solitaireLabels} arcade={arcadeLabels} onDesktop={goDesktop}
-                  onBack={backToRoom} />
+                  onBack={backToRoom} />)}
               </motion.div>
             )}
 
@@ -570,9 +672,9 @@ export function DeskView(props: DeskViewProps) {
               <motion.div key="pong" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskPong time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                {boundary(<DeskPong time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={pongLabels} arcade={arcadeLabels} onDesktop={goDesktop}
-                  onBack={backToRoom} />
+                  onBack={backToRoom} />)}
               </motion.div>
             )}
 
@@ -580,9 +682,9 @@ export function DeskView(props: DeskViewProps) {
               <motion.div key="breakout" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskBreakout time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                {boundary(<DeskBreakout time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={breakoutLabels} arcade={arcadeLabels} onDesktop={goDesktop}
-                  onBack={backToRoom} />
+                  onBack={backToRoom} />)}
               </motion.div>
             )}
 
@@ -590,7 +692,7 @@ export function DeskView(props: DeskViewProps) {
               <motion.div key="readme" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskReadme
+                {boundary(<DeskReadme
                   time={time}
                   content={readmeContent}
                   labels={readmeLabels}
@@ -598,7 +700,7 @@ export function DeskView(props: DeskViewProps) {
                   backLabel={backLabel}
                   onDesktop={goDesktop}
                   onBack={backToRoom}
-                />
+                />)}
               </motion.div>
             )}
 
@@ -606,14 +708,14 @@ export function DeskView(props: DeskViewProps) {
               <motion.div key="music" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskMusic
+                {boundary(<DeskMusic
                   time={time}
                   desktopLabel={desktopLabel}
                   backLabel={backLabel}
                   labels={musicLabels}
                   onDesktop={goDesktop}
                   onBack={backToRoom}
-                />
+                />)}
               </motion.div>
             )}
 
@@ -621,7 +723,7 @@ export function DeskView(props: DeskViewProps) {
               <motion.div key="legal" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskLegal
+                {boundary(<DeskLegal
                   time={time}
                   privacy={legalPrivacy}
                   terms={legalTerms}
@@ -631,7 +733,7 @@ export function DeskView(props: DeskViewProps) {
                   backLabel={backLabel}
                   onDesktop={goDesktop}
                   onBack={backToRoom}
-                />
+                />)}
               </motion.div>
             )}
 
@@ -639,14 +741,14 @@ export function DeskView(props: DeskViewProps) {
               <motion.div key="guestbook" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskGuestbook
+                {boundary(<DeskGuestbook
                   time={time}
                   labels={guestbookLabels}
                   desktopLabel={desktopLabel}
                   backLabel={backLabel}
                   onDesktop={goDesktop}
                   onBack={backToRoom}
-                />
+                />)}
               </motion.div>
             )}
 
@@ -654,7 +756,7 @@ export function DeskView(props: DeskViewProps) {
               <motion.div key="settings" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskSettings
+                {boundary(<DeskSettings
                   time={time}
                   labels={settingsLabels}
                   desktopLabel={desktopLabel}
@@ -669,7 +771,7 @@ export function DeskView(props: DeskViewProps) {
                   is24h={is24h}
                   onClock={onClock}
                   onDesktop={goDesktop}
-                />
+                />)}
               </motion.div>
             )}
 
@@ -677,14 +779,14 @@ export function DeskView(props: DeskViewProps) {
               <motion.div key="movie" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskMovie
+                {boundary(<DeskMovie
                   time={time}
                   desktopLabel={desktopLabel}
                   backLabel={backLabel}
                   labels={movieLabels}
                   onDesktop={goDesktop}
                   onBack={backToRoom}
-                />
+                />)}
               </motion.div>
             )}
 
@@ -692,7 +794,7 @@ export function DeskView(props: DeskViewProps) {
               <motion.div key="terminal" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: reduce ? 0 : 0.2 }}>
-                <DeskTerminal
+                {boundary(<DeskTerminal
                   time={time}
                   labels={terminalLabels}
                   desktopLabel={desktopLabel}
@@ -702,13 +804,23 @@ export function DeskView(props: DeskViewProps) {
                   readmeContent={readmeContent}
                   bootCommand={termBoot}
                   onBootHandled={() => setTermBoot(null)}
-                />
+                />)}
               </motion.div>
             )}
           </AnimatePresence>
           </DeskClockContext.Provider>
+          </DeskScreenContext.Provider>
         </div>
       </motion.div>
+      {portrait && (
+        <div
+          className="absolute left-0 right-0 bottom-0 flex items-center px-3"
+          style={{ height: MUSIC_BAR_H, backgroundColor: '#0e0a08', borderTop: '1px solid #5a4430' }}
+        >
+          <NowPlaying labels={nowPlayingLabels} embedded />
+        </div>
+      )}
+      </div>
     </div>
   )
 }

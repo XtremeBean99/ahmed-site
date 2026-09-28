@@ -85,21 +85,20 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
       setPlaying(true)
       playingRef.current = true
     }).catch(() => {
+      // Only user activations may start media: touchstart and touch pointerdown are not
+      // (pointerup, touchend, click and keydown are), so keep listening until play() works.
+      const events = ['pointerup', 'touchend', 'click', 'keydown'] as const
       const onGesture = () => {
         audioRef.current?.play().then(() => {
           setPlaying(true)
           playingRef.current = true
+          cleanup?.()
         }).catch(() => {})
-        cleanup?.()
       }
       cleanup = () => {
-        document.removeEventListener('click', onGesture)
-        document.removeEventListener('keydown', onGesture)
-        document.removeEventListener('touchstart', onGesture)
+        for (const type of events) document.removeEventListener(type, onGesture)
       }
-      document.addEventListener('click', onGesture)
-      document.addEventListener('keydown', onGesture)
-      document.addEventListener('touchstart', onGesture)
+      for (const type of events) document.addEventListener(type, onGesture)
     })
 
     return () => {

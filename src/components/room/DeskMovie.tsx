@@ -1,11 +1,21 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScreenStrip } from './ScreenStrip'
+import { ScreenStrip, useDeskScreen } from './ScreenStrip'
 import { ArcadeButton } from './pixel-ui'
 import { useRoomAudio } from './RoomAudioProvider'
 
 const PIXEL = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const
+
+// Portrait seek bar with a 28px thumb; the desk keeps the native accent-colour slider.
+const SEEK_CSS = `
+.room-seek{-webkit-appearance:none;appearance:none;height:28px;background:transparent;outline:none;cursor:pointer}
+.room-seek:focus-visible{outline:2px solid #5a4430;outline-offset:2px}
+.room-seek::-webkit-slider-runnable-track{height:8px;background:#c8b8a8;border:1px solid #b8a88f}
+.room-seek::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;margin-top:-9px;background:#8a6a3a;border:2px solid #3a3028;border-radius:0}
+.room-seek::-moz-range-track{height:8px;background:#c8b8a8;border:1px solid #b8a88f}
+.room-seek::-moz-range-thumb{width:28px;height:28px;background:#8a6a3a;border:2px solid #3a3028;border-radius:0}
+`
 
 export interface MovieLabels {
   title: string
@@ -38,9 +48,11 @@ function clock(seconds: number) {
  * The VHS player: plays /video/shrek.mp4 on the desk monitor inside a black
  * letterbox, with pixel transport controls and a fullscreen handoff to the
  * browser's own player. Starting the film pauses the room's music so the two
- * do not talk over each other.
+ * do not talk over each other. On a portrait phone the picture is 320x180 at
+ * the top and the transport sits in its own row underneath.
  */
 export function DeskMovie({ time, desktopLabel, backLabel, labels, onDesktop, onBack }: DeskMovieProps) {
+  const { portrait } = useDeskScreen()
   const videoRef = useRef<HTMLVideoElement>(null)
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(false)
@@ -84,12 +96,29 @@ export function DeskMovie({ time, desktopLabel, backLabel, labels, onDesktop, on
     if (el) el.currentTime = value
   }, [])
 
+  const seekProps = {
+    type: 'range' as const,
+    min: 0,
+    max: duration || 0,
+    step: 1,
+    value: current,
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => seek(Number(e.target.value)),
+    'aria-label': labels.seek,
+  }
+
   return (
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#1b1b1b' }}>
+      {portrait && <style>{SEEK_CSS}</style>}
       <ScreenStrip time={time} title={labels.title} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack} />
 
-      {/* Letterboxed picture */}
-      <div className="relative flex-1" style={{ backgroundColor: '#000' }}>
+      {/* Portrait centres the picture and its controls in black, like a TV; the desk letterboxes */}
+      {portrait && <div className="flex-1 min-h-0" style={{ backgroundColor: '#000' }} />}
+
+      {/* Letterboxed picture: fixed 16:9 in portrait, flex-1 on the desk */}
+      <div
+        className={`relative ${portrait ? 'w-full flex-shrink-0' : 'flex-1'}`}
+        style={{ backgroundColor: '#000', height: portrait ? 180 : undefined }}
+      >
         <video
           ref={videoRef}
           src="/video/shrek.mp4"
@@ -137,42 +166,45 @@ export function DeskMovie({ time, desktopLabel, backLabel, labels, onDesktop, on
 
       {/* Transport */}
       <div
-        className="flex items-center gap-2 px-3 h-9 flex-shrink-0 border-t"
-        style={{ backgroundColor: '#e8e0d8', borderColor: '#c8b8a8', ...PIXEL, fontSize: 10, color: '#3a3028' }}
+        className={`flex items-center gap-2 px-3 flex-shrink-0 border-t ${portrait ? 'py-1' : 'h-9'}`}
+        style={{ backgroundColor: '#e8e0d8', borderColor: '#c8b8a8', ...PIXEL, fontSize: portrait ? 12 : 10, color: '#3a3028' }}
       >
-        <ArcadeButton tone="dark" size="sm" onClick={togglePlay} ariaLabel={playing ? labels.pause : labels.play}>
+        <ArcadeButton tone="dark" size={portrait ? 'xl' : 'sm'} onClick={togglePlay} ariaLabel={playing ? labels.pause : labels.play}>
           {playing ? '❚❚' : '▶'}
         </ArcadeButton>
-        <span style={{ minWidth: 34 }}>{clock(current)}</span>
-        <input
-          type="range"
-          min={0}
-          max={duration || 0}
-          step={1}
-          value={current}
-          onChange={(e) => seek(Number(e.target.value))}
-          aria-label={labels.seek}
-          className="flex-1 h-[6px] appearance-none"
-          style={{ accentColor: '#8a6a3a', backgroundColor: '#c8b8a8' }}
-        />
-        <span style={{ minWidth: 34 }}>{clock(duration)}</span>
-        <ArcadeButton
-          tone="dark"
-          size="sm"
-          onClick={() => {
-            const el = videoRef.current
-            if (!el) return
-            el.muted = !el.muted
-            setMuted(el.muted)
-          }}
-          ariaLabel={muted ? labels.unmute : labels.mute}
-        >
-          {muted ? '✕♪' : '♪'}
-        </ArcadeButton>
-        <ArcadeButton tone="dark" size="sm" onClick={fullscreen} ariaLabel={labels.fullscreen}>
+        <span style={{ minWidth: portrait ? 44 : 34 }}>{clock(current)}</span>
+        {portrait ? (
+          <input {...seekProps} className="room-seek flex-1 min-w-0" style={{ touchAction: 'none' }} />
+        ) : (
+          <input
+            {...seekProps}
+            className="flex-1 h-[6px] appearance-none"
+            style={{ accentColor: '#8a6a3a', backgroundColor: '#c8b8a8' }}
+          />
+        )}
+        <span style={{ minWidth: portrait ? 44 : 34 }}>{clock(duration)}</span>
+        {!portrait && (
+          <ArcadeButton
+            tone="dark"
+            size="sm"
+            onClick={() => {
+              const el = videoRef.current
+              if (!el) return
+              el.muted = !el.muted
+              setMuted(el.muted)
+            }}
+            ariaLabel={muted ? labels.unmute : labels.mute}
+          >
+            {muted ? '✕♪' : '♪'}
+          </ArcadeButton>
+        )}
+        <ArcadeButton tone="dark" size={portrait ? 'xl' : 'sm'} onClick={fullscreen} ariaLabel={labels.fullscreen}>
           ⛶
         </ArcadeButton>
       </div>
+
+      {/* The rest of the portrait screen stays black like the desk letterbox */}
+      {portrait && <div className="flex-1 min-h-0" style={{ backgroundColor: '#000' }} />}
     </div>
   )
 }

@@ -42,29 +42,68 @@ export function RoomObject({
 }: RoomObjectProps) {
   const reduce = useReducedMotion()
   const [tooltipReady, setTooltipReady] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const tooltipTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const pointerTypeRef = useRef('mouse')
+
+  const clearTimers = useCallback(() => {
+    if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current)
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current)
+  }, [])
 
   const handleActivate = useCallback(() => {
     onActivate()
-    timerRef.current = setTimeout(() => setTooltipReady(true), 150)
+    if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current)
+    tooltipTimerRef.current = setTimeout(() => setTooltipReady(true), 150)
   }, [onActivate])
 
   const handleDeactivate = useCallback(() => {
     onDeactivate()
-    if (timerRef.current) clearTimeout(timerRef.current)
+    clearTimers()
     setTooltipReady(false)
-  }, [onDeactivate])
+  }, [onDeactivate, clearTimers])
 
-  // Clear the tooltip delay timer on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
-  }, [])
+  // Hover must come from a mouse only: a touch tap runs the same highlight and
+  // tooltip through the click handler below, so iOS never needs a second tap.
+  const handlePointerEnter = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerType !== 'mouse') return
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current)
+      handleActivate()
+    },
+    [handleActivate],
+  )
+
+  const handlePointerLeave = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerType !== 'mouse') return
+      handleDeactivate()
+    },
+    [handleDeactivate],
+  )
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      // e.detail === 0 for keyboard clicks; those already have focus/tooltip.
+      if (pointerTypeRef.current !== 'mouse' && e.detail > 0) {
+        handleActivate()
+        if (tapTimerRef.current) clearTimeout(tapTimerRef.current)
+        tapTimerRef.current = setTimeout(() => handleDeactivate(), 1600)
+      }
+      onClick?.(e)
+    },
+    [onClick, handleActivate, handleDeactivate],
+  )
+
+  // Clear the tooltip and tap timers on unmount
+  useEffect(() => () => clearTimers(), [clearTimers])
 
   const sharedHandlers = {
-    onMouseEnter: handleActivate,
-    onMouseLeave: handleDeactivate,
+    onPointerEnter: handlePointerEnter,
+    onPointerLeave: handlePointerLeave,
+    onPointerDown: (e: React.PointerEvent) => {
+      pointerTypeRef.current = e.pointerType
+    },
     onFocus: handleActivate,
     onBlur: handleDeactivate,
   }
@@ -81,7 +120,7 @@ export function RoomObject({
           className={`block cursor-pointer ${focusClass}`}
           aria-label={label}
           tabIndex={tabIndex}
-          onClick={onClick}
+          onClick={handleClick}
           {...sharedHandlers}
         >
           {children}
@@ -91,7 +130,7 @@ export function RoomObject({
           className={`block cursor-pointer ${focusClass}`}
           aria-label={label}
           tabIndex={tabIndex}
-          onClick={onClick}
+          onClick={handleClick}
           {...sharedHandlers}
         >
           {children}

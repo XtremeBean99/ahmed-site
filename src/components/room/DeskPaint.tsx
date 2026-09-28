@@ -1,9 +1,10 @@
 // src/components/room/DeskPaint.tsx
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScreenStrip, StripButton } from './ScreenStrip'
-import { ArcadeFrame, useFullscreen } from './DeskArcade'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { lineCells } from '@/lib/room/gestures'
+import { ScreenStrip, StripButton, useDeskScreen } from './ScreenStrip'
+import { ArcadeButton, ArcadeFrame, useFullscreen } from './DeskArcade'
 
 const COLS = 107
 const ROWS = 50
@@ -61,6 +62,7 @@ function loadCells(): Uint8Array {
 
 export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDesktop }: DeskPaintProps) {
   const fs = useFullscreen()
+  const { portrait, w } = useDeskScreen()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const cellsRef = useRef<Uint8Array | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -73,6 +75,10 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
   // at runtime - a ref keeps repaint/setCell/flood reading the live colour
   // without having to rebuild those callbacks on every colour change.
   const paletteRef = useRef<string[]>([...FIXED_PALETTE, DEFAULT_CUSTOM_COLOR])
+
+  // Portrait: the 107x50 canvas fills the width with 6px margins (about 308x144).
+  const canvasW = portrait ? w - 12 : 0
+  const canvasH = portrait ? Math.round((canvasW * ROWS) / COLS) : 0
 
   const repaint = useCallback(() => {
     const ctx = canvasRef.current?.getContext('2d')
@@ -95,6 +101,12 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
       clearTimeout(armTimer.current)
     }
   }, [repaint])
+
+  // The canvas element is recreated when the orientation branch swaps; repaint
+  // the new backing store from the cells so a rotation never blanks the drawing.
+  useLayoutEffect(() => {
+    repaint()
+  }, [portrait, repaint])
 
   // The custom slot's colour can change after cells already used it - repaint
   // so those cells pick up the new colour immediately.
@@ -160,16 +172,43 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
     return { x, y }
   }
 
-  const applyAt = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  // A stroke joins each pointer sample to the last one, so fast moves (a finger) leave no gaps.
+  const lastCell = useRef<{ x: number; y: number } | null>(null)
+  const applyAt = (e: React.PointerEvent<HTMLCanvasElement>, fresh = false) => {
     const { x, y } = cellFromEvent(e)
-    if (tool === 'fill') flood(x, y, colorIdx)
-    else setCell(x, y, tool === 'eraser' ? BLANK : colorIdx)
+    if (tool === 'fill') { flood(x, y, colorIdx); return }
+    const from = fresh || !lastCell.current ? { x, y } : lastCell.current
+    for (const p of lineCells(from.x, from.y, x, y)) setCell(p.x, p.y, tool === 'eraser' ? BLANK : colorIdx)
+    lastCell.current = { x, y }
   }
 
   const clearAll = () => {
     cellsRef.current?.fill(BLANK)
     repaint()
     persist()
+  }
+
+  const clearClick = () => {
+    if (!armed) {
+      setArmed(true)
+      clearTimeout(armTimer.current)
+      armTimer.current = setTimeout(() => setArmed(false), 3000)
+      return
+    }
+    clearTimeout(armTimer.current)
+    setArmed(false)
+    clearAll()
+  }
+
+  const selectColor = (i: number) => {
+    setColorIdx(i)
+    if (tool === 'eraser') setTool('pencil')
+  }
+
+  const selectCustom = (value: string) => {
+    setCustomColor(value)
+    setColorIdx(CUSTOM_IDX)
+    if (tool === 'eraser') setTool('pencil')
   }
 
   const download = () => {
@@ -184,100 +223,161 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
   }
 
   return (
-    <ArcadeFrame fs={fs}>
+    <ArcadeFrame fs={fs} portrait={portrait}>
       <ScreenStrip time={time} fs={fs} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack} />
 
-      {/* Toolbar */}
-      <div
-        className="flex items-center gap-1.5 px-[5px] border-b flex-shrink-0"
-        style={{ height: 24, backgroundColor: '#e8e0d8', borderColor: '#c8b8a8', fontSize: '10px', color: '#3a3028' }}
-      >
-        <StripButton pressed={tool === 'pencil'} onClick={() => setTool('pencil')}>{labels.pencil}</StripButton>
-        <StripButton pressed={tool === 'eraser'} onClick={() => setTool('eraser')}>{labels.eraser}</StripButton>
-        <StripButton pressed={tool === 'fill'} onClick={() => setTool('fill')}>{labels.fill}</StripButton>
-        <span className="flex items-center gap-1 ml-2">
-          {FIXED_PALETTE.map((hex, i) => (
-            <button
-              key={hex}
-              type="button"
-              onClick={() => {
-                setColorIdx(i)
-                if (tool === 'eraser') setTool('pencil')
-              }}
-              aria-label={labels.color.replace('{n}', String(i + 1))}
-              aria-pressed={colorIdx === i}
-              className="outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028]"
-              style={{
-                width: 12,
-                height: 12,
-                backgroundColor: hex,
-                border: colorIdx === i ? '2px solid #3a3028' : '1px solid #c8b8a8',
-              }}
-            />
-          ))}
-          {/* Custom colour wheel: native picker sits over a swatch showing the current pick. */}
-          <span className="relative" style={{ width: 12, height: 12 }}>
-            <span
-              aria-hidden
-              className="absolute inset-0"
-              style={{
-                backgroundColor: customColor,
-                border: colorIdx === CUSTOM_IDX ? '2px solid #3a3028' : '1px solid #c8b8a8',
-              }}
-            />
-            <input
-              type="color"
-              value={customColor}
-              onChange={(e) => {
-                setCustomColor(e.target.value)
-                setColorIdx(CUSTOM_IDX)
-                if (tool === 'eraser') setTool('pencil')
-              }}
-              aria-label={labels.color.replace('{n}', 'wheel')}
-              className="absolute inset-0 outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028] cursor-pointer"
-              style={{ width: 12, height: 12, padding: 0, border: 'none', background: 'none' }}
-            />
-          </span>
-        </span>
-        <span className="ml-auto flex items-center gap-1.5">
-          <StripButton
-            pressed={armed || undefined}
-            onClick={() => {
-              if (!armed) {
-                setArmed(true)
-                clearTimeout(armTimer.current)
-                armTimer.current = setTimeout(() => setArmed(false), 3000)
-                return
-              }
-              clearTimeout(armTimer.current)
-              setArmed(false)
-              clearAll()
+      {portrait ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 min-h-0">
+          <canvas
+            ref={canvasRef}
+            width={COLS * CELL}
+            height={ROWS * CELL}
+            role="img"
+            aria-label={labels.canvas}
+            style={{ width: canvasW, height: canvasH, imageRendering: 'pixelated', touchAction: 'none', cursor: 'crosshair' }}
+            onPointerDown={(e) => {
+              e.currentTarget.setPointerCapture(e.pointerId)
+              applyAt(e, true)
             }}
-          >
-            {armed ? labels.clearConfirm : labels.clear}
-          </StripButton>
-          <StripButton onClick={download}>{labels.download}</StripButton>
-        </span>
-      </div>
+            onPointerMove={(e) => {
+              if (e.buttons & 1 && tool !== 'fill') applyAt(e)
+            }}
+          />
 
-      {/* Canvas */}
-      <div className="flex-1 flex items-center justify-center">
-        <canvas
-          ref={canvasRef}
-          width={COLS * CELL}
-          height={ROWS * CELL}
-          role="img"
-          aria-label={labels.canvas}
-          style={{ imageRendering: 'pixelated', touchAction: 'none', cursor: 'crosshair' }}
-          onPointerDown={(e) => {
-            e.currentTarget.setPointerCapture(e.pointerId)
-            applyAt(e)
-          }}
-          onPointerMove={(e) => {
-            if (e.buttons & 1 && tool !== 'fill') applyAt(e)
-          }}
-        />
-      </div>
+          {/* Tools */}
+          <div className="flex items-center gap-2">
+            <ArcadeButton size="xl" pressed={tool === 'pencil'} onClick={() => setTool('pencil')}>{labels.pencil}</ArcadeButton>
+            <ArcadeButton size="xl" pressed={tool === 'eraser'} onClick={() => setTool('eraser')}>{labels.eraser}</ArcadeButton>
+            <ArcadeButton size="xl" pressed={tool === 'fill'} onClick={() => setTool('fill')}>{labels.fill}</ArcadeButton>
+          </div>
+
+          {/* Palette: the 10 fixed colours in a 5x2 grid plus the custom swatch */}
+          <div className="flex items-center justify-center gap-3">
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(5, 36px)', gap: 4 }}>
+              {FIXED_PALETTE.map((hex, i) => (
+                <button
+                  key={hex}
+                  type="button"
+                  onClick={() => selectColor(i)}
+                  aria-label={labels.color.replace('{n}', String(i + 1))}
+                  aria-pressed={colorIdx === i}
+                  className="outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028]"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    backgroundColor: hex,
+                    border: colorIdx === i ? '2px solid #3a3028' : '1px solid #c8b8a8',
+                  }}
+                />
+              ))}
+            </div>
+            {/* Custom colour wheel: the whole swatch opens the native picker. */}
+            <label
+              className="relative outline-none focus-within:outline focus-within:outline-1 focus-within:outline-[#3a3028]"
+              style={{ width: 36, height: 36, cursor: 'pointer' }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundColor: customColor,
+                  border: colorIdx === CUSTOM_IDX ? '2px solid #3a3028' : '1px solid #c8b8a8',
+                }}
+              />
+              <input
+                type="color"
+                value={customColor}
+                onChange={(e) => selectCustom(e.target.value)}
+                aria-label={labels.color.replace('{n}', 'wheel')}
+                style={{ position: 'absolute', inset: 0, width: 36, height: 36, padding: 0, border: 'none', background: 'none', opacity: 0, cursor: 'pointer' }}
+              />
+            </label>
+          </div>
+
+          {/* Clear and Download */}
+          <div className="flex items-center gap-2">
+            <ArcadeButton size="xl" pressed={armed || undefined} onClick={clearClick}>
+              {armed ? labels.clearConfirm : labels.clear}
+            </ArcadeButton>
+            <ArcadeButton size="xl" onClick={download}>{labels.download}</ArcadeButton>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Toolbar */}
+          <div
+            className="flex items-center gap-1.5 px-[5px] border-b flex-shrink-0"
+            style={{ height: 24, backgroundColor: '#e8e0d8', borderColor: '#c8b8a8', fontSize: '10px', color: '#3a3028' }}
+          >
+            <StripButton pressed={tool === 'pencil'} onClick={() => setTool('pencil')}>{labels.pencil}</StripButton>
+            <StripButton pressed={tool === 'eraser'} onClick={() => setTool('eraser')}>{labels.eraser}</StripButton>
+            <StripButton pressed={tool === 'fill'} onClick={() => setTool('fill')}>{labels.fill}</StripButton>
+            <span className="flex items-center gap-1 ml-2">
+              {FIXED_PALETTE.map((hex, i) => (
+                <button
+                  key={hex}
+                  type="button"
+                  onClick={() => selectColor(i)}
+                  aria-label={labels.color.replace('{n}', String(i + 1))}
+                  aria-pressed={colorIdx === i}
+                  className="outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028]"
+                  style={{
+                    width: 12,
+                    height: 12,
+                    backgroundColor: hex,
+                    border: colorIdx === i ? '2px solid #3a3028' : '1px solid #c8b8a8',
+                  }}
+                />
+              ))}
+              {/* Custom colour wheel: native picker sits over a swatch showing the current pick. */}
+              <span className="relative" style={{ width: 12, height: 12 }}>
+                <span
+                  aria-hidden
+                  className="absolute inset-0"
+                  style={{
+                    backgroundColor: customColor,
+                    border: colorIdx === CUSTOM_IDX ? '2px solid #3a3028' : '1px solid #c8b8a8',
+                  }}
+                />
+                <input
+                  type="color"
+                  value={customColor}
+                  onChange={(e) => selectCustom(e.target.value)}
+                  aria-label={labels.color.replace('{n}', 'wheel')}
+                  className="absolute inset-0 outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028] cursor-pointer"
+                  style={{ width: 12, height: 12, padding: 0, border: 'none', background: 'none' }}
+                />
+              </span>
+            </span>
+            <span className="ml-auto flex items-center gap-1.5">
+              <StripButton pressed={armed || undefined} onClick={clearClick}>
+                {armed ? labels.clearConfirm : labels.clear}
+              </StripButton>
+              <StripButton onClick={download}>{labels.download}</StripButton>
+            </span>
+          </div>
+
+          {/* Canvas */}
+          <div className="flex-1 flex items-center justify-center">
+            <canvas
+              ref={canvasRef}
+              width={COLS * CELL}
+              height={ROWS * CELL}
+              role="img"
+              aria-label={labels.canvas}
+              style={{ imageRendering: 'pixelated', touchAction: 'none', cursor: 'crosshair' }}
+              onPointerDown={(e) => {
+                e.currentTarget.setPointerCapture(e.pointerId)
+                applyAt(e, true)
+              }}
+              onPointerMove={(e) => {
+                if (e.buttons & 1 && tool !== 'fill') applyAt(e)
+              }}
+            />
+          </div>
+        </>
+      )}
     </ArcadeFrame>
   )
 }

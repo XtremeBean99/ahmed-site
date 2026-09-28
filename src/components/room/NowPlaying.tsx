@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRoomAudio } from './RoomAudioProvider'
 import { PLAYLIST } from '@/lib/room/playlist'
 import { extractCoverFromMp3 } from '@/lib/room/id3'
+import { isMediaVolumeReadOnly } from '@/lib/room/media'
 
 interface NowPlayingProps {
   labels: {
@@ -31,8 +32,17 @@ export function NowPlaying({ labels, embedded }: NowPlayingProps) {
   const { playing, trackIndex, volume, toggle, nextTrack, setVolume } = useRoomAudio()
   const [coverError, setCoverError] = useState(false)
   const [embeddedCover, setEmbeddedCover] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+  const [volumeReadOnly, setVolumeReadOnly] = useState(false)
   const prevTrackRef = useRef('')
   const track = PLAYLIST[trackIndex]
+
+  // The server HTML must not include the cover: it would preload track 0's
+  // cover before the client picks the random track that actually plays.
+  useEffect(() => {
+    setMounted(true)
+    setVolumeReadOnly(isMediaVolumeReadOnly())
+  }, [])
 
   // When track changes and has no external cover, try extracting embedded art
   useEffect(() => {
@@ -71,8 +81,9 @@ export function NowPlaying({ labels, embedded }: NowPlayingProps) {
       onKeyDown={keepKeys}
       onKeyUp={keepKeys}
     >
-      {/* Album cover or placeholder */}
-      {coverSrc && !coverError ? (
+      {/* Album cover or placeholder (the img renders only after mount so the
+          server HTML does not preload a cover for a track that will not play) */}
+      {mounted && coverSrc && !coverError ? (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={coverSrc}
@@ -135,19 +146,21 @@ export function NowPlaying({ labels, embedded }: NowPlayingProps) {
         </svg>
       </button>
 
-      {/* Volume slider */}
-      <input
-        type="range"
-        min={0}
-        max={1}
-        step={0.05}
-        value={volume}
-        onChange={(e) => setVolume(Number(e.target.value))}
-        onPointerUp={(e) => e.currentTarget.blur()}
-        aria-label={labels.volume}
-        className="flex-shrink-0 cursor-pointer outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#c8b89a]"
-        style={{ width: 56, height: 14, accentColor: '#c8b89a' }}
-      />
+      {/* Volume slider (hidden where the OS ignores media volume, e.g. iOS) */}
+      {!volumeReadOnly && (
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.05}
+          value={volume}
+          onChange={(e) => setVolume(Number(e.target.value))}
+          onPointerUp={(e) => e.currentTarget.blur()}
+          aria-label={labels.volume}
+          className="flex-shrink-0 cursor-pointer outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#c8b89a]"
+          style={{ width: 56, height: 14, accentColor: '#c8b89a' }}
+        />
+      )}
     </div>
   )
 }

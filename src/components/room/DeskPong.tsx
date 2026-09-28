@@ -17,6 +17,7 @@ import {
   useFullscreen,
   type DeskGameProps,
 } from './DeskArcade'
+import { PORTRAIT_STRIP_H, useDeskScreen } from './ScreenStrip'
 import {
   BALL_SIZE,
   COURT_H,
@@ -34,6 +35,7 @@ import {
   type PongSide,
   type PongState,
 } from '@/lib/games/pong-engine'
+import { fromView, viewSize } from '@/lib/games/pong-view'
 import { BEST_KEYS, getBest, readJson, setBestIfHigher, writeJson } from '@/lib/games/storage'
 import { useSfx } from './RoomSfxProvider'
 
@@ -48,6 +50,8 @@ export interface PongLabels {
   normal: string
   hard: string
   hint: string
+  touchHint: string
+  pause: string
   bestRally: string
   paused: string
   resume: string
@@ -92,11 +96,14 @@ const TRAIL_ALPHA = [0.22, 0.14, 0.08, 0.04]
 function drawCourt(
   ctx: CanvasRenderingContext2D,
   k: number,
+  portrait: boolean,
   state: PongState | null,
   trail: { x: number; y: number }[],
   flash: { side: PongSide; until: number } | null,
 ) {
-  ctx.setTransform(k, 0, 0, k, 0, 0)
+  // The court itself is drawn in engine coordinates under the orientation transform.
+  if (portrait) ctx.setTransform(0, -k, k, 0, 0, COURT_W * k)
+  else ctx.setTransform(k, 0, 0, k, 0, 0)
 
   // Warm phosphor CRT: a faint centre lift, then a 1px inset border like screen burn.
   const lift = ctx.createRadialGradient(COURT_W / 2, COURT_H / 2, 24, COURT_W / 2, COURT_H / 2, 340)
@@ -123,12 +130,6 @@ function drawCourt(
   ctx.shadowBlur = 6 * k
   ctx.shadowColor = ARCADE.phosphorGlow
   ctx.fillStyle = ARCADE.phosphor
-
-  ctx.globalAlpha = 0.85
-  drawDigit(ctx, state ? state.score[0] : 0, COURT_W / 2 - 64, 18, 6)
-  drawDigit(ctx, state ? state.score[1] : 0, COURT_W / 2 + 64, 18, 6)
-  ctx.globalAlpha = 1
-
   ctx.fillRect(LEFT_X, leftY, PADDLE_W, PADDLE_H)
   ctx.fillRect(RIGHT_X, rightY, PADDLE_W, PADDLE_H)
   ctx.restore()
@@ -150,13 +151,35 @@ function drawCourt(
     ctx.restore()
   }
 
+  // HUD in view coordinates so the digits stay upright beside the centre line.
+  ctx.setTransform(k, 0, 0, k, 0, 0)
+  const vw = viewSize(portrait).w
+
+  ctx.save()
+  ctx.shadowBlur = 6 * k
+  ctx.shadowColor = ARCADE.phosphorGlow
+  ctx.fillStyle = ARCADE.phosphor
+  ctx.globalAlpha = 0.85
+  // Portrait: each score beside its own half of the net (the CPU's above, yours
+  // below), clear of the paddles that run along the top and bottom edges.
+  const net = viewSize(portrait).h / 2
+  if (portrait) {
+    drawDigit(ctx, state ? state.score[1] : 0, vw - 40, net - 54, 6)
+    drawDigit(ctx, state ? state.score[0] : 0, vw - 40, net + 24, 6)
+  } else {
+    drawDigit(ctx, state ? state.score[0] : 0, vw / 2 - 64, 18, 6)
+    drawDigit(ctx, state ? state.score[1] : 0, vw / 2 + 64, 18, 6)
+  }
+  ctx.globalAlpha = 1
+  ctx.restore()
+
   if (state && state.status === 'serve') {
     const n = clampNum(Math.ceil(state.timer * 3), 1, 3)
     ctx.save()
     ctx.shadowBlur = 4 * k
     ctx.shadowColor = ARCADE.phosphorGlow
     ctx.fillStyle = ARCADE.phosphor
-    drawDigit(ctx, n, COURT_W / 2, 112, 3)
+    drawDigit(ctx, n, vw / 2, portrait ? net - 60 : 112, 3)
     ctx.restore()
   }
 }
@@ -165,8 +188,11 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
   const fs = useFullscreen()
   const { tone } = useSfx()
   const reduce = useReducedMotion()
+  const screen = useDeskScreen()
+  const portrait = screen.portrait
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const k = useCanvasScale(canvasRef, COURT_W)
+  const courtSize = viewSize(portrait)
+  const k = useCanvasScale(canvasRef, courtSize.w)
 
   const [view, setView] = useState<'menu' | 'play' | 'over'>('menu')
   const [paused, setPaused] = useState(false)
@@ -179,7 +205,10 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
   const matchRef = useRef<PongState | null>(null)
   const trailRef = useRef<{ x: number; y: number }[]>([])
   const keysRef = useRef({ w: false, s: false, up: false, down: false })
-  const mouseTargetRef = useRef<number | undefined>(undefined)
+  const leftTargetRef = useRef<number | undefined>(undefined)
+  const rightTargetRef = useRef<number | undefined>(undefined)
+  const pointersRef = useRef<Map<number, PongSide>>(new Map())
+  const tapRef = useRef<{ id: number; x: number; y: number } | null>(null)
   const flashRef = useRef<{ side: PongSide; until: number } | null>(null)
   const viewRef = useRef(view)
   const modeRef = useRef(mode)
@@ -203,17 +232,29 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
     setBestRally(getBest(BEST_KEYS.pong))
   }, [])
 
+  const toolsShown = portrait && view === 'play'
+  const stripH = portrait ? (toolsShown ? PORTRAIT_STRIP_H * 2 : PORTRAIT_STRIP_H) : 28
+  const availH = screen.h - stripH
+  const fit = Math.min(screen.w / courtSize.w, availH / courtSize.h)
+  const cssW = Math.max(1, Math.floor(courtSize.w * fit))
+  const cssH = Math.max(1, Math.floor(courtSize.h * fit))
+  const courtLeft = Math.floor((screen.w - cssW) / 2)
+  const courtTop = Math.floor((availH - cssH) / 2)
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    canvas.width = Math.round(COURT_W * k)
-    canvas.height = Math.round(COURT_H * k)
-  }, [k])
+    canvas.width = Math.round(courtSize.w * k)
+    canvas.height = Math.round(courtSize.h * k)
+  }, [k, courtSize.w, courtSize.h])
 
   const start = useCallback((nextMode: PongMode, nextDifficulty: PongDifficulty) => {
     matchRef.current = createMatch(nextMode, nextDifficulty, Math.random)
     trailRef.current = []
-    mouseTargetRef.current = undefined
+    leftTargetRef.current = undefined
+    rightTargetRef.current = undefined
+    pointersRef.current.clear()
+    tapRef.current = null
     flashRef.current = null
     setFinalState(null)
     setMode(nextMode)
@@ -258,8 +299,9 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
       const rightDown = m === '2p' ? keys.down : false
       return {
         left: leftUp ? -1 : leftDown ? 1 : 0,
-        leftTarget: m === '1p' ? mouseTargetRef.current : undefined,
+        leftTarget: leftTargetRef.current,
         right: rightUp ? -1 : rightDown ? 1 : 0,
+        rightTarget: rightTargetRef.current,
       }
     }
 
@@ -348,12 +390,12 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
       } else {
         acc = 0
       }
-      drawCourt(ctx, k, matchRef.current, trailRef.current, flashRef.current)
+      drawCourt(ctx, k, portrait, matchRef.current, trailRef.current, flashRef.current)
     }
 
     raf = requestAnimationFrame(frame)
     return () => cancelAnimationFrame(raf)
-  }, [k, reduce, tone, labels])
+  }, [k, reduce, tone, labels, portrait])
 
   // The app owns the screen while it is open, so keys are read from the window.
   useEffect(() => {
@@ -387,7 +429,8 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
       }
       if (key === 'w' || key === 's' || key === 'arrowup' || key === 'arrowdown') {
         e.preventDefault()
-        mouseTargetRef.current = undefined
+        leftTargetRef.current = undefined
+        rightTargetRef.current = undefined
         setKey(key, true)
       }
     }
@@ -413,14 +456,90 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
     return () => document.removeEventListener('visibilitychange', onHide)
   }, [])
 
-  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (modeRef.current !== '1p') return
-    const el = e.currentTarget
+  const viewPoint = (clientX: number, clientY: number, el: HTMLDivElement) => {
+    const canvas = canvasRef.current
+    if (!canvas) return null
     const rect = el.getBoundingClientRect()
-    if (rect.width <= 0) return
+    const canvasRect = canvas.getBoundingClientRect()
+    if (rect.width <= 0 || canvasRect.width <= 0) return null
     const scale = rect.width / el.offsetWidth
-    mouseTargetRef.current = clampNum((e.clientY - rect.top) / scale, 0, COURT_H)
+    return { x: (clientX - canvasRect.left) / scale, y: (clientY - canvasRect.top) / scale }
   }
+
+  const sideForPoint = (p: { x: number; y: number }): PongSide => {
+    if (modeRef.current === '1p') return 'left'
+    return portrait
+      ? p.y >= courtSize.h / 2
+        ? 'left'
+        : 'right'
+      : p.x < courtSize.w / 2
+        ? 'left'
+        : 'right'
+  }
+
+  const setTarget = (side: PongSide, p: { x: number; y: number }) => {
+    const target = clampNum(fromView(p.x, p.y, portrait).y, 0, COURT_H)
+    if (side === 'left') leftTargetRef.current = target
+    else rightTargetRef.current = target
+  }
+
+  const handleTap = () => {
+    if (viewRef.current === 'menu') {
+      tone('select')
+      start(modeRef.current, difficultyRef.current)
+    } else if (viewRef.current === 'play' && !pausedRef.current) {
+      const s = matchRef.current
+      if (s && s.status === 'serve') matchRef.current = { ...s, timer: 0 }
+    }
+  }
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse') return
+    const target = e.target as HTMLElement
+    if (target.closest('button')) return
+    const p = viewPoint(e.clientX, e.clientY, e.currentTarget)
+    if (!p) return
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+    pointersRef.current.set(e.pointerId, sideForPoint(p))
+    tapRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY }
+  }
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = e.currentTarget
+    if (e.pointerType === 'mouse') {
+      if (modeRef.current !== '1p') return
+      const p = viewPoint(e.clientX, e.clientY, el)
+      if (p) setTarget('left', p)
+      return
+    }
+    const side = pointersRef.current.get(e.pointerId)
+    if (!side) return
+    const p = viewPoint(e.clientX, e.clientY, el)
+    if (!p) return
+    setTarget(side, p)
+    const tap = tapRef.current
+    if (tap && tap.id === e.pointerId && (Math.abs(e.clientX - tap.x) > 8 || Math.abs(e.clientY - tap.y) > 8)) {
+      tapRef.current = null
+    }
+  }
+
+  const releasePointer = (e: React.PointerEvent<HTMLDivElement>, cancelled: boolean) => {
+    if (e.pointerType === 'mouse') return
+    const side = pointersRef.current.get(e.pointerId)
+    pointersRef.current.delete(e.pointerId)
+    if (side && ![...pointersRef.current.values()].includes(side)) {
+      if (side === 'left') leftTargetRef.current = undefined
+      else rightTargetRef.current = undefined
+    }
+    const tap = tapRef.current
+    if (tap && tap.id === e.pointerId) {
+      tapRef.current = null
+      if (!cancelled) handleTap()
+    }
+  }
+
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => releasePointer(e, false)
+  const onPointerCancel = (e: React.PointerEvent<HTMLDivElement>) => releasePointer(e, true)
 
   const resultTitle = finalState
     ? finalState.mode === '1p'
@@ -433,15 +552,34 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
     : ''
 
   return (
-    <ArcadeFrame fs={fs} background={ARCADE.crt}>
-      <ArcadeStrip time={time} fs={fs} arcade={arcade} desktopLabel={desktopLabel} backLabel={backLabel} onDesktop={onDesktop} onBack={onBack} />
-      <div className="relative flex-1 overflow-hidden" onMouseMove={onMouseMove}>
+    <ArcadeFrame fs={fs} background={ARCADE.crt} portrait>
+      <ArcadeStrip time={time} fs={fs} arcade={arcade} desktopLabel={desktopLabel} backLabel={backLabel} onDesktop={onDesktop} onBack={onBack}>
+        {portrait && view === 'play' ? (
+          <ArcadeButton
+            size="xl"
+            tone="dark"
+            pressed={paused}
+            ariaLabel={paused ? labels.resume : labels.pause}
+            onClick={() => setPaused((p) => !p)}
+          >
+            {paused ? labels.resume : labels.pause}
+          </ArcadeButton>
+        ) : null}
+      </ArcadeStrip>
+      <div
+        className="relative flex-1 overflow-hidden"
+        style={{ touchAction: 'none' }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+      >
         <canvas
           ref={canvasRef}
           role="img"
           aria-label={labels.court}
-          className="absolute inset-0"
-          style={{ width: COURT_W, height: COURT_H }}
+          className="absolute"
+          style={{ width: cssW, height: cssH, left: courtLeft, top: courtTop }}
         />
         <CrtOverlay />
         <div className="sr-only" aria-live="polite">{announcement}</div>
@@ -451,25 +589,25 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
             <div className="flex flex-col items-center gap-4">
               <BlockTitle text="PONG" />
               <div className="flex flex-col items-stretch gap-2">
-                <ArcadeButton size="lg" onClick={() => { tone('select'); start('1p', difficulty) }}>
+                <ArcadeButton size={portrait ? 'xl' : 'lg'} onClick={() => { tone('select'); start('1p', difficulty) }}>
                   {labels.onePlayer}
                 </ArcadeButton>
                 <div className="flex justify-center gap-1.5" role="group" aria-label={labels.difficulty}>
                   {(['easy', 'normal', 'hard'] as const).map((d) => (
-                    <ArcadeButton key={d} size="sm" tone="dark" pressed={difficulty === d} ariaLabel={labels[d]} onClick={() => chooseDifficulty(d)}>
+                    <ArcadeButton key={d} size={portrait ? 'xl' : 'sm'} tone="dark" pressed={difficulty === d} ariaLabel={labels[d]} onClick={() => chooseDifficulty(d)}>
                       {labels[d]}
                     </ArcadeButton>
                   ))}
                 </div>
-                <ArcadeButton size="lg" onClick={() => { tone('select'); start('2p', difficulty) }}>
+                <ArcadeButton size={portrait ? 'xl' : 'lg'} onClick={() => { tone('select'); start('2p', difficulty) }}>
                   {labels.twoPlayers}
                 </ArcadeButton>
               </div>
-              <p className="text-center" style={{ ...PIXEL_FONT, fontSize: 9, color: ARCADE.panelText, whiteSpace: 'pre' }}>
-                {labels.hint}
+              <p className="text-center" style={{ ...PIXEL_FONT, fontSize: portrait ? 12 : 9, color: ARCADE.panelText, whiteSpace: 'pre' }}>
+                {portrait ? labels.touchHint : labels.hint}
               </p>
               {bestRally > 0 && (
-                <p style={{ ...PIXEL_FONT, fontSize: 9, color: ARCADE.panelText }}>
+                <p style={{ ...PIXEL_FONT, fontSize: portrait ? 12 : 9, color: ARCADE.panelText }}>
                   {labels.bestRally.replace('{n}', String(bestRally))}
                 </p>
               )}
@@ -482,8 +620,8 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
             <ArcadePanel className="flex flex-col items-center gap-3 px-6 py-5">
               <p style={{ ...PIXEL_FONT, fontSize: 12 }}>{labels.paused}</p>
               <div className="flex gap-2">
-                <ArcadeButton onClick={resume}>{labels.resume}</ArcadeButton>
-                <ArcadeButton tone="dark" onClick={toMenu}>{labels.menu}</ArcadeButton>
+                <ArcadeButton size={portrait ? 'xl' : 'md'} onClick={resume}>{labels.resume}</ArcadeButton>
+                <ArcadeButton size={portrait ? 'xl' : 'md'} tone="dark" onClick={toMenu}>{labels.menu}</ArcadeButton>
               </div>
             </ArcadePanel>
           </ArcadeOverlay>
@@ -497,8 +635,8 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
                 {labels.finalScore.replace('{l}', String(finalState.score[0])).replace('{r}', String(finalState.score[1]))}
               </p>
               <div className="flex gap-2">
-                <ArcadeButton onClick={rematch}>{labels.rematch}</ArcadeButton>
-                <ArcadeButton tone="dark" onClick={toMenu}>{labels.menu}</ArcadeButton>
+                <ArcadeButton size={portrait ? 'xl' : 'md'} onClick={rematch}>{labels.rematch}</ArcadeButton>
+                <ArcadeButton size={portrait ? 'xl' : 'md'} tone="dark" onClick={toMenu}>{labels.menu}</ArcadeButton>
               </div>
             </ArcadePanel>
           </ArcadeOverlay>

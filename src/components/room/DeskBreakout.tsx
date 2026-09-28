@@ -4,7 +4,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import {
-  APP_H,
   ARCADE,
   ArcadeButton,
   ArcadeFrame,
@@ -14,30 +13,26 @@ import {
   BlockTitle,
   CrtOverlay,
   PIXEL_FONT,
-  SCREEN_W,
   useCanvasScale,
   useFullscreen,
   type DeskGameProps,
 } from './DeskArcade'
-import { StripButton } from './ScreenStrip'
+import { StripButton, useDeskScreen } from './ScreenStrip'
 import { useSfx } from './RoomSfxProvider'
 import { BEST_KEYS, getBest, setBestIfHigher } from '@/lib/games/storage'
-import type { BreakoutEvent, BreakoutState, Brick, PowerUpKind } from '@/lib/games/types'
+import type { BreakoutEvent, Brick, PowerUpKind } from '@/lib/games/types'
 import {
-  BALL_SIZE,
-  BRICK_H,
-  BRICK_W,
-  COURT_H,
-  COURT_W,
+  LANDSCAPE_COURT,
+  PORTRAIT_COURT,
   createGame,
   launch,
   movePaddle,
   nextLevel,
-  PADDLE_H,
-  PADDLE_Y,
   STEP_MS,
   step,
   togglePause,
+  type BreakoutGameState,
+  type CourtGeometry,
 } from '@/lib/games/breakout-engine'
 
 const HUD_LINE = 'rgba(240,220,180,0.12)'
@@ -186,9 +181,11 @@ export interface BreakoutLabels {
   hudLevel: string
   title: string
   start: string
+  startTouch: string
   best: string
   score: string
   hint: string
+  hintTouch: string
   pause: string
   paused: string
   resume: string
@@ -205,10 +202,15 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
   const fs = useFullscreen()
   const { tone } = useSfx()
   const reduce = useReducedMotion() ?? false
+  const { portrait, w, h } = useDeskScreen()
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const courtRef = useRef<HTMLDivElement>(null)
-  const stateRef = useRef<BreakoutState>(createGame())
+  const initialCourt = useRef(portrait ? PORTRAIT_COURT : LANDSCAPE_COURT).current
+  const newCourtRef = useRef<CourtGeometry>(portrait ? PORTRAIT_COURT : LANDSCAPE_COURT)
+  newCourtRef.current = portrait ? PORTRAIT_COURT : LANDSCAPE_COURT
+  // A game keeps its court across rotation; only a new game or the next level picks the current one.
+  const stateRef = useRef<BreakoutGameState>(createGame(initialCourt))
   const rngRef = useRef<() => number>(Math.random)
   const keysRef = useRef<Set<string>>(new Set())
   const particlesRef = useRef<Particle[]>([])
@@ -231,14 +233,17 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
   const [announce, setAnnounce] = useState('')
   bestRef.current = best
 
-  const k = useCanvasScale(canvasRef, SCREEN_W)
+  const geo = stateRef.current.geo
+  const stripH = portrait ? 88 : 28
+  const courtScale = Math.min(w / geo.courtW, (h - stripH) / geo.courtH)
+  const k = useCanvasScale(canvasRef, geo.courtW)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    canvas.width = Math.max(1, Math.round(SCREEN_W * k))
-    canvas.height = Math.max(1, Math.round(APP_H * k))
-  }, [k])
+    canvas.width = Math.max(1, Math.round(geo.courtW * k))
+    canvas.height = Math.max(1, Math.round(geo.courtH * k))
+  }, [k, geo])
 
   useEffect(() => {
     setBest(getBest(BEST_KEYS.breakoutDesk))
@@ -264,7 +269,7 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
   }, [])
 
   const resetGame = useCallback(() => {
-    stateRef.current = createGame()
+    stateRef.current = createGame(newCourtRef.current)
     startedRef.current = false
     particlesRef.current = []
     trailRef.current = []
@@ -285,7 +290,7 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
     }
   }, [])
 
-  const handleEvents = useCallback((events: BreakoutEvent[], s: BreakoutState) => {
+  const handleEvents = useCallback((events: BreakoutEvent[], s: BreakoutGameState) => {
     for (const e of events) {
       switch (e.type) {
         case 'paddle':
@@ -296,11 +301,11 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
           break
         case 'brick':
           toneRef.current('brick', 1 + e.row * 0.07)
-          spawnParticles(particlesRef.current, e.x + BRICK_W / 2, e.y + BRICK_H / 2, BAND_COLORS[e.color] ?? ARCADE.phosphor, 8)
+          spawnParticles(particlesRef.current, e.x + s.geo.brickW / 2, e.y + s.geo.brickH / 2, BAND_COLORS[e.color] ?? ARCADE.phosphor, 8)
           break
         case 'tough':
           toneRef.current('select')
-          spawnParticles(particlesRef.current, e.x + BRICK_W / 2, e.y + BRICK_H / 2, BAND_COLORS[e.color] ?? ARCADE.phosphor, 3)
+          spawnParticles(particlesRef.current, e.x + s.geo.brickW / 2, e.y + s.geo.brickH / 2, BAND_COLORS[e.color] ?? ARCADE.phosphor, 3)
           break
         case 'steel':
           toneRef.current('select')
@@ -321,7 +326,7 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
           if (clearTimerRef.current !== null) window.clearTimeout(clearTimerRef.current)
           clearTimerRef.current = window.setTimeout(() => {
             clearTimerRef.current = null
-            nextLevel(stateRef.current)
+            nextLevel(stateRef.current, newCourtRef.current)
             setClearBanner(null)
             lastViewRef.current = stateRef.current.status
             setView(stateRef.current.status)
@@ -409,10 +414,11 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
 
     const draw = () => {
       const s = stateRef.current
+      const geo = s.geo
       const now = performance.now()
       const reduceNow = reduceRef.current
       ctx.setTransform(k, 0, 0, k, 0, 0)
-      ctx.clearRect(0, 0, COURT_W, COURT_H)
+      ctx.clearRect(0, 0, geo.courtW, geo.courtH)
 
       let shakeX = 0
       let shakeY = 0
@@ -424,33 +430,47 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
       ctx.translate(shakeX, shakeY)
 
       ctx.fillStyle = ARCADE.crt
-      ctx.fillRect(0, 0, COURT_W, COURT_H)
-      const lift = ctx.createRadialGradient(COURT_W / 2, COURT_H / 2, 20, COURT_W / 2, COURT_H / 2, 300)
+      ctx.fillRect(0, 0, geo.courtW, geo.courtH)
+      const lift = ctx.createRadialGradient(geo.courtW / 2, geo.courtH / 2, 20, geo.courtW / 2, geo.courtH / 2, 300)
       lift.addColorStop(0, '#1c140f')
       lift.addColorStop(1, ARCADE.crt)
       ctx.fillStyle = lift
-      ctx.fillRect(0, 0, COURT_W, COURT_H)
+      ctx.fillRect(0, 0, geo.courtW, geo.courtH)
 
       // HUD
       ctx.save()
       ctx.shadowColor = ARCADE.phosphorGlow
       ctx.shadowBlur = 6 * k
       const pad = (n: number) => String(Math.min(99999, Math.max(0, n))).padStart(5, '0')
-      const x = drawBlockText(ctx, labelsRef.current.hudScore, 8, 5, ARCADE.phosphor, 2, 2)
-      drawBlockText(ctx, pad(s.score), x + 6, 5, ARCADE.phosphor, 2, 2)
-      // The dim high score reads cleaner without the glow.
-      ctx.shadowBlur = 0
-      const hx = drawBlockText(ctx, labelsRef.current.hudHi, 120, 5, ARCADE.inkSoft, 2, 2)
-      drawBlockText(ctx, pad(bestRef.current), hx + 6, 5, ARCADE.inkSoft, 2, 2)
-      ctx.shadowBlur = 6 * k
-      const levelX = Math.round((COURT_W - 54) / 2)
-      const levelEnd = drawBlockText(ctx, labelsRef.current.hudLevel, levelX, 5, ARCADE.phosphor, 2, 2)
-      drawBlockText(ctx, String(s.level), levelEnd + 6, 5, ARCADE.phosphor, 2, 2)
-      ctx.fillStyle = ARCADE.phosphor
-      for (let i = 0; i < s.lives; i++) ctx.fillRect(528 - 16 * i - 12, 9, 12, 3)
+      if (geo.courtW < LANDSCAPE_COURT.courtW) {
+        const x = drawBlockText(ctx, labelsRef.current.hudScore, 4, 5, ARCADE.phosphor, 2, 2)
+        const xs = drawBlockText(ctx, pad(s.score), x + 4, 5, ARCADE.phosphor, 2, 2)
+        // The dim high score reads cleaner without the glow.
+        ctx.shadowBlur = 0
+        const hx = drawBlockText(ctx, labelsRef.current.hudHi, xs + 6, 5, ARCADE.inkSoft, 2, 2)
+        const hs = drawBlockText(ctx, pad(bestRef.current), hx + 3, 5, ARCADE.inkSoft, 2, 2)
+        ctx.shadowBlur = 6 * k
+        const lx = drawBlockText(ctx, labelsRef.current.hudLevel, hs + 5, 5, ARCADE.phosphor, 2, 2)
+        drawBlockText(ctx, String(s.level), lx + 3, 5, ARCADE.phosphor, 2, 2)
+        ctx.fillStyle = ARCADE.phosphor
+        for (let i = 0; i < s.lives; i++) ctx.fillRect(geo.courtW - 20 - 16 * i, 9, 12, 3)
+      } else {
+        const x = drawBlockText(ctx, labelsRef.current.hudScore, 8, 5, ARCADE.phosphor, 2, 2)
+        drawBlockText(ctx, pad(s.score), x + 6, 5, ARCADE.phosphor, 2, 2)
+        // The dim high score reads cleaner without the glow.
+        ctx.shadowBlur = 0
+        const hx = drawBlockText(ctx, labelsRef.current.hudHi, 120, 5, ARCADE.inkSoft, 2, 2)
+        drawBlockText(ctx, pad(bestRef.current), hx + 6, 5, ARCADE.inkSoft, 2, 2)
+        ctx.shadowBlur = 6 * k
+        const levelX = Math.round((geo.courtW - 54) / 2)
+        const levelEnd = drawBlockText(ctx, labelsRef.current.hudLevel, levelX, 5, ARCADE.phosphor, 2, 2)
+        drawBlockText(ctx, String(s.level), levelEnd + 6, 5, ARCADE.phosphor, 2, 2)
+        ctx.fillStyle = ARCADE.phosphor
+        for (let i = 0; i < s.lives; i++) ctx.fillRect(geo.courtW - 20 - 16 * i, 9, 12, 3)
+      }
       ctx.restore()
       ctx.fillStyle = HUD_LINE
-      ctx.fillRect(0, 20, COURT_W, 1)
+      ctx.fillRect(0, geo.hudH, geo.courtW, 1)
 
       // Bricks
       for (const brick of s.bricks) if (brick.alive) drawBrick(ctx, brick)
@@ -474,12 +494,12 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
       ctx.shadowBlur = 6 * k
       const pw = s.paddle.width
       const px = Math.round(s.paddle.x - pw / 2)
-      const py = PADDLE_Y - PADDLE_H / 2
+      const py = geo.paddleY - geo.paddleH / 2
       ctx.fillStyle = ARCADE.phosphor
-      ctx.fillRect(px, py, pw, PADDLE_H)
+      ctx.fillRect(px, py, pw, geo.paddleH)
       ctx.fillStyle = ARCADE.rust
-      ctx.fillRect(px, py, 4, PADDLE_H)
-      ctx.fillRect(px + pw - 4, py, 4, PADDLE_H)
+      ctx.fillRect(px, py, 4, geo.paddleH)
+      ctx.fillRect(px + pw - 4, py, 4, geo.paddleH)
       ctx.fillStyle = lighten(ARCADE.phosphor, 0.3)
       ctx.fillRect(px, py, pw, 1)
       if (s.effects.some((e) => e.kind === 'catch')) {
@@ -496,7 +516,7 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
           ctx.fillStyle = ARCADE.phosphor
           for (let i = 0; i < snaps.length; i++) {
             ctx.globalAlpha = ((i + 1) / snaps.length) * 0.35
-            for (const dot of snaps[i]) ctx.fillRect(Math.round(dot.x - 3), Math.round(dot.y - 3), BALL_SIZE, BALL_SIZE)
+            for (const dot of snaps[i]) ctx.fillRect(Math.round(dot.x - geo.ballSize / 2), Math.round(dot.y - geo.ballSize / 2), geo.ballSize, geo.ballSize)
           }
           ctx.restore()
         }
@@ -506,7 +526,7 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
       ctx.shadowBlur = 6 * k
       ctx.fillStyle = ARCADE.phosphor
       for (const ball of s.balls) {
-        ctx.fillRect(Math.round(ball.x - BALL_SIZE / 2), Math.round(ball.y - BALL_SIZE / 2), BALL_SIZE, BALL_SIZE)
+        ctx.fillRect(Math.round(ball.x - geo.ballSize / 2), Math.round(ball.y - geo.ballSize / 2), geo.ballSize, geo.ballSize)
       }
       ctx.restore()
 
@@ -577,12 +597,14 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
     return () => cancelAnimationFrame(raf)
   }, [k, handleEvents, syncView])
 
+  // Through the canvas's own box: it is scaled and centred inside the container on a portrait
+  // phone, and a court kept across a rotation can be much wider than the screen.
   const courtToLocal = (clientX: number) => {
-    const el = courtRef.current
-    if (!el) return 0
-    const r = el.getBoundingClientRect()
-    const s = r.width / el.offsetWidth
-    return (clientX - r.left) / s
+    const c = canvasRef.current
+    if (!c) return 0
+    const r = c.getBoundingClientRect()
+    if (r.width <= 0) return 0
+    return ((clientX - r.left) / r.width) * stateRef.current.geo.courtW
   }
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -593,20 +615,22 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault()
+    // A finger that slides past the court's edge keeps steering the paddle.
+    if (e.pointerType !== 'mouse') e.currentTarget.setPointerCapture(e.pointerId)
     doLaunch()
   }
 
   const current = stateRef.current
 
   return (
-    <ArcadeFrame fs={fs} background={ARCADE.crt}>
+    <ArcadeFrame fs={fs} background={ARCADE.crt} portrait={portrait}>
       <ArcadeStrip time={time} fs={fs} arcade={arcade} desktopLabel={desktopLabel} backLabel={backLabel} onDesktop={onDesktop} onBack={onBack}>
         <StripButton onClick={doPause}>{labels.pause}</StripButton>
       </ArcadeStrip>
 
       <div
         ref={courtRef}
-        className="relative flex-1 overflow-hidden"
+        className="relative flex-1 min-h-0 overflow-hidden flex items-center justify-center"
         style={{ backgroundColor: ARCADE.crt, touchAction: 'none' }}
         onPointerMove={onPointerMove}
         onPointerDown={onPointerDown}
@@ -615,17 +639,17 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
           ref={canvasRef}
           role="img"
           aria-label={labels.field}
-          className="absolute left-0 top-0"
-          style={{ width: SCREEN_W, height: APP_H }}
+          className="flex-shrink-0"
+          style={{ width: geo.courtW, height: geo.courtH, transform: courtScale !== 1 ? `scale(${courtScale})` : undefined }}
         />
         <CrtOverlay />
 
         {view === 'ready' && startedRef.current && (
           <p
             className="absolute inset-x-0 text-center pointer-events-none"
-            style={{ bottom: 44, fontSize: 9, color: '#c8b89a', ...PIXEL_FONT, textShadow: '1px 1px 0 rgba(0,0,0,0.7)' }}
+            style={{ bottom: 44, fontSize: portrait ? 12 : 9, color: '#c8b89a', ...PIXEL_FONT, textShadow: '1px 1px 0 rgba(0,0,0,0.7)' }}
           >
-            {labels.start}
+            {portrait ? labels.startTouch : labels.start}
           </p>
         )}
 
@@ -641,9 +665,9 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
               <div className="flex flex-col items-center gap-3 text-center" style={PIXEL_FONT}>
                 <h2 className="sr-only">{labels.title}</h2>
                 <BlockTitle text={labels.title} block={5} />
-                <p style={{ fontSize: 10, color: ARCADE.panelText }}>{labels.start}</p>
-                {best > 0 && <p style={{ fontSize: 9, color: ARCADE.panelText }}>{labels.best.replace('{n}', String(best))}</p>}
-                <p style={{ fontSize: 9, color: ARCADE.panelText, opacity: 0.8, whiteSpace: 'pre' }}>{labels.hint}</p>
+                <p style={{ fontSize: 10, color: ARCADE.panelText }}>{portrait ? labels.startTouch : labels.start}</p>
+                {best > 0 && <p style={{ fontSize: portrait ? 12 : 9, color: ARCADE.panelText }}>{labels.best.replace('{n}', String(best))}</p>}
+                <p style={{ fontSize: portrait ? 12 : 9, color: ARCADE.panelText, opacity: 0.8, whiteSpace: 'pre' }}>{portrait ? labels.hintTouch : labels.hint}</p>
               </div>
             </div>
           </ArcadeOverlay>
@@ -654,7 +678,7 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
             <ArcadePanel className="px-8 py-5 text-center">
               <p style={{ fontSize: 12 }}>{labels.paused}</p>
               <div className="mt-3 flex justify-center">
-                <ArcadeButton onClick={doPause} size="md">
+                <ArcadeButton onClick={doPause} size={portrait ? 'xl' : 'md'}>
                   {labels.resume}
                 </ArcadeButton>
               </div>
@@ -676,14 +700,14 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
           <ArcadeOverlay>
             <ArcadePanel className="px-8 py-5 text-center">
               <p style={{ fontSize: 12 }}>{labels.over}</p>
-              <p className="mt-2" style={{ fontSize: 9, color: '#c8b89a' }}>
+              <p className="mt-2" style={{ fontSize: portrait ? 12 : 9, color: '#c8b89a' }}>
                 {labels.score.replace('{n}', String(current.score))}
               </p>
-              <p className="mt-0.5" style={{ fontSize: 9, color: '#c8b89a' }}>
+              <p className="mt-0.5" style={{ fontSize: portrait ? 12 : 9, color: '#c8b89a' }}>
                 {labels.best.replace('{n}', String(best))}
               </p>
               <div className="mt-3 flex justify-center">
-                <ArcadeButton onClick={resetGame} tone="cream" size="md">
+                <ArcadeButton onClick={resetGame} tone="cream" size={portrait ? 'xl' : 'md'}>
                   {labels.playAgain}
                 </ArcadeButton>
               </div>

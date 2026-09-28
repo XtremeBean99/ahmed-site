@@ -1409,6 +1409,8 @@ export const en = {
       reset: 'New game',
       won: 'Cleared!',
       lost: 'Boom.',
+      reveal: 'Reveal',
+      flag: 'Flag',
     },
     snakeApp: {
       board: 'Snake board',
@@ -1420,6 +1422,12 @@ export const en = {
       paused: 'Paused',
       resume: 'Resume',
       hint: 'Arrows or WASD  ·  Space pauses  ·  Enter restarts',
+      pause: 'Pause',
+      hintTouch: 'Swipe the board or use the D-pad',
+      dpadUp: 'Up',
+      dpadDown: 'Down',
+      dpadLeft: 'Left',
+      dpadRight: 'Right',
     },
     readmeApp: {
       title: 'README.txt',

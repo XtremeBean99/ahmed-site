@@ -146,7 +146,8 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const STAGE_H = 768
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const panXRef = useRef(0)
-  const dragStartRef = useRef<{ x: number; y: number; px: number } | null>(null)
+  // `moved` flips once the finger passes PAN_SLOP: from then on it is a pan, not a tap.
+  const dragStartRef = useRef<{ x: number; y: number; px: number; moved: boolean } | null>(null)
   const panRafRef = useRef(0)
   const momentumRef = useRef(0)
   const samplesRef = useRef<{ t: number; x: number }[]>([])
@@ -165,18 +166,31 @@ export function Room({ dict, readmeContent }: RoomProps) {
 
   useEffect(() => {
     if (!mobile) return
+    // A drag may start on an object (on a phone the monitor fills most of the view):
+    // it only becomes a pan past PAN_SLOP, and then the object's click is swallowed.
+    const PAN_SLOP = 8
+    const swallowClick = () => {
+      const stop = (ev: MouseEvent) => { ev.stopPropagation(); ev.preventDefault() }
+      window.addEventListener('click', stop, { capture: true, once: true })
+      setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 400)
+    }
     const onDown = (e: PointerEvent) => {
       if (view !== 'room') return
       stopMomentum()
       samplesRef.current = []
       const el = e.target as HTMLElement
-      if (el.closest('a,button,[tabindex],[role="button"],input,textarea,select')) return
+      if (el.closest('input,textarea,select')) return
       if (el.closest('#room-stage-outer') === null) return
-      dragStartRef.current = { x: e.clientX, y: e.clientY, px: panXRef.current }
+      dragStartRef.current = { x: e.clientX, y: e.clientY, px: panXRef.current, moved: false }
     }
     const onMove = (e: PointerEvent) => {
-      if (!dragStartRef.current) return
-      const next = clampPanX(dragStartRef.current.px + (e.clientX - dragStartRef.current.x))
+      const start = dragStartRef.current
+      if (!start) return
+      if (!start.moved) {
+        if (Math.abs(e.clientX - start.x) < PAN_SLOP) return
+        start.moved = true
+      }
+      const next = clampPanX(start.px + (e.clientX - start.x))
       panXRef.current = next
       samplesRef.current.push({ t: performance.now(), x: next })
       if (!hasDraggedRef.current) {
@@ -187,8 +201,11 @@ export function Room({ dict, readmeContent }: RoomProps) {
       panRafRef.current = requestAnimationFrame(() => setPan({ x: next, y: 0 }))
     }
     const onUp = () => {
-      if (!dragStartRef.current) return
+      const start = dragStartRef.current
+      if (!start) return
       dragStartRef.current = null
+      if (!start.moved) return
+      swallowClick()
       if (reduce !== false) return
       const v = releaseVelocity(samplesRef.current, performance.now())
       if (v === 0) return

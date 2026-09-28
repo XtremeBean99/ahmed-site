@@ -11,10 +11,14 @@ import {
 import { loadPrefs, savePrefs } from '@/lib/room/storage'
 
 /**
- * Interaction sound effects. Owns a small pool of preloaded <audio> elements
- * per sound and plays them on demand, gated by the `sfx` preference in
- * room-save-v1 (independent of the music `audio` pref; muting music never
- * mutes SFX). Reduced motion does NOT disable sound.
+ * Interaction sound effects. Each file is fetched once as an ArrayBuffer
+ * (on idle after mount) and decoded once into an AudioBuffer on a shared
+ * AudioContext, which is created and resumed on the first user gesture so
+ * no autoplay warning is logged. `play()` starts a buffer source through a
+ * gain node set to the SFX volume. Without Web Audio everything stays silent.
+ * Gated by the `sfx` preference in room-save-v1 (independent of the music
+ * `audio` pref; muting music never mutes SFX). Reduced motion does NOT
+ * disable sound.
  *
  * There is no global click listener; each interaction calls `play()` explicitly.
  */
@@ -30,7 +34,10 @@ const SFX_SRC = {
 
 export type SfxName = keyof typeof SFX_SRC
 
-const POOL_SIZE = 4
+const SFX_NAMES = Object.keys(SFX_SRC) as SfxName[]
+
+/** A play() for a not-yet-decoded sound is kept for this long, then dropped. */
+const PENDING_MS = 300
 
 /**
  * Synthesized arcade sounds (Web Audio, no files). Each voice is one short
@@ -90,59 +97,156 @@ export function useSfx(): SfxState {
   return ctx
 }
 
+function createAudioContext(): AudioContext | null {
+  if (typeof window === 'undefined') return null
+  const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+  if (!Ctor) return null
+  try {
+    return new Ctor()
+  } catch {
+    return null
+  }
+}
+
+function startSource(ac: AudioContext, buffer: AudioBuffer, volume: number): void {
+  const src = ac.createBufferSource()
+  src.buffer = buffer
+  const gain = ac.createGain()
+  gain.gain.value = volume
+  src.connect(gain)
+  gain.connect(ac.destination)
+  src.start()
+}
+
 export function RoomSfxProvider({ children }: { children: ReactNode }) {
-  const poolsRef = useRef<Record<string, HTMLAudioElement[]>>({})
-  const idxRef = useRef<Record<string, number>>({})
   const enabledRef = useRef(true)
   const volumeRef = useRef(0.5)
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const noiseRef = useRef<AudioBuffer | null>(null)
+  const arrayBuffersRef = useRef(new Map<SfxName, ArrayBuffer>())
+  const buffersRef = useRef(new Map<SfxName, AudioBuffer>())
+  const pendingRef = useRef(new Map<SfxName, number>())
+  const fetchingRef = useRef(new Set<SfxName>())
 
-  // Build the audio pools once, from the persisted prefs (client-only).
+  // Fetch each file once on idle, decode once the shared context exists
+  // (created on the first user gesture), and keep the prefs in refs.
   useEffect(() => {
     const prefs = loadPrefs()
     enabledRef.current = prefs.sfx
     volumeRef.current = prefs.sfxVolume
-    for (const [name, src] of Object.entries(SFX_SRC)) {
-      poolsRef.current[name] = Array.from({ length: POOL_SIZE }, () => {
-        const a = new Audio(src)
-        a.preload = 'auto'
-        a.volume = volumeRef.current
-        return a
+
+    const buffers = buffersRef.current
+    const arrayBuffers = arrayBuffersRef.current
+    const pending = pendingRef.current
+    const fetching = fetchingRef.current
+
+    const decodeBuffer = (name: SfxName, arrayBuffer: ArrayBuffer) => {
+      const ac = audioCtxRef.current
+      if (!ac) return
+      // decodeAudioData detaches the buffer, so it must only ever be handed over once.
+      arrayBuffers.delete(name)
+      ac.decodeAudioData(arrayBuffer).then((buffer) => {
+        buffers.set(name, buffer)
+        const requestedAt = pending.get(name)
+        pending.delete(name)
+        if (requestedAt !== undefined && enabledRef.current && performance.now() - requestedAt <= PENDING_MS) {
+          startSource(ac, buffer, volumeRef.current)
+        }
+      }).catch(() => {
+        arrayBuffers.delete(name)
+        pending.delete(name)
       })
-      idxRef.current[name] = 0
     }
-    return () => {
-      for (const pool of Object.values(poolsRef.current)) {
-        for (const a of pool) { a.pause(); a.src = '' }
+
+    const decodeReady = () => {
+      const ac = audioCtxRef.current
+      if (!ac) return
+      for (const [name, arrayBuffer] of Array.from(arrayBuffers)) {
+        decodeBuffer(name, arrayBuffer)
       }
-      poolsRef.current = {}
+    }
+
+    const fetchBuffer = (name: SfxName) => {
+      if (fetching.has(name)) return
+      fetching.add(name)
+      fetch(SFX_SRC[name]).then((res) => {
+        if (!res.ok) throw new Error(`sfx fetch failed: ${res.status}`)
+        return res.arrayBuffer()
+      }).then((arrayBuffer) => {
+        arrayBuffers.set(name, arrayBuffer)
+        if (audioCtxRef.current) decodeBuffer(name, arrayBuffer)
+      }).catch(() => {
+        fetching.delete(name)
+      })
+    }
+
+    const fetchAll = () => {
+      for (const name of SFX_NAMES) fetchBuffer(name)
+    }
+
+    const idleId = typeof window.requestIdleCallback === 'function'
+      ? window.requestIdleCallback(fetchAll)
+      : window.setTimeout(fetchAll, 1)
+
+    // A touch pointerdown is not a user activation (only pointerup, touchend, click and
+    // keydown are), so listen to those and keep listening until the context really runs.
+    const unlockEvents = ['pointerup', 'touchend', 'click', 'keydown'] as const
+    const stopListening = () => {
+      for (const type of unlockEvents) document.removeEventListener(type, onGesture, true)
+    }
+    const onGesture = () => {
+      if (!audioCtxRef.current) audioCtxRef.current = createAudioContext()
+      const ac = audioCtxRef.current
+      if (!ac) return
+      decodeReady()
+      if (ac.state === 'running') { stopListening(); return }
+      void ac.resume().then(() => { if (ac.state === 'running') stopListening() }).catch(() => {})
+    }
+    for (const type of unlockEvents) document.addEventListener(type, onGesture, true)
+
+    return () => {
+      if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idleId)
+      else window.clearTimeout(idleId)
+      stopListening()
+      void audioCtxRef.current?.close().catch(() => {})
+      audioCtxRef.current = null
+      noiseRef.current = null
+      buffers.clear()
+      arrayBuffers.clear()
+      pending.clear()
+      fetching.clear()
     }
   }, [])
 
   const play = useCallback((name: SfxName) => {
-    if (!enabledRef.current) return
-    const pool = poolsRef.current[name]
-    if (!pool || pool.length === 0) return
-    const next = (idxRef.current[name] + 1) % pool.length
-    idxRef.current[name] = next
-    const a = pool[next]
-    a.volume = volumeRef.current
-    try {
-      a.currentTime = 0
-      a.play().catch(() => {})
-    } catch {
-      /* ignore */
+    if (!enabledRef.current || volumeRef.current <= 0) return
+    const ac = audioCtxRef.current
+    // play() runs inside the interaction's own handler, so it may resume a suspended context.
+    if (ac && ac.state === 'suspended') void ac.resume().catch(() => {})
+    const buffer = buffersRef.current.get(name)
+    if (ac && buffer) {
+      try {
+        startSource(ac, buffer, volumeRef.current)
+      } catch {
+        /* ignore */
+      }
+      return
     }
+    pendingRef.current.set(name, performance.now())
+    window.setTimeout(() => {
+      const requestedAt = pendingRef.current.get(name)
+      if (requestedAt !== undefined && performance.now() - requestedAt > PENDING_MS) {
+        pendingRef.current.delete(name)
+      }
+    }, PENDING_MS + 50)
   }, [])
-
-  const audioCtxRef = useRef<AudioContext | null>(null)
-  const noiseRef = useRef<AudioBuffer | null>(null)
-  useEffect(() => () => { void audioCtxRef.current?.close().catch(() => {}) }, [])
 
   const tone = useCallback((name: ToneName, pitch = 1) => {
     if (!enabledRef.current || volumeRef.current <= 0) return
+    const ac = audioCtxRef.current
+    if (!ac) return
     try {
-      const ac = audioCtxRef.current ?? (audioCtxRef.current = new AudioContext())
-      if (ac.state === 'suspended') void ac.resume()
+      if (ac.state === 'suspended') void ac.resume().catch(() => {})
       if (!noiseRef.current) {
         const buf = ac.createBuffer(1, ac.sampleRate / 4, ac.sampleRate)
         const data = buf.getChannelData(0)
@@ -193,9 +297,6 @@ export function RoomSfxProvider({ children }: { children: ReactNode }) {
   const setVolume = useCallback((v: number) => {
     volumeRef.current = v
     savePrefs({ sfxVolume: v })
-    for (const pool of Object.values(poolsRef.current)) {
-      for (const a of pool) { a.volume = v }
-    }
   }, [])
 
 

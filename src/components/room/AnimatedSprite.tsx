@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { RoomObject } from './RoomObject'
 import { DURATION } from '@/lib/motion'
@@ -49,11 +49,6 @@ export function AnimatedSprite({
   const reduce = useReducedMotion()
   const { tick, tickRef, advanceTo, clearTimer, start, stop } = useAnimationTimer(frameDuration, reduce)
 
-  // Touch devices: track whether a tap-triggered animation is running
-  const touchActiveRef = useRef(false)
-  const touchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const [isTouchDevice] = useState(() => typeof window !== 'undefined' && !matchMedia('(any-pointer: fine)').matches)
-
   // All sprites (poster, saitama, bonsai, coffee) animate ON HOVER/TAP ONLY — never
   // autoplay on mount. Hover starts the sequence per mode; leaving stops it.
   const startAnimation = useCallback(() => {
@@ -89,13 +84,6 @@ export function AnimatedSprite({
     stop()
   }, [stop])
 
-  // Cleanup touch timer on unmount (interval is handled by useAnimationTimer)
-  useEffect(() => {
-    return () => {
-      if (touchTimerRef.current) clearTimeout(touchTimerRef.current)
-    }
-  }, [])
-
   // Warm the browser cache for the frames AT THE CURRENT LIGHTING STATE so the
   // first play does not skip while images stream in. Preloading only the base
   // (dusk) paths missed the graded dawn/day/night variants (lightingSrc) — that
@@ -109,33 +97,13 @@ export function AnimatedSprite({
     }
   }, [frames, lighting, altFrame])
 
-  // Touch tap handler: on coarse-pointer devices, a tap starts the animation
-  // and auto-stops after the full sequence completes (or on a second tap).
-  const handleTouch = useCallback(() => {
-    if (!isTouchDevice || reduce) return
-    if (touchActiveRef.current) {
-      stopAnimation()
-      touchActiveRef.current = false
-      if (touchTimerRef.current) clearTimeout(touchTimerRef.current)
-      return
-    }
-    touchActiveRef.current = true
-    startAnimation()
-    if (onClick) onClick()
-    const totalMs = frames.length * frameDuration + 200
-    touchTimerRef.current = setTimeout(() => {
-      stopAnimation()
-      touchActiveRef.current = false
-    }, totalMs)
-  }, [isTouchDevice, reduce, startAnimation, stopAnimation, onClick, frames.length, frameDuration])
-
   return (
     <RoomObject
       label={label}
       showTooltip={hovered}
       onActivate={startAnimation}
       onDeactivate={stopAnimation}
-      onClick={isTouchDevice ? handleTouch : onClick}
+      onClick={onClick}
       tabIndex={0}
       tooltipAlign={tooltipAlign}
       style={{

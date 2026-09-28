@@ -474,6 +474,7 @@ export const en = {
     posterClickHint: 'Nice poster!',
     clockTip: "It's {time}",
     hint: 'Click around to explore',
+    hintTouch: 'Tap things to explore, drag to look around',
     skip: 'Skip to the website',
     metaTitle: "Ahmed's website",
     metaDescription: 'Step into my digital room, a cosy pixel-art space and the front door to my personal website.',

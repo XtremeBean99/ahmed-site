@@ -782,4 +782,17 @@ verification; ask the owner before merging into `master` (a push deploys).
 
 ### Build log
 - 28 September: refining questions answered (portrait-native, monitor bezel, terminal desktop-only, music
-  untouched); design and plan written; baseline build started for the JS comparison.
+  untouched); design and plan written. Baseline build: `/` 240 kB page, 345 kB First Load JS.
+- MOB0 done (`6f345b9`, `7f6bccf`): geometry module and tests, `DeskScreenContext`, portrait strip and toolbar,
+  `xl` buttons, `ArcadeFrame` portrait and compat modes, the bezel shell (bezel widened to 10/12/26 px so the
+  sampled rim and body read at phone size), the music bar, per-app error boundaries, code splitting with idle
+  prefetch, touch CSS. `/` is now 71.4 kB page, **177 kB First Load JS** (was 345). Checked at 390x844 (320 x 648
+  logical screen at 1.156x, 44 px strip buttons, no sideways overflow), a compat game in portrait, and rotation
+  390x844 -> 844x390 -> 390x844 mid-game keeping the Snake state. Room and DeskView now take the desk copy types
+  from `Dictionary`, so a builder's new strings never touch files it does not own.
+- The browser pane reports a touch screen with no fine pointer even at 1408x768, so it always runs the mobile
+  paths; master and `feat/mobile` give identical screen and stage rects there (1024x768). The exact desktop
+  (mouse) comparison is done in MOB9 with a temporary local override of `isMobileViewport` on both branches.
+- Wave 1 launched (MOB1 desktop and text apps, MOB2 Snake/Minesweeper/Paint, MOB4 Solitaire, MOB7 room); MOB7
+  also owns `Monitor.tsx`, `RoomSpeakers.tsx` and `SideTableClock.tsx` for tap tooltips; MOB5 also owns
+  `pong-engine.ts` (a `rightTarget` input for two-player touch). Wave 2 waits for memory (15 GB, 2.4 GB free).

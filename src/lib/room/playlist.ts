@@ -20,20 +20,6 @@ export const PLAYLIST: Track[] = [
     cover: '/audio/covers/summer-days.jpg',
   },
   {
-    id: 'teresa-no-tameiki',
-    title: 'Teresa no Tameiki',
-    artist: 'Yasushi Miyagawa',
-    src: '/audio/teresa-no-tameiki.mp3',
-    cover: '/audio/covers/teresa-no-tameiki.jpg',
-  },
-  {
-    id: 'fall-in-love',
-    title: '(You And Me Still Keep On) Fall In Love',
-    artist: 'Mai Yamane',
-    src: '/audio/fall-in-love.mp3',
-    cover: '/audio/covers/fall-in-love.jpg',
-  },
-  {
     id: 'hako-is-alive',
     title: 'Hako Is Alive and She Is 59',
     src: '/audio/hako-is-alive.mp3',
@@ -45,13 +31,6 @@ export const PLAYLIST: Track[] = [
     artist: 'Daniel Caesar',
     src: '/audio/always.mp3',
     cover: '/audio/covers/always.jpg',
-  },
-  {
-    id: 'sukoshidake-mawarimichi',
-    title: 'Sukoshidake Mawarimichi',
-    artist: 'Hi-Fi Set',
-    src: '/audio/sukoshidake-mawarimichi.mp3',
-    cover: '/audio/covers/sukoshidake-mawarimichi.jpg',
   },
   {
     id: 'morphine-slowed',
@@ -150,5 +129,26 @@ export const PLAYLIST: Track[] = [
     artist: 'Steve Lacy',
     src: '/audio/some.mp3',
     cover: '/audio/covers/some.jpg',
+  },
+  {
+    id: 'come-undone',
+    title: 'Come Undone',
+    artist: 'Duran Duran',
+    src: '/audio/come-undone.mp3',
+    cover: '/audio/covers/come-undone.jpg',
+  },
+  {
+    id: 'luo-zhi-san-qian',
+    title: '落纸三千',
+    artist: '刘珂矣',
+    src: '/audio/luo-zhi-san-qian.mp3',
+    cover: '/audio/covers/luo-zhi-san-qian.jpg',
+  },
+  {
+    id: 'stereo-love',
+    title: 'Stereo Love',
+    artist: 'Edward Maya, Vika Jigulina',
+    src: '/audio/stereo-love.mp3',
+    cover: '/audio/covers/stereo-love.jpg',
   },
 ]

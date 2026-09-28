@@ -1,0 +1,8 @@
+assets/
+.agents-work/
+.superpowers/
+.git-junk/
+.claude/
+*.md
+!README.md
+ideas.txt

@@ -23,6 +23,7 @@ import { BEST_KEYS, getBest, readJson, setBestIfHigher, writeJson } from '@/lib/
 import { useSfx } from './RoomSfxProvider'
 import {
   autoFinishStep,
+  autoTarget,
   bestMove,
   canAutoFinish,
   canMove,
@@ -391,6 +392,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
   const winPhaseRef = useRef<'cascade' | 'panel' | null>(null)
   const dealAnimRef = useRef<DealAnim | null>(null)
   const suppressClickRef = useRef(false)
+  const pointerTypeRef = useRef('mouse')
   const announceTimer = useRef<number | null>(null)
 
   const k = useCanvasScale(cascadeRef, L.w)
@@ -712,6 +714,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     const g = gameRef.current
     if (!g || g.won) return
     if (e.pointerType === 'mouse' && e.button !== 0) return
+    pointerTypeRef.current = e.pointerType
     const run = runFor(g, loc)
     if (run.length === 0) return
     const slot = computeSlots(g, dealAnimRef.current, L).get(cardId(run[0]))
@@ -737,7 +740,8 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     if (!p || e.pointerId !== p.pointerId) return
     const { x, y } = toLocal(e)
     if (!p.active) {
-      if (Math.hypot(x - p.start.x, y - p.start.y) < TAP_DIST) return
+      // A mouse drags after 3px as on the desk before; a finger gets TAP_DIST so a tap stays a tap.
+      if (Math.hypot(x - p.start.x, y - p.start.y) < (e.pointerType === 'mouse' ? 3 : TAP_DIST)) return
       setSelected(null)
       const next = { ...p, active: true, pointer: { x, y } }
       pendingRef.current = next
@@ -754,14 +758,19 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     if (!p || e.pointerId !== p.pointerId) return
     pendingRef.current = null
     setPending(null)
-    suppressClickRef.current = true
     const g = gameRef.current
     if (!g) return
     if (!p.active) {
+      // A mouse click keeps the desk's click-to-select and double-click; a finger or pen taps to move.
+      if (e.pointerType === 'mouse') return
       const { x, y } = toLocal(e)
-      if (Math.hypot(x - p.start.x, y - p.start.y) < TAP_DIST) playBestMove(g, p.from)
+      if (Math.hypot(x - p.start.x, y - p.start.y) < TAP_DIST) {
+        suppressClickRef.current = true
+        playBestMove(g, p.from)
+      }
       return
     }
+    suppressClickRef.current = true
     const topIdx = p.cards.length - 1
     const topX = p.pointer.x - p.offset.x
     const topY = p.pointer.y - p.offset.y - L.dragLift + topIdx * L.dragRunStep
@@ -785,8 +794,8 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     setPending(null)
   }
 
-  const handleCardClick = (e: React.MouseEvent<HTMLButtonElement>, loc: Loc) => {
-    if (e.detail > 0) {
+  const handleCardClick = (loc: Loc) => {
+    if (suppressClickRef.current) {
       suppressClickRef.current = false
       return
     }
@@ -808,6 +817,23 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
       return
     }
     setSelected(loc)
+  }
+
+  // Mouse only: a finger's double tap is already two tap-to-moves.
+  const handleCardDouble = (loc: Loc) => {
+    if (pointerTypeRef.current !== 'mouse') return
+    if (dealAnimRef.current || winPhaseRef.current !== null) return
+    const g = gameRef.current
+    if (!g || g.won) return
+    const target = autoTarget(g, loc)
+    if (target) {
+      const next = move(g, loc, target)
+      if (next) {
+        apply(g, next)
+        tone('place')
+      }
+    }
+    setSelected(null)
   }
 
   const handleStockClick = () => {
@@ -1062,7 +1088,8 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
                       onPointerMove={handleCardPointerMove}
                       onPointerUp={handleCardPointerUp}
                       onPointerCancel={handleCardPointerCancel}
-                      onClick={(e) => handleCardClick(e, loc)}
+                      onClick={() => handleCardClick(loc)}
+                      onDoubleClick={() => handleCardDouble(loc)}
                     >
                       <CardSprite card={card} faceUp={slot.faceUp} alt="" ring={ring} shadow={dragPos ? 'strong' : 'normal'} instant={reduceMotion} scale={L.cardScale} />
                     </button>

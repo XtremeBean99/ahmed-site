@@ -144,6 +144,8 @@ export function DeskMinesweeper({ time, backLabel, desktopLabel, labels, onBack,
               doFlag(r, c)
             }}
             onPointerDown={(e) => {
+              // A long-press left over from a cancelled touch must not swallow this tap.
+              pressFlagged.current = false
               if (e.pointerType !== 'mouse') {
                 longPress.current = setTimeout(() => {
                   pressFlagged.current = true
@@ -153,6 +155,7 @@ export function DeskMinesweeper({ time, backLabel, desktopLabel, labels, onBack,
             }}
             onPointerUp={() => clearTimeout(longPress.current)}
             onPointerLeave={() => clearTimeout(longPress.current)}
+            onPointerCancel={() => clearTimeout(longPress.current)}
             className="outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a3028]"
             style={{
               width: cellSize,

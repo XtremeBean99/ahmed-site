@@ -235,9 +235,16 @@ export function DeskView(props: DeskViewProps) {
   // controls, so apps keep their own gestures.
   useEffect(() => {
     if (!mobile || portrait) return
+    // Like the room, a drag may start on the lamp or a speaker (they cover most of
+    // the desk art on a phone): it pans past 6px, and then that button's click is swallowed.
+    const swallowClick = () => {
+      const stop = (ev: MouseEvent) => { ev.stopPropagation(); ev.preventDefault() }
+      window.addEventListener('click', stop, { capture: true, once: true })
+      setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 400)
+    }
     const onDown = (e: PointerEvent) => {
       const el = e.target as HTMLElement
-      if (el.closest('[data-screen-area],a,button,[tabindex],[role="button"],input,textarea,select')) return
+      if (el.closest('[data-screen-area],input,textarea,select')) return
       draggedRef.current = false
       deskDragRef.current = { x: e.clientX, y: e.clientY, px: deskPanRef.current.x, py: deskPanRef.current.y }
     }
@@ -245,7 +252,10 @@ export function DeskView(props: DeskViewProps) {
       if (!deskDragRef.current) return
       const dx = e.clientX - deskDragRef.current.x
       const dy = e.clientY - deskDragRef.current.y
-      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) draggedRef.current = true
+      if (!draggedRef.current) {
+        if (Math.abs(dx) <= 6 && Math.abs(dy) <= 6) return
+        draggedRef.current = true
+      }
       const { slack } = deskLayoutRef.current
       const pan = {
         x: clamp(deskDragRef.current.px + dx, -slack.x, slack.x),
@@ -258,7 +268,9 @@ export function DeskView(props: DeskViewProps) {
       })
     }
     const onUp = () => {
+      if (!deskDragRef.current) return
       deskDragRef.current = null
+      if (draggedRef.current) swallowClick()
       // The click after a drag fires before this timeout, so it is still
       // suppressed; the timeout clears the flag when no click follows.
       setTimeout(() => { draggedRef.current = false }, 0)
@@ -496,6 +508,8 @@ export function DeskView(props: DeskViewProps) {
       <motion.div style={portrait ? PORTRAIT_STAGE : {
         width: STAGE_W, height: STAGE_H, position: 'absolute', top: '50%', left: '50%',
         transform: deskTransform, transformOrigin: 'center center',
+        // The mobile desk pans by drag like the room; the browser must not claim the gesture (pointercancel).
+        touchAction: mobile ? 'none' : undefined,
       }} initial={reduce ? undefined : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
         {!portrait && (<>
         {/* Lamp-off close-up */}

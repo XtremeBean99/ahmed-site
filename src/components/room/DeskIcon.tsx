@@ -64,7 +64,8 @@ export function DeskIcon({ label, tooltip, href, icon, iconSize = 32, portraitSi
       )}
       <div
         className={`flex items-center justify-center group-hover:-translate-y-px transition-transform duration-100 ${portrait ? '' : 'w-10 h-10'}`}
-        style={portrait ? { width: renderSize, height: renderSize } : undefined}
+        // A fixed box, like the desk's 40px one, so every label sits on the same line.
+        style={portrait ? { width: 56, height: 56 } : undefined}
       >
         <svg width={renderSize} height={renderSize} viewBox="0 0 16 16" fill="none" shapeRendering="crispEdges" aria-hidden="true">
           {icon}

@@ -111,7 +111,10 @@ export function DeskMovie({ time, desktopLabel, backLabel, labels, onDesktop, on
       {portrait && <style>{SEEK_CSS}</style>}
       <ScreenStrip time={time} title={labels.title} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack} />
 
-      {/* Letterboxed picture: fixed 16:9 at the top in portrait, flex-1 on the desk */}
+      {/* Portrait centres the picture and its controls in black, like a TV; the desk letterboxes */}
+      {portrait && <div className="flex-1 min-h-0" style={{ backgroundColor: '#000' }} />}
+
+      {/* Letterboxed picture: fixed 16:9 in portrait, flex-1 on the desk */}
       <div
         className={`relative ${portrait ? 'w-full flex-shrink-0' : 'flex-1'}`}
         style={{ backgroundColor: '#000', height: portrait ? 180 : undefined }}
@@ -171,7 +174,7 @@ export function DeskMovie({ time, desktopLabel, backLabel, labels, onDesktop, on
         </ArcadeButton>
         <span style={{ minWidth: portrait ? 44 : 34 }}>{clock(current)}</span>
         {portrait ? (
-          <input {...seekProps} className="room-seek flex-1" style={{ touchAction: 'none' }} />
+          <input {...seekProps} className="room-seek flex-1 min-w-0" style={{ touchAction: 'none' }} />
         ) : (
           <input
             {...seekProps}

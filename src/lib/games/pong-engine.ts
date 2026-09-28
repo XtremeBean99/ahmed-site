@@ -35,9 +35,11 @@ export interface PongState {
 
 export interface PongInput {
   left: -1 | 0 | 1
-  /** Desired centre y for the left paddle (1P mouse). Undefined means use keys. */
+  /** Desired centre y for the left paddle. Undefined means use keys. */
   leftTarget?: number
   right: -1 | 0 | 1
+  /** Desired centre y for the right paddle. Undefined means use keys (or the CPU in 1P). */
+  rightTarget?: number
 }
 
 export type PongEvent =
@@ -150,13 +152,15 @@ function movePaddles(state: PongState, dt: number, input: PongInput): PongState 
   let right = state.right
   let cpu = state.cpu
 
-  if (state.mode === '1p' && input.leftTarget !== undefined) {
+  if (input.leftTarget !== undefined) {
     left = movePaddleToward(left, input.leftTarget, MOUSE_SPEED, dt)
   } else if (input.left !== 0) {
     left = movePaddleBy(left, input.left, dt)
   }
 
-  if (state.mode === '2p') {
+  if (input.rightTarget !== undefined) {
+    right = movePaddleToward(right, input.rightTarget, MOUSE_SPEED, dt)
+  } else if (state.mode === '2p') {
     if (input.right !== 0) right = movePaddleBy(right, input.right, dt)
   } else {
     const d = DIFFICULTY[state.difficulty]

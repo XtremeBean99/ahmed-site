@@ -201,6 +201,30 @@ test('2P input moves both paddles independently', () => {
   assert.equal(r.state.right.y, 116)
 })
 
+test('a right target moves the right paddle in 1P, overriding the CPU', () => {
+  const s = createMatch('1p', 'normal', straight)
+  const state: PongState = {
+    ...s,
+    status: 'play',
+    timer: 0,
+    ball: { x: 300, y: 137, vx: -240, vy: 0 },
+    right: { y: 0 },
+    cpu: { reaction: 0, aimOffset: 0 },
+  }
+  const r = step(state, 0.1, { left: 0, right: 0, rightTarget: 140 }, straight)
+  assert.equal(r.state.right.y, 70)
+})
+
+test('targets steer both paddles in 2P while keys move a paddle without one', () => {
+  const r = step(playState({ left: { y: 0 }, right: { y: 0 } }), 0.05, { left: 0, leftTarget: 100, right: 0, rightTarget: 20 }, straight)
+  assert.equal(r.state.left.y, 35)
+  assert.equal(r.state.right.y, 2)
+
+  const keys = step(playState({ left: { y: 100 }, right: { y: 100 } }), 0.05, { left: -1, right: 1, leftTarget: 140 }, straight)
+  assert.equal(keys.state.left.y, 122, 'a left target overrides the left key')
+  assert.equal(keys.state.right.y, 116, 'the right key still moves the right paddle')
+})
+
 test('the CPU aims at the predicted intercept, reflecting wall bounces', () => {
   const s = createMatch('1p', 'hard', straight)
   const state: PongState = {

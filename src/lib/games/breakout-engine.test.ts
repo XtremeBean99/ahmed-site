@@ -1,7 +1,9 @@
+import { createHash } from 'node:crypto'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { mulberry32 } from './cards'
 import type { BreakoutState, Brick } from './types'
+import type { BreakoutGameState } from './breakout-engine'
 import {
   BALL_SIZE,
   BASE_SPEED,
@@ -9,6 +11,7 @@ import {
   createGame,
   GRID_X,
   GRID_Y,
+  LANDSCAPE_COURT,
   launch,
   levelSpeed,
   LEVELS,
@@ -19,6 +22,7 @@ import {
   PADDLE_H,
   PADDLE_Y,
   parseLevel,
+  PORTRAIT_COURT,
   POWERUP_H,
   scoreForRow,
   START_LIVES,
@@ -398,4 +402,67 @@ test('seeded runs replay identically', () => {
     return s
   }
   assert.equal(JSON.stringify(run(7)), JSON.stringify(run(7)))
+})
+
+test('the portrait preset bricks fit inside the court with margins', () => {
+  for (const rows of LEVELS) {
+    const bricks = parseLevel(rows, PORTRAIT_COURT)
+    assert.ok(bricks.length > 0)
+    for (const b of bricks) {
+      assert.ok(b.x >= PORTRAIT_COURT.gridX)
+      assert.ok(b.y >= PORTRAIT_COURT.gridY)
+      assert.ok(b.x + b.w <= PORTRAIT_COURT.courtW - PORTRAIT_COURT.gridX)
+      assert.ok(b.y + b.h <= PORTRAIT_COURT.courtH - PORTRAIT_COURT.gridY)
+    }
+  }
+})
+
+test('levels parse to the same brick count on both courts', () => {
+  for (const rows of LEVELS) {
+    assert.equal(parseLevel(rows, LANDSCAPE_COURT).length, parseLevel(rows, PORTRAIT_COURT).length)
+  }
+})
+
+test('the paddle clamps to the portrait court', () => {
+  const s = createGame(PORTRAIT_COURT)
+  movePaddle(s, -50)
+  assert.equal(s.paddle.x, PORTRAIT_COURT.paddleW / 2)
+  assert.equal(s.balls[0].x, s.paddle.x)
+  movePaddle(s, PORTRAIT_COURT.courtW + 50)
+  assert.equal(s.paddle.x, PORTRAIT_COURT.courtW - PORTRAIT_COURT.paddleW / 2)
+})
+
+test('a ball never leaves the portrait court over a long simulated run', () => {
+  const s = createGame(PORTRAIT_COURT)
+  const rng = mulberry32(1234)
+  launch(s, rng)
+  for (let i = 0; i < 20000; i++) {
+    if (s.status === 'clear') nextLevel(s, PORTRAIT_COURT)
+    if (s.status === 'ready') launch(s, rng)
+    if (s.balls.length > 0) movePaddle(s, s.balls[0].x)
+    if (s.status === 'play' && s.balls.some((b) => b.stuck)) launch(s, rng)
+    step(s, rng)
+    const half = PORTRAIT_COURT.ballSize / 2
+    for (const b of s.balls) {
+      assert.ok(b.x - half >= -0.001, `ball left edge at step ${i}`)
+      assert.ok(b.x + half <= PORTRAIT_COURT.courtW + 0.001, `ball right edge at step ${i}`)
+      assert.ok(b.y - half >= PORTRAIT_COURT.hudH - 0.001, `ball top edge at step ${i}`)
+      assert.ok(b.y + half <= PORTRAIT_COURT.courtH + 0.001, `ball bottom edge at step ${i}`)
+    }
+  }
+  assert.notEqual(s.status, 'over')
+})
+
+test('a landscape game is identical to before', () => {
+  const run = (seed: number): BreakoutGameState => {
+    const s = createGame()
+    const rng = mulberry32(seed)
+    launch(s, rng)
+    for (let i = 0; i < 300; i++) step(s, rng)
+    return s
+  }
+  const digest = createHash('sha256')
+    .update(JSON.stringify(run(7), (key, value) => (key === 'geo' ? undefined : value)))
+    .digest('hex')
+  assert.equal(digest, '68a136fbd7c6caee4cff55c445485107e38eb06d3fc01745f445f31660906438')
 })

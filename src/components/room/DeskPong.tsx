@@ -160,8 +160,16 @@ function drawCourt(
   ctx.shadowColor = ARCADE.phosphorGlow
   ctx.fillStyle = ARCADE.phosphor
   ctx.globalAlpha = 0.85
-  drawDigit(ctx, state ? state.score[0] : 0, vw / 2 - 64, 18, 6)
-  drawDigit(ctx, state ? state.score[1] : 0, vw / 2 + 64, 18, 6)
+  // Portrait: each score beside its own half of the net (the CPU's above, yours
+  // below), clear of the paddles that run along the top and bottom edges.
+  const net = viewSize(portrait).h / 2
+  if (portrait) {
+    drawDigit(ctx, state ? state.score[1] : 0, vw - 40, net - 54, 6)
+    drawDigit(ctx, state ? state.score[0] : 0, vw - 40, net + 24, 6)
+  } else {
+    drawDigit(ctx, state ? state.score[0] : 0, vw / 2 - 64, 18, 6)
+    drawDigit(ctx, state ? state.score[1] : 0, vw / 2 + 64, 18, 6)
+  }
   ctx.globalAlpha = 1
   ctx.restore()
 
@@ -171,7 +179,7 @@ function drawCourt(
     ctx.shadowBlur = 4 * k
     ctx.shadowColor = ARCADE.phosphorGlow
     ctx.fillStyle = ARCADE.phosphor
-    drawDigit(ctx, n, vw / 2, 112, 3)
+    drawDigit(ctx, n, vw / 2, portrait ? net - 60 : 112, 3)
     ctx.restore()
   }
 }

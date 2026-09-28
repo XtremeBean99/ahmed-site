@@ -396,3 +396,205 @@ function advanceAfterHand(s: BlackjackState): BlackjackState {
   }
   return { ...s, phase: 'dealer' }
 }
+
+/**
+ * Table geometry for one screen. Landscape is the original 536x308 desk table,
+ * pixel for pixel; portrait is a 320-wide phone felt under the strip and the
+ * app toolbar (44 + 44 logical px).
+ */
+export interface BlackjackLayout {
+  portrait: boolean
+  /** Felt width in logical px. */
+  playW: number
+  /** Felt height under the strip (and, in portrait, the toolbar row). */
+  feltH: number
+  cardW: number
+  cardH: number
+  dealerY: number
+  /** Base (inactive) top of a hand in the first row. */
+  handY: number
+  handYActive: number
+  badgeAbove: number
+  midY: number
+  midH: number
+  stakeY: number
+  circle: { x: number; y: number; r: number }
+  shoe: { x: number; y: number }
+  shoeOrigin: { x: number; y: number }
+  fan: number
+  handGap: number
+  edge: number
+  /** The width hands may occupy: playW minus both edges. */
+  maxRowW: number
+  /** Vertical step between stacked hand rows in portrait. */
+  rowH: number
+  /** Portrait: tighten the fan at most this far before stacking rows. */
+  minStep: number
+  /** Portrait: the 38px action row's top. */
+  actionTop: number
+  chipRowTop: number
+  chipRowH: number
+  actionH: number
+  /** Portrait: stake circle centre when the chip row is / is not shown. */
+  betYBetting: number
+  betYPlay: number
+  /** Portrait: vertical band the hand block is centred in. */
+  handAreaTop: number
+  handAreaBottom: number
+}
+
+const LANDSCAPE_STRIP_H = 28
+const PORTRAIT_STRIP_H = 88
+
+export function blackjackLayout(w: number, h: number, portrait: boolean, cardW: number, cardH: number): BlackjackLayout {
+  if (!portrait) {
+    const feltH = h - LANDSCAPE_STRIP_H
+    return {
+      portrait: false,
+      playW: w,
+      feltH,
+      cardW,
+      cardH,
+      dealerY: 10,
+      handY: 138,
+      handYActive: 134,
+      badgeAbove: 19,
+      midY: 10 + cardH,
+      midH: 134 - 19 - (10 + cardH),
+      stakeY: 210,
+      circle: { x: 268, y: 222, r: 14 },
+      shoe: { x: 470, y: 8 },
+      shoeOrigin: { x: 493, y: 21 },
+      fan: 14,
+      handGap: 24,
+      edge: 12,
+      maxRowW: w - 2 * 12,
+      rowH: 0,
+      minStep: 0,
+      actionTop: feltH - 40,
+      chipRowTop: 0,
+      chipRowH: 0,
+      actionH: 40,
+      betYBetting: 222,
+      betYPlay: 222,
+      handAreaTop: 0,
+      handAreaBottom: 0,
+    }
+  }
+  const feltH = h - PORTRAIT_STRIP_H
+  const dealerY = 6
+  const midY = dealerY + cardH + 4
+  const midH = 26
+  const actionH = 38
+  const chipRowH = 44
+  const actionTop = feltH - 4 - actionH
+  const chipRowTop = actionTop - 6 - chipRowH
+  const betYBetting = chipRowTop - 6 - 14
+  const betYPlay = actionTop - 6 - 14
+  return {
+    portrait: true,
+    playW: w,
+    feltH,
+    cardW,
+    cardH,
+    dealerY,
+    handY: 0,
+    handYActive: 0,
+    badgeAbove: 19,
+    midY,
+    midH,
+    stakeY: 0,
+    circle: { x: Math.round(w / 2), y: betYPlay, r: 14 },
+    shoe: { x: w - 52, y: 4 },
+    shoeOrigin: { x: w - 26, y: 20 },
+    fan: 14,
+    handGap: 24,
+    edge: 10,
+    maxRowW: w - 2 * 10,
+    rowH: 88,
+    minStep: 8,
+    actionTop,
+    chipRowTop,
+    chipRowH,
+    actionH,
+    betYBetting,
+    betYPlay,
+    handAreaTop: midY + midH + 2,
+    handAreaBottom: betYPlay - 14 - 2,
+  }
+}
+
+export interface BlackjackHandLayout {
+  index: number
+  left: number
+  step: number
+  top: number
+  centerX: number
+  width: number
+}
+
+function rowGeometry(row: readonly Hand[], ly: BlackjackLayout): { step: number; widths: number[]; lefts: number[]; totalW: number } {
+  const overlaps = row.reduce((n, h) => n + h.cards.length - 1, 0)
+  const fixed = ly.cardW * row.length + ly.handGap * (row.length - 1)
+  const step = overlaps > 0 ? Math.min(ly.fan, Math.floor((ly.maxRowW - fixed) / overlaps)) : ly.fan
+  const widths = row.map((h) => ly.cardW + step * (h.cards.length - 1))
+  const totalW = widths.reduce((a, b) => a + b, 0) + ly.handGap * (row.length - 1)
+  let left = Math.round((ly.playW - totalW) / 2)
+  const lefts = widths.map((w) => {
+    const l = left
+    left += w + ly.handGap
+    return l
+  })
+  return { step, widths, lefts, totalW }
+}
+
+/**
+ * Card slots for every hand, in felt x/y. Landscape keeps the original
+ * single-row formula; portrait keeps hands in one centred row while they fit,
+ * otherwise stacks two rows and centres the block between the banner and the
+ * bet area.
+ */
+export function layoutBlackjackHands(
+  hands: readonly Hand[],
+  active: number,
+  phase: Phase,
+  ly: BlackjackLayout,
+): BlackjackHandLayout[] {
+  if (hands.length === 0) return []
+  const activeIdx = phase === 'player' ? active : -1
+  let rows: readonly (readonly Hand[])[]
+  if (ly.portrait) {
+    const single = rowGeometry(hands, ly)
+    if (single.totalW <= ly.maxRowW && single.step >= ly.minStep) rows = [hands]
+    else {
+      const cut = Math.ceil(hands.length / 2)
+      rows = [hands.slice(0, cut), hands.slice(cut)]
+    }
+  } else {
+    rows = [hands]
+  }
+  let baseY = ly.handY
+  if (ly.portrait) {
+    const blockH = 23 + (rows.length - 1) * ly.rowH + ly.cardH + 8
+    const slack = Math.max(0, Math.floor((ly.handAreaBottom - ly.handAreaTop - blockH) / 2))
+    baseY = ly.handAreaTop + 23 + slack
+  }
+  const out: BlackjackHandLayout[] = []
+  let index = 0
+  rows.forEach((row, rowIndex) => {
+    const geo = rowGeometry(row, ly)
+    row.forEach((_, i) => {
+      const handIndex = index + i
+      out.push({
+        index: handIndex,
+        left: geo.lefts[i],
+        step: geo.step,
+        top: baseY + rowIndex * ly.rowH + (handIndex === activeIdx ? -4 : 0),
+        centerX: Math.round(geo.lefts[i] + geo.widths[i] / 2),
+        width: geo.widths[i],
+      })
+    })
+    index += row.length
+  })
+  return out
+}

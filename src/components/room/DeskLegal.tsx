@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ScreenStrip, StripButton } from './ScreenStrip'
+import { ScreenStrip, StripButton, useDeskScreen } from './ScreenStrip'
+import { ArcadeButton } from './pixel-ui'
 
 export interface LegalLabels {
   title: string
@@ -51,31 +52,50 @@ function termsSections(t: Record<string, string | string[]>): Section[] {
 }
 
 export function DeskLegal({ time, privacy, terms, effectiveDate, labels, desktopLabel, backLabel, onDesktop, onBack }: DeskLegalProps) {
+  const { portrait } = useDeskScreen()
   const [tab, setTab] = useState<'privacy' | 'terms'>('privacy')
   const doc = (tab === 'privacy' ? privacy : terms) as Record<string, string>
   const sections = tab === 'privacy'
     ? privacySections(privacy as Record<string, string | string[]>)
     : termsSections(terms as Record<string, string | string[]>)
 
+  const tabGroup = (
+    <span
+      role="group"
+      aria-label={labels.title}
+      className={portrait ? 'contents' : 'flex items-center gap-1.5'}
+    >
+      {portrait ? (
+        <>
+          <ArcadeButton size="xl" pressed={tab === 'privacy'} onClick={() => setTab('privacy')} className="flex-1">{labels.privacyTab}</ArcadeButton>
+          <ArcadeButton size="xl" pressed={tab === 'terms'} onClick={() => setTab('terms')} className="flex-1">{labels.termsTab}</ArcadeButton>
+        </>
+      ) : (
+        <>
+          <StripButton pressed={tab === 'privacy'} onClick={() => setTab('privacy')}>{labels.privacyTab}</StripButton>
+          <StripButton pressed={tab === 'terms'} onClick={() => setTab('terms')}>{labels.termsTab}</StripButton>
+        </>
+      )}
+    </span>
+  )
+  const headingStyle: React.CSSProperties = { fontWeight: 'bold', ...(portrait ? { fontSize: 13 } : {}) }
+
   return (
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#faf8f5' }}>
       <ScreenStrip time={time} title={labels.title} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack}>
-        <span role="group" aria-label={labels.title} className="flex items-center gap-1.5">
-          <StripButton pressed={tab === 'privacy'} onClick={() => setTab('privacy')}>{labels.privacyTab}</StripButton>
-          <StripButton pressed={tab === 'terms'} onClick={() => setTab('terms')}>{labels.termsTab}</StripButton>
-        </span>
+        {tabGroup}
       </ScreenStrip>
 
       <div
         key={tab}
         className="flex-1 overflow-y-auto p-3 mx-2 my-2"
-        style={{ backgroundColor: '#fffef5', border: '1px solid #d8d0c0', fontFamily: "'Courier New', 'Consolas', monospace", fontSize: '10px', lineHeight: '1.6', color: '#2a2520' }}
+        style={{ backgroundColor: '#fffef5', border: '1px solid #d8d0c0', fontFamily: "'Courier New', 'Consolas', monospace", fontSize: portrait ? 12 : 10, lineHeight: '1.6', color: '#2a2520' }}
       >
-        <p style={{ fontWeight: 'bold' }}>{doc.title}</p>
+        <p style={headingStyle}>{doc.title}</p>
         <p style={{ color: '#6a6058', marginBottom: '8px' }}>{effectiveDate}: {doc.date}</p>
         {sections.map((s) => (
           <section key={s.h} style={{ marginBottom: '10px' }}>
-            <p style={{ fontWeight: 'bold', marginBottom: '2px' }}>{s.h}</p>
+            <p style={{ ...headingStyle, marginBottom: '2px' }}>{s.h}</p>
             {s.body.map((b, i) => <p key={i} style={{ marginBottom: '4px' }}>{b}</p>)}
             {s.items && s.items.length > 0 && (
               <ul style={{ listStyle: 'disc', paddingLeft: '16px', marginBottom: '4px' }}>

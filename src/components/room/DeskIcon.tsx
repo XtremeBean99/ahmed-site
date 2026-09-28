@@ -1,4 +1,5 @@
 import { useId, useRef, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { useDeskScreen } from './ScreenStrip'
 
 interface DeskIconProps {
   label: string
@@ -9,12 +10,16 @@ interface DeskIconProps {
   icon: ReactNode
   /** Rendered icon size in px (square). Defaults to 32. */
   iconSize?: number
+  /** Rendered icon size on a portrait phone; defaults to min(1.5x iconSize, 56). */
+  portraitSize?: number
   onClick: (e: React.MouseEvent) => void
   autoFocus?: boolean
 }
 
-export function DeskIcon({ label, tooltip, href, icon, iconSize = 32, onClick, autoFocus }: DeskIconProps) {
+export function DeskIcon({ label, tooltip, href, icon, iconSize = 32, portraitSize, onClick, autoFocus }: DeskIconProps) {
   const tipId = useId()
+  const { portrait } = useDeskScreen()
+  const renderSize = portrait ? (portraitSize ?? Math.min(Math.round(iconSize * 1.5), 56)) : iconSize
   const [showTooltip, setShowTooltip] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
@@ -37,8 +42,9 @@ export function DeskIcon({ label, tooltip, href, icon, iconSize = 32, onClick, a
     'relative flex flex-col items-center gap-1 group outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[rgba(0,0,0,0.4)] focus-visible:outline-offset-1'
   const style = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as React.CSSProperties
   const sharedHandlers = {
-    onMouseEnter: activate,
-    onMouseLeave: deactivate,
+    // Touch taps must not open the hover tooltip; labels live under the icon.
+    onPointerEnter: (e: React.PointerEvent<HTMLElement>) => { if (e.pointerType === 'mouse') activate() },
+    onPointerLeave: deactivate,
     // Keyboard focus only: DeskDesktop autoFocuses the last app's icon, and a
     // mouse user should not get a tooltip stuck open on it.
     onFocus: (e: React.FocusEvent<HTMLElement>) => { if (e.currentTarget.matches(':focus-visible')) activate() },
@@ -56,13 +62,16 @@ export function DeskIcon({ label, tooltip, href, icon, iconSize = 32, onClick, a
           {tooltip}
         </span>
       )}
-      <div className="w-10 h-10 flex items-center justify-center group-hover:-translate-y-px transition-transform duration-100">
-        <svg width={iconSize} height={iconSize} viewBox="0 0 16 16" fill="none" shapeRendering="crispEdges" aria-hidden="true">
+      <div
+        className={`flex items-center justify-center group-hover:-translate-y-px transition-transform duration-100 ${portrait ? '' : 'w-10 h-10'}`}
+        style={portrait ? { width: renderSize, height: renderSize } : undefined}
+      >
+        <svg width={renderSize} height={renderSize} viewBox="0 0 16 16" fill="none" shapeRendering="crispEdges" aria-hidden="true">
           {icon}
         </svg>
       </div>
       <span
-        className="text-[9px] text-[#2a2520] text-center leading-tight max-w-[56px]"
+        className={`text-center leading-tight ${portrait ? 'text-[11px] max-w-[72px]' : 'text-[9px] max-w-[56px]'} text-[#2a2520]`}
         style={{ fontFamily: 'var(--font-pixel), "Courier New", monospace', textShadow: 'none' }}
       >
         {label}

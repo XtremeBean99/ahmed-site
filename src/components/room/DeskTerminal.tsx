@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useSfx } from './RoomSfxProvider'
 import { ScreenStrip } from './ScreenStrip'
+import { useStageScale } from '@/lib/room/useStageScale'
 import { TermEditor, TERM_FONT, TERM_FONT_SIZE, TERM_LINE_H } from './TermEditor'
 import { Shell } from '@/lib/terminal/shell/shell'
 import { COMMANDS } from '@/lib/terminal/commands'
@@ -16,6 +17,8 @@ import type { Editor, EditorHost, TerminalIO } from '@/lib/terminal/types'
 
 const FG = '#35e65c'
 const BG = '#0a0a0a'
+// Touch devices render the input at 16px (global CSS); scaled back to the grid font.
+const TERM_INPUT_SCALE = TERM_FONT_SIZE / 16
 
 interface DeskTerminalProps {
   time: string
@@ -73,6 +76,7 @@ function commonPrefix(a: string[]): string {
 
 export function DeskTerminal({ time, labels, desktopLabel, backLabel, onDesktop, onBack, readmeContent, bootCommand, onBootHandled }: DeskTerminalProps) {
   const sfx = useSfx()
+  const { mobile } = useStageScale()
   const [lines, setLines] = useState<string[]>([''])
   const [input, setInput] = useState('')
   const [mode, setMode] = useState<'boot' | 'idle' | 'busy' | 'reading'>('boot')
@@ -342,24 +346,43 @@ export function DeskTerminal({ time, labels, desktopLabel, backLabel, onDesktop,
         <div role="log" aria-live="off">
           {head.map((s, i) => <Line key={i} s={s} />)}
         </div>
-        <div className="flex items-start">
+        <div className={mobile ? 'flex items-center' : 'flex items-start'}>
           <div className="flex-shrink-0" style={{ whiteSpace: 'pre-wrap' }}>
             <Line s={last + (showPrompt ? promptStr : '')} />
           </div>
-          <input
-            ref={inputRef}
-            value={mode === 'busy' || mode === 'boot' ? '' : input}
-            onChange={(e) => { if (modeRef.current === 'idle' || modeRef.current === 'reading') setInput(e.target.value) }}
-            onKeyDown={onKeyDown}
-            readOnly={mode === 'busy' || mode === 'boot'}
-            className="flex-1 min-w-0 outline-none"
-            style={{ font: 'inherit', color: FG, background: 'transparent', caretColor: FG, padding: 0, border: 0, opacity: mode === 'busy' ? 0 : 1 }}
-            spellCheck={false}
-            autoComplete="off"
-            autoCapitalize="off"
-            autoCorrect="off"
-            aria-label="Terminal input"
-          />
+          <div className="flex-1 min-w-0" style={mobile ? { overflow: 'hidden' } : undefined}>
+            <input
+              ref={inputRef}
+              value={mode === 'busy' || mode === 'boot' ? '' : input}
+              onChange={(e) => { if (modeRef.current === 'idle' || modeRef.current === 'reading') setInput(e.target.value) }}
+              onKeyDown={onKeyDown}
+              readOnly={mode === 'busy' || mode === 'boot'}
+              className="outline-none"
+              style={{
+                font: 'inherit',
+                color: FG,
+                background: 'transparent',
+                caretColor: FG,
+                padding: 0,
+                border: 0,
+                opacity: mode === 'busy' ? 0 : 1,
+                display: 'block',
+                ...(mobile
+                  ? {
+                      width: `${(16 / TERM_FONT_SIZE) * 100}%`,
+                      lineHeight: 'normal',
+                      transform: `scale(${TERM_INPUT_SCALE})`,
+                      transformOrigin: 'left center',
+                    }
+                  : { width: '100%' }),
+              }}
+              spellCheck={false}
+              autoComplete="off"
+              autoCapitalize="off"
+              autoCorrect="off"
+              aria-label="Terminal input"
+            />
+          </div>
         </div>
       </div>
     </div>

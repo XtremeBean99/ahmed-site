@@ -3,8 +3,8 @@
 import { useRoomAudio } from './RoomAudioProvider'
 import { PLAYLIST } from '@/lib/room/playlist'
 import { useT } from '@/lib/i18n/client'
-import { ScreenStrip } from './ScreenStrip'
-import { ARCADE } from './pixel-ui'
+import { ScreenStrip, useDeskScreen } from './ScreenStrip'
+import { ARCADE, ArcadeButton } from './pixel-ui'
 
 const PIXEL = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const
 
@@ -26,15 +26,17 @@ interface DeskMusicProps {
 export function DeskMusic({ time, desktopLabel, backLabel, labels, onDesktop, onBack }: DeskMusicProps) {
   const { playing, trackIndex, toggle, selectTrack } = useRoomAudio()
   const audio = useT().room.audio
+  const { portrait } = useDeskScreen()
+  const cover = portrait ? 32 : 24
 
   return (
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: ARCADE.paper }}>
       <ScreenStrip time={time} title={labels.title} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack} />
 
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: ARCADE.stripBorder }}>
+      <div className={`flex items-center gap-2 px-3 border-b ${portrait ? 'py-1.5' : 'py-2'}`} style={{ borderColor: ARCADE.stripBorder }}>
         <MusicNoteIcon />
-        <span className="text-[11px] truncate min-w-0" style={{ ...PIXEL, color: ARCADE.ink }}>
+        <span className={`truncate min-w-0 ${portrait ? 'text-[12px]' : 'text-[11px]'}`} style={{ ...PIXEL, color: ARCADE.ink }}>
           {labels.nowPlaying}: {PLAYLIST[trackIndex].title}
         </span>
         {playing && (
@@ -55,14 +57,14 @@ export function DeskMusic({ time, desktopLabel, backLabel, labels, onDesktop, on
               key={track.id}
               type="button"
               onClick={() => selectTrack(i)}
-              className={`flex items-center gap-2 px-3 py-[6px] w-full text-left border-b transition-colors ${isActive ? 'bg-[#3d2e1e]' : 'bg-transparent hover:bg-[#e8e0d8]'}`}
-              style={{ borderColor: ARCADE.strip }}
+              className={`flex items-center gap-2 px-3 w-full text-left border-b transition-colors ${portrait ? 'py-1' : 'py-[6px]'} ${isActive ? 'bg-[#3d2e1e]' : 'bg-transparent hover:bg-[#e8e0d8]'}`}
+              style={{ borderColor: ARCADE.strip, minHeight: portrait ? 44 : undefined }}
               aria-label={`${labels.select}: ${track.title}`}
             >
               {/* Album cover or track number */}
               <div
                 className="flex-shrink-0 flex items-center justify-center"
-                style={{ width: 24, height: 24, backgroundColor: isActive && playing ? ARCADE.olive : ARCADE.strip }}
+                style={{ width: cover, height: cover, backgroundColor: isActive && playing ? ARCADE.olive : ARCADE.strip }}
               >
                 {track.cover ? (
                   /* eslint-disable-next-line @next/next/no-img-element */
@@ -70,10 +72,10 @@ export function DeskMusic({ time, desktopLabel, backLabel, labels, onDesktop, on
                     src={track.cover}
                     alt=""
                     className="block"
-                    style={{ width: 24, height: 24, objectFit: 'cover', imageRendering: 'auto' }}
+                    style={{ width: cover, height: cover, objectFit: 'cover', imageRendering: 'auto' }}
                   />
                 ) : (
-                  <span className="text-[9px]" style={{ ...PIXEL, color: ARCADE.ink }}>
+                  <span className={portrait ? 'text-[10px]' : 'text-[9px]'} style={{ ...PIXEL, color: ARCADE.ink }}>
                     {isActive && playing ? '♪' : i + 1}
                   </span>
                 )}
@@ -82,14 +84,14 @@ export function DeskMusic({ time, desktopLabel, backLabel, labels, onDesktop, on
               {/* Track info */}
               <div className="flex-1 min-w-0">
                 <div
-                  className="text-[10px] leading-tight truncate"
+                  className={`leading-tight truncate ${portrait ? 'text-[12px]' : 'text-[10px]'}`}
                   style={{ ...PIXEL, color: isActive ? ARCADE.panelText : ARCADE.ink }}
                 >
                   {track.title}
                 </div>
                 {track.artist && (
                   <div
-                    className="text-[8px] leading-tight truncate"
+                    className={`leading-tight truncate ${portrait ? 'text-[10px]' : 'text-[8px]'}`}
                     style={{ ...PIXEL, color: isActive ? ARCADE.panelText : ARCADE.phosphorDim }}
                   >
                     {track.artist}
@@ -109,18 +111,25 @@ export function DeskMusic({ time, desktopLabel, backLabel, labels, onDesktop, on
       </div>
 
       {/* Playback controls */}
-      <div className="flex items-center justify-center gap-4 py-2 border-t" style={{ borderColor: ARCADE.stripBorder }}>
-        <button
-          type="button"
-          onClick={toggle}
-          className="flex items-center gap-1 px-3 py-1"
-          style={{ ...PIXEL, color: ARCADE.phosphorDim, fontSize: '10px' }}
-        >
-          <span aria-hidden style={{ color: ARCADE.olive, fontSize: '12px' }}>
-            {playing ? '⏸' : '▶'}
-          </span>
-          {playing ? audio.pause : audio.play}
-        </button>
+      <div className={`flex items-center justify-center border-t ${portrait ? 'gap-3 py-1.5' : 'gap-4 py-2'}`} style={{ borderColor: ARCADE.stripBorder }}>
+        {portrait ? (
+          <ArcadeButton tone="dark" size="xl" onClick={toggle} ariaLabel={playing ? audio.pause : audio.play} className="gap-1.5">
+            <span aria-hidden style={{ color: ARCADE.olive }}>{playing ? '⏸' : '▶'}</span>
+            {playing ? audio.pause : audio.play}
+          </ArcadeButton>
+        ) : (
+          <button
+            type="button"
+            onClick={toggle}
+            className="flex items-center gap-1 px-3 py-1"
+            style={{ ...PIXEL, color: ARCADE.phosphorDim, fontSize: '10px' }}
+          >
+            <span aria-hidden style={{ color: ARCADE.olive, fontSize: '12px' }}>
+              {playing ? '⏸' : '▶'}
+            </span>
+            {playing ? audio.pause : audio.play}
+          </button>
+        )}
       </div>
     </div>
   )

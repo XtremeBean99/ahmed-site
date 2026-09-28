@@ -405,3 +405,120 @@ sizes) before merging into `feat/catan-overhaul`. Task files hold the full speci
     banner announced every bot phase change on top of the event narration (it now speaks only prompts for you).
   - The phone Cards sheet showed its heading twice.
 
+
+---
+
+## APPROVED DESIGN — Mobile, full optimisation of the room and desk (`/`)
+
+Requested 28 September 2026: "Full optimise the main site for mobile, ask refining questions first then proceed
+using deepcode agents". Branch `feat/mobile` in the worktree `ahmed-site/.claude/worktrees/mobile` (its
+`node_modules` is a junction: `cmd /c rmdir` it before any cleanup). Each deepcode builder gets its own worktree
+`mob-<key>` on branch `mobile/<key>` off `feat/mobile`, merged back after review. Catan is out of scope (done in v3).
+
+### Owner decisions (refining questions)
+- **Portrait-native.** On a portrait phone the monitor becomes a tall portrait screen and every desk app gets a
+  portrait layout (the landscape 536x308 screen can only render at about 0.7x on a 390 px wide phone).
+- **Monitor bezel.** The portrait screen sits inside a thin pixel bezel in the monitor's colours with the green
+  power LED in the chin, so it still reads as the computer; the room is one tap away (← Room).
+- **Terminal stays desktop-only** (konami code). If a phone does open it (a `~/Desktop` file), it must render and
+  accept the phone keyboard, nothing more.
+- **Music untouched** (no re-encoding). Covers and sound effects still get lighter.
+
+### Findings that shaped it (live site at 390x844, 28 September)
+- Phones land on the desk README (deliberate, `55ddfae`) but the screen is 378x217 px: README text about 7-8 px,
+  desktop icons and labels tiny, strip buttons about 20 px tall; most of the phone is desk art or black.
+- Landscape phones are fine for size (the screen renders at about 1.1-1.2x, larger than on a 1408x768 laptop).
+- Snake has no touch input at all; Pong is keys plus mouse; iPhone has no element full screen (the button hides);
+  the guestbook inputs are under 16 px so iOS zooms the page; room tooltips are mouse-hover only; the room's
+  "Click around to explore" hint overlaps the music bar; the NowPlaying volume slider does nothing on iOS (media
+  volume is read-only there).
+- The `/` page chunk is 699 KB decoded (1.2 MB of JS in total): every desk app and the terminal engine ship with
+  the landing page. Each sound effect is downloaded 3-4 times at startup (a pool of `new Audio()` elements, about
+  600 KB); cover thumbnails shown at 36 px are 20-300 KB JPEGs.
+
+### Goal
+A phone visitor in portrait gets a readable, touch-first version of the same site: the README landing, the pixel
+desktop, every app and game playable with fingers, the room explorable by drag and tap, and a lighter first load.
+Desktop at 1408x768 and 1920x1080 stays pixel-identical; landscape phones and tablets keep the diegetic desk.
+
+### A. The portrait screen (the contract, MOB0)
+- **Mode.** `isPortraitPhone(vw, vh, mobile)`: mobile (the existing `isMobileViewport`) and `vh > vw` and the
+  landscape screen would render below 0.9x (`min((vw-12)/536, (vh-12)/308) < 0.9`). So 360-430 px phones in
+  portrait get the portrait screen; iPads, foldables and every landscape viewport keep today's desk.
+- **Logical screen.** 320 logical px wide, `h` logical px tall (between 440 and about 700, from the phone), scaled
+  as one unit by `s = (available width - bezel) / 320` (about 1.06x on 360 px phones, 1.16x on 390, 1.28x on 430).
+  If `h` would fall under 440 (short phones with browser bars), `s` shrinks to fit 440 and the screen centres.
+  Apps design in logical px exactly as they do for 536x308, so canvases, pointer maths and pixel coordinates keep
+  working. Minimums in portrait: body text 12 logical px (about 14 CSS px), labels 10, tap targets 38 (about 44).
+- **Shell.** Full viewport, black, safe-area padding; the bezel (8 px sides, 10 px top, 22 px chin with the LED,
+  CSS px, colours sampled from the monitor art) around the scaled screen; a 56 px music bar under the bezel holds
+  `NowPlaying embedded` (Room stops rendering its fixed player in this mode). No desk art, desk pan, mouse
+  follower, "click again to return" or desk clicks in portrait.
+- **Rotation keeps state.** DeskView keeps one element tree in both modes (the screen element never changes
+  parent or position among its siblings; the desk art and the bezel are conditional siblings), so rotating the
+  phone swaps layouts without remounting the open app or losing a game.
+- **Context.** `DeskScreenContext` / `useDeskScreen()` (next to `DeskClockContext` in `ScreenStrip.tsx`) gives
+  `{ w, h, portrait }`: `{536, 308, false}` on the desk, `{320, h, true}` in portrait.
+- **ArcadeFrame.** New `portrait` prop: the app has a portrait layout. In portrait with the prop, the frame is
+  `w x h` and the app lays out from `useDeskScreen()`; without it (compat, for apps not yet migrated) the 536x308
+  frame scales to 320 wide and centres, so everything keeps working mid-migration. Full screen reports
+  unsupported in portrait (the app already fills the phone). The frame root is `select-none` with no touch
+  callout, so long-presses never select text or open menus.
+- **ScreenStrip.** In portrait the strip is 44 logical px (clock, title, Desktop, ← Room with `xl` buttons);
+  app controls passed as children move to a second 44 px toolbar row under it (scrolls sideways if crowded).
+  `ArcadeButton` gains an `xl` size (38 px tall); `StripButton` picks `sm` on the desk and `xl` in portrait.
+- **Global touch CSS.** No tap highlight in the room and desk, `touch-action: manipulation` on their buttons,
+  `overscroll-behavior: none` on the document so a swipe in a game never pulls to refresh.
+- **Inputs.** Every text input and textarea in the desk renders at 16 px computed font size on touch devices so
+  iOS never zooms (the logical-px scale is a transform, which iOS ignores for this).
+
+### B. Desk apps in portrait (each builder owns its files)
+- **Desktop grid:** 4 columns, larger icons and labels, desktop files row and screensaver sized from `w x h`.
+- **README, Legal, Guestbook, Settings, Music, Movie:** they are already flex layouts; portrait bumps type to the
+  minimums, makes rows and tabs full-width touch targets, stacks the guestbook form (focused input scrolled into
+  view above the phone keyboard), hides the music volume slider where volume is read-only (iOS), and fits the
+  video to the width with the controls below.
+- **Terminal:** reflows its character grid to the portrait width; inputs at 16 px; no extra-keys row.
+- **Snake:** portrait board scaled to the width with a pixel D-pad under it; swipes on the board steer too; on
+  touch in landscape the D-pad sits beside the board (the owner's "touchpad for snake" idea).
+- **Minesweeper:** bigger cells in portrait and a Reveal/Flag mode toggle (long-press still flags).
+- **Paint:** the 107x50 canvas at the full width, tools and a larger palette under it.
+- **Blackjack:** dealer at the top, hands in the middle, chips and Hit/Stand/Double/Split as big buttons at the
+  bottom; the tutorial dialog fits the portrait screen.
+- **Solitaire:** classic phone layout (stock, waste, gap, four foundations over seven columns) with cards scaled
+  to fit, more vertical fan room, and tap-to-move (a tap sends a card to its best legal destination; drag stays).
+- **Pong:** the court turns vertical in portrait (the engine stays as is; the view transposes x and y): you at the
+  bottom, the CPU at the top, drag anywhere on your half; two players hold the top and bottom halves. Touch drag
+  works in landscape as well.
+- **Breakout:** the engine's court geometry becomes state chosen at game start (landscape 536x280 as today; a
+  portrait court about 300 wide) with the same 14-column levels on narrower bricks and speeds scaled to the court;
+  drag anywhere to move the paddle. A game started in one orientation keeps its court when the phone rotates (the
+  view scales it to fit) until the next game.
+
+### C. The room on phones (MOB8)
+Initial pan centred on the monitor; momentum when a drag is released; faint edge chevrons until the first drag;
+touch copy for the hint ("Tap things to explore, drag to look around") placed clear of the music bar; tooltips on
+tap (touch shows the object's tooltip for about 1.6 s alongside its action; hover handlers only react to a mouse,
+which also avoids iOS's tap-twice behaviour when hover changes content); the e-reader in `dvh` with one page,
+swipe and tap-zone page turns and 44 px controls; the discoveries badge and popup fitting a 320 px screen.
+
+### D. Lighter first load (MOB0, MOB9)
+- Desk apps (all but README and the desktop), the terminal and the e-reader become `next/dynamic` chunks, fetched
+  on idle after the landing is interactive (skipped with Save-Data), so opening an app stays instant.
+  `desktopFiles` reads the saved file system without importing the terminal engine.
+- Sound effects move to Web Audio: each file fetched and decoded once, played through a buffer source with a gain
+  node, the context unlocked on the first gesture (iOS), same `useSfx()` API.
+- Cover art: originals move to `assets/audio-covers/`; `npm run covers` (ffmpeg) writes 128x128 thumbnails to
+  `public/audio/covers/`. The stale cover preload is removed.
+
+### Verification
+Viewports: 390x844, 360x800, 430x932 and 375x667 portrait with touch emulation; 844x390 landscape; 768x1024 and
+1024x768 tablet; 1408x768 and 1920x1080 desktop (screenshots before and after must match). Every app in portrait at
+`h = 440` and `h = 640`, playable by touch; a rotation mid-game keeps state; no horizontal overflow; no input zoom;
+`npm run type-check`, `npm run lint`, `npm run build` and every test suite green; First Load JS for `/` measured
+before and after.
+
+### Deliberately skipped
+Catan; a phone-specific terminal (extra keys row, touch konami); re-encoding the music; new art (the bezel is drawn
+in CSS from sampled colours); the archived `(site)` pages; the README "desktop only" note from `ideas.txt` (nothing
+visible stays desktop-only now); ideas.txt items other than the Snake touchpad.

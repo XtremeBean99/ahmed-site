@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
 import {
@@ -16,6 +16,7 @@ import {
   WINDOW_GLASS,
 } from '@/lib/room/objects'
 import { useStageScale } from '@/lib/room/useStageScale'
+import { releaseVelocity, stepMomentum } from '@/lib/room/pan'
 import { loadPrefs, savePrefs } from '@/lib/room/storage'
 import { RoomStage } from './RoomStage'
 import { RoomHud } from './RoomHud'
@@ -83,6 +84,7 @@ interface RoomProps {
       windowLabel: string
       posterClickHint: string
       hint: string
+      hintTouch: string
       skip: string
       audio: {
         play: string
@@ -124,6 +126,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const [pendingApp, setPendingApp] = useState<string | null>(null)
   const [discoveryToast, setDiscoveryToast] = useState<string | null>(null)
   const [hintPulses, setHintPulses] = useState(false)
+  const [hasDragged, setHasDragged] = useState(false)
 
   const discover = useCallback((id: string, label: string) => {
     if (addDiscovery(id)) {
@@ -145,6 +148,9 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const panXRef = useRef(0)
   const dragStartRef = useRef<{ x: number; y: number; px: number } | null>(null)
   const panRafRef = useRef(0)
+  const momentumRef = useRef(0)
+  const samplesRef = useRef<{ t: number; x: number }[]>([])
+  const hasDraggedRef = useRef(false)
 
   const clampPanX = useCallback((px: number) => {
     const stageWidth = STAGE_W * (window.innerHeight / STAGE_H)
@@ -152,10 +158,17 @@ export function Room({ dict, readmeContent }: RoomProps) {
     return Math.max(-maxX, Math.min(maxX, px))
   }, [])
 
+  const stopMomentum = useCallback(() => {
+    cancelAnimationFrame(panRafRef.current)
+    momentumRef.current = 0
+  }, [])
+
   useEffect(() => {
     if (!mobile) return
     const onDown = (e: PointerEvent) => {
       if (view !== 'room') return
+      stopMomentum()
+      samplesRef.current = []
       const el = e.target as HTMLElement
       if (el.closest('a,button,[tabindex],[role="button"],input,textarea,select')) return
       if (el.closest('#room-stage-outer') === null) return
@@ -165,30 +178,60 @@ export function Room({ dict, readmeContent }: RoomProps) {
       if (!dragStartRef.current) return
       const next = clampPanX(dragStartRef.current.px + (e.clientX - dragStartRef.current.x))
       panXRef.current = next
+      samplesRef.current.push({ t: performance.now(), x: next })
+      if (!hasDraggedRef.current) {
+        hasDraggedRef.current = true
+        setHasDragged(true)
+      }
       cancelAnimationFrame(panRafRef.current)
       panRafRef.current = requestAnimationFrame(() => setPan({ x: next, y: 0 }))
     }
-    const onUp = () => { dragStartRef.current = null }
+    const onUp = () => {
+      if (!dragStartRef.current) return
+      dragStartRef.current = null
+      if (reduce !== false) return
+      const v = releaseVelocity(samplesRef.current, performance.now())
+      if (v === 0) return
+      const maxX = Math.max(0, (STAGE_W * (window.innerHeight / STAGE_H) - window.innerWidth) / 2)
+      momentumRef.current = v
+      const glide = (last: number) => {
+        const now = performance.now()
+        const dt = Math.min(now - last, 64)
+        const next = stepMomentum(panXRef.current, momentumRef.current, dt, -maxX, maxX)
+        panXRef.current = next.x
+        momentumRef.current = next.v
+        setPan({ x: next.x, y: 0 })
+        if (!next.done) panRafRef.current = requestAnimationFrame(() => glide(now))
+      }
+      panRafRef.current = requestAnimationFrame(() => glide(performance.now()))
+    }
+    const onCancel = () => {
+      dragStartRef.current = null
+      samplesRef.current = []
+    }
     window.addEventListener('pointerdown', onDown, { passive: true })
     window.addEventListener('pointermove', onMove, { passive: true })
     window.addEventListener('pointerup', onUp)
-    window.addEventListener('pointercancel', onUp)
+    window.addEventListener('pointercancel', onCancel)
     return () => {
       window.removeEventListener('pointerdown', onDown)
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
-      window.removeEventListener('pointercancel', onUp)
+      window.removeEventListener('pointercancel', onCancel)
       cancelAnimationFrame(panRafRef.current)
     }
-  }, [mobile, view, clampPanX])
+  }, [mobile, view, clampPanX, reduce, stopMomentum])
 
   // Keep the panned offset valid across rotations and window resizes.
   useEffect(() => {
     if (!mobile) return
-    const onResize = () => setPan({ x: clampPanX(panXRef.current), y: 0 })
+    const onResize = () => {
+      stopMomentum()
+      setPan({ x: clampPanX(panXRef.current), y: 0 })
+    }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
-  }, [mobile, clampPanX])
+  }, [mobile, clampPanX, stopMomentum])
 
   // Preload desk close-up art on idle so entering the desk is instant
   useEffect(() => {
@@ -485,6 +528,17 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const screenCenterX = monitorObj.x + 125
   const screenCenterY = monitorObj.y + 74
 
+  // On phones the room opens panned to the desk area (monitor sprite centred)
+  // and returns there from the desk. Layout effect: apply before paint so the
+  // first room frame never flashes the bed-and-side-table centre.
+  useLayoutEffect(() => {
+    if (!mobile || view !== 'room') return
+    const fillScale = window.innerHeight / STAGE_H
+    const x = clampPanX((STAGE_W / 2 - (monitorObj.x + monitorObj.w / 2)) * fillScale)
+    panXRef.current = x
+    setPan({ x, y: 0 })
+  }, [mobile, view, monitorObj, clampPanX])
+
   const glowX = (screenCenterX / STAGE_W) * 100
   const glowY = (screenCenterY / STAGE_H) * 100
   // A 5x3 grid: about the site, then tools and media, then a full row of games.
@@ -505,6 +559,10 @@ export function Room({ dict, readmeContent }: RoomProps) {
     { id: 'pong', kind: 'app', target: 'pong', label: t.desk.pong, tooltip: t.desk.pongTip, icon: ICON_PONG },
     { id: 'breakout', kind: 'app', target: 'breakout', label: t.desk.breakout, tooltip: t.desk.breakoutTip, icon: ICON_BREAKOUT },
   ]
+
+  // How far the phone can pan before the stage edge hits the viewport edge.
+  const viewportWidth = typeof window === 'undefined' ? 0 : window.innerWidth
+  const panMax = mobile ? Math.max(0, (STAGE_W * scale - viewportWidth) / 2) : 0
 
   // Desk view
   if (view === 'desk') {
@@ -566,10 +624,65 @@ export function Room({ dict, readmeContent }: RoomProps) {
     <div className="relative w-full h-dvh overflow-hidden bg-[#1a1210] room-cursor">
       <RoomHud
         hintLabel={t.room.hint}
+        touchHintLabel={t.room.hintTouch}
         skipLabel={t.room.skip}
+        mobile={mobile}
+        dismissed={hasDragged}
       />
 
       <NowPlaying labels={t.room.audio} />
+
+      {/* Edge chevrons: hint at more room off-screen until the first drag. */}
+      {mobile && view === 'room' && !hasDragged && panMax > 0 && (
+        <>
+          {pan.x > -panMax && (
+            <div aria-hidden className="fixed left-0 top-1/2 -translate-y-1/2 z-30 pointer-events-none pl-1">
+              <div
+                className={reduce ? undefined : 'animate-pulse'}
+                style={{
+                  width: 20,
+                  height: 36,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#3d2e1e',
+                  border: '2px solid #5a4430',
+                  borderRadius: '2px',
+                  color: '#e8d5b0',
+                  fontFamily: 'var(--font-pixel), "Courier New", monospace',
+                  fontSize: '13px',
+                  lineHeight: 1,
+                }}
+              >
+                {'<'}
+              </div>
+            </div>
+          )}
+          {pan.x < panMax && (
+            <div aria-hidden className="fixed right-0 top-1/2 -translate-y-1/2 z-30 pointer-events-none pr-1">
+              <div
+                className={reduce ? undefined : 'animate-pulse'}
+                style={{
+                  width: 20,
+                  height: 36,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#3d2e1e',
+                  border: '2px solid #5a4430',
+                  borderRadius: '2px',
+                  color: '#e8d5b0',
+                  fontFamily: 'var(--font-pixel), "Courier New", monospace',
+                  fontSize: '13px',
+                  lineHeight: 1,
+                }}
+              >
+                {'>'}
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       <nav aria-label={t.room.navLabel}>
         <LightingProvider state={light}>
@@ -663,8 +776,8 @@ export function Room({ dict, readmeContent }: RoomProps) {
           {/* Side table, clickable: toggles the drawer open or closed. Dims with the lamp. */}
           <div
             style={{ position: 'absolute', left: SIDE_TABLE_RECT.x, top: SIDE_TABLE_RECT.y, width: SIDE_TABLE_RECT.w, height: SIDE_TABLE_RECT.h }}
-            onMouseEnter={() => setSideTableHovered(true)}
-            onMouseLeave={() => setSideTableHovered(false)}
+            onPointerEnter={(e) => { if (e.pointerType === 'mouse') setSideTableHovered(true) }}
+            onPointerLeave={(e) => { if (e.pointerType === 'mouse') setSideTableHovered(false) }}
             onFocus={() => setSideTableHovered(true)}
             onBlur={() => setSideTableHovered(false)}
           >
@@ -809,8 +922,8 @@ export function Room({ dict, readmeContent }: RoomProps) {
           {/* Lamp toggle hotspot */}
           <div
             style={{ position: 'absolute', left: 60, top: 300, width: 110, height: 220 }}
-            onMouseEnter={() => setLampHovered(true)}
-            onMouseLeave={() => setLampHovered(false)}
+            onPointerEnter={(e) => { if (e.pointerType === 'mouse') setLampHovered(true) }}
+            onPointerLeave={(e) => { if (e.pointerType === 'mouse') setLampHovered(false) }}
             onFocus={() => setLampHovered(true)}
             onBlur={() => setLampHovered(false)}
           >
@@ -977,6 +1090,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
         <DiscoveriesBadge
           title={t.room.discoveryTitle}
           discoveryLabels={t.room.discoveryLabels}
+          mobile={mobile}
         />
       )}
 

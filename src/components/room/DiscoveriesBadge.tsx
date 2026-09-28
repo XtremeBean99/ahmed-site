@@ -7,9 +7,10 @@ import { getDiscoveries, DISCOVERY_IDS } from '@/lib/room/discoveries'
 interface DiscoveriesBadgeProps {
   title: string
   discoveryLabels: Record<string, string>
+  mobile: boolean
 }
 
-export function DiscoveriesBadge({ title, discoveryLabels }: DiscoveriesBadgeProps) {
+export function DiscoveriesBadge({ title, discoveryLabels, mobile }: DiscoveriesBadgeProps) {
   const [discoveries, setDiscoveries] = useState<Set<string>>(new Set())
   const [open, setOpen] = useState(false)
   const found = discoveries.size
@@ -38,6 +39,11 @@ export function DiscoveriesBadge({ title, discoveryLabels }: DiscoveriesBadgePro
           borderColor: '#5a4430',
           borderRadius: '3px',
           color: '#e8d5b0',
+          minWidth: mobile ? 44 : undefined,
+          minHeight: mobile ? 44 : undefined,
+          display: mobile ? 'flex' : undefined,
+          alignItems: mobile ? 'center' : undefined,
+          justifyContent: mobile ? 'center' : undefined,
         }}
       >
         {'\u2726'} {found}/{total}
@@ -54,6 +60,7 @@ export function DiscoveriesBadge({ title, discoveryLabels }: DiscoveriesBadgePro
               color: '#e8d5b0',
               borderWidth: '2px',
               borderStyle: 'solid',
+              maxWidth: 'calc(100vw - 24px)',
               maxHeight: '60vh',
               overflowY: 'auto',
             }}

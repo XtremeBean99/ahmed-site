@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import type { Card, Rank, Suit } from './cards'
 import {
   addChip,
+  blackjackLayout,
   canDouble,
   canInsure,
   canSplit,
@@ -15,6 +16,7 @@ import {
   hit,
   insure,
   isBlackjack,
+  layoutBlackjackHands,
   newBet,
   rebet,
   rebuy,
@@ -389,4 +391,86 @@ test('rebet deals the same bet again; newBet clears the table', () => {
 
   const broke = { ...settled, bankroll: 10 }
   assert.equal(rebet(broke, rng), broke)
+})
+
+test('landscape layout keeps the original desk table geometry', () => {
+  const ly = blackjackLayout(536, 308, false, 45, 63)
+  assert.equal(ly.portrait, false)
+  assert.equal(ly.playW, 536)
+  assert.equal(ly.feltH, 280)
+  assert.equal(ly.dealerY, 10)
+  assert.equal(ly.handY, 138)
+  assert.equal(ly.handYActive, 134)
+  assert.equal(ly.badgeAbove, 19)
+  assert.equal(ly.midY, 73)
+  assert.equal(ly.midH, 42)
+  assert.equal(ly.stakeY, 210)
+  assert.deepEqual(ly.circle, { x: 268, y: 222, r: 14 })
+  assert.deepEqual(ly.shoe, { x: 470, y: 8 })
+  assert.deepEqual(ly.shoeOrigin, { x: 493, y: 21 })
+  assert.equal(ly.fan, 14)
+  assert.equal(ly.handGap, 24)
+  assert.equal(ly.edge, 12)
+  assert.equal(ly.maxRowW, 512)
+  assert.equal(ly.actionTop, 240)
+})
+
+test('portrait layout fits the 320-wide felt and anchors the controls', () => {
+  const p440 = blackjackLayout(320, 440, true, 45, 63)
+  assert.equal(p440.portrait, true)
+  assert.equal(p440.playW, 320)
+  assert.equal(p440.feltH, 352)
+  assert.equal(p440.dealerY, 6)
+  assert.equal(p440.midY, 73)
+  assert.equal(p440.midH, 26)
+  assert.equal(p440.actionTop, 310)
+  assert.equal(p440.chipRowTop, 260)
+  assert.equal(p440.betYBetting, 240)
+  assert.equal(p440.betYPlay, 290)
+  assert.equal(p440.handAreaTop, 101)
+  assert.equal(p440.handAreaBottom, 274)
+
+  const p640 = blackjackLayout(320, 640, true, 45, 63)
+  assert.equal(p640.feltH, 552)
+  assert.equal(p640.actionTop, 510)
+  assert.equal(p640.chipRowTop, 460)
+  assert.equal(p640.betYBetting, 440)
+  assert.equal(p640.betYPlay, 490)
+})
+
+test('landscape hands keep the original single-row slot maths', () => {
+  const ly = blackjackLayout(536, 308, false, 45, 63)
+  const hands = [doneHand([C(10), C(6)]), doneHand([C(9), C(8)])]
+  const slots = layoutBlackjackHands(hands, 0, 'player', ly)
+  assert.equal(slots.length, 2)
+  assert.equal(slots[0].left, 197)
+  assert.equal(slots[0].step, 14)
+  assert.equal(slots[0].top, 134)
+  assert.equal(slots[1].left, 280)
+  assert.equal(slots[1].top, 138)
+})
+
+test('portrait hands centre one row and stack two rows without leaving the felt', () => {
+  const ly = blackjackLayout(320, 440, true, 45, 63)
+  const three = [doneHand([C(8), C(8)]), doneHand([C(8), C(8)]), doneHand([C(8), C(8)])]
+  const one = layoutBlackjackHands(three, 1, 'player', ly)
+  assert.equal(one.length, 3)
+  assert.equal(one[0].step, 14)
+  assert.equal(one[0].top, one[2].top)
+  assert.equal(one[1].top, one[0].top - 4)
+  for (const s of one) {
+    assert.ok(s.left >= 0 && s.left + s.width <= 320)
+    assert.ok(s.top >= ly.handAreaTop - 4 && s.top + 63 <= ly.handAreaBottom)
+  }
+
+  const four = [doneHand([C(8), C(8), C(8)]), doneHand([C(8), C(8), C(8)]), doneHand([C(8), C(8), C(8)]), doneHand([C(8), C(8), C(8)])]
+  const two = layoutBlackjackHands(four, 2, 'player', ly)
+  assert.equal(two.length, 4)
+  assert.equal(two[0].top, two[3].top - 88)
+  assert.equal(two[1].top, two[3].top - 88)
+  assert.equal(two[2].top, two[3].top - 4)
+  for (const s of two) {
+    assert.ok(s.left >= 0 && s.left + s.width <= 320)
+    assert.ok(s.top + 63 <= ly.handAreaBottom + 8)
+  }
 })

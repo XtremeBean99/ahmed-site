@@ -12,16 +12,17 @@ import {
   ArcadeStrip,
   FELT_STYLE,
   PIXEL_FONT,
-  SCREEN_W,
   useFullscreen,
   type DeskGameProps,
 } from './DeskArcade'
+import { useDeskScreen } from './ScreenStrip'
 import { CARD_H, CARD_W, PlayingCard, cardUrl } from './PlayingCard'
 import { cardName, type Card, type CardNameLabels, type Rank, type Suit } from '@/lib/games/cards'
 import {
   CHIP_VALUES,
   MIN_BET,
   addChip,
+  blackjackLayout,
   canDouble,
   canSplit,
   clearBet,
@@ -33,6 +34,7 @@ import {
   hit,
   insure,
   isBlackjack,
+  layoutBlackjackHands,
   newBet,
   rebet,
   rebuy,
@@ -44,24 +46,7 @@ import {
 import { BEST_KEYS, getBest, readJson, setBestIfHigher, writeJson } from '@/lib/games/storage'
 import { useSfx } from './RoomSfxProvider'
 
-const PLAY_W = SCREEN_W
-const DEALER_Y = 10
-const HAND_Y = 138
-const HAND_Y_ACTIVE = 134
-/** A hand's total badge sits this far above its cards. */
-const BADGE_ABOVE = 19
-/** The band between the dealer's cards and the player badges: felt printing and result banner. */
-const MID_Y = DEALER_Y + CARD_H
-const MID_H = HAND_Y_ACTIVE - BADGE_ABOVE - MID_Y
-const STAKE_Y = 210
-/** Chips drawn per stack, so a stack never runs under the 40px bottom bar at y 240. */
 const STACK_MAX = 6
-/** Horizontal step between overlapping cards, the gap between split hands, and the felt margin. */
-const FAN = 14
-const HAND_GAP = 24
-const EDGE = 12
-const CIRCLE = { x: 268, y: 222, r: 14 }
-const SHOE_ORIGIN = { x: 493, y: 21 }
 const TUTORIAL_KEY = 'blackjack-tutorial-seen'
 
 const STAGGER = 180
@@ -72,6 +57,8 @@ const SETTLE_MS = 300
 const SHUFFLE_BANNER_MS = 700
 
 const CREAM = '#f4e8d0'
+/** Fan used by the tutorial's example hands, decorative only. */
+const EXAMPLE_FAN = 14
 
 const CHIP_CIRCLE = [
   '..######..',
@@ -200,11 +187,11 @@ function BetStack({ amount, left, top, zIndex = 1 }: { amount: number; left: num
   )
 }
 
-function ChipSvg({ value }: { value: number }) {
+function ChipSvg({ value, size = 24 }: { value: number; size?: number }) {
   const body = chipBody(value)
   const outline = value === 100 ? '#6a5a48' : '#2a2520'
   return (
-    <svg width={24} height={24} viewBox="0 0 12 12" shapeRendering="crispEdges" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 12 12" shapeRendering="crispEdges" aria-hidden>
       {CHIP_CIRCLE.map((row, y) =>
         row.split('').map((cell, x) => {
           if (cell === '.') return null
@@ -239,6 +226,25 @@ function ChipButton({
   disabled: boolean
   onClick: () => void
 }) {
+  const { portrait } = useDeskScreen()
+  if (portrait) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        aria-label={label}
+        title={title}
+        className="relative flex items-center justify-center outline-none enabled:hover:brightness-110 enabled:active:translate-y-px disabled:opacity-45 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[#e8d5b0]"
+        style={{ width: 44, height: 44 }}
+      >
+        <ChipSvg value={value} size={36} />
+        <span className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ ...PIXEL_FONT, fontSize: 10, color: CREAM }}>
+          {value}
+        </span>
+      </button>
+    )
+  }
   return (
     <button
       type="button"
@@ -289,13 +295,27 @@ function FlipCard({ card, revealed }: { card: Card; revealed: boolean }) {
 }
 
 /** A card that flies from the shoe to its slot on the felt. */
-function FlyCard({ card, slotX, slotY, delay }: { card: Card; slotX: number; slotY: number; delay: number }) {
+function FlyCard({
+  card,
+  slotX,
+  slotY,
+  delay,
+  fromX,
+  fromY,
+}: {
+  card: Card
+  slotX: number
+  slotY: number
+  delay: number
+  fromX: number
+  fromY: number
+}) {
   const reduce = useReducedMotion()
   return (
     <motion.div
       className="absolute"
       style={{ left: slotX, top: slotY }}
-      initial={{ x: SHOE_ORIGIN.x - slotX, y: SHOE_ORIGIN.y - slotY, opacity: 0 }}
+      initial={{ x: fromX - slotX, y: fromY - slotY, opacity: 0 }}
       animate={{ x: 0, y: 0, opacity: 1 }}
       transition={{ duration: reduce ? 0 : FLY / 1000, delay: reduce ? 0 : delay / 1000, ease: 'easeOut' }}
     >
@@ -304,9 +324,10 @@ function FlyCard({ card, slotX, slotY, delay }: { card: Card; slotX: number; slo
   )
 }
 
-function Shoe({ label }: { label: string }) {
+function Shoe({ x, y, label }: { x: number; y: number; label: string }) {
+  const { portrait } = useDeskScreen()
   return (
-    <div className="absolute" style={{ left: 470, top: 8, width: 46, height: 34 }} aria-hidden>
+    <div className="absolute" style={{ left: x, top: y, width: 46, height: 34 }} aria-hidden>
       {[0, 1, 2].map((i) => (
         <div
           key={i}
@@ -336,18 +357,18 @@ function Shoe({ label }: { label: string }) {
           borderTop: '1px solid #6a4a32',
         }}
       />
-      <div className="absolute text-center" style={{ left: 0, top: 30, width: 46, ...PIXEL_FONT, fontSize: 8, color: ARCADE.feltText }}>
+      <div className="absolute text-center" style={{ left: 0, top: 30, width: 46, ...PIXEL_FONT, fontSize: portrait ? 10 : 8, color: ARCADE.feltText }}>
         {label}
       </div>
     </div>
   )
 }
 
-function ActivePointer({ centerX }: { centerX: number }) {
+function ActivePointer({ centerX, top }: { centerX: number; top: number }) {
   return (
     <svg
       className="absolute"
-      style={{ left: Math.round(centerX) - 3, top: HAND_Y_ACTIVE + CARD_H + 4 }}
+      style={{ left: Math.round(centerX) - 3, top }}
       width={7}
       height={4}
       shapeRendering="crispEdges"
@@ -363,15 +384,15 @@ function ActivePointer({ centerX }: { centerX: number }) {
 
 const cardOf = (rank: Rank, suit: Suit): Card => ({ rank, suit })
 
-function KeyCap({ children }: { children: ReactNode }) {
+function KeyCap({ children, portrait = false }: { children: ReactNode; portrait?: boolean }) {
   return (
     <kbd
       style={{
         ...PIXEL_FONT,
         display: 'inline-block',
-        minWidth: 15,
+        minWidth: portrait ? 17 : 15,
         padding: '2px 4px 1px',
-        fontSize: 9,
+        fontSize: portrait ? 10 : 9,
         lineHeight: 1,
         textAlign: 'center',
         color: ARCADE.panelText,
@@ -387,15 +408,15 @@ function KeyCap({ children }: { children: ReactNode }) {
 }
 
 /** Key caps, a gold name and a plain description, one row each. */
-function KeyRows({ rows, top = 10 }: { rows: { keys: string[]; name?: string; text: string }[]; top?: number }) {
+function KeyRows({ rows, top = 10, portrait = false }: { rows: { keys: string[]; name?: string; text: string }[]; top?: number; portrait?: boolean }) {
   const named = rows.some((row) => row.name)
   return (
-    <div className="grid items-center" style={{ gridTemplateColumns: named ? 'auto auto 1fr' : 'auto 1fr', columnGap: 8, rowGap: 6, marginTop: top }}>
+    <div className="grid items-center" style={{ gridTemplateColumns: named ? 'auto auto 1fr' : 'auto 1fr', columnGap: 8, rowGap: portrait ? 8 : 6, marginTop: top }}>
       {rows.map((row) => (
         <div key={row.text} className="contents">
           <span className="flex gap-1">
             {row.keys.map((k) => (
-              <KeyCap key={k}>{k}</KeyCap>
+              <KeyCap key={k} portrait={portrait}>{k}</KeyCap>
             ))}
           </span>
           {named && <span style={{ color: ARCADE.gold }}>{row.name}</span>}
@@ -407,20 +428,20 @@ function KeyRows({ rows, top = 10 }: { rows: { keys: string[]; name?: string; te
 }
 
 /** A few example hands laid on a strip of felt, each with a caption. */
-function FeltExamples({ hands, names }: { hands: { cards: Card[]; caption: string }[]; names: CardNameLabels }) {
+function FeltExamples({ hands, names, portrait = false }: { hands: { cards: Card[]; caption: string }[]; names: CardNameLabels; portrait?: boolean }) {
   return (
     <div
       className="flex items-end justify-center"
-      style={{ gap: 28, marginTop: 10, padding: '6px 12px', backgroundColor: ARCADE.felt, border: `1px solid ${ARCADE.feltLine}`, borderRadius: 3 }}
+      style={{ gap: portrait ? 14 : 28, marginTop: 10, padding: portrait ? '6px 8px' : '6px 12px', backgroundColor: ARCADE.felt, border: `1px solid ${ARCADE.feltLine}`, borderRadius: 3 }}
     >
       {hands.map((hand) => (
         <figure key={hand.caption} className="m-0 flex flex-col items-center" style={{ gap: 4 }}>
-          <div className="relative" style={{ width: CARD_W + FAN * (hand.cards.length - 1), height: CARD_H }}>
+          <div className="relative" style={{ width: CARD_W + EXAMPLE_FAN * (hand.cards.length - 1), height: CARD_H }}>
             {hand.cards.map((c, i) => (
-              <PlayingCard key={i} card={c} alt={cardName(c, names)} style={{ position: 'absolute', left: i * FAN, top: 0 }} />
+              <PlayingCard key={i} card={c} alt={cardName(c, names)} style={{ position: 'absolute', left: i * EXAMPLE_FAN, top: 0 }} />
             ))}
           </div>
-          <figcaption style={{ fontSize: 9, lineHeight: 1, color: ARCADE.feltText }}>{hand.caption}</figcaption>
+          <figcaption style={{ fontSize: portrait ? 10 : 9, lineHeight: 1, color: ARCADE.feltText }}>{hand.caption}</figcaption>
         </figure>
       ))}
     </div>
@@ -432,6 +453,7 @@ function FeltExamples({ hands, names }: { hands: { cards: Card[]; caption: strin
  * it closes only this dialog and never reaches DeskView's leave-the-app handler.
  */
 function BlackjackTutorial({ labels, names, onClose }: { labels: BlackjackLabels; names: CardNameLabels; onClose: () => void }) {
+  const { portrait } = useDeskScreen()
   const t = labels.tutorial
   const [page, setPage] = useState(0)
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -445,6 +467,7 @@ function BlackjackTutorial({ labels, names, onClose }: { labels: BlackjackLabels
       extra: (
         <FeltExamples
           names={names}
+          portrait={portrait}
           hands={[
             { cards: [cardOf(9, 'C'), cardOf(9, 'D')], caption: t.goal.dealer },
             { cards: [cardOf(10, 'S'), cardOf(12, 'H')], caption: t.goal.you },
@@ -457,6 +480,7 @@ function BlackjackTutorial({ labels, names, onClose }: { labels: BlackjackLabels
       extra: (
         <FeltExamples
           names={names}
+          portrait={portrait}
           hands={[
             { cards: [cardOf(1, 'S'), cardOf(13, 'H')], caption: t.values.blackjack },
             { cards: [cardOf(1, 'D'), cardOf(6, 'C')], caption: t.values.soft },
@@ -468,18 +492,19 @@ function BlackjackTutorial({ labels, names, onClose }: { labels: BlackjackLabels
     {
       ...t.betting,
       extra: (
-        <div className="flex items-center justify-center" style={{ gap: 24, marginTop: 12 }}>
-          <div className="flex" style={{ gap: 12 }}>
+        <div className={portrait ? 'flex flex-col items-center' : 'flex items-center justify-center'} style={{ gap: portrait ? 8 : 24, marginTop: 12 }}>
+          <div className="flex" style={{ gap: portrait ? 10 : 12 }}>
             {CHIP_VALUES.map((value, i) => (
               <div key={value} className="flex flex-col items-center" style={{ gap: 3 }}>
                 <ChipSvg value={value} />
-                <span style={{ fontSize: 9, lineHeight: 1 }}>{value}</span>
-                <KeyCap>{i + 1}</KeyCap>
+                <span style={{ fontSize: portrait ? 10 : 9, lineHeight: 1 }}>{value}</span>
+                <KeyCap portrait={portrait}>{i + 1}</KeyCap>
               </div>
             ))}
           </div>
           <KeyRows
             top={0}
+            portrait={portrait}
             rows={[
               { keys: ['Backspace'], text: t.betting.clear },
               { keys: ['Space', 'Enter'], text: t.betting.deal },
@@ -492,6 +517,7 @@ function BlackjackTutorial({ labels, names, onClose }: { labels: BlackjackLabels
       ...t.turn,
       extra: (
         <KeyRows
+          portrait={portrait}
           rows={[
             { keys: ['H'], name: labels.hit, text: t.turn.hit },
             { keys: ['S'], name: labels.stand, text: t.turn.stand },
@@ -507,6 +533,7 @@ function BlackjackTutorial({ labels, names, onClose }: { labels: BlackjackLabels
         <>
           <p style={{ margin: '8px 0 0' }}>{t.dealer.insurance}</p>
           <KeyRows
+            portrait={portrait}
             rows={[
               { keys: ['I', 'Y'], text: t.dealer.yes },
               { keys: ['N'], text: t.dealer.no },
@@ -519,7 +546,7 @@ function BlackjackTutorial({ labels, names, onClose }: { labels: BlackjackLabels
       ...t.payouts,
       extra: (
         <>
-          <div className="grid" style={{ gridTemplateColumns: 'auto 1fr', columnGap: 16, rowGap: 4, margin: '8px 0 0 12px' }}>
+          <div className="grid" style={{ gridTemplateColumns: 'auto 1fr', columnGap: 16, rowGap: portrait ? 6 : 4, margin: '8px 0 0 12px' }}>
             {t.payouts.rows.map((row) => (
               <div key={row.term} className="contents">
                 <span style={{ color: ARCADE.gold }}>{row.term}</span>
@@ -594,23 +621,23 @@ function BlackjackTutorial({ labels, names, onClose }: { labels: BlackjackLabels
         tabIndex={-1}
         className="outline-none"
       >
-        <ArcadePanel style={{ width: 448, padding: '10px 12px' }}>
-          <div className="flex items-center justify-between" style={{ height: 18 }}>
-            <h2 id={titleId} style={{ fontSize: 9, lineHeight: 1, letterSpacing: 1, textTransform: 'uppercase', color: ARCADE.gold }}>
+        <ArcadePanel style={{ width: portrait ? 308 : 448, padding: portrait ? '10px' : '10px 12px' }}>
+          <div className="flex items-center justify-between" style={{ height: portrait ? 38 : 18 }}>
+            <h2 id={titleId} style={{ fontSize: portrait ? 10 : 9, lineHeight: 1, letterSpacing: 1, textTransform: 'uppercase', color: ARCADE.gold }}>
               {t.title}
             </h2>
-            <ArcadeButton tone="dark" size="sm" onClick={onClose} title={`${t.close} (Esc)`}>
+            <ArcadeButton tone="dark" size={portrait ? 'xl' : 'sm'} onClick={onClose} title={`${t.close} (Esc)`}>
               {t.close}
             </ArcadeButton>
           </div>
-          <h3 style={{ fontSize: 12, lineHeight: '14px', margin: '4px 0 6px' }}>{current.title}</h3>
-          <div id={bodyId} aria-live="polite" style={{ height: 144, fontSize: 10, lineHeight: '14px' }}>
+          <h3 style={{ fontSize: 12, lineHeight: portrait ? '16px' : '14px', margin: portrait ? '6px 0 6px' : '4px 0 6px' }}>{current.title}</h3>
+          <div id={bodyId} aria-live="polite" style={{ height: portrait ? 196 : 144, fontSize: portrait ? 12 : 10, lineHeight: portrait ? '16px' : '14px' }}>
             <p style={{ margin: 0 }}>{current.body}</p>
             {current.extra}
           </div>
           <div className="grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr', marginTop: 8 }}>
             <div className="justify-self-start">
-              <ArcadeButton tone="dark" onClick={() => go(-1)} disabled={page === 0} title={`${t.back} (Left)`}>
+              <ArcadeButton tone="dark" size={portrait ? 'xl' : undefined} onClick={() => go(-1)} disabled={page === 0} title={`${t.back} (Left)`}>
                 {t.back}
               </ArcadeButton>
             </div>
@@ -620,10 +647,10 @@ function BlackjackTutorial({ labels, names, onClose }: { labels: BlackjackLabels
                   <span key={i} style={{ width: 4, height: 4, backgroundColor: i === page ? ARCADE.amber : ARCADE.panelBorder }} />
                 ))}
               </span>
-              <span style={{ fontSize: 9, lineHeight: 1 }}>{t.page.replace('{n}', String(page + 1)).replace('{total}', String(pages.length))}</span>
+              <span style={{ fontSize: portrait ? 10 : 9, lineHeight: 1 }}>{t.page.replace('{n}', String(page + 1)).replace('{total}', String(pages.length))}</span>
             </div>
             <span ref={nextRef} className="justify-self-end">
-              <ArcadeButton onClick={() => (page === last ? onClose() : go(1))} title={page === last ? t.start : `${t.next} (Right)`}>
+              <ArcadeButton size={portrait ? 'xl' : undefined} onClick={() => (page === last ? onClose() : go(1))} title={page === last ? t.start : `${t.next} (Right)`}>
                 {page === last ? t.start : t.next}
               </ArcadeButton>
             </span>
@@ -659,6 +686,8 @@ function loadSave(): { bankroll: number; handsPlayed: number; rebuys: number } |
 }
 
 export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, onBack, onDesktop }: DeskGameProps<BlackjackLabels>) {
+  const { w, h, portrait } = useDeskScreen()
+  const layout = useMemo(() => blackjackLayout(w, h, portrait, CARD_W, CARD_H), [w, h, portrait])
   const fs = useFullscreen()
   const { tone } = useSfx()
   const reduce = useReducedMotion()
@@ -1012,34 +1041,14 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
     return () => window.removeEventListener('keydown', onKey)
   }, [helpOpen, onChip, onClear, startDeal, doRebet, doInsure, doHit, doStand, doDouble, doSplit])
 
-  const dealerWidth = table.dealer.length > 0 ? CARD_W + FAN * (table.dealer.length - 1) : 0
-  const dealerLeft = Math.round((PLAY_W - dealerWidth) / 2)
+  const dealerWidth = table.dealer.length > 0 ? CARD_W + layout.fan * (table.dealer.length - 1) : 0
+  const dealerLeft = Math.round((layout.playW - dealerWidth) / 2)
 
-  // Every x here is on the felt (0 to PLAY_W): hands sit centred as one row.
-  const handsLayout = useMemo(() => {
-    const hands = table.hands
-    if (hands.length === 0) return []
-    const overlaps = hands.reduce((n, h) => n + h.cards.length - 1, 0)
-    const fixed = CARD_W * hands.length + HAND_GAP * (hands.length - 1)
-    // Tighten the fan only if four long split hands would run off the felt.
-    const step = overlaps > 0 ? Math.min(FAN, Math.floor((PLAY_W - 2 * EDGE - fixed) / overlaps)) : FAN
-    const widths = hands.map((h) => CARD_W + step * (h.cards.length - 1))
-    const totalW = widths.reduce((a, b) => a + b, 0) + HAND_GAP * (hands.length - 1)
-    let left = Math.round((PLAY_W - totalW) / 2)
-    const active = table.phase === 'player' ? table.active : -1
-    return hands.map((hand, i) => {
-      const layout = {
-        hand,
-        index: i,
-        left,
-        step,
-        top: i === active ? HAND_Y_ACTIVE : HAND_Y,
-        centerX: Math.round(left + widths[i] / 2),
-      }
-      left += widths[i] + HAND_GAP
-      return layout
-    })
-  }, [table.hands, table.active, table.phase])
+  // Every x here is on the felt (0 to playW). Portrait centres one row, or stacks two.
+  const handsLayout = useMemo(
+    () => layoutBlackjackHands(table.hands, table.active, table.phase, layout),
+    [table.hands, table.active, table.phase, layout],
+  )
 
   const dealDelay = useCallback(
     (slot: string) => (reduce ? 0 : (dealOrder[slot] ?? 0) * STAGGER),
@@ -1154,11 +1163,81 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
     )
   }
 
+  const renderPortraitActions = () => {
+    if (table.phase === 'betting') {
+      return (
+        <>
+          <span style={{ ...PIXEL_FONT, fontSize: 12, color: ARCADE.panelText }}>{labels.bet.replace('{n}', fmt(table.bet))}</span>
+          <ArcadeButton tone="dark" size="xl" onClick={onClear} disabled={busy || table.bet === 0} title={`${labels.clear} (Backspace)`}>
+            {labels.clear}
+          </ArcadeButton>
+          <ArcadeButton size="xl" onClick={startDeal} disabled={busy || table.bet < MIN_BET} title={`${labels.deal} (Space)`}>
+            {labels.deal}
+          </ArcadeButton>
+        </>
+      )
+    }
+    if (table.phase === 'insurance') {
+      return (
+        <>
+          <span style={{ ...PIXEL_FONT, fontSize: 12, color: ARCADE.panelText }}>{labels.insurance}</span>
+          <ArcadeButton size="xl" onClick={() => doInsure(true)} disabled={busy} title={`${labels.yes} (I)`}>
+            {labels.yes}
+          </ArcadeButton>
+          <ArcadeButton tone="dark" size="xl" onClick={() => doInsure(false)} disabled={busy} title={`${labels.no} (N)`}>
+            {labels.no}
+          </ArcadeButton>
+        </>
+      )
+    }
+    if (table.phase === 'settled') {
+      return (
+        <>
+          <ArcadeButton
+            size="xl"
+            onClick={doRebet}
+            disabled={busy || table.bet < MIN_BET || table.bankroll < table.bet}
+            title={`${labels.rebet} (Space)`}
+          >
+            {labels.rebet}
+          </ArcadeButton>
+          <ArcadeButton tone="dark" size="xl" onClick={doNewBet} disabled={busy} title={labels.newBet}>
+            {labels.newBet}
+          </ArcadeButton>
+        </>
+      )
+    }
+    const dealerTurn = table.phase === 'dealer'
+    return (
+      <>
+        <ArcadeButton size="xl" onClick={doHit} disabled={busy || !canHit} title={`${labels.hit} (H)`}>
+          {labels.hit}
+        </ArcadeButton>
+        <ArcadeButton size="xl" onClick={doStand} disabled={busy || dealerTurn || !canStand} title={`${labels.stand} (S)`}>
+          {labels.stand}
+        </ArcadeButton>
+        <ArcadeButton size="xl" onClick={doDouble} disabled={busy || dealerTurn || !canDouble(table)} title={`${labels.double} (D)`}>
+          {labels.double}
+        </ArcadeButton>
+        <ArcadeButton size="xl" onClick={doSplit} disabled={busy || dealerTurn || !canSplit(table)} title={`${labels.split} (P)`}>
+          {labels.split}
+        </ArcadeButton>
+      </>
+    )
+  }
+
+  const betY = table.phase === 'betting' ? layout.betYBetting : layout.circle.y
+  const shownBet = table.phase === 'player' || table.phase === 'dealer' ? (activeHand?.bet ?? table.bet) : table.bet
+  const totalWon =
+    table.phase === 'settled'
+      ? Math.floor(table.hands.reduce((sum, hand) => sum + (hand.payout ?? 0), 0) / 5) * 5
+      : 0
+
   return (
-    <ArcadeFrame fs={fs} background={ARCADE.felt}>
+    <ArcadeFrame fs={fs} background={ARCADE.felt} portrait={portrait}>
       <ArcadeStrip time={time} fs={fs} arcade={arcade} desktopLabel={desktopLabel} backLabel={backLabel} onDesktop={onDesktop} onBack={onBack}>
         <span ref={helpButtonRef} className="contents">
-          <ArcadeButton tone="dark" size="sm" onClick={(e) => { helpByKeyRef.current = e.detail === 0; setHelpOpen(true) }}>
+          <ArcadeButton tone="dark" size={portrait ? 'xl' : 'sm'} onClick={(e) => { helpByKeyRef.current = e.detail === 0; setHelpOpen(true) }}>
             {labels.tutorial.button}
           </ArcadeButton>
         </span>
@@ -1169,30 +1248,30 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
         <div
           aria-hidden
           className="absolute flex items-center justify-center"
-          style={{ left: 0, right: 0, top: MID_Y, height: MID_H, opacity: banner ? 0 : 1, transition: 'opacity 150ms' }}
+          style={{ left: 0, right: 0, top: layout.midY, height: layout.midH, opacity: banner ? 0 : 1, transition: 'opacity 150ms' }}
         >
-          <span style={{ ...PIXEL_FONT, fontSize: 10, lineHeight: 1, color: ARCADE.feltText, opacity: 0.75, letterSpacing: 1 }}>{labels.blackjackPays}</span>
+          <span style={{ ...PIXEL_FONT, fontSize: portrait ? 12 : 10, lineHeight: 1, color: ARCADE.feltText, opacity: 0.75, letterSpacing: 1 }}>{labels.blackjackPays}</span>
         </div>
 
         {/* Dealer zone. Like the hands, the group starts at the felt origin, so every child uses felt x and y. */}
         {table.dealer.length > 0 && (
-          <div className="absolute" style={{ left: 0, top: 0, width: PLAY_W, height: DEALER_Y + CARD_H }} role="group" aria-label={dealerAria}>
+          <div className="absolute" style={{ left: 0, top: 0, width: layout.playW, height: layout.dealerY + CARD_H }} role="group" aria-label={dealerAria}>
             <div
               className="absolute"
-              style={{ left: dealerLeft - 8, top: DEALER_Y + 22, transform: 'translateX(-100%)' }}
+              style={{ left: dealerLeft - 8, top: layout.dealerY + 22, transform: 'translateX(-100%)' }}
               aria-hidden
             >
-              <ArcadePanel style={{ fontSize: 9, lineHeight: 1, padding: '2px 5px' }}>{dealerBadge}</ArcadePanel>
+              <ArcadePanel style={{ fontSize: portrait ? 10 : 9, lineHeight: 1, padding: '2px 5px' }}>{dealerBadge}</ArcadePanel>
             </div>
             {table.dealer.map((card, i) => {
-              const slotX = dealerLeft + i * FAN
+              const slotX = dealerLeft + i * layout.fan
               if (i === 1) {
                 return (
                   <motion.div
                     key={`${dealSeq}-d-1`}
                     className="absolute"
-                    style={{ left: slotX, top: DEALER_Y }}
-                    initial={{ x: SHOE_ORIGIN.x - slotX, y: SHOE_ORIGIN.y - DEALER_Y, opacity: 0 }}
+                    style={{ left: slotX, top: layout.dealerY }}
+                    initial={{ x: layout.shoeOrigin.x - slotX, y: layout.shoeOrigin.y - layout.dealerY, opacity: 0 }}
                     animate={{ x: 0, y: 0, opacity: 1 }}
                     transition={{ duration: reduce ? 0 : FLY / 1000, delay: reduce ? 0 : dealDelay('d-1') / 1000, ease: 'easeOut' }}
                   >
@@ -1200,25 +1279,55 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
                   </motion.div>
                 )
               }
-              return <FlyCard key={`${dealSeq}-d-${i}`} card={card} slotX={slotX} slotY={DEALER_Y} delay={dealDelay(`d-${i}`)} />
+              return <FlyCard key={`${dealSeq}-d-${i}`} card={card} slotX={slotX} slotY={layout.dealerY} delay={dealDelay(`d-${i}`)} fromX={layout.shoeOrigin.x} fromY={layout.shoeOrigin.y} />
             })}
           </div>
         )}
 
-        <Shoe label={labels.sixDecks} />
+        <Shoe x={layout.shoe.x} y={layout.shoe.y} label={labels.sixDecks} />
 
         {/* Betting circle with the pending stack */}
-        {table.phase === 'betting' && (
+        {!portrait && table.phase === 'betting' && (
           <>
-            <svg className="absolute" style={{ left: CIRCLE.x - CIRCLE.r, top: CIRCLE.y - CIRCLE.r }} width={CIRCLE.r * 2} height={CIRCLE.r * 2} aria-hidden>
-              <circle cx={CIRCLE.r} cy={CIRCLE.r} r={CIRCLE.r - 0.5} fill="none" stroke={ARCADE.feltLine} strokeWidth={1} strokeOpacity={0.6} />
+            <svg className="absolute" style={{ left: layout.circle.x - layout.circle.r, top: layout.circle.y - layout.circle.r }} width={layout.circle.r * 2} height={layout.circle.r * 2} aria-hidden>
+              <circle cx={layout.circle.r} cy={layout.circle.r} r={layout.circle.r - 0.5} fill="none" stroke={ARCADE.feltLine} strokeWidth={1} strokeOpacity={0.6} />
             </svg>
-            {table.bet > 0 && <BetStack amount={table.bet} left={CIRCLE.x - 6} top={CIRCLE.y - stackHeight(table.bet) / 2} />}
+            {table.bet > 0 && <BetStack amount={table.bet} left={layout.circle.x - 6} top={layout.circle.y - stackHeight(table.bet) / 2} />}
+          </>
+        )}
+
+        {/* Portrait bet area: bank and stake circle sit above the chip row / action row. */}
+        {portrait && (
+          <>
+            <div
+              className="absolute"
+              style={{ left: 6, top: betY - 12, zIndex: 5, backgroundColor: ARCADE.panelDark, border: `1px solid ${ARCADE.panelBorder}`, padding: '2px 6px', lineHeight: 1.25 }}
+            >
+              <div style={{ ...PIXEL_FONT, fontSize: 10, color: ARCADE.panelText }}>{labels.bank.replace('{n}', fmt(table.bankroll))}</div>
+              <div style={{ ...PIXEL_FONT, fontSize: 10, color: ARCADE.feltText }}>{labels.best.replace('{n}', fmt(best))}</div>
+            </div>
+            <svg className="absolute" style={{ left: layout.circle.x - layout.circle.r, top: betY - layout.circle.r }} width={layout.circle.r * 2} height={layout.circle.r * 2} aria-hidden>
+              <circle cx={layout.circle.r} cy={layout.circle.r} r={layout.circle.r - 0.5} fill="none" stroke={ARCADE.feltLine} strokeWidth={1} strokeOpacity={0.6} />
+            </svg>
+            {shownBet > 0 && <BetStack amount={shownBet} left={layout.circle.x - 6} top={betY - stackHeight(shownBet) / 2} zIndex={2} />}
+            {table.phase === 'settled' && totalWon > 0 && (
+              <motion.div
+                className="absolute"
+                style={{ left: 0, top: 0 }}
+                initial={{ y: -110, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: reduce ? 0 : 0.3, delay: reduce ? 0 : 0.1, ease: 'easeOut' }}
+                aria-hidden
+              >
+                <BetStack amount={totalWon} left={layout.circle.x + 14} top={betY - stackHeight(totalWon) / 2} zIndex={3} />
+              </motion.div>
+            )}
           </>
         )}
 
         {/* Player hands */}
-        {handsLayout.map(({ hand, index, left, step, top, centerX }) => {
+        {handsLayout.map(({ index, left, step, top, centerX }) => {
+          const hand = table.hands[index]
           const v = handValue(hand.cards)
           const badgeText = hand.outcome === 'bust' ? labels.resultBust : v.soft ? labels.soft.replace('{n}', String(v.total)) : String(v.total)
           const loses = table.phase === 'settled' && (hand.outcome === 'lose' || hand.outcome === 'bust')
@@ -1226,31 +1335,33 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
           // The group spans the whole felt so its cards, badge, stake and pointer all use felt x.
           return (
             <div key={index} className="absolute inset-0 pointer-events-none" role="group" aria-label={handLabel(hand)}>
-              <div className="absolute" style={{ left, top: top - BADGE_ABOVE }} aria-hidden>
-                <ArcadePanel style={{ fontSize: 9, lineHeight: 1, padding: '2px 5px' }}>{badgeText}</ArcadePanel>
+              <div className="absolute" style={{ left, top: top - layout.badgeAbove }} aria-hidden>
+                <ArcadePanel style={{ fontSize: portrait ? 10 : 9, lineHeight: 1, padding: '2px 5px' }}>{badgeText}</ArcadePanel>
               </div>
               {hand.cards.map((c, ci) => (
-                <FlyCard key={`${dealSeq}-p${index}-${ci}`} card={c} slotX={left + ci * step} slotY={top} delay={dealDelay(`p${index}-${ci}`)} />
+                <FlyCard key={`${dealSeq}-p${index}-${ci}`} card={c} slotX={left + ci * step} slotY={top} delay={dealDelay(`p${index}-${ci}`)} fromX={layout.shoeOrigin.x} fromY={layout.shoeOrigin.y} />
               ))}
-              {table.phase === 'player' && index === table.active && <ActivePointer centerX={centerX} />}
+              {table.phase === 'player' && index === table.active && <ActivePointer centerX={centerX} top={top + CARD_H + 4} />}
 
-              {loses ? (
-                <motion.div
-                  className="absolute"
-                  style={{ left: 0, top: 0 }}
-                  initial={false}
-                  animate={{ y: -118, opacity: 0 }}
-                  transition={{ duration: reduce ? 0 : 0.3, delay: reduce ? 0 : 0.15, ease: 'easeIn' }}
-                  aria-hidden
-                >
-                  <BetStack amount={hand.bet} left={centerX - 6} top={STAKE_Y} />
-                </motion.div>
-              ) : (
-                <div className="absolute" style={{ left: 0, top: 0 }} aria-hidden>
-                  <BetStack amount={hand.bet} left={centerX - 6} top={STAKE_Y} />
-                </div>
+              {!portrait && (
+                loses ? (
+                  <motion.div
+                    className="absolute"
+                    style={{ left: 0, top: 0 }}
+                    initial={false}
+                    animate={{ y: -118, opacity: 0 }}
+                    transition={{ duration: reduce ? 0 : 0.3, delay: reduce ? 0 : 0.15, ease: 'easeIn' }}
+                    aria-hidden
+                  >
+                    <BetStack amount={hand.bet} left={centerX - 6} top={layout.stakeY} />
+                  </motion.div>
+                ) : (
+                  <div className="absolute" style={{ left: 0, top: 0 }} aria-hidden>
+                    <BetStack amount={hand.bet} left={centerX - 6} top={layout.stakeY} />
+                  </div>
+                )
               )}
-              {wins && (
+              {!portrait && wins && (
                 <motion.div
                   className="absolute"
                   style={{ left: 0, top: 0 }}
@@ -1260,7 +1371,7 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
                   aria-hidden
                 >
                   {/* Winnings land beside the stake so both stay visible. */}
-                  <BetStack amount={Math.floor((hand.payout ?? 0) / 5) * 5} left={centerX + 14} top={STAKE_Y} />
+                  <BetStack amount={Math.floor((hand.payout ?? 0) / 5) * 5} left={centerX + 14} top={layout.stakeY} />
                 </motion.div>
               )}
             </div>
@@ -1271,32 +1382,54 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
         {banner && (
           <motion.div
             className="absolute left-0 right-0 flex items-center justify-center"
-            style={{ top: MID_Y, height: MID_H, zIndex: 15 }}
+            style={{ top: layout.midY, height: layout.midH, zIndex: 15 }}
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: reduce ? 0 : 0.15 }}
           >
-            <ArcadePanel style={{ fontSize: 10, padding: '5px 12px' }}>{banner}</ArcadePanel>
+            <ArcadePanel style={{ fontSize: portrait ? 12 : 10, padding: '5px 12px' }}>{banner}</ArcadePanel>
           </motion.div>
         )}
 
         {/* Bottom bar */}
-        <div
-          className="absolute flex items-center gap-3 px-3"
-          style={{ left: 0, right: 0, bottom: 0, height: 40, backgroundColor: ARCADE.feltDark, borderTop: `1px solid ${ARCADE.feltLine}`, zIndex: 10 }}
-        >
-          <div style={{ backgroundColor: ARCADE.panelDark, border: `1px solid ${ARCADE.panelBorder}`, padding: '3px 7px', lineHeight: 1.25 }}>
-            <div style={{ ...PIXEL_FONT, fontSize: 10, color: ARCADE.panelText }}>{labels.bank.replace('{n}', fmt(table.bankroll))}</div>
-            <div style={{ ...PIXEL_FONT, fontSize: 8, color: ARCADE.feltText }}>{labels.best.replace('{n}', fmt(best))}</div>
+        {portrait ? (
+          <div className="absolute left-0 right-0 bottom-0 flex flex-col items-center" style={{ gap: 6, paddingBottom: 4, zIndex: 10 }}>
+            {table.phase === 'betting' && (
+              <div className="flex items-center" style={{ gap: 8, height: layout.chipRowH }}>
+                {CHIP_VALUES.map((value, i) => (
+                  <ChipButton
+                    key={value}
+                    value={value}
+                    label={labels.chip.replace('{n}', String(value))}
+                    title={`${labels.chip.replace('{n}', String(value))} (${i + 1})`}
+                    disabled={busy}
+                    onClick={() => onChip(value)}
+                  />
+                ))}
+              </div>
+            )}
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 px-3" style={{ minHeight: layout.actionH }}>
+              {renderPortraitActions()}
+            </div>
           </div>
-          {renderControls()}
-        </div>
+        ) : (
+          <div
+            className="absolute flex items-center gap-3 px-3"
+            style={{ left: 0, right: 0, bottom: 0, height: 40, backgroundColor: ARCADE.feltDark, borderTop: `1px solid ${ARCADE.feltLine}`, zIndex: 10 }}
+          >
+            <div style={{ backgroundColor: ARCADE.panelDark, border: `1px solid ${ARCADE.panelBorder}`, padding: '3px 7px', lineHeight: 1.25 }}>
+              <div style={{ ...PIXEL_FONT, fontSize: 10, color: ARCADE.panelText }}>{labels.bank.replace('{n}', fmt(table.bankroll))}</div>
+              <div style={{ ...PIXEL_FONT, fontSize: 8, color: ARCADE.feltText }}>{labels.best.replace('{n}', fmt(best))}</div>
+            </div>
+            {renderControls()}
+          </div>
+        )}
 
         {outOfChips && (
           <ArcadeOverlay>
             <ArcadePanel style={{ padding: '10px 16px', textAlign: 'center' }}>
               <div style={{ fontSize: 12, marginBottom: 10 }}>{labels.outOfChips}</div>
-              <ArcadeButton size="md" onClick={doRebuy} title={labels.rebuy}>
+              <ArcadeButton size={portrait ? 'xl' : 'md'} onClick={doRebuy} title={labels.rebuy}>
                 {labels.rebuy}
               </ArcadeButton>
             </ArcadePanel>

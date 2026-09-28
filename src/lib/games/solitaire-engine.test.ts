@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   autoFinishStep,
   autoTarget,
+  bestMove,
   canAutoFinish,
   canMove,
   deal,
@@ -335,4 +336,52 @@ test('waste to tableau and waste to foundation take only the waste top', () => {
   assert.ok(next)
   assert.deepEqual(next!.waste.map(cardId), [C(8)].map(cardId))
   assert.deepEqual(next!.tableau[0].up.map(cardId), [H(10), C(9)].map(cardId))
+})
+
+test('bestMove sends an Ace to the first empty foundation', () => {
+  const s = state({ waste: [S(1)] })
+  assert.deepEqual(bestMove(s, waste), foundation(0))
+})
+
+test('bestMove sends a two onto its matching Ace', () => {
+  const s = state({ waste: [S(2)], foundations: [[S(1)], [], [], []] })
+  assert.deepEqual(bestMove(s, waste), foundation(0))
+})
+
+test('bestMove sends a King to the lowest empty column', () => {
+  const s = state({ waste: [S(13)], tableau: [{ down: [], up: [] }, { down: [], up: [] }, ...emptyTableau().slice(2)] })
+  assert.deepEqual(bestMove(s, waste), tableau(0, 0))
+})
+
+test('bestMove sends a tableau run to the lowest column that accepts it', () => {
+  const s = state({
+    tableau: [
+      { down: [], up: [S(13), H(12), S(11)] },
+      { down: [], up: [C(13)] },
+      ...emptyTableau().slice(2),
+    ],
+  })
+  assert.deepEqual(bestMove(s, tableau(0, 1)), tableau(1, 0))
+})
+
+test('bestMove sends a waste card to the lowest tableau column', () => {
+  const s = state({ waste: [C(9)], tableau: [{ down: [], up: [H(10)] }, { down: [], up: [D(10)] }, ...emptyTableau().slice(2)] })
+  assert.deepEqual(bestMove(s, waste), tableau(0, 0))
+})
+
+test('bestMove returns null when nothing is legal', () => {
+  const s = state({ waste: [H(5)], tableau: emptyTableau() })
+  assert.equal(bestMove(s, waste), null)
+})
+
+test('bestMove does not shift a king-headed run from an otherwise empty column into another empty column', () => {
+  const s = state({ tableau: [{ down: [], up: [S(13), H(12)] }, ...emptyTableau().slice(1)] })
+  assert.equal(bestMove(s, tableau(0, 0)), null)
+})
+
+test('bestMove only returns destinations the engine accepts', () => {
+  const s = state({ waste: [S(2)], foundations: [[S(1)], [], [], []] })
+  const to = bestMove(s, waste)
+  assert.ok(to)
+  assert.ok(move(s, waste, to!))
 })

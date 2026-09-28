@@ -17,12 +17,13 @@ import {
   type DeskGameProps,
 } from './DeskArcade'
 import { CARD_H, CARD_W, cardCanvas, cardUrl } from './PlayingCard'
+import { PORTRAIT_STRIP_H, useDeskScreen } from './ScreenStrip'
 import { cardId, cardName, createDeck, type Card } from '@/lib/games/cards'
 import { BEST_KEYS, getBest, readJson, setBestIfHigher, writeJson } from '@/lib/games/storage'
 import { useSfx } from './RoomSfxProvider'
 import {
   autoFinishStep,
-  autoTarget,
+  bestMove,
   canAutoFinish,
   canMove,
   deal,
@@ -35,18 +36,17 @@ import {
   type TableauPile,
 } from '@/lib/games/solitaire-engine'
 
-const COL_X = (i: number) => 83 + i * 54
-const FOUND_X = (i: number) => 245 + i * 54
-const TOP_Y = 8
-const TABLEAU_Y = 80
-const DOWN_STEP = 4
-const UP_STEP = 13
-const UP_STEP_MIN = 8
-const FLOOR_Y = 280 - CARD_H
-const STATUS_H = 22
-const WASTE_FAN = 12
-const DRAG_LIFT = 2
-const DRAG_RUN_STEP = 16
+const PORTRAIT_STRIP_AND_TOOLBAR_H = PORTRAIT_STRIP_H * 2
+const PORTRAIT_MARGIN = 4
+const PORTRAIT_TOP_Y = 8
+const PORTRAIT_TABLEAU_GAP = 12
+const PORTRAIT_SCALE = 40 / CARD_W
+const PORTRAIT_DOWN_STEP = 5
+const PORTRAIT_UP_STEP_MIN = 10
+const PORTRAIT_UP_STEP_MAX = 22
+const PORTRAIT_STATUS_H = 12
+const PORTRAIT_WASTE_FAN_Y = 6
+const TAP_DIST = 6
 
 const ALL_CARDS = createDeck()
 
@@ -102,16 +102,96 @@ interface DragState {
   active: boolean
 }
 
-function upStepFor(pile: TableauPile): number {
-  if (pile.up.length <= 1) return UP_STEP
-  const avail = 252 - TABLEAU_Y - pile.down.length * DOWN_STEP - CARD_H
-  return Math.max(UP_STEP_MIN, Math.min(UP_STEP, Math.floor(avail / (pile.up.length - 1))))
+interface SolitaireLayout {
+  portrait: boolean
+  w: number
+  playH: number
+  cardScale: number
+  cardW: number
+  cardH: number
+  topY: number
+  tableauY: number
+  downStep: number
+  upStepMin: number
+  upStepMax: number
+  tableauBottomLimit: number
+  statusH: number
+  wasteFanX: number
+  wasteFanY: number
+  floorY: number
+  dragLift: number
+  dragRunStep: number
+  colX: (i: number) => number
+  foundX: (i: number) => number
 }
 
-function tableauPileBottom(pile: TableauPile): number {
-  if (pile.up.length > 0) return TABLEAU_Y + pile.down.length * DOWN_STEP + (pile.up.length - 1) * upStepFor(pile) + CARD_H
-  if (pile.down.length > 0) return TABLEAU_Y + pile.down.length * DOWN_STEP + CARD_H
-  return TABLEAU_Y + CARD_H
+/** One set of geometry for both orientations; landscape keeps the original numbers exactly. */
+function solitaireLayout(w: number, h: number, portrait: boolean): SolitaireLayout {
+  if (!portrait) {
+    const playH = 280
+    return {
+      portrait: false,
+      w,
+      playH,
+      cardScale: 1,
+      cardW: CARD_W,
+      cardH: CARD_H,
+      topY: 8,
+      tableauY: 80,
+      downStep: 4,
+      upStepMin: 8,
+      upStepMax: 13,
+      tableauBottomLimit: 252,
+      statusH: 22,
+      wasteFanX: 12,
+      wasteFanY: 0,
+      floorY: playH - CARD_H,
+      dragLift: 2,
+      dragRunStep: 16,
+      colX: (i) => 83 + i * 54,
+      foundX: (i) => 245 + i * 54,
+    }
+  }
+  const cardW = Math.round(CARD_W * PORTRAIT_SCALE)
+  const cardH = Math.round(CARD_H * PORTRAIT_SCALE)
+  const pitch = (w - 2 * PORTRAIT_MARGIN) / 7
+  const playH = h - PORTRAIT_STRIP_AND_TOOLBAR_H
+  const tableauY = PORTRAIT_TOP_Y + cardH + PORTRAIT_TABLEAU_GAP
+  const colX = (i: number) => PORTRAIT_MARGIN + i * pitch
+  return {
+    portrait: true,
+    w,
+    playH,
+    cardScale: PORTRAIT_SCALE,
+    cardW,
+    cardH,
+    topY: PORTRAIT_TOP_Y,
+    tableauY,
+    downStep: PORTRAIT_DOWN_STEP,
+    upStepMin: PORTRAIT_UP_STEP_MIN,
+    upStepMax: PORTRAIT_UP_STEP_MAX,
+    tableauBottomLimit: playH - PORTRAIT_STATUS_H,
+    statusH: PORTRAIT_STATUS_H,
+    wasteFanX: 0,
+    wasteFanY: PORTRAIT_WASTE_FAN_Y,
+    floorY: playH - cardH,
+    dragLift: 2,
+    dragRunStep: 16,
+    colX,
+    foundX: (i) => colX(i + 3),
+  }
+}
+
+function upStepFor(L: SolitaireLayout, pile: TableauPile): number {
+  if (pile.up.length <= 1) return L.upStepMax
+  const avail = L.tableauBottomLimit - L.tableauY - pile.down.length * L.downStep - L.cardH
+  return Math.max(L.upStepMin, Math.min(L.upStepMax, Math.floor(avail / (pile.up.length - 1))))
+}
+
+function tableauPileBottom(L: SolitaireLayout, pile: TableauPile): number {
+  if (pile.up.length > 0) return L.tableauY + pile.down.length * L.downStep + (pile.up.length - 1) * upStepFor(L, pile) + L.cardH
+  if (pile.down.length > 0) return L.tableauY + pile.down.length * L.downStep + L.cardH
+  return L.tableauY + L.cardH
 }
 
 /** The deal order mirrors the engine's sequential tableau deal. */
@@ -124,33 +204,33 @@ function dealOrderOf(game: SolitaireState): Card[] {
   return order
 }
 
-function computeSlots(game: SolitaireState, dealAnim: DealAnim | null): Map<string, CardSlot> {
+function computeSlots(game: SolitaireState, dealAnim: DealAnim | null, L: SolitaireLayout): Map<string, CardSlot> {
   const map = new Map<string, CardSlot>()
-  game.stock.forEach((card, i) => map.set(cardId(card), { x: COL_X(0), y: TOP_Y, z: i, faceUp: false }))
+  game.stock.forEach((card, i) => map.set(cardId(card), { x: L.colX(0), y: L.topY, z: i, faceUp: false }))
 
   const show = Math.min(3, game.waste.length)
   game.waste.forEach((card, i) => {
     const k = game.drawCount === 3 && i >= game.waste.length - show ? i - (game.waste.length - show) : 0
-    map.set(cardId(card), { x: COL_X(1) + k * WASTE_FAN, y: TOP_Y, z: 24 + i, faceUp: true })
+    map.set(cardId(card), { x: L.colX(1) + k * L.wasteFanX, y: L.topY + k * L.wasteFanY, z: 24 + i, faceUp: true })
   })
 
   game.foundations.forEach((pile, f) => {
-    pile.forEach((card, i) => map.set(cardId(card), { x: FOUND_X(f), y: TOP_Y, z: 60 + f * 13 + i, faceUp: true }))
+    pile.forEach((card, i) => map.set(cardId(card), { x: L.foundX(f), y: L.topY, z: 60 + f * 13 + i, faceUp: true }))
   })
 
   game.tableau.forEach((pile, i) => {
-    const x = COL_X(i)
-    const step = upStepFor(pile)
-    pile.down.forEach((card, j) => map.set(cardId(card), { x, y: TABLEAU_Y + j * DOWN_STEP, z: 200 + i * 40 + j, faceUp: false }))
+    const x = L.colX(i)
+    const step = upStepFor(L, pile)
+    pile.down.forEach((card, j) => map.set(cardId(card), { x, y: L.tableauY + j * L.downStep, z: 200 + i * 40 + j, faceUp: false }))
     pile.up.forEach((card, k) =>
-      map.set(cardId(card), { x, y: TABLEAU_Y + pile.down.length * DOWN_STEP + k * step, z: 200 + i * 40 + pile.down.length + k, faceUp: true }),
+      map.set(cardId(card), { x, y: L.tableauY + pile.down.length * L.downStep + k * step, z: 200 + i * 40 + pile.down.length + k, faceUp: true }),
     )
   })
 
   if (dealAnim) {
     const dealt = new Set(dealAnim.order.slice(0, dealAnim.revealed).map(cardId))
     dealAnim.order.forEach((card, idx) => {
-      if (!dealt.has(cardId(card))) map.set(cardId(card), { x: COL_X(0), y: TOP_Y, z: 500 + idx, faceUp: false })
+      if (!dealt.has(cardId(card))) map.set(cardId(card), { x: L.colX(0), y: L.topY, z: 500 + idx, faceUp: false })
     })
   }
   return map
@@ -181,12 +261,12 @@ function sameLoc(a: Loc, b: Loc): boolean {
 
 const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
-function EmptySlot({ glyph, recycle }: { glyph?: boolean; recycle?: boolean }) {
+function EmptySlot({ glyph, recycle, width = CARD_W, height = CARD_H }: { glyph?: boolean; recycle?: boolean; width?: number; height?: number }) {
   const line = 'rgba(111,146,112,0.55)'
   const fill = 'rgba(0,0,0,0.12)'
   const a = ['..#..', '.#.#.', '#...#', '#...#', '#####', '#...#', '#...#']
   return (
-    <svg width={CARD_W} height={CARD_H} viewBox="0 0 45 63" shapeRendering="crispEdges" aria-hidden className="pointer-events-none">
+    <svg width={width} height={height} viewBox="0 0 45 63" shapeRendering="crispEdges" aria-hidden className="pointer-events-none">
       <rect x="1" y="1" width="43" height="61" fill={fill} />
       <rect x="2" y="0" width="41" height="1" fill={line} />
       <rect x="2" y="62" width="41" height="1" fill={line} />
@@ -238,6 +318,7 @@ function CardSprite({
   ring,
   shadow,
   instant,
+  scale = 1,
 }: {
   card: Card
   faceUp: boolean
@@ -245,12 +326,15 @@ function CardSprite({
   ring: boolean
   shadow: 'normal' | 'strong'
   instant: boolean
+  scale?: number
 }) {
   const dur = instant ? 0 : 0.18
   const filter = shadow === 'strong' ? 'drop-shadow(2px 3px 0 rgba(20,14,10,0.35))' : 'drop-shadow(1px 1px 0 rgba(20,14,10,0.35))'
   const ringShadow = ring ? { boxShadow: `0 0 0 1px ${ARCADE.amber}, 0 0 0 2px ${ARCADE.ink}` } : undefined
+  const w = CARD_W * scale
+  const h = CARD_H * scale
   return (
-    <div className="relative" style={{ width: CARD_W, height: CARD_H }}>
+    <div className="relative" style={{ width: w, height: h }}>
       <motion.img
         src={cardUrl('back')}
         alt=""
@@ -279,6 +363,8 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
   const fs = useFullscreen()
   const { tone } = useSfx()
   const reduceMotion = useReducedMotion() === true
+  const screen = useDeskScreen()
+  const L = useMemo(() => solitaireLayout(screen.w, screen.h, screen.portrait), [screen.w, screen.h, screen.portrait])
 
   const [game, setGame] = useState<SolitaireState | null>(null)
   const [best, setBest] = useState(0)
@@ -296,7 +382,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
 
   const playRef = useRef<HTMLDivElement>(null)
   const cascadeRef = useRef<HTMLCanvasElement>(null)
-  const newWrapRef = useRef<HTMLSpanElement>(null)
+  const newMenuRef = useRef<HTMLSpanElement>(null)
   const gameRef = useRef<SolitaireState | null>(null)
   const pendingRef = useRef<DragState | null>(null)
   const historyRef = useRef<SolitaireState[]>([])
@@ -307,7 +393,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
   const suppressClickRef = useRef(false)
   const announceTimer = useRef<number | null>(null)
 
-  const k = useCanvasScale(cascadeRef, 536)
+  const k = useCanvasScale(cascadeRef, L.w)
 
   useEffect(() => {
     const saved = readJson('solitaire-save')
@@ -494,14 +580,14 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
   }, [game, best, bestTime])
 
   useEffect(() => {
-    if (!showNew) return
+    if (!showNew || L.portrait) return
     const onPointer = (e: PointerEvent) => {
-      const wrap = newWrapRef.current
+      const wrap = newMenuRef.current
       if (wrap && !wrap.contains(e.target as Node)) setShowNew(false)
     }
     window.addEventListener('pointerdown', onPointer)
     return () => window.removeEventListener('pointerdown', onPointer)
-  }, [showNew])
+  }, [showNew, L.portrait])
 
   // The bouncing-cards cascade: one card at a time, Kings first, never clearing the canvas.
   useEffect(() => {
@@ -513,15 +599,15 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     const g = gameRef.current
     if (!g) return
 
-    canvas.width = 536 * k
-    canvas.height = 280 * k
+    canvas.width = L.w * k
+    canvas.height = L.playH * k
     ctx.setTransform(k, 0, 0, k, 0, 0)
 
     const queue: { card: Card; x: number }[] = []
     for (let rank = 13; rank >= 1; rank--) {
       for (let f = 0; f < 4; f++) {
         const card = g.foundations[f]?.[rank - 1]
-        if (card) queue.push({ card, x: FOUND_X(f) })
+        if (card) queue.push({ card, x: L.foundX(f) })
       }
     }
 
@@ -531,11 +617,11 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     const launch = (): boolean => {
       const next = queue.shift()
       if (!next) return false
-      const dir = next.x <= 536 / 2 ? 1 : -1
+      const dir = next.x <= L.w / 2 ? 1 : -1
       current = {
         card: next.card,
         x: next.x,
-        y: TOP_Y,
+        y: L.topY,
         vx: dir * (2 + Math.random() * 3),
         vy: -(3 + Math.random() * 3),
       }
@@ -554,16 +640,16 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
       c.vy += 0.35
       c.x += c.vx
       c.y += c.vy
-      if (c.y >= FLOOR_Y) {
-        c.y = FLOOR_Y
+      if (c.y >= L.floorY) {
+        c.y = L.floorY
         c.vy = -Math.abs(c.vy) * 0.72
       }
-      if (c.x < -CARD_W || c.x > 536) {
+      if (c.x < -L.cardW || c.x > L.w) {
         current = null
         raf = requestAnimationFrame(step)
         return
       }
-      ctx.drawImage(cardCanvas(c.card), Math.round(c.x), Math.round(c.y))
+      ctx.drawImage(cardCanvas(c.card), Math.round(c.x), Math.round(c.y), L.cardW, L.cardH)
       raf = requestAnimationFrame(step)
     }
     raf = requestAnimationFrame(step)
@@ -577,7 +663,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
       window.removeEventListener('pointerdown', onPointer)
       window.removeEventListener('keydown', onKey)
     }
-  }, [winPhase, k])
+  }, [winPhase, k, L])
 
   const toLocal = useCallback((e: { clientX: number; clientY: number }) => {
     const el = playRef.current
@@ -587,18 +673,39 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     return { x: (e.clientX - r.left) / s, y: (e.clientY - r.top) / s }
   }, [])
 
-  const findDropTarget = useCallback((g: SolitaireState, cx: number, cy: number): Loc | null => {
-    for (let f = 0; f < 4; f++) {
-      const x = FOUND_X(f)
-      if (cx >= x - 5 && cx <= x + 50 && cy >= TOP_Y && cy <= TOP_Y + CARD_H + 20) return { pile: 'foundation', index: f }
-    }
-    for (let i = 0; i < 7; i++) {
-      const x = COL_X(i)
-      const bottom = tableauPileBottom(g.tableau[i])
-      if (cx >= x - 5 && cx <= x + 50 && cy >= TABLEAU_Y && cy <= bottom + 20) return { pile: 'tableau', index: i, card: 0 }
-    }
-    return null
-  }, [])
+  const findDropTarget = useCallback(
+    (g: SolitaireState, cx: number, cy: number): Loc | null => {
+      for (let f = 0; f < 4; f++) {
+        const x = L.foundX(f)
+        if (cx >= x - 5 && cx <= x + L.cardW + 5 && cy >= L.topY && cy <= L.topY + L.cardH + 20) return { pile: 'foundation', index: f }
+      }
+      for (let i = 0; i < 7; i++) {
+        const x = L.colX(i)
+        const bottom = tableauPileBottom(L, g.tableau[i])
+        if (cx >= x - 5 && cx <= x + L.cardW + 5 && cy >= L.tableauY && cy <= bottom + 20) return { pile: 'tableau', index: i, card: 0 }
+      }
+      return null
+    },
+    [L],
+  )
+
+  const playBestMove = useCallback(
+    (g: SolitaireState, from: Loc) => {
+      setSelected(null)
+      const target = bestMove(g, from)
+      if (!target) {
+        tone('invalid')
+        announceMsg(labels.illegal)
+        return
+      }
+      const next = move(g, from, target)
+      if (next) {
+        apply(g, next)
+        tone('place')
+      }
+    },
+    [apply, tone, announceMsg, labels.illegal],
+  )
 
   const handleCardPointerDown = (e: React.PointerEvent<HTMLButtonElement>, loc: Loc) => {
     if (dealAnimRef.current || winPhaseRef.current !== null) return
@@ -607,7 +714,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     if (e.pointerType === 'mouse' && e.button !== 0) return
     const run = runFor(g, loc)
     if (run.length === 0) return
-    const slot = computeSlots(g, dealAnimRef.current).get(cardId(run[0]))
+    const slot = computeSlots(g, dealAnimRef.current, L).get(cardId(run[0]))
     if (!slot) return
     suppressClickRef.current = false
     const { x, y } = toLocal(e)
@@ -630,7 +737,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     if (!p || e.pointerId !== p.pointerId) return
     const { x, y } = toLocal(e)
     if (!p.active) {
-      if (Math.hypot(x - p.start.x, y - p.start.y) < 3) return
+      if (Math.hypot(x - p.start.x, y - p.start.y) < TAP_DIST) return
       setSelected(null)
       const next = { ...p, active: true, pointer: { x, y } }
       pendingRef.current = next
@@ -647,14 +754,18 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     if (!p || e.pointerId !== p.pointerId) return
     pendingRef.current = null
     setPending(null)
-    if (!p.active) return
     suppressClickRef.current = true
     const g = gameRef.current
     if (!g) return
+    if (!p.active) {
+      const { x, y } = toLocal(e)
+      if (Math.hypot(x - p.start.x, y - p.start.y) < TAP_DIST) playBestMove(g, p.from)
+      return
+    }
     const topIdx = p.cards.length - 1
     const topX = p.pointer.x - p.offset.x
-    const topY = p.pointer.y - p.offset.y - DRAG_LIFT + topIdx * DRAG_RUN_STEP
-    const target = findDropTarget(g, topX + CARD_W / 2, topY + CARD_H / 2)
+    const topY = p.pointer.y - p.offset.y - L.dragLift + topIdx * L.dragRunStep
+    const target = findDropTarget(g, topX + L.cardW / 2, topY + L.cardH / 2)
     if (target && canMove(g, p.from, target)) {
       const next = move(g, p.from, target)
       if (next) {
@@ -667,8 +778,15 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     announceMsg(labels.illegal)
   }
 
-  const handleCardClick = (loc: Loc) => {
-    if (suppressClickRef.current) {
+  const handleCardPointerCancel = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const p = pendingRef.current
+    if (!p || e.pointerId !== p.pointerId) return
+    pendingRef.current = null
+    setPending(null)
+  }
+
+  const handleCardClick = (e: React.MouseEvent<HTMLButtonElement>, loc: Loc) => {
+    if (e.detail > 0) {
       suppressClickRef.current = false
       return
     }
@@ -690,21 +808,6 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
       return
     }
     setSelected(loc)
-  }
-
-  const handleCardDouble = (loc: Loc) => {
-    if (dealAnimRef.current || winPhaseRef.current !== null) return
-    const g = gameRef.current
-    if (!g || g.won) return
-    const target = autoTarget(g, loc)
-    if (target) {
-      const next = move(g, loc, target)
-      if (next) {
-        apply(g, next)
-        tone('place')
-      }
-    }
-    setSelected(null)
   }
 
   const handleStockClick = () => {
@@ -777,7 +880,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
 
   const layout = useMemo(() => {
     if (!game) return null
-    const slots = computeSlots(game, dealAnim)
+    const slots = computeSlots(game, dealAnim, L)
     const locs = new Map<string, Loc>()
     if (game.waste.length > 0) {
       const card = game.waste[game.waste.length - 1]
@@ -792,7 +895,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     // Render bottom-to-top so DOM order alone stacks the piles correctly.
     const order = ALL_CARDS.slice().sort((a, b) => (slots.get(cardId(a))?.z ?? 0) - (slots.get(cardId(b))?.z ?? 0))
     return { slots, locs, order }
-  }, [game, dealAnim])
+  }, [game, dealAnim, L])
 
   const selectedIds = useMemo(() => {
     const set = new Set<string>()
@@ -808,7 +911,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     if (idx < 0) return null
     return {
       x: pending.pointer.x - pending.offset.x,
-      y: pending.pointer.y - pending.offset.y - DRAG_LIFT + idx * DRAG_RUN_STEP,
+      y: pending.pointer.y - pending.offset.y - L.dragLift + idx * L.dragRunStep,
       z: 19,
     }
   }
@@ -824,7 +927,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
   const slotButtonStyle = { padding: 0, border: 'none', background: 'transparent' } as const
 
   return (
-    <ArcadeFrame fs={fs} background={ARCADE.felt}>
+    <ArcadeFrame fs={fs} background={ARCADE.felt} portrait>
       <ArcadeStrip
         time={time}
         fs={fs}
@@ -833,7 +936,29 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
         backLabel={backLabel}
         onDesktop={onDesktop}
         onBack={onBack}
-      />
+      >
+        {L.portrait && (
+          <>
+            <ArcadeButton size="xl" tone="dark" pressed={game?.drawCount === 1} onClick={() => startNew(1)} ariaLabel={labels.drawOne}>
+              {labels.drawOne}
+            </ArcadeButton>
+            <ArcadeButton size="xl" tone="dark" pressed={game?.drawCount === 3} onClick={() => startNew(3)} ariaLabel={labels.drawThree}>
+              {labels.drawThree}
+            </ArcadeButton>
+            <ArcadeButton size="xl" tone="dark" disabled={!canUndo} onClick={undo} ariaLabel={labels.undo}>
+              {labels.undo}
+            </ArcadeButton>
+            {game && canAutoFinish(game) && !game.won && (
+              <ArcadeButton size="xl" tone="dark" onClick={startAutoFinish} ariaLabel={labels.auto}>
+                {labels.auto}
+              </ArcadeButton>
+            )}
+            <ArcadeButton size="xl" tone="dark" onClick={() => setShowNew((s) => !s)} ariaLabel={labels.newGame}>
+              {labels.newGame}
+            </ArcadeButton>
+          </>
+        )}
+      </ArcadeStrip>
       <div
         ref={playRef}
         role="group"
@@ -854,26 +979,32 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
       >
         {game && layout && (
           <>
+            {L.portrait && (
+              <div aria-hidden className="absolute pointer-events-none" style={{ left: L.colX(2), top: L.topY, width: L.cardW, height: L.cardH }}>
+                <EmptySlot width={L.cardW} height={L.cardH} />
+              </div>
+            )}
+
             {/* Stock: draws, or recycles once the waste can come back. */}
             <button
               type="button"
               className={slotButtonClass}
-              style={{ left: COL_X(0), top: TOP_Y, width: CARD_W, height: CARD_H, ...slotButtonStyle }}
+              style={{ left: L.colX(0), top: L.topY, width: L.cardW, height: L.cardH, ...slotButtonStyle }}
               onClick={handleStockClick}
               aria-label={game.stock.length === 0 && game.waste.length > 0 ? labels.recycle : labels.stock}
             >
-              {game.stock.length === 0 && <EmptySlot recycle={game.waste.length > 0} />}
+              {game.stock.length === 0 && <EmptySlot recycle={game.waste.length > 0} width={L.cardW} height={L.cardH} />}
             </button>
 
             {/* Waste: only its top card is playable. */}
             <button
               type="button"
               className={slotButtonClass}
-              style={{ left: COL_X(1), top: TOP_Y, width: CARD_W, height: CARD_H, ...slotButtonStyle }}
+              style={{ left: L.colX(1), top: L.topY, width: L.cardW, height: L.cardH, ...slotButtonStyle }}
               onClick={() => setSelected(null)}
               aria-label={labels.waste}
             >
-              {game.waste.length === 0 && <EmptySlot />}
+              {game.waste.length === 0 && <EmptySlot width={L.cardW} height={L.cardH} />}
             </button>
 
             {game.foundations.map((pile, f) => (
@@ -881,26 +1012,26 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
                 key={`foundation-${f}`}
                 type="button"
                 className={slotButtonClass}
-                style={{ left: FOUND_X(f), top: TOP_Y, width: CARD_W, height: CARD_H, ...slotButtonStyle }}
+                style={{ left: L.foundX(f), top: L.topY, width: L.cardW, height: L.cardH, ...slotButtonStyle }}
                 onClick={() => handlePileClick({ pile: 'foundation', index: f })}
                 aria-label={labels.foundation.replace('{n}', String(f + 1))}
               >
-                {pile.length === 0 && <EmptySlot glyph />}
+                {pile.length === 0 && <EmptySlot glyph width={L.cardW} height={L.cardH} />}
               </button>
             ))}
 
             {game.tableau.map((pile, i) => {
-              const bottom = tableauPileBottom(pile)
+              const bottom = tableauPileBottom(L, pile)
               return (
                 <button
                   key={`tableau-${i}`}
                   type="button"
                   className={slotButtonClass}
-                  style={{ left: COL_X(i), top: TABLEAU_Y, width: CARD_W, height: bottom + 20 - TABLEAU_Y, ...slotButtonStyle }}
+                  style={{ left: L.colX(i), top: L.tableauY, width: L.cardW, height: bottom + 20 - L.tableauY, ...slotButtonStyle }}
                   onClick={() => handlePileClick({ pile: 'tableau', index: i, card: 0 })}
                   aria-label={labels.tableau.replace('{n}', String(i + 1))}
                 >
-                  {pile.up.length === 0 && pile.down.length === 0 && <EmptySlot />}
+                  {pile.up.length === 0 && pile.down.length === 0 && <EmptySlot width={L.cardW} height={L.cardH} />}
                 </button>
               )
             })}
@@ -916,7 +1047,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
                 <motion.div
                   key={id}
                   className={loc && slot.faceUp ? 'absolute' : 'absolute pointer-events-none'}
-                  style={{ left: 0, top: 0, width: CARD_W, height: CARD_H, zIndex: dragPos ? dragPos.z : 0 }}
+                  style={{ left: 0, top: 0, width: L.cardW, height: L.cardH, zIndex: dragPos ? dragPos.z : 0 }}
                   initial={false}
                   animate={{ x: dragPos ? dragPos.x : slot.x, y: dragPos ? dragPos.y : slot.y }}
                   transition={{ duration: dragPos || reduceMotion ? 0 : 0.16, ease: 'easeOut' }}
@@ -926,18 +1057,18 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
                       type="button"
                       aria-label={ariaLabelFor(loc, card)}
                       className="block outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#3a2820] focus-visible:outline-offset-1"
-                      style={{ padding: 0, border: 'none', background: 'transparent', display: 'block', width: CARD_W, height: CARD_H }}
+                      style={{ padding: 0, border: 'none', background: 'transparent', display: 'block', width: L.cardW, height: L.cardH, touchAction: 'none' }}
                       onPointerDown={(e) => handleCardPointerDown(e, loc)}
                       onPointerMove={handleCardPointerMove}
                       onPointerUp={handleCardPointerUp}
-                      onClick={() => handleCardClick(loc)}
-                      onDoubleClick={() => handleCardDouble(loc)}
+                      onPointerCancel={handleCardPointerCancel}
+                      onClick={(e) => handleCardClick(e, loc)}
                     >
-                      <CardSprite card={card} faceUp={slot.faceUp} alt="" ring={ring} shadow={dragPos ? 'strong' : 'normal'} instant={reduceMotion} />
+                      <CardSprite card={card} faceUp={slot.faceUp} alt="" ring={ring} shadow={dragPos ? 'strong' : 'normal'} instant={reduceMotion} scale={L.cardScale} />
                     </button>
                   ) : (
-                    <div aria-hidden className="pointer-events-none" style={{ width: CARD_W, height: CARD_H }}>
-                      <CardSprite card={card} faceUp={slot.faceUp} alt="" ring={false} shadow={dragPos ? 'strong' : 'normal'} instant={reduceMotion} />
+                    <div aria-hidden className="pointer-events-none" style={{ width: L.cardW, height: L.cardH }}>
+                      <CardSprite card={card} faceUp={slot.faceUp} alt="" ring={false} shadow={dragPos ? 'strong' : 'normal'} instant={reduceMotion} scale={L.cardScale} />
                     </div>
                   )}
                 </motion.div>
@@ -950,56 +1081,80 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
           ref={cascadeRef}
           aria-hidden
           className="pointer-events-none absolute left-0 top-0 z-10"
-          style={{ width: 536, height: 280 }}
+          style={{ width: L.w, height: L.playH }}
         />
 
         <div
-          className="absolute left-0 right-0 bottom-0 flex items-center gap-3 pl-[10px] pr-2"
+          className="absolute left-0 right-0 bottom-0 flex items-center"
           style={{
-            height: STATUS_H,
+            height: L.statusH,
             zIndex: 15,
             backgroundColor: ARCADE.feltDark,
             borderTop: `1px solid ${ARCADE.feltLine}`,
             color: ARCADE.feltText,
             ...PIXEL_FONT,
-            fontSize: 8,
+            fontSize: L.portrait ? 10 : 8,
             lineHeight: 1,
             fontVariantNumeric: 'tabular-nums',
+            gap: L.portrait ? 8 : 12,
+            padding: L.portrait ? '0 4px' : '0 8px 0 10px',
           }}
         >
           <span>{labels.score.replace('{n}', String(game?.score ?? 0))}</span>
           <span>{labels.time.replace('{t}', fmtTime(elapsed))}</span>
           <span>{labels.moves.replace('{n}', String(game?.moves ?? 0))}</span>
-          <span>{labels.draw.replace('{n}', String(game?.drawCount ?? 1))}</span>
+          {!L.portrait && <span>{labels.draw.replace('{n}', String(game?.drawCount ?? 1))}</span>}
           {best > 0 && <span>{labels.best.replace('{n}', best.toLocaleString('en-US'))}</span>}
-          <span className="ml-auto flex items-center gap-1.5">
-            <ArcadeButton size="sm" tone="dark" disabled={!canUndo} onClick={undo} ariaLabel={labels.undo}>
-              {labels.undo}
-            </ArcadeButton>
-            {game && canAutoFinish(game) && !game.won && (
-              <ArcadeButton size="sm" tone="cream" onClick={startAutoFinish} ariaLabel={labels.auto}>
-                {labels.auto}
+          {!L.portrait && (
+            <span className="ml-auto flex items-center gap-1.5">
+              <ArcadeButton size="sm" tone="dark" disabled={!canUndo} onClick={undo} ariaLabel={labels.undo}>
+                {labels.undo}
               </ArcadeButton>
-            )}
-            <span ref={newWrapRef} className="relative inline-flex">
-              <ArcadeButton size="sm" tone="cream" onClick={() => setShowNew((s) => !s)} ariaLabel={labels.newGame} title={labels.newGame}>
-                {labels.newGame}
-              </ArcadeButton>
-              {showNew && (
-                <ArcadePanel className="absolute bottom-[26px] right-0 z-40 px-2 py-2" style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'stretch' }}>
-                  <div role="group" aria-label={labels.newGameMenu} style={{ display: 'contents' }}>
-                    <ArcadeButton size="sm" tone="cream" pressed={game?.drawCount === 1} onClick={() => startNew(1)}>
-                      {labels.drawOne}
-                    </ArcadeButton>
-                    <ArcadeButton size="sm" tone="cream" pressed={game?.drawCount === 3} onClick={() => startNew(3)}>
-                      {labels.drawThree}
-                    </ArcadeButton>
-                  </div>
-                </ArcadePanel>
+              {game && canAutoFinish(game) && !game.won && (
+                <ArcadeButton size="sm" tone="cream" onClick={startAutoFinish} ariaLabel={labels.auto}>
+                  {labels.auto}
+                </ArcadeButton>
               )}
+              <span ref={newMenuRef} className="relative inline-flex">
+                <ArcadeButton size="sm" tone="cream" onClick={() => setShowNew((s) => !s)} ariaLabel={labels.newGame} title={labels.newGame}>
+                  {labels.newGame}
+                </ArcadeButton>
+                {showNew && (
+                  <ArcadePanel className="absolute bottom-[26px] right-0 z-40 px-2 py-2" style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'stretch' }}>
+                    <div role="group" aria-label={labels.newGameMenu} style={{ display: 'contents' }}>
+                      <ArcadeButton size="sm" tone="cream" pressed={game?.drawCount === 1} onClick={() => startNew(1)}>
+                        {labels.drawOne}
+                      </ArcadeButton>
+                      <ArcadeButton size="sm" tone="cream" pressed={game?.drawCount === 3} onClick={() => startNew(3)}>
+                        {labels.drawThree}
+                      </ArcadeButton>
+                    </div>
+                  </ArcadePanel>
+                )}
+              </span>
             </span>
-          </span>
+          )}
         </div>
+
+        {L.portrait && showNew && (
+          <div
+            className="absolute inset-0 z-20 flex items-center justify-center"
+            style={{ backgroundColor: 'rgba(12,8,6,0.55)' }}
+            onPointerDown={() => setShowNew(false)}
+          >
+            <div role="group" aria-label={labels.newGameMenu} onPointerDown={(e) => e.stopPropagation()}>
+              <ArcadePanel className="px-6 py-5" style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'stretch' }}>
+                <p style={{ fontSize: 12, margin: 0, textAlign: 'center' }}>{labels.newGameMenu}</p>
+                <ArcadeButton size="xl" tone="cream" pressed={game?.drawCount === 1} onClick={() => startNew(1)}>
+                  {labels.drawOne}
+                </ArcadeButton>
+                <ArcadeButton size="xl" tone="cream" pressed={game?.drawCount === 3} onClick={() => startNew(3)}>
+                  {labels.drawThree}
+                </ArcadeButton>
+              </ArcadePanel>
+            </div>
+          </div>
+        )}
 
         {winPhase === 'panel' && winStats && (
           <ArcadeOverlay>
@@ -1008,10 +1163,10 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
               style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}
             >
               <p style={{ fontSize: 12, margin: 0 }}>{labels.winTitle}</p>
-              <p style={{ fontSize: 9, margin: 0 }}>{labels.winScore.replace('{n}', winStats.score.toLocaleString('en-US'))}</p>
-              <p style={{ fontSize: 9, margin: 0 }}>{labels.winTime.replace('{t}', fmtTime(winStats.time))}</p>
-              <p style={{ fontSize: 9, margin: 0 }}>{labels.winMoves.replace('{n}', String(winStats.moves))}</p>
-              <ArcadeButton size="md" tone="cream" onClick={() => startNew(game?.drawCount ?? 1)} className="mt-1">
+              <p style={{ fontSize: L.portrait ? 10 : 9, margin: 0 }}>{labels.winScore.replace('{n}', winStats.score.toLocaleString('en-US'))}</p>
+              <p style={{ fontSize: L.portrait ? 10 : 9, margin: 0 }}>{labels.winTime.replace('{t}', fmtTime(winStats.time))}</p>
+              <p style={{ fontSize: L.portrait ? 10 : 9, margin: 0 }}>{labels.winMoves.replace('{n}', String(winStats.moves))}</p>
+              <ArcadeButton size={L.portrait ? 'xl' : 'md'} tone="cream" onClick={() => startNew(game?.drawCount ?? 1)} className="mt-1">
                 {labels.playAgain}
               </ArcadeButton>
             </ArcadePanel>

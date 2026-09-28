@@ -77,13 +77,15 @@ const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(ma
 
 /** Mobile desk layout: scale the stage so the whole monitor screen fits the
  *  viewport with a small margin, then centre the screen area in view. The desk
- *  art around it stays pannable within the stage edges. */
+ *  art around it stays pannable within the stage edges. The fixed music player
+ *  runs along the bottom, so the screen fits (and centres) in the space above
+ *  it; that only bites on landscape phones, where the height is the limit. */
 function mobileDeskLayout(vw: number, vh: number) {
-  const s = Math.max(0.2, Math.min((vw - 12) / SCREEN_W, (vh - 12) / SCREEN_H))
+  const s = Math.max(0.2, Math.min((vw - 12) / SCREEN_W, (vh - MUSIC_BAR_H - 12) / SCREEN_H))
   const slackX = Math.abs(STAGE_W * s - vw) / 2
   const slackY = Math.abs(STAGE_H * s - vh) / 2
   const cx = -(SCREEN_CX - STAGE_W / 2) * s
-  const cy = -(SCREEN_CY - STAGE_H / 2) * s
+  const cy = -(SCREEN_CY - STAGE_H / 2) * s - MUSIC_BAR_H / 2
   return {
     scale: s,
     pan: { x: clamp(cx, -slackX, slackX), y: clamp(cy, -slackY, slackY) },

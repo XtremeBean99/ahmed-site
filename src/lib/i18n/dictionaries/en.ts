@@ -1385,7 +1385,7 @@ export const en = {
       best: 'Best {n}',
       score: 'Score {n}',
       hint: 'Mouse or Left/Right  Space launches  P pauses',
-      hintTouch: 'Drag to move  Tap to launch',
+      hintTouch: 'Drag anywhere to move the paddle',
       pause: 'Pause',
       paused: 'Paused',
       resume: 'Resume',

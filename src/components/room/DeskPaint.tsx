@@ -2,6 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { lineCells } from '@/lib/room/gestures'
 import { ScreenStrip, StripButton, useDeskScreen } from './ScreenStrip'
 import { ArcadeButton, ArcadeFrame, useFullscreen } from './DeskArcade'
 
@@ -171,10 +172,14 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
     return { x, y }
   }
 
-  const applyAt = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  // A stroke joins each pointer sample to the last one, so fast moves (a finger) leave no gaps.
+  const lastCell = useRef<{ x: number; y: number } | null>(null)
+  const applyAt = (e: React.PointerEvent<HTMLCanvasElement>, fresh = false) => {
     const { x, y } = cellFromEvent(e)
-    if (tool === 'fill') flood(x, y, colorIdx)
-    else setCell(x, y, tool === 'eraser' ? BLANK : colorIdx)
+    if (tool === 'fill') { flood(x, y, colorIdx); return }
+    const from = fresh || !lastCell.current ? { x, y } : lastCell.current
+    for (const p of lineCells(from.x, from.y, x, y)) setCell(p.x, p.y, tool === 'eraser' ? BLANK : colorIdx)
+    lastCell.current = { x, y }
   }
 
   const clearAll = () => {
@@ -232,7 +237,7 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
             style={{ width: canvasW, height: canvasH, imageRendering: 'pixelated', touchAction: 'none', cursor: 'crosshair' }}
             onPointerDown={(e) => {
               e.currentTarget.setPointerCapture(e.pointerId)
-              applyAt(e)
+              applyAt(e, true)
             }}
             onPointerMove={(e) => {
               if (e.buttons & 1 && tool !== 'fill') applyAt(e)
@@ -364,7 +369,7 @@ export function DeskPaint({ time, backLabel, desktopLabel, labels, onBack, onDes
               style={{ imageRendering: 'pixelated', touchAction: 'none', cursor: 'crosshair' }}
               onPointerDown={(e) => {
                 e.currentTarget.setPointerCapture(e.pointerId)
-                applyAt(e)
+                applyAt(e, true)
               }}
               onPointerMove={(e) => {
                 if (e.buttons & 1 && tool !== 'fill') applyAt(e)

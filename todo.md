@@ -796,3 +796,31 @@ verification; ask the owner before merging into `master` (a push deploys).
 - Wave 1 launched (MOB1 desktop and text apps, MOB2 Snake/Minesweeper/Paint, MOB4 Solitaire, MOB7 room); MOB7
   also owns `Monitor.tsx`, `RoomSpeakers.tsx` and `SideTableClock.tsx` for tap tooltips; MOB5 also owns
   `pong-engine.ts` (a `rightTarget` input for two-player touch). Wave 2 waits for memory (15 GB, 2.4 GB free).
+- Three of four wave 1 builders died on DeepSeek "Request timed out" (the deepcode-cli OpenAI client: 10 min per
+  request, 2 retries). `run.ps1` now retries up to 5 times with a fresh session and a resume note (partial work stays
+  in the worktree); every later run finished on its first attempt.
+- Visual checks now use a headless Edge driven over the DevTools protocol (a scratchpad script): exact viewports,
+  touch emulation, taps and swipes, and a real mouse for the desktop regression. The browser pane cannot emulate a
+  fine pointer and freezes animation frames while hidden.
+- MOB2 merged (Snake, Minesweeper, Paint). Review fixes: the D-pad shrinks to 40 px before Snake's board drops under
+  13 px cells on short phones (it was 10 px at h 440); swipes chain turns and a finger lifted after a swipe no
+  longer restarts; the portrait Minesweeper result was screen-reader-only; the D-pad arrows got matching heads;
+  Paint strokes join their pointer samples (`lineCells`, tested) because finger strokes left dotted gaps.
+- MOB4 merged (Solitaire portrait, tap-to-move replacing double-click). MOB1 merged (desktop grid, text apps,
+  terminal); review fixes: a focus outline the builder added to the terminal input would have shown on desktop;
+  portrait icon labels did not share a line; the Movie seek bar pushed the full-screen button off the screen (the
+  picture and controls are now centred in black).
+- MOB8 merged (Web Audio effects, 128x128 covers: 2.6 MB to 133 kB). Review fix: the builder unlocked the context
+  on a touch `pointerdown`, which is not a user activation, so phones would have stayed silent; it now listens to
+  pointerup, touchend, click and keydown until the context runs, and `play()` resumes it.
+- MOB7 merged (room on phones). Found in the browser: the room opens on the desk, where the monitor and speakers
+  fill most of the view, and a drag that started on any object was ignored, so the room barely panned. Drags now
+  start anywhere, become a pan past 8 px and swallow the object's click.
+- MOB5 merged (Pong vertical in portrait, touch in both orientations). Review fix: the portrait scores sat in the
+  CPU paddle's band; they now flank the net.
+- Landscape phones: the fixed music player covered the open app on an 844x390 phone; the mobile desk now fits the
+  screen above it. A paused Snake survives 844x390 -> 390x844 -> 844x390.
+- Desktop regression (headless Edge, mouse, 1408x768, SSIM against the live site): the app area is identical
+  (1.000000) for README, the desktop grid, Minesweeper, Paint, Pong, Settings and Legal; the others differ only by
+  random content (Snake's apple, the deal, the current track, live guestbook entries, the film's loaded frame);
+  the room 0.9987 (clock and animations).

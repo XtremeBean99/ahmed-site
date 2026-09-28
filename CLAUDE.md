@@ -19,10 +19,10 @@ The conventional site pages (`/home`, `/games`, `/projects`, `/tutoring`, `/lega
 retired in Spec 1 (July 2026) and 301-redirect to `/`. Their source code is archived under
 `_archive/` — not part of the build, recoverable via `git mv`.
 
-## Current State (26 September 2026)
+## Current State (28 September 2026)
 
-Latest: Pixel Catan v3 overhaul, playable on phones and tablets (v21 below; details in the Pixel Catan section).
-Before that: one consistent desk chrome, fullscreen with a music bar, Blackjack tutorial, reactive keyboard (v20).
+Latest: the room and desk are portrait-native and touch-first on phones (v22 below; the contract every desk app
+follows is in "Phones" under the Room section). Before that: Pixel Catan v3 (v21) and one desk chrome (v20).
 
 
 Pixel OS v1 desk launcher (Home/Paint/Minesweeper icons with bubble tooltips; Paint app
@@ -205,6 +205,38 @@ y 572–635 via rAF + lerp writing transforms directly (never React state per po
 rest point (1007,608); static on touch/reduced-motion. Idle screensaver after 15 s.
 Mouse jitter triggers on any click outside the screen area.
 
+### Phones (portrait screen, touch) — the contract every desk app follows
+- **Modes.** `isPortraitPhone(vw, vh, mobile)` (`src/lib/room/desk-screen.ts`): a mobile viewport (no fine pointer,
+  or under 700 px) in portrait where the 536x308 screen would render below 0.9x. Those phones get a **portrait
+  screen**: 320 logical px wide and `h` tall (440 to about 700), scaled as one unit by about 1.06-1.28x inside a
+  pixel bezel sampled from the monitor art (`PortraitBezel`, 10/12/26 px sides/top/chin, green LED) with a 56 px
+  music bar underneath (`NowPlaying embedded`; Room skips its fixed player then). Everything else (desktops,
+  tablets, landscape phones) keeps the scaled desk; on mobile the desk fits the screen above the fixed player.
+- **Context.** `useDeskScreen()` (from `ScreenStrip.tsx`) gives `{ w, h, portrait }`: `{536, 308, false}` on the
+  desk. Lay out in logical px from it; never store layout-derived coordinates in state.
+- **Rotation keeps state.** DeskView keeps one element tree (desk art and bezel are conditional siblings of the
+  screen element), so a phone rotating mid-game only re-lays the app out. Keep your root (`ArcadeFrame` for games)
+  the same in both layouts, branch inside it, and never `key` on `portrait`.
+- **ArcadeFrame `portrait` prop.** Pass it once an app has a portrait layout; without it the app runs in compat
+  mode (its 536x308 layout scaled to 320 wide, with the desk screen in its context). Full screen is unsupported in
+  portrait. The frame is `select-none` with no touch callout.
+- **Strip.** In portrait `ScreenStrip` is 44 px (clock, title, Desktop, ← Room) and any children move to a second
+  44 px toolbar row (`PORTRAIT_STRIP_H`); `StripButton` becomes `xl`. `ArcadeButton size="xl"` is 38 px (about
+  44 CSS px): the portrait tap target. Minimum text 12 px (labels 10).
+- **Touch rules.** Pointer events, never mouse events; `touchAction: 'none'` on anything dragged or swiped; hover
+  only for `pointerType === 'mouse'`; `useStageScale().mobile` for landscape touch affordances. Globals: no tap
+  highlight, `touch-action: manipulation` on room buttons, no pull to refresh, 16 px text inputs on coarse
+  pointers (iOS zooms below that; the stage transform does not count). Media volume is read-only on iOS
+  (`isMediaVolumeReadOnly()`; the sliders hide there).
+- **Loading.** Every desk app but README and the desktop is a `next/dynamic` chunk prefetched on idle (not on
+  Save-Data or 2g), each wrapped in `AppBoundary` (a failed chunk shows Reload / Desktop instead of crashing).
+  `/` First Load JS went from 345 kB to 177 kB.
+- **Adding an app:** build the 536x308 layout, then a portrait layout from `useDeskScreen()` checked at h 440 and
+  640, add it to the dynamic imports and `APP_CHUNKS` in DeskView, and pass `portrait` to `ArcadeFrame`.
+- **Checking phones:** the browser pane has no fine pointer (it always runs the mobile paths) and freezes animation
+  frames while hidden; a headless Edge driven over the DevTools protocol gives exact viewports, touch emulation
+  and a real mouse (the scratch script used for v22 is described in `todo.md`).
+
 ### Audio (`RoomAudioProvider` + `playlist.ts` + `NowPlaying` + `id3.ts`)
 One context provider mounted above both views owning a single `Audio` element.
 **It must ALWAYS provide context** — gating it behind reduced motion crashed every
@@ -215,7 +247,13 @@ allows, falling back to first-gesture. Volume defaults to 0.3, adjustable via a 
 36×36 cover — external cover file first, then embedded ID3 APIC frame via `id3.ts`, then
 cassette-SVG placeholder. Title 12px, artist 10px, play/pause/skip 18px icons. All labels
 from dictionaries. `id3.ts` is a zero-dependency ID3v2 parser that fetches the first 256 KB
-of an MP3 and extracts APIC (attached picture) frames.
+of an MP3 and extracts APIC (attached picture) frames. NowPlaying renders the cover only after mount (the
+server render would otherwise preload track 0's cover) and hides its volume slider where media volume is
+read-only (iOS). Covers are 128x128 thumbnails in `public/audio/covers/` generated by `npm run covers` (ffmpeg)
+from the originals in `assets/audio-covers/`; add new covers there and rerun. **Sound effects** (`RoomSfxProvider`)
+are fetched once, decoded once and played through Web Audio (buffer source plus gain) on the shared
+AudioContext that `tone()` also uses; it is unlocked on the first real user activation (a touch `pointerdown` is
+not one: it listens to pointerup, touchend, click and keydown until the context runs).
 
 ### Room-view objects (`objects.ts` registry + `AnimatedSprite`)
 monitor (235,257 402×350, 4 frames: rest + 3-frame hover highlight, play-once-hold,

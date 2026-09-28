@@ -478,6 +478,22 @@ remember-summer-days ⚠ commercial. Cover: summer-days.jpg.
   room palette, contrast fixes, focus returns to the launching icon, hint pulses inside `RoomStage`,
   splash skippable (click/key, instant on reduced motion), terminal and screensaver discoveries fire.
 
+- **v22** `28-29 September 2026`: **Phones.** The room and desk are portrait-native and touch-first (the contract is
+  "Phones" above). A portrait phone gets a 320 x h screen in a monitor bezel with a music bar; every desk app has a
+  portrait layout: the desktop grid (4 columns), README, Legal, Guestbook (form above the entries, fields scrolled
+  clear of the keyboard), Settings, Music, Movie, the terminal (desktop-only by the owner, but it reflows), Snake
+  (a pixel D-pad plus swipes; the D-pad also sits beside the board on landscape touch screens), Minesweeper (a
+  Reveal/Flag toggle), Paint (strokes now join their samples), Blackjack, Solitaire (tap to move for fingers; the
+  mouse keeps click-to-select and double-click), Pong (the court turns vertical, drag your paddle, two players on
+  two halves) and Breakout (a 304x400 portrait court carried in the engine state). Rotating mid-game keeps state.
+  The room opens on the desk on phones, glides after a flick, answers taps with tooltips, and pans from anywhere
+  (so does the landscape desk); the e-reader turns pages by swipe. Loading: apps are code-split and prefetched on
+  idle (First Load JS for `/` 345 kB to 179 kB), effects play through Web Audio (each file fetched once), covers
+  are 128x128 thumbnails (2.6 MB to 133 kB), music starts on a phone's first real tap. Desktop at 1408x768 is
+  pixel-identical to v21 (checked with SSIM against the live site). Built by eight parallel deepcode builders in
+  worktrees, reviewed by two deepcode reviews and the orchestrator; design, plan and log in `todo.md` (MOB0-MOB11).
+  Tests: `npm run test:room` (37).
+
 - **v21** `26 September 2026`: **Pixel Catan v3.** `/catan` works on desktop, tablet and phone (three layouts,
   bottom sheets, touch placement; `MobileGate` no longer blocks it) with game settings (points to win, friendly
   robber, board presets), Easy/Normal/Hard bots that trade with each other and with you, a trade panel, a results

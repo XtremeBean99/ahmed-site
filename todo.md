@@ -824,3 +824,17 @@ verification; ask the owner before merging into `master` (a push deploys).
   (1.000000) for README, the desktop grid, Minesweeper, Paint, Pong, Settings and Legal; the others differ only by
   random content (Snake's apple, the deal, the current track, live guestbook entries, the film's loaded frame);
   the room 0.9987 (clock and animations).
+- MOB6 merged (Breakout: court geometry in the engine state, a 304x400 portrait court, touch play); one copy fix
+  (the touch menu said Tap to launch twice). MOB3 merged (Blackjack: a pure tested layout, portrait table, tutorial).
+  Desktop SSIM against the live site 1.000000 for Breakout, the Blackjack tutorial and the Blackjack table.
+- MOB10 deepcode review of the merged branch: four findings, all confirmed and fixed (`e7006a2`): music never
+  auto-started on a phone's first tap (the fallback used touchstart, not a user activation, and removed its other
+  listeners after that failure; pre-existing); a mouse click in Solitaire auto-moved the card instead of selecting
+  it (desktop behaviour restored, fingers keep tap-to-move); the landscape desk ignored drags that began on the lamp
+  or speakers and let the browser claim the gesture (it now pans from anywhere with touch-action none); a
+  Minesweeper long-press left over from a cancelled touch swallowed the next tap.
+- Matrix: 390x844, 360x800, 430x932, 375x548 portrait; 844x390 landscape; 768x1024 and 1024x768 tablets (the desk at
+  1.41x and 1.89x); no sideways overflow anywhere.
+- Final checks: `npm run build` green, `/` 73.2 kB page and 179 kB First Load JS (was 240 and 345); test:room 37,
+  test:snake 9, test:games 135, test:terminal 518, test:catan 348, all passing; lint 0 errors (all 29 warnings are
+  pre-existing, in terminal-engine files this branch does not touch).

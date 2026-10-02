@@ -100,7 +100,6 @@ export function MusicNotes({ holes, startDelay = 0 }: MusicNotesProps) {
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           key={i}
-          src=""
           alt=""
           className="absolute opacity-0"
           style={{ imageRendering: 'pixelated' }}

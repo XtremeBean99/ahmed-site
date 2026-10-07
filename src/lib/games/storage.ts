@@ -79,6 +79,11 @@ export function setBestIfLower(key: string, value: number): boolean {
 export const CHESS_SAVE_KEY = 'chess-save'
 export const CHESS_STATS_KEY = 'chess-stats'
 
+/** Mahjong: the game in progress (either mode), the settings last used, and solitaire bests / the 4-player record. */
+export const MAHJONG_SAVE_KEY = 'mahjong-save'
+export const MAHJONG_PREFS_KEY = 'mahjong-prefs'
+export const MAHJONG_STATS_KEY = 'mahjong-stats'
+
 export const SCORES_KEYS = {
   breakout: 'breakout-scores',
 } as const

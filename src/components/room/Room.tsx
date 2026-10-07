@@ -48,6 +48,7 @@ import {
   ICON_PONG,
   ICON_BREAKOUT,
   ICON_CHESS,
+  ICON_MAHJONG,
   ICON_README,
   ICON_MUSIC,
   ICON_LEGAL,
@@ -559,7 +560,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
 
   const glowX = (screenCenterX / STAGE_W) * 100
   const glowY = (screenCenterY / STAGE_H) * 100
-  // A 6x3 grid on the desk (4x4 on a portrait phone): about the site, then tools and media, then the games.
+  // A 6x3 grid on the desk (4x5 on a portrait phone): about the site, then tools and media, then the games.
   const deskShortcuts: DesktopShortcut[] = [
     { id: 'readme', kind: 'app', target: 'readme', label: t.desk.readme, tooltip: t.desk.readmeTip, icon: ICON_README },
     { id: 'linkedin', kind: 'external', target: 'https://www.linkedin.com/in/ahmed-hussain-0880ba25a/', label: t.desk.linkedin, tooltip: t.desk.linkedinTip, icon: ICON_LINKEDIN, iconSize: 24 },
@@ -577,6 +578,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
     { id: 'pong', kind: 'app', target: 'pong', label: t.desk.pong, tooltip: t.desk.pongTip, icon: ICON_PONG },
     { id: 'breakout', kind: 'app', target: 'breakout', label: t.desk.breakout, tooltip: t.desk.breakoutTip, icon: ICON_BREAKOUT },
     { id: 'chess', kind: 'app', target: 'chess', label: t.desk.chess, tooltip: t.desk.chessTip, icon: ICON_CHESS },
+    { id: 'mahjong', kind: 'app', target: 'mahjong', label: t.desk.mahjong, tooltip: t.desk.mahjongTip, icon: ICON_MAHJONG },
   ]
 
   // How far the phone can pan before the stage edge hits the viewport edge.
@@ -605,6 +607,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
           pongLabels={t.desk.pongApp}
           breakoutLabels={t.desk.breakoutApp}
           chessLabels={t.desk.chessApp}
+          mahjongLabels={t.desk.mahjongApp}
           arcadeLabels={t.desk.arcade}
           musicLabels={t.desk.musicApp}
           legalLabels={t.desk.legalApp}

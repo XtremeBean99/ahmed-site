@@ -19,6 +19,7 @@ export const DISCOVERY_IDS = [
   'pong',
   'breakout',
   'chess',
+  'mahjong',
   'readme',
   'legal',
   'settings',

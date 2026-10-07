@@ -170,11 +170,12 @@ inside its own monitor iframe (recursion guard removed — `/` is accessible fro
 ### Desk view (`DeskView.tsx`)
 Close-up art (`desk-closeup.png` and `desk-closeup-lamp-off.png`, crossfaded+flickered via
 `lampOn`/`lampFlicker` props passed from Room) with a clickable lamp toggle at (8,88 160×480)
-Screen modes: `desktop | paint | minesweeper | snake | blackjack | solitaire | pong | breakout | chess |
+Screen modes: `desktop | paint | minesweeper | snake | blackjack | solitaire | pong | breakout | chess | mahjong |
 readme | music | legal | guestbook | settings | terminal | movie`. Desktop icons: LinkedIn (external),
 GitHub (external), Settings, Music, Paint, Minesweeper, Snake, Blackjack, Solitaire, Pong, Breakout, Chess,
-README, Guestbook, Movie, Legal (16: a 6-column grid in landscape, three rows so the Terminal's `~/Desktop`
-file row still fits under it; 4 columns in portrait). (Links/webring was removed
+Mahjong, README, Guestbook, Movie, Legal (17: a 6-column grid in landscape, three rows so the Terminal's `~/Desktop`
+file row still fits under it; 4 columns and five rows in portrait, where the icon box is 48 px and the row gap 4 px
+so the fifth row fits at screen heights down to about 440). (Links/webring was removed
 in v19; `terminal` stays konami-only and has no icon.)
 `terminal` (`DeskTerminal.tsx` + `TermEditor.tsx`, engine in `src/lib/terminal/`): a client-only Linux
 shell. `shell/` is an async bash interpreter (quoting, expansions, arrays, arithmetic, control flow,
@@ -208,6 +209,26 @@ history from the start, so it survives a reload), Flip, Hint (`bestMove` at leve
 Copy PGN. The CPU thinks inside a 250 ms `setTimeout` guarded by a game-id ref, so New/Undo/unmount cancel it.
 The game, settings and orientation save to `chess-save`, the win/loss/draw record against the CPU to
 `chess-stats` (both in games storage); a finished saved game reopens for review without re-counting),
+`mahjong` (`DeskMahjong.tsx` shell + `mahjong/`: `tile-art.tsx`, `Solitaire.tsx`, `FourPlayer.tsx`,
+`mahjong-store.ts`, `labels.ts`, `chrome.ts`; pure engines `mahjong-tiles.ts`, `mahjong-solitaire.ts`,
+`mahjong-engine.ts` + `mahjong-scoring.ts` + `mahjong-bot.ts`, tests via `npm run test:mahjong`). A mode picker
+(Solitaire layout Turtle/Pyramid/Fortress and a dim-blocked-tiles setting; 4-Player bots Easy/Normal/Hard, minimum
+faan 0/1/3, East round or full game, bot speed, auto-pass chow offers) plus Resume for the saved game. Tiles are
+drawn in code: DOM boxes with an ivory face, a green side (box-shadow depth) and SVG faces on a 20x28 grid (dots,
+bamboo sticks and a bird, characters with numeral + 萬, winds, dragons with a blue-frame white dragon, flowers and
+seasons), simplified below 17 px wide; CJK glyphs come from the visitor's system fonts. Solitaire scales the layout
+to fit (integer unit sizes, layers offset up-left), only free tiles respond, a hovered or selected tile is magnified
+in the side panel (HUD row in portrait), Hint flashes a pair, Undo, Shuffle (offered when stuck), a timer and best
+time per layout; keys H, U or Ctrl+Z, S, N. 4-Player is you (seat 0) against three bots under Hong Kong rules: the
+engine is stepped one action at a time on a 70-560 ms `setTimeout` guarded by a game-id ref (New/unmount cancel it);
+click a tile to select and again to discard (or the Discard button), claim prompts (Chow with each option shown,
+Pung, Kong, Win, Pass; Escape or Space passes), tsumo and kong buttons, a "Ready, waiting on" row from
+`waitingTiles`, four rivers with the last discard ringed, a log, a hand-over panel (winner, tiles, faan breakdown,
+payments) and a match summary. Keys: arrows pick a tile, Enter discards, P/C/K/W/Space for claims, Escape closes the
+hand-over panel or clears the selection before DeskView's ladder. Portrait stacks the opponents on top, the rivers
+2x2, and the hand in two rows of seven with 38 px action buttons. Storage (games storage): `mahjong-save` (the game
+in progress and its mode, validated by each engine's `validateSave`), `mahjong-prefs` (settings last used),
+`mahjong-stats` (solitaire best time and wins per layout; 4-player matches and hands won, best faan),
 `readme` (`DeskReadme.tsx`: renders `site-text.txt`), `music`
 (`DeskMusic.tsx`: playlist picker), `legal` (`DeskLegal.tsx`: privacy/terms tabs, scrollable
 legal doc). The `browser` mode was removed (Spec 1, July 2026). Escape ladder app→desktop→room.
@@ -519,6 +540,11 @@ remember-summer-days ⚠ commercial. Cover: summer-days.jpg.
   captured pieces when the screen is tall enough, a wrapping SAN list, and Undo/Flip/Hint/New in the toolbar row
   (Resign and PGN live in the New-game panel there); checked at 390x560, 390x640 and 390x844. The desktop grid
   went from 5 columns to 6 because a fourth row of icons no longer left room for the Terminal's desktop files.
+
+- **v24** `7 October 2026`: **Mahjong** added as a desk app (see the `mahjong` paragraph under Desk view): Solitaire
+  (three layouts) and 4-player Hong Kong against three bots, a seventeenth icon (`ICON_MAHJONG`), `mahjong` discovery
+  (the badge is now completable at 28), `desk.mahjong`/`mahjongTip`/`mahjongApp` copy, `MAHJONG_*_KEY` storage keys,
+  `npm run test:mahjong` (62). The portrait desktop grid now has five rows, so its icons shrank from 56 to 48 px.
 
 - **v21** `26 September 2026`: **Pixel Catan v3.** `/catan` works on desktop, tablet and phone (three layouts,
   bottom sheets, touch placement; `MobileGate` no longer blocks it) with game settings (points to win, friendly

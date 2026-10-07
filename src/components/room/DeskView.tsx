@@ -18,6 +18,7 @@ import type { SolitaireLabels } from './DeskSolitaire'
 import type { PongLabels } from './DeskPong'
 import type { BreakoutLabels } from './DeskBreakout'
 import type { ChessLabels } from './DeskChess'
+import type { MahjongLabels } from './DeskMahjong'
 import type { ArcadeLabels } from './DeskArcade'
 import { DeskReadme } from './DeskReadme'
 import type { LegalLabels } from './DeskLegal'
@@ -41,6 +42,7 @@ const DeskSolitaire = dynamic(() => import('./DeskSolitaire').then((m) => m.Desk
 const DeskPong = dynamic(() => import('./DeskPong').then((m) => m.DeskPong), { ssr: false, loading: AppLoading })
 const DeskBreakout = dynamic(() => import('./DeskBreakout').then((m) => m.DeskBreakout), { ssr: false, loading: AppLoading })
 const DeskChess = dynamic(() => import('./DeskChess').then((m) => m.DeskChess), { ssr: false, loading: AppLoading })
+const DeskMahjong = dynamic(() => import('./DeskMahjong').then((m) => m.DeskMahjong), { ssr: false, loading: AppLoading })
 const DeskMusic = dynamic(() => import('./DeskMusic').then((m) => m.DeskMusic), { ssr: false, loading: AppLoading })
 const DeskLegal = dynamic(() => import('./DeskLegal').then((m) => m.DeskLegal), { ssr: false, loading: AppLoading })
 const DeskSettings = dynamic(() => import('./DeskSettings').then((m) => m.DeskSettings), { ssr: false, loading: AppLoading })
@@ -50,7 +52,7 @@ const DeskMovie = dynamic(() => import('./DeskMovie').then((m) => m.DeskMovie), 
 const APP_CHUNKS = [
   () => import('./DeskPaint'), () => import('./DeskMinesweeper'), () => import('./DeskSnake'),
   () => import('./DeskBlackjack'), () => import('./DeskSolitaire'), () => import('./DeskPong'),
-  () => import('./DeskBreakout'), () => import('./DeskChess'), () => import('./DeskMusic'), () => import('./DeskLegal'),
+  () => import('./DeskBreakout'), () => import('./DeskChess'), () => import('./DeskMahjong'), () => import('./DeskMusic'), () => import('./DeskLegal'),
   () => import('./DeskSettings'), () => import('./DeskTerminal'), () => import('./DeskGuestbook'),
   () => import('./DeskMovie'),
 ]
@@ -94,7 +96,7 @@ function mobileDeskLayout(vw: number, vh: number) {
     slack: { x: slackX, y: slackY },
   }
 }
-type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'snake' | 'blackjack' | 'solitaire' | 'pong' | 'breakout' | 'chess' | 'readme' | 'music' | 'legal' | 'guestbook' | 'settings' | 'terminal' | 'movie'
+type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'snake' | 'blackjack' | 'solitaire' | 'pong' | 'breakout' | 'chess' | 'mahjong' | 'readme' | 'music' | 'legal' | 'guestbook' | 'settings' | 'terminal' | 'movie'
 
 interface DeskViewProps {
   shortcuts: DesktopShortcut[]
@@ -114,6 +116,7 @@ interface DeskViewProps {
   pongLabels: PongLabels
   breakoutLabels: BreakoutLabels
   chessLabels: ChessLabels
+  mahjongLabels: MahjongLabels
   /** Shared by the arcade apps: full-screen button and card names */
   arcadeLabels: ArcadeLabels
   /** Labels for the readme popup */
@@ -168,7 +171,7 @@ const SAFE_PADDING = 'env(safe-area-inset-top) env(safe-area-inset-right) env(sa
 const PORTRAIT_STAGE: React.CSSProperties = { position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', transform: 'none' }
 
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, clickAgainLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, chessLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack, nowPlayingLabels } = props
+  const { shortcuts, backLabel, clickAgainLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, chessLabels, mahjongLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack, nowPlayingLabels } = props
   const { scale, mobile, portrait } = useStageScale()
   const t = useT().desk
   const reduce = useReducedMotion()
@@ -697,6 +700,16 @@ export function DeskView(props: DeskViewProps) {
                 transition={{ duration: reduce ? 0 : 0.2 }}>
                 {boundary(<DeskChess time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={chessLabels} arcade={arcadeLabels} onDesktop={goDesktop}
+                  onBack={backToRoom} />)}
+              </motion.div>
+            )}
+
+            {screenMode === 'mahjong' && (
+              <motion.div key="mahjong" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                {boundary(<DeskMahjong time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                  labels={mahjongLabels} arcade={arcadeLabels} onDesktop={goDesktop}
                   onBack={backToRoom} />)}
               </motion.div>
             )}

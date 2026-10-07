@@ -19,7 +19,7 @@ interface DeskIconProps {
 export function DeskIcon({ label, tooltip, href, icon, iconSize = 32, portraitSize, onClick, autoFocus }: DeskIconProps) {
   const tipId = useId()
   const { portrait } = useDeskScreen()
-  const renderSize = portrait ? (portraitSize ?? Math.min(Math.round(iconSize * 1.5), 56)) : iconSize
+  const renderSize = portrait ? (portraitSize ?? Math.min(Math.round(iconSize * 1.5), 48)) : iconSize
   const [showTooltip, setShowTooltip] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
@@ -65,7 +65,7 @@ export function DeskIcon({ label, tooltip, href, icon, iconSize = 32, portraitSi
       <div
         className={`flex items-center justify-center group-hover:-translate-y-px transition-transform duration-100 ${portrait ? '' : 'w-10 h-10'}`}
         // A fixed box, like the desk's 40px one, so every label sits on the same line.
-        style={portrait ? { width: 56, height: 56 } : undefined}
+        style={portrait ? { width: 48, height: 48 } : undefined}
       >
         <svg width={renderSize} height={renderSize} viewBox="0 0 16 16" fill="none" shapeRendering="crispEdges" aria-hidden="true">
           {icon}
@@ -316,6 +316,25 @@ export const ICON_CHESS = pixels([
   '..oooooooooooo..',
   '................',
 ], { ...ARCADE_ICON_PALETTE, B: '#8a5a3a' })
+
+export const ICON_MAHJONG = pixels([
+  '................',
+  '..oooooooooooo..',
+  '.oCCCCCRRCCCCCo.',
+  '.oCCRRRRRRRRCCo.',
+  '.oCCRCCRRCCRCCo.',
+  '.oCCRCCRRCCRCCo.',
+  '.oCCRRRRRRRRCCo.',
+  '.oCCCCCRRCCCCCo.',
+  '.oCCCCCRRCCCCCo.',
+  '.oCCCCCCCCCCCCo.',
+  '.oGGGGGGGGGGGGo.',
+  '.oGGGGGGGGGGGGo.',
+  '..oooooooooooo..',
+  '................',
+  '................',
+  '................',
+], { ...ARCADE_ICON_PALETTE, C: '#f4ecd0', G: '#3b7a5a' })
 
 export const ICON_LINKEDIN = (
   <image href="/icons/linkedin.png" x="0" y="0" width="16" height="16" preserveAspectRatio="xMidYMid meet" />

@@ -11,6 +11,8 @@ export const SPRITE_FRAME_MS = {
   catan: 150,
   books: 120,
   vhs: 120,
+  shelfGame: 120,
+  bedsideBook: 120,
 } as const
 
 /**
@@ -224,6 +226,48 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
     href: null,
   },
 ]
+
+/**
+ * The desk games on the shelf, right of the VHS tapes. Drawn by
+ * scripts/draw-shelf-games.mjs, cropped by scripts/extract-shelf.mjs (rest +
+ * the two-step highlight, play-once-hold). Clicking one zooms to the desk and
+ * opens that app, like the VHS opens the film.
+ */
+export interface ShelfGameDef {
+  /** Desk screen mode to open; also the label key in `room.shelfGameLabels`. */
+  app: 'chess' | 'mahjong' | 'solitaire' | 'blackjack' | 'minesweeper' | 'snake' | 'pong' | 'breakout'
+  x: number
+  y: number
+  w: number
+  h: number
+  frames: string[]
+}
+
+const shelfFrames = (id: string) => [1, 2, 3].map((i) => `/room/shelf-${id}-${i}.png`)
+
+export const SHELF_GAMES: ShelfGameDef[] = [
+  { app: 'chess', x: 295, y: 204, w: 37, h: 38, frames: shelfFrames('chess') },
+  { app: 'mahjong', x: 329, y: 209, w: 46, h: 29, frames: shelfFrames('mahjong') },
+  { app: 'solitaire', x: 370, y: 193, w: 30, h: 39, frames: shelfFrames('solitaire') },
+  { app: 'blackjack', x: 396, y: 190, w: 42, h: 38, frames: shelfFrames('blackjack') },
+  { app: 'minesweeper', x: 436, y: 183, w: 38, h: 40, frames: shelfFrames('minesweeper') },
+  { app: 'snake', x: 470, y: 179, w: 24, h: 40, frames: shelfFrames('snake') },
+  { app: 'pong', x: 490, y: 180, w: 30, h: 36, frames: shelfFrames('pong') },
+  { app: 'breakout', x: 514, y: 177, w: 30, h: 36, frames: shelfFrames('breakout') },
+]
+
+/**
+ * The book in the side table's lower cubby: the guestbook. Cut out of the
+ * closed-drawer art by scripts/extract-side-table.mjs (rest + highlight), so
+ * it lifts on hover; hidden while the drawer is open, which covers it.
+ */
+export const BEDSIDE_BOOK = {
+  x: 739,
+  y: 533,
+  w: 46,
+  h: 55,
+  frames: [1, 2, 3].map((i) => `/room/bedside-book-${i}.png`),
+}
 
 /**
  * Alternate poster art shown while the poster is toggled (click to swap, click

@@ -35,6 +35,9 @@ const FILES = [
   ...range('catan', 3),
   ...range('books', 3),
   ...range('vhs', 3),
+  ...['chess', 'mahjong', 'solitaire', 'blackjack', 'minesweeper', 'snake', 'pong', 'breakout']
+    .flatMap((id) => range(`shelf-${id}`, 3)),
+  ...range('bedside-book', 3),
   'room-speakers.png',
   'room-speakers-lamp-off.png',
   ...range('coffee', 6),

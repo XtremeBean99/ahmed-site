@@ -39,6 +39,11 @@ const GROUPS = [
   { out: 'catan', sources: ['catan.png', 'catan2.png', 'catan3.png'] },
   { out: 'books', sources: ['books1.png', 'books2.png', 'books3.png'] },
   { out: 'vhs', sources: ['vhs1.png', 'vhs2.png', 'vhs3.png'] },
+  // The desk games, drawn by scripts/draw-shelf-games.mjs.
+  ...['chess', 'mahjong', 'solitaire', 'blackjack', 'minesweeper', 'snake', 'pong', 'breakout'].map((id) => ({
+    out: `shelf-${id}`,
+    sources: [`${id}.png`, `${id}2.png`, `${id}3.png`],
+  })),
 ]
 
 async function extractGroup(group) {

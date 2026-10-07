@@ -28,6 +28,11 @@ interface AnimatedSpriteProps {
    */
   altFrame?: string | null
   altActive?: boolean
+  /**
+   * Darken the art like the furniture it sits on when the lamp is off (the
+   * bedside book follows the side table). The highlight dims with it.
+   */
+  dimmed?: boolean
 }
 
 export function AnimatedSprite({
@@ -43,6 +48,7 @@ export function AnimatedSprite({
   tooltipAlign,
   altFrame = null,
   altActive = false,
+  dimmed = false,
 }: AnimatedSpriteProps) {
   const [hovered, setHovered] = useState(false)
   const lighting = useLighting()
@@ -128,7 +134,11 @@ export function AnimatedSprite({
           alt=""
           draggable={false}
           className="block w-full h-full"
-          style={{ imageRendering: 'pixelated' }}
+          style={{
+            imageRendering: 'pixelated',
+            filter: dimmed ? 'brightness(0.72)' : 'none',
+            transition: 'filter 0.4s ease',
+          }}
         />
       </motion.div>
     </RoomObject>

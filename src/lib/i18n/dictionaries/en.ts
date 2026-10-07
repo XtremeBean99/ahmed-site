@@ -447,6 +447,17 @@ export const en = {
     catanLabel: 'Longest road ever, click to play',
     booksLabel: 'Books on the shelf',
     vhsLabel: 'VHS tape, play it on the monitor',
+    shelfGameLabels: {
+      chess: 'Chess set, play on the monitor',
+      mahjong: 'Mahjong tiles, play on the monitor',
+      solitaire: 'Deck of cards, play Solitaire',
+      blackjack: 'Poker chips, play Blackjack',
+      minesweeper: 'Minesweeper floppy disk',
+      snake: 'Old phone, play Snake',
+      pong: 'Pong cartridge',
+      breakout: 'Breakout cartridge',
+    },
+    guestbookBookLabel: 'Guestbook, sign it on the monitor',
     bookLabels: {
       'moby-dick': 'Moby-Dick, Herman Melville',
       'nineteen-eighty-four': 'Nineteen Eighty-Four, George Orwell',

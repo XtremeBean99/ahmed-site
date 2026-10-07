@@ -14,6 +14,8 @@ import {
   LIGHTING_FADE_MS,
   POSTER_ALT_FRAME,
   WINDOW_GLASS,
+  SHELF_GAMES,
+  BEDSIDE_BOOK,
 } from '@/lib/room/objects'
 import { useStageScale } from '@/lib/room/useStageScale'
 import { releaseVelocity, stepMomentum } from '@/lib/room/pan'
@@ -76,6 +78,8 @@ interface RoomProps {
       catanLabel: string
       booksLabel: string
       vhsLabel: string
+      shelfGameLabels: Record<string, string>
+      guestbookBookLabel: string
       bookLabels: Record<string, string>
       reader: ReaderLabels
       lampLabel: string
@@ -530,6 +534,13 @@ export function Room({ dict, readmeContent }: RoomProps) {
     handleEnter()
   }, [discover, handleEnter, t.room.discoveryLabels.movie])
 
+  // Shelf games and the bedside guestbook: zoom to the desk and open that app.
+  // DeskView announces the open, which counts the app's discovery.
+  const openDeskApp = useCallback((app: string) => {
+    setPendingApp(app)
+    handleEnter()
+  }, [handleEnter])
+
   const monitorObj = ROOM_OBJECTS.find((o) => o.id === 'monitor')!
   const posterObj = ROOM_OBJECTS.find((o) => o.id === 'poster')!
   const saitamaObj = ROOM_OBJECTS.find((o) => o.id === 'saitama')!
@@ -859,6 +870,22 @@ export function Room({ dict, readmeContent }: RoomProps) {
             onToggle={toggleClockFormat}
           />
 
+          {/* The book in the side table's cubby is the guestbook. The open drawer covers it. */}
+          {!sideTableOpen && (
+            <AnimatedSprite
+              label={t.room.guestbookBookLabel}
+              x={BEDSIDE_BOOK.x}
+              y={BEDSIDE_BOOK.y}
+              w={BEDSIDE_BOOK.w}
+              h={BEDSIDE_BOOK.h}
+              frames={BEDSIDE_BOOK.frames}
+              frameDuration={SPRITE_FRAME_MS.bedsideBook}
+              mode="play-once-hold"
+              dimmed={!lampOn}
+              onClick={() => openDeskApp('guestbook')}
+            />
+          )}
+
           <AnimatedSprite
             label={t.room.posterLabel}
             x={posterObj.x}
@@ -941,6 +968,22 @@ export function Room({ dict, readmeContent }: RoomProps) {
             mode="play-once-hold"
             onClick={playTape}
           />
+
+          {/* Shelf games: each opens its desk app on the monitor */}
+          {SHELF_GAMES.map((game) => (
+            <AnimatedSprite
+              key={game.app}
+              label={t.room.shelfGameLabels[game.app] ?? game.app}
+              x={game.x}
+              y={game.y}
+              w={game.w}
+              h={game.h}
+              frames={game.frames}
+              frameDuration={SPRITE_FRAME_MS.shelfGame}
+              mode="play-once-hold"
+              onClick={() => openDeskApp(game.app)}
+            />
+          ))}
 
           {/* Lamp toggle hotspot */}
           <div

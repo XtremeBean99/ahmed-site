@@ -298,6 +298,25 @@ export const ICON_BREAKOUT = pixels([
   '................',
 ], ARCADE_ICON_PALETTE)
 
+export const ICON_CHESS = pixels([
+  '................',
+  '....oo..........',
+  '...owwo.........',
+  '..owwwwoo.......',
+  '.owwkwwwwo......',
+  '.owwwwwwwwo.....',
+  'owwwooowwwwo....',
+  'owwo..owwwwo....',
+  '.oo...owwwwo....',
+  '.....owwwwwo....',
+  '....owwwwwwo....',
+  '...owwwwwwwwo...',
+  '..owwwwwwwwwwo..',
+  '..oBBBBBBBBBBo..',
+  '..oooooooooooo..',
+  '................',
+], { ...ARCADE_ICON_PALETTE, B: '#8a5a3a' })
+
 export const ICON_LINKEDIN = (
   <image href="/icons/linkedin.png" x="0" y="0" width="16" height="16" preserveAspectRatio="xMidYMid meet" />
 )

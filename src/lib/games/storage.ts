@@ -75,6 +75,10 @@ export function setBestIfLower(key: string, value: number): boolean {
   }
 }
 
+/** Chess: the game in progress and its settings, and the win/loss/draw record against the CPU. */
+export const CHESS_SAVE_KEY = 'chess-save'
+export const CHESS_STATS_KEY = 'chess-stats'
+
 export const SCORES_KEYS = {
   breakout: 'breakout-scores',
 } as const

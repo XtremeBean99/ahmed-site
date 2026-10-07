@@ -63,7 +63,7 @@ export function DeskDesktop({
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#faf8f5' }}>
       <ScreenStrip time={time} backLabel={backLabel} onBack={onBack} />
       <nav aria-label={screenLabel} className="flex-1 flex items-center justify-center" style={portrait && hasFiles ? { paddingBottom: 54 } : undefined}>
-        <div className={portrait ? 'grid grid-cols-4 gap-x-[5px] gap-y-3 px-2' : 'grid grid-cols-5 gap-x-7 gap-y-4 px-4'}>
+        <div className={portrait ? 'grid grid-cols-4 gap-x-[5px] gap-y-3 px-2' : 'grid grid-cols-6 gap-x-5 gap-y-4 px-4'}>
           {shortcuts.map((s) => (
             <DeskIcon
               key={s.id}

@@ -18,6 +18,7 @@ export const DISCOVERY_IDS = [
   'solitaire',
   'pong',
   'breakout',
+  'chess',
   'readme',
   'legal',
   'settings',

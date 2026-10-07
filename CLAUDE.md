@@ -170,9 +170,11 @@ inside its own monitor iframe (recursion guard removed — `/` is accessible fro
 ### Desk view (`DeskView.tsx`)
 Close-up art (`desk-closeup.png` and `desk-closeup-lamp-off.png`, crossfaded+flickered via
 `lampOn`/`lampFlicker` props passed from Room) with a clickable lamp toggle at (8,88 160×480)
-Screen modes: `desktop | paint | minesweeper | snake | readme | music | legal | guestbook |
-settings | terminal | movie`. Desktop icons: LinkedIn (external), GitHub (external), Settings,
-Music, Paint, Minesweeper, Snake, README, Guestbook, Movie, Legal. (Links/webring was removed
+Screen modes: `desktop | paint | minesweeper | snake | blackjack | solitaire | pong | breakout | chess |
+readme | music | legal | guestbook | settings | terminal | movie`. Desktop icons: LinkedIn (external),
+GitHub (external), Settings, Music, Paint, Minesweeper, Snake, Blackjack, Solitaire, Pong, Breakout, Chess,
+README, Guestbook, Movie, Legal (16: a 6-column grid in landscape, three rows so the Terminal's `~/Desktop`
+file row still fits under it; 4 columns in portrait). (Links/webring was removed
 in v19; `terminal` stays konami-only and has no icon.)
 `terminal` (`DeskTerminal.tsx` + `TermEditor.tsx`, engine in `src/lib/terminal/`): a client-only Linux
 shell. `shell/` is an async bash interpreter (quoting, expansions, arrays, arithmetic, control flow,
@@ -194,7 +196,19 @@ padding box by the border and knock the last row and column out of step with the
 `src/lib/games/snake-engine.ts`, walls kill, arrows/WASD read from the **window** so a desk
 click cannot break the controls, Space pauses, Enter restarts, auto-pause on tab hide,
 best score in games storage; on touch screens a new game waits for the first swipe, D-pad press, board tap or
-Start, while the desk with a mouse starts at once), `readme` (`DeskReadme.tsx`: renders `site-text.txt`), `music`
+Start, while the desk with a mouse starts at once), `chess` (`DeskChess.tsx` + the pure engine in `src/lib/games/chess-engine.ts`: legal-move generation,
+SAN, FEN/PGN, draw rules, and a time-bounded alpha-beta `bestMove` at four levels, Beginner to Expert; the app
+plays the CPU as White, Black or random, or two players on one screen with optional auto-flip. The board is
+DOM squares in a `role="grid"` with pieces as run-length SVG paths built from 10x10 pixel masks (outline grown
+at build time, so any size stays crisp); click-to-move, drag-and-drop on pointer events, a roving keyboard
+cursor on the focused board (arrows, Enter/Space; Escape closes the innermost layer first, in the capture phase,
+before DeskView's app-to-desktop ladder sees it), promotion picker (also Q/R/B/N), last-move/check/selection
+tints, captured pieces with material lead, SAN move list, Undo (takes back the CPU reply too; it replays the
+history from the start, so it survives a reload), Flip, Hint (`bestMove` at level 3), Resign (two clicks) and
+Copy PGN. The CPU thinks inside a 250 ms `setTimeout` guarded by a game-id ref, so New/Undo/unmount cancel it.
+The game, settings and orientation save to `chess-save`, the win/loss/draw record against the CPU to
+`chess-stats` (both in games storage); a finished saved game reopens for review without re-counting),
+`readme` (`DeskReadme.tsx`: renders `site-text.txt`), `music`
 (`DeskMusic.tsx`: playlist picker), `legal` (`DeskLegal.tsx`: privacy/terms tabs, scrollable
 legal doc). The `browser` mode was removed (Spec 1, July 2026). Escape ladder app→desktop→room.
 Speakers (left 190,265 175×300; right 1005,270 215×300) are mute-toggle buttons with
@@ -494,6 +508,17 @@ remember-summer-days ⚠ commercial. Cover: summer-days.jpg.
   pixel-identical to v21 (checked with SSIM against the live site). Built by eight parallel deepcode builders in
   worktrees, reviewed by two deepcode reviews and the orchestrator; design, plan and log in `todo.md` (MOB0-MOB11).
   Tests: `npm run test:room` (37).
+
+- **v23** `7 October 2026`: **Chess** added as a desk app (`DeskChess.tsx`, engine `src/lib/games/chess-engine.ts`,
+  tests in `chess-engine.test.ts` via `npm run test:games`), following the Snake checklist: `chess` screen mode,
+  dynamic import and `APP_CHUNKS` entry in DeskView, `ICON_CHESS` (a pixel knight), a sixteenth desktop shortcut,
+  `chess` discovery (the badge is now completable at 27), `desk.chess`/`chessTip`/`chessApp` copy, `CHESS_SAVE_KEY`
+  and `CHESS_STATS_KEY` in games storage. Vs CPU (four levels, White/Black/random) or two players with optional
+  auto-flip; click, drag and keyboard input; promotion picker; Undo, Flip, Hint, Resign, Copy PGN; game-over
+  panel with Play again/Review; saves and resumes. Portrait: a 38 px-square board under the strip, a status row,
+  captured pieces when the screen is tall enough, a wrapping SAN list, and Undo/Flip/Hint/New in the toolbar row
+  (Resign and PGN live in the New-game panel there); checked at 390x560, 390x640 and 390x844. The desktop grid
+  went from 5 columns to 6 because a fourth row of icons no longer left room for the Terminal's desktop files.
 
 - **v21** `26 September 2026`: **Pixel Catan v3.** `/catan` works on desktop, tablet and phone (three layouts,
   bottom sheets, touch placement; `MobileGate` no longer blocks it) with game settings (points to win, friendly

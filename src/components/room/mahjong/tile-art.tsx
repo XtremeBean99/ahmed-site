@@ -5,8 +5,9 @@
  * Mahjong tiles drawn in code: an ivory face with a green side, faces as SVG on a 20x28 grid so every
  * size stays crisp (and simplified below 17 px wide). Used by both Mahjong modes.
  */
-import type { CSSProperties, ReactNode } from 'react'
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { parseTile } from '@/lib/games/mahjong-tiles'
+import { useTileTipApi } from './tip-context'
 
 const FACE = '#f6efd6'
 const FACE_HI = '#fffdf2'
@@ -16,7 +17,7 @@ const INK = '#23201c'
 const RED = '#c0392b'
 const GREEN = '#1f8a4a'
 const BLUE = '#2a5aa0'
-const CJK = '"Noto Sans CJK SC","Noto Sans SC","PingFang SC","Microsoft YaHei","Hiragino Sans GB","WenQuanYi Micro Hei","SimHei",sans-serif'
+export const CJK = '"Noto Sans CJK SC","Noto Sans SC","PingFang SC","Microsoft YaHei","Hiragino Sans GB","WenQuanYi Micro Hei","SimHei",sans-serif'
 
 const NUMERALS = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九']
 const WIND_CHARS = ['', '東', '南', '西', '北']
@@ -210,10 +211,22 @@ export interface TileViewProps {
   style?: CSSProperties
   className?: string
   title?: string
+  /** False keeps this tile out of the hover tooltips (a TileTipLayer shows them for every face otherwise). */
+  tip?: boolean
 }
 
 /** One tile. Position it from the outside (absolute left/top in `style`). */
-export function TileView({ code, w, h, depth = 2, selected, highlight, dim, accent, style, className, title }: TileViewProps) {
+export function TileView({ code, w, h, depth = 2, selected, highlight, dim, accent, style, className, title, tip = true }: TileViewProps) {
+  const tips = useTileTipApi()
+  const ref = useRef<HTMLDivElement>(null)
+  // A tile that is matched away or discarded unmounts under the pointer and never sees pointerleave.
+  useEffect(() => {
+    const el = ref.current
+    return () => {
+      if (el) tips?.leave(el)
+    }
+  }, [tips])
+  const tipFor = tips && code !== null && tip ? code : null
   const back = code === null
   const simple = w < 17
   const face = back ? SIDE : selected ? '#ffe7a0' : highlight ? '#bfe8e0' : FACE
@@ -221,8 +234,11 @@ export function TileView({ code, w, h, depth = 2, selected, highlight, dim, acce
   const ring = accent ? `0 0 0 2px ${accent},` : ''
   return (
     <div
+      ref={ref}
       className={className}
       title={title}
+      onPointerEnter={tipFor ? (e) => { if (e.pointerType === 'mouse') tips!.enter(tipFor, e.currentTarget) } : undefined}
+      onPointerLeave={tipFor ? (e) => tips!.leave(e.currentTarget) : undefined}
       style={{
         width: w,
         height: h,

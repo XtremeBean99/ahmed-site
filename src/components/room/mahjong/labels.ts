@@ -1,6 +1,8 @@
 // src/components/room/mahjong/labels.ts
 import type { LayoutId } from '@/lib/games/mahjong-solitaire'
 import type { BotLevel } from '@/lib/games/mahjong-bot'
+import type { AutoTableLabels } from './AutoTable'
+import type { TileInfoLabels } from './tile-info'
 
 /** Every string the Mahjong desk app shows; the copy lives in en.ts `desk.mahjongApp`. */
 export interface MahjongLabels {
@@ -99,4 +101,31 @@ export interface MahjongLabels {
   handAria: string
   riverAria: string
   seatAria: string
+  tableAnim: string
+  autoTable: AutoTableLabels
+  tileInfo: TileInfoLabels
+  tutorial: MahjongTutorialLabels
+}
+
+type Page = { title: string; body: string }
+type Terms = { term: string; text: string }[]
+
+export interface MahjongTutorialLabels {
+  tiles: Page & { captions: string[] }
+  guide: Page & { pick: string }
+  solitaire: {
+    goal: Page & { match: string; noMatch: string }
+    free: Page & { free: string; blocked: string }
+    play: Page & { hint: string; undo: string; shuffle: string; menu: string }
+    saved: Page
+  }
+  four: {
+    goal: Page & { captions: string[] }
+    sets: Page & { rows: Terms }
+    turn: Page & { pick: string; discard: string; win: string; kong: string }
+    claim: Page & { pung: string; chow: string; kong: string; win: string; pass: string }
+    winds: Page
+    scoring: Page & { rows: Terms }
+    table: Page & { skipKeys: string }
+  }
 }

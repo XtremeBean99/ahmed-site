@@ -10,6 +10,7 @@ import { ScreenStrip, StripButton, useDeskScreen } from './ScreenStrip'
 import { ArcadeButton, ArcadeFrame, useFullscreen } from './DeskArcade'
 import { ARCADE } from './pixel-ui'
 import { DeskDpad } from './DeskDpad'
+import { GameTutorial, KeyRows, TutorialButton, useTutorial } from './GameTutorial'
 
 const COLS = 14
 const ROWS = 14
@@ -54,6 +55,40 @@ export interface SnakeLabels {
   dpadDown: string
   dpadLeft: string
   dpadRight: string
+  tutorial: SnakeTutorialLabels
+}
+
+type Page = { title: string; body: string }
+export interface SnakeTutorialLabels {
+  goal: Page
+  controls: Page & { steer: string; pause: string; restart: string }
+}
+
+function SnakeTutorial({ labels, onClose }: { labels: SnakeLabels; onClose: () => void }) {
+  const { portrait } = useDeskScreen()
+  const t = labels.tutorial
+  return (
+    <GameTutorial
+      onClose={onClose}
+      pages={[
+        t.goal,
+        {
+          ...t.controls,
+          extra: (
+            <KeyRows
+              portrait={portrait}
+              rows={[
+                { keys: ['←', '↑', '→', '↓'], text: t.controls.steer },
+                { keys: ['W', 'A', 'S', 'D'], text: t.controls.steer },
+                { keys: ['Space'], text: t.controls.pause },
+                { keys: ['Enter'], text: t.controls.restart },
+              ]}
+            />
+          ),
+        },
+      ]}
+    />
+  )
 }
 
 interface DeskSnakeProps {
@@ -77,6 +112,7 @@ export function DeskSnake({ time, backLabel, desktopLabel, labels, onBack, onDes
   // would hit the wall before finding the controls.
   const [waiting, setWaiting] = useState(false)
   const swipeStart = useRef<{ x: number; y: number; steered: boolean } | null>(null)
+  const tutorial = useTutorial('snake-tutorial-seen')
 
   // Portrait phones steer with swipes or the D-pad; touch landscape gets the
   // D-pad beside the board. A desktop with a mouse is untouched.
@@ -107,12 +143,12 @@ export function DeskSnake({ time, backLabel, desktopLabel, labels, onBack, onDes
     setWaiting(false)
   }
 
-  // The interval is rebuilt on each score change so the game speeds up.
+  // The interval is rebuilt on each score change so the game speeds up. How to play holds it.
   useEffect(() => {
-    if (game.status !== 'playing' || paused || waiting) return
+    if (game.status !== 'playing' || paused || waiting || tutorial.open) return
     const id = setInterval(() => setGame((s) => step(s)), tickMs(game.score))
     return () => clearInterval(id)
-  }, [game.status, game.score, paused, waiting])
+  }, [game.status, game.score, paused, waiting, tutorial.open])
 
   useEffect(() => {
     if (game.status !== 'playing' && setBestIfHigher(BEST_KEYS.snake, game.score)) setBest(game.score)
@@ -271,6 +307,7 @@ export function DeskSnake({ time, backLabel, desktopLabel, labels, onBack, onDes
   return (
     <ArcadeFrame fs={fs} portrait={portrait}>
       <ScreenStrip time={time} fs={fs} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack}>
+        <TutorialButton tutorial={tutorial} />
         {portrait && (
           <>
             <StripButton onClick={() => setPaused((p) => !p)}>{paused ? labels.resume : labels.pause}</StripButton>
@@ -326,6 +363,7 @@ export function DeskSnake({ time, backLabel, desktopLabel, labels, onBack, onDes
           </div>
         </>
       )}
+      {tutorial.open && <SnakeTutorial labels={labels} onClose={tutorial.close} />}
     </ArcadeFrame>
   )
 }

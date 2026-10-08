@@ -27,6 +27,7 @@ import type { MahjongChrome } from './chrome'
 import { MUTED, TABLE_BG } from './chrome'
 import type { MahjongLabels } from './labels'
 import { TileView } from './tile-art'
+import { AutoTable } from './AutoTable'
 import { clearSave, loadStats, recordHand, recordMatch, writeSave, type Prefs, type Stats } from './mahjong-store'
 
 interface Props {
@@ -50,6 +51,11 @@ interface HandItem { code: string; drawn: boolean }
 
 function fmt(template: string, vars: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ''))
+}
+
+/** A hand just dealt: nobody has discarded or melded yet. */
+function freshHand(g: GameState): boolean {
+  return g.phase !== 'handOver' && g.phase !== 'matchOver' && g.seats.every((s) => s.discards.length === 0 && s.melds.length === 0)
 }
 
 function sameLast(a: LastAction | null, b: LastAction | null): boolean {
@@ -119,6 +125,10 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
   const [overShown, setOverShown] = useState(true)
   const [stats, setStats] = useState<Stats>(loadStats)
   const [announce, setAnnounce] = useState('')
+  // The automatic table runs before a fresh hand; bots and the clock wait for it and for How to play.
+  const [dealing, setDealing] = useState(() => prefs.tableAnim && freshHand(initial.game))
+  const helpOpen = chrome.helpOpen
+  const hold = dealing || helpOpen
 
   const gameRef = useRef(game)
   const gameIdRef = useRef(0)
@@ -204,7 +214,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
     phase === 'draw' ? 'draw' : phase === 'discard' && game.turn !== 0 ? 'discard' : phase === 'claim' && botSeatPending ? 'claim' : null
 
   useEffect(() => {
-    if (stepKind === null) return
+    if (stepKind === null || hold) return
     const id = gameIdRef.current
     const delay = stepKind === 'draw' ? (game.turn === 0 ? 160 : speed.draw) : stepKind === 'discard' ? speed.discard : speed.claim
     const timer = window.setTimeout(() => {
@@ -227,7 +237,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
       if (next !== s) commit(next)
     }, delay)
     return () => window.clearTimeout(timer)
-  }, [game, stepKind, speed, level, commit])
+  }, [game, stepKind, speed, level, commit, hold])
 
   /* ---------- The human's actions ---------- */
   const act = useCallback(
@@ -247,14 +257,14 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
   // Optional: pass chow-only offers without asking.
   const chowOnly = inClaim && game.claim!.options[0].length > 0 && game.claim!.options[0].every((o) => o.type === 'chow')
   useEffect(() => {
-    if (!chowOnly || !prefs.autoPassChow || botSeatPending) return
+    if (!chowOnly || !prefs.autoPassChow || botSeatPending || hold) return
     const id = gameIdRef.current
     const timer = window.setTimeout(() => {
       if (id !== gameIdRef.current) return
       act({ type: 'pass' })
     }, 120)
     return () => window.clearTimeout(timer)
-  }, [chowOnly, prefs.autoPassChow, botSeatPending, game, act])
+  }, [chowOnly, prefs.autoPassChow, botSeatPending, game, act, hold])
 
   const discardIndex = useCallback(
     (i: number) => {
@@ -282,9 +292,10 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
     lastLoggedRef.current = next.lastAction
     setLog([])
     setOverShown(true)
-    tone('deal')
+    if (prefs.tableAnim && freshHand(next)) setDealing(true)
+    else tone('deal')
     commit(next)
-  }, [commit, tone])
+  }, [commit, tone, prefs.tableAnim])
 
   const newMatchSame = useCallback(() => {
     const s = gameRef.current
@@ -298,8 +309,9 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
     setSel(null)
     setOverShown(true)
     setGame(m)
-    tone('deal')
-  }, [tone])
+    if (prefs.tableAnim) setDealing(true)
+    else tone('deal')
+  }, [tone, prefs.tableAnim])
 
   /* ---------- Save and records ---------- */
   useEffect(() => {
@@ -402,7 +414,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
   // Escape: a claim is passed, then the hand-over panel closes, then the selection clears; only then DeskView's ladder.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || document.fullscreenElement) return
+      if (e.key !== 'Escape' || document.fullscreenElement || hold) return
       if (handOver && overShown) setOverShown(false)
       else if (inClaim) act({ type: 'pass' })
       else if (sel !== null) setSel(null)
@@ -411,7 +423,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
     }
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
-  }, [handOver, overShown, inClaim, sel, act])
+  }, [handOver, overShown, inClaim, sel, act, hold])
 
   /* ---------- Geometry ---------- */
   const bodyH = portrait ? screenH - 2 * PORTRAIT_STRIP_H : 280
@@ -835,11 +847,26 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
     <>
       <ArcadeStrip time={chrome.time} fs={chrome.fs} arcade={chrome.arcade} desktopLabel={chrome.desktopLabel} backLabel={chrome.backLabel} onDesktop={chrome.onDesktop} onBack={chrome.onBack}>
         <ArcadeButton size={portrait ? 'xl' : 'sm'} tone="dark" onClick={onMenu}>{labels.menu}</ArcadeButton>
+        {chrome.help}
       </ArcadeStrip>
       <div className="relative flex-1 min-h-0 overflow-hidden" style={{ backgroundColor: TABLE_BG }}>
         {table}
         {resultPanel}
         {matchPanel}
+        {dealing && !helpOpen && (
+          <AutoTable
+            key={`${game.opts.seed}-${game.handNo}`}
+            seed={(game.opts.seed + game.handNo * 7919) >>> 0}
+            dealer={game.dealer}
+            hand={game.seats[0].hand}
+            speed={prefs.speed}
+            w={screenW}
+            h={bodyH}
+            portrait={portrait}
+            labels={labels.autoTable}
+            onDone={() => setDealing(false)}
+          />
+        )}
         <div aria-live="polite" className="sr-only">{announce}</div>
       </div>
     </>

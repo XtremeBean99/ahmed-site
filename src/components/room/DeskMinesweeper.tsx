@@ -8,6 +8,7 @@ import { useStageScale } from '@/lib/room/useStageScale'
 import { ScreenStrip, StripButton, useDeskScreen } from './ScreenStrip'
 import { ArcadeButton, ArcadeFrame, useFullscreen } from './DeskArcade'
 import { ARCADE } from './pixel-ui'
+import { GameTutorial, KeyRows, TutorialButton, useTutorial } from './GameTutorial'
 
 const ROWS = 9
 const COLS = 9
@@ -30,6 +31,83 @@ export interface MinesLabels {
   lost: string
   reveal: string
   flag: string
+  tutorial: MinesTutorialLabels
+}
+
+type Page = { title: string; body: string }
+export interface MinesTutorialLabels {
+  goal: Page
+  numbers: Page & { caption: string }
+  flags: Page
+  controls: Page & { move: string; open: string; flag: string }
+}
+
+/** A 3 by 4 corner of a board: numbers around a flagged mine, one square still closed. */
+const EXAMPLE: (number | 'flag' | 'closed' | 0)[][] = [
+  [0, 1, 'flag', 'closed'],
+  [0, 1, 2, 'closed'],
+  [0, 0, 1, 1],
+]
+
+function MinesTutorial({ labels, onClose }: { labels: MinesLabels; onClose: () => void }) {
+  const { portrait } = useDeskScreen()
+  const t = labels.tutorial
+  const cell = portrait ? 24 : 18
+  const font = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const
+  return (
+    <GameTutorial
+      onClose={onClose}
+      pages={[
+        t.goal,
+        {
+          ...t.numbers,
+          extra: (
+            <figure className="m-0 flex flex-col items-center" style={{ gap: 4, marginTop: 8 }}>
+              <div className="grid" style={{ gridTemplateColumns: `repeat(4, ${cell}px)` }} aria-hidden>
+                {EXAMPLE.flat().map((v, i) => {
+                  const open = v !== 'flag' && v !== 'closed'
+                  return (
+                    <span
+                      key={i}
+                      className="flex items-center justify-center"
+                      style={{
+                        width: cell,
+                        height: cell,
+                        fontSize: portrait ? 14 : 11,
+                        lineHeight: 1,
+                        backgroundColor: open ? '#e8e0d8' : '#c8b8a8',
+                        border: open ? '1px solid #d8c8b8' : '2px outset #e8e0d8',
+                        color: typeof v === 'number' && v > 0 ? NUMBER_COLORS[v] : '#3a3028',
+                        textShadow: 'none',
+                        ...font,
+                      }}
+                    >
+                      {v === 'flag' ? '⚑' : typeof v === 'number' && v > 0 ? v : ''}
+                    </span>
+                  )
+                })}
+              </div>
+              <figcaption style={{ fontSize: portrait ? 10 : 9, lineHeight: 1.2 }}>{t.numbers.caption}</figcaption>
+            </figure>
+          ),
+        },
+        t.flags,
+        {
+          ...t.controls,
+          extra: (
+            <KeyRows
+              portrait={portrait}
+              rows={[
+                { keys: ['←', '↑', '→', '↓'], text: t.controls.move },
+                { keys: ['Enter', 'Space'], text: t.controls.open },
+                { keys: ['F'], text: t.controls.flag },
+              ]}
+            />
+          ),
+        },
+      ]}
+    />
+  )
 }
 
 interface DeskMinesweeperProps {
@@ -53,17 +131,18 @@ export function DeskMinesweeper({ time, backLabel, desktopLabel, labels, onBack,
   const longPress = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const pressFlagged = useRef(false)
   const gridRef = useRef<HTMLDivElement>(null)
+  const tutorial = useTutorial('minesweeper-tutorial-seen')
 
   useEffect(() => {
     setBest(getBest(BEST_KEYS.minesweeper))
   }, [])
 
-  // Timer runs from the first reveal until the game ends
+  // Timer runs from the first reveal until the game ends, and stops while How to play is open
   useEffect(() => {
-    if (board.status !== 'playing' || !board.minesPlaced) return
+    if (board.status !== 'playing' || !board.minesPlaced || tutorial.open) return
     const id = setInterval(() => setElapsed((s) => s + 1), 1000)
     return () => clearInterval(id)
-  }, [board.status, board.minesPlaced])
+  }, [board.status, board.minesPlaced, tutorial.open])
 
   useEffect(() => {
     if (board.status === 'won' && setBestIfLower(BEST_KEYS.minesweeper, elapsed)) {
@@ -178,6 +257,7 @@ export function DeskMinesweeper({ time, backLabel, desktopLabel, labels, onBack,
   return (
     <ArcadeFrame fs={fs} portrait={portrait}>
       <ScreenStrip time={time} fs={fs} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack}>
+        <TutorialButton tutorial={tutorial} />
         {mobile && !portrait && (
           <>
             <StripButton pressed={!flagMode} onClick={() => setFlagMode(false)}>{labels.reveal}</StripButton>
@@ -241,6 +321,7 @@ export function DeskMinesweeper({ time, backLabel, desktopLabel, labels, onBack,
           </div>
         </>
       )}
+      {tutorial.open && <MinesTutorial labels={labels} onClose={tutorial.close} />}
     </ArcadeFrame>
   )
 }

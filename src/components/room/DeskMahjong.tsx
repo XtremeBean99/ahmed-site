@@ -1,7 +1,7 @@
 // src/components/room/DeskMahjong.tsx
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, type ReactNode } from 'react'
 import { ArcadeButton, ArcadeFrame, ArcadePanel, ArcadeStrip, ARCADE, PIXEL_FONT, useFullscreen, type DeskGameProps } from './DeskArcade'
 import { useDeskScreen } from './ScreenStrip'
 import { LAYOUT_IDS, LAYOUTS, newGame, tilesLeft, type LayoutId, type SolitaireState } from '@/lib/games/mahjong-solitaire'
@@ -13,6 +13,10 @@ import type { MahjongLabels } from './mahjong/labels'
 import { MahjongSolitaire } from './mahjong/Solitaire'
 import { MahjongFourPlayer } from './mahjong/FourPlayer'
 import { fmtTime, loadPrefs, loadSave, loadStats, savePrefs, type Prefs, type SavedGame, type Tab } from './mahjong/mahjong-store'
+import { MahjongTutorial } from './mahjong/Tutorial'
+import { TileTipLayer } from './mahjong/tile-tip'
+import { TutorialButton, useTutorial } from './GameTutorial'
+import { useT } from '@/lib/i18n/client'
 
 export type { MahjongLabels } from './mahjong/labels'
 
@@ -61,10 +65,19 @@ export function DeskMahjong({ time, backLabel, desktopLabel, labels, arcade, onB
     setRun(null)
   }, [])
 
-  const chrome: MahjongChrome = { time, backLabel, desktopLabel, arcade, fs, onBack, onDesktop }
+  // One tutorial per mode, each opening by itself the first time that mode is started.
+  const solTut = useTutorial('mahjong-solitaire-tutorial-seen', run?.mode === 'solitaire')
+  const fourTut = useTutorial('mahjong-four-tutorial-seen', run?.mode === 'four')
+  // From the menu, the "?" explains the mode that is picked.
+  const helpMode: Tab = run ? run.mode : prefs.tab
+  const helpOpen = solTut.open || fourTut.open
+  const help = <TutorialButton tutorial={helpMode === 'solitaire' ? solTut : fourTut} />
+
+  const chrome: MahjongChrome = { time, backLabel, desktopLabel, arcade, fs, onBack, onDesktop, help, helpOpen }
 
   return (
     <ArcadeFrame fs={fs} background={TABLE_BG} portrait>
+      <TileTipLayer labels={labels.tileInfo} mode={helpOpen ? (solTut.open ? 'solitaire' : 'four') : helpMode}>
       {run === null ? (
         <MenuView
           chrome={chrome}
@@ -77,17 +90,47 @@ export function DeskMahjong({ time, backLabel, desktopLabel, labels, arcade, onB
           onSolitaire={startSolitaire}
           onFour={startFour}
           onResume={resume}
+          onHelpSolitaire={(e) => {
+            setPref({ tab: 'solitaire' })
+            solTut.show(e)
+          }}
+          onHelpFour={(e) => {
+            setPref({ tab: 'four' })
+            fourTut.show(e)
+          }}
         />
       ) : run.mode === 'solitaire' ? (
         <MahjongSolitaire key={run.id} chrome={chrome} labels={labels} prefs={prefs} initial={{ game: run.game, elapsed: run.elapsed }} onMenu={toMenu} />
       ) : (
         <MahjongFourPlayer key={run.id} chrome={chrome} labels={labels} prefs={prefs} initial={{ game: run.game, level: run.level }} onMenu={toMenu} />
       )}
+      {solTut.open && <MahjongTutorial mode="solitaire" labels={labels} onClose={solTut.close} />}
+      {fourTut.open && <MahjongTutorial mode="four" labels={labels} onClose={fourTut.close} />}
+      </TileTipLayer>
     </ArcadeFrame>
   )
 }
 
 /* ---------- Mode picker ---------- */
+
+/** A mode's heading in the landscape menu, with its own How to play button. */
+function PanelTitle({ text, help }: { text: string; help: (e: React.MouseEvent) => void }) {
+  return (
+    <div className="flex items-center justify-between">
+      <div style={{ fontSize: 12, color: ARCADE.amber }}>{text}</div>
+      <HelpLink onClick={help} />
+    </div>
+  )
+}
+
+function HelpLink({ onClick }: { onClick: (e: React.MouseEvent) => void }): ReactNode {
+  const name = useT().desk.tutorial.button
+  return (
+    <ArcadeButton tone="dark" size="sm" ariaLabel={name} title={name} onClick={onClick}>
+      ?
+    </ArcadeButton>
+  )
+}
 
 function MenuView({
   chrome,
@@ -100,6 +143,8 @@ function MenuView({
   onSolitaire,
   onFour,
   onResume,
+  onHelpSolitaire,
+  onHelpFour,
 }: {
   chrome: MahjongChrome
   labels: MahjongLabels
@@ -111,6 +156,8 @@ function MenuView({
   onSolitaire: () => void
   onFour: () => void
   onResume: () => void
+  onHelpSolitaire: (e: React.MouseEvent) => void
+  onHelpFour: (e: React.MouseEvent) => void
 }) {
   const size = portrait ? 'xl' : 'md'
   const font = portrait ? 12 : 10
@@ -142,6 +189,7 @@ function MenuView({
       {row(labels.rounds, [opt(labels.roundEast, prefs.rounds === 'east', () => setPref({ rounds: 'east' })), opt(labels.roundFull, prefs.rounds === 'full', () => setPref({ rounds: 'full' }))])}
       {row(labels.speed, [opt(labels.speedNormal, prefs.speed === 'normal', () => setPref({ speed: 'normal' })), opt(labels.speedFast, prefs.speed === 'fast', () => setPref({ speed: 'fast' }))])}
       {row(labels.autoPass, [opt(labels.on, prefs.autoPassChow, () => setPref({ autoPassChow: true })), opt(labels.off, !prefs.autoPassChow, () => setPref({ autoPassChow: false }))])}
+      {row(labels.tableAnim, [opt(labels.on, prefs.tableAnim, () => setPref({ tableAnim: true })), opt(labels.off, !prefs.tableAnim, () => setPref({ tableAnim: false }))])}
       <div style={{ fontSize: font, color: MUTED, lineHeight: 1.3, ...PIXEL_FONT }}>
         {labels.record.replace('{m}', String(stats.four.matchWins)).replace('{mp}', String(stats.four.matches)).replace('{h}', String(stats.four.handWins)).replace('{hp}', String(stats.four.hands))}
       </div>
@@ -159,11 +207,13 @@ function MenuView({
     </ArcadeButton>
   )
 
-  const panelStyle = { display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'stretch' } as const
+  const panelStyle = { display: 'flex', flexDirection: 'column', gap: portrait ? 6 : 4, alignItems: 'stretch' } as const
 
   return (
     <>
-      <ArcadeStrip time={chrome.time} title={labels.title} fs={chrome.fs} arcade={chrome.arcade} desktopLabel={chrome.desktopLabel} backLabel={chrome.backLabel} onDesktop={chrome.onDesktop} onBack={chrome.onBack} />
+      <ArcadeStrip time={chrome.time} title={labels.title} fs={chrome.fs} arcade={chrome.arcade} desktopLabel={chrome.desktopLabel} backLabel={chrome.backLabel} onDesktop={chrome.onDesktop} onBack={chrome.onBack}>
+        {portrait && chrome.help}
+      </ArcadeStrip>
       <div className="relative flex-1 min-h-0 overflow-hidden" style={{ backgroundColor: ARCADE.panelDark }}>
         {portrait ? (
           <div className="absolute inset-0 flex flex-col" style={{ padding: 6, gap: 6 }}>
@@ -188,14 +238,14 @@ function MenuView({
             <div className="flex-1 min-h-0 grid" style={{ gridTemplateColumns: '1fr 1.15fr', gap: 8 }}>
               <ArcadePanel className="px-3 py-2 flex flex-col min-h-0" style={{ ...panelStyle, justifyContent: 'space-between' }}>
                 <div style={panelStyle}>
-                  <div style={{ fontSize: 12, color: ARCADE.amber }}>{labels.modeSolitaire}</div>
+                  <PanelTitle text={labels.modeSolitaire} help={onHelpSolitaire} />
                   {solPanel}
                 </div>
                 <ArcadeButton size="md" onClick={onSolitaire}>{labels.start}</ArcadeButton>
               </ArcadePanel>
               <ArcadePanel className="px-3 py-2 flex flex-col min-h-0" style={{ ...panelStyle, justifyContent: 'space-between' }}>
                 <div style={panelStyle}>
-                  <div style={{ fontSize: 12, color: ARCADE.amber }}>{labels.modeFour}</div>
+                  <PanelTitle text={labels.modeFour} help={onHelpFour} />
                   {fourPanel}
                 </div>
                 <ArcadeButton size="md" onClick={onFour}>{labels.start}</ArcadeButton>

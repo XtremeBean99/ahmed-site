@@ -16,9 +16,10 @@ import {
   useFullscreen,
   type DeskGameProps,
 } from './DeskArcade'
-import { CARD_H, CARD_W, cardCanvas, cardUrl } from './PlayingCard'
+import { CARD_H, CARD_W, PlayingCard, cardCanvas, cardUrl } from './PlayingCard'
+import { GameTutorial, KeyRows, TermRows, TutorialButton, useTutorial } from './GameTutorial'
 import { PORTRAIT_STRIP_H, useDeskScreen } from './ScreenStrip'
-import { cardId, cardName, createDeck, type Card } from '@/lib/games/cards'
+import { cardId, cardName, createDeck, type Card, type CardNameLabels, type Rank, type Suit } from '@/lib/games/cards'
 import { BEST_KEYS, getBest, readJson, setBestIfHigher, writeJson } from '@/lib/games/storage'
 import { useSfx } from './RoomSfxProvider'
 import {
@@ -79,6 +80,101 @@ export interface SolitaireLabels {
   cardAtTableau: string
   cardAtWaste: string
   cardAtFoundation: string
+  tutorial: SolitaireTutorialLabels
+}
+
+type Page = { title: string; body: string }
+export interface SolitaireTutorialLabels {
+  goal: Page
+  columns: Page & { ok: string }
+  stock: Page
+  moving: Page & { draw: string; undo: string; auto: string; newGame: string }
+  scoring: Page & { rows: { term: string; text: string }[] }
+}
+
+const c = (rank: Rank, suit: Suit): Card => ({ rank, suit })
+
+/** Cards on a strip of felt: fanned across (`dx`) or cascaded down (`dy`), each group with a caption. */
+function CardGroups({ groups, names }: { groups: { cards: Card[]; dx?: number; dy?: number; caption?: string; down?: boolean }[]; names: CardNameLabels }) {
+  const { portrait } = useDeskScreen()
+  const w = CARD_W
+  const h = CARD_H
+  return (
+    <div className="flex items-end justify-center" style={{ gap: portrait ? 14 : 24, marginTop: 8, padding: '6px 10px', backgroundColor: ARCADE.felt, border: `1px solid ${ARCADE.feltLine}`, borderRadius: 3 }}>
+      {groups.map((g, i) => {
+        const dx = g.dx ?? 0
+        const dy = g.dy ?? 0
+        return (
+          <figure key={i} className="m-0 flex flex-col items-center" style={{ gap: 4 }}>
+            <div className="relative" style={{ width: w + dx * (g.cards.length - 1), height: h + dy * (g.cards.length - 1) }}>
+              {g.cards.map((card, j) => (
+                <PlayingCard key={j} card={card} faceUp={!g.down} alt={g.down ? '' : cardName(card, names)} style={{ position: 'absolute', left: j * dx, top: j * dy }} />
+              ))}
+            </div>
+            {g.caption && <figcaption style={{ fontSize: portrait ? 10 : 9, lineHeight: 1, color: ARCADE.feltText }}>{g.caption}</figcaption>}
+          </figure>
+        )
+      })}
+    </div>
+  )
+}
+
+function SolitaireTutorial({ labels, names, onClose }: { labels: SolitaireLabels; names: CardNameLabels; onClose: () => void }) {
+  const { portrait } = useDeskScreen()
+  const t = labels.tutorial
+  return (
+    <GameTutorial
+      onClose={onClose}
+      bodyH={{ landscape: 162, portrait: 220 }}
+      pages={[
+        {
+          ...t.goal,
+          extra: (
+            <CardGroups
+              names={names}
+              groups={[
+                { cards: [c(1, 'S'), c(2, 'S'), c(3, 'S')], dx: 12 },
+                { cards: [c(1, 'H'), c(2, 'H')], dx: 12 },
+                { cards: [c(1, 'D')] },
+                { cards: [c(1, 'C'), c(2, 'C'), c(3, 'C'), c(4, 'C')], dx: 12 },
+              ]}
+            />
+          ),
+        },
+        {
+          ...t.columns,
+          extra: <CardGroups names={names} groups={[{ cards: [c(13, 'S'), c(12, 'H'), c(11, 'C'), c(10, 'D')], dy: portrait ? 14 : 8, caption: t.columns.ok }]} />,
+        },
+        {
+          ...t.stock,
+          extra: (
+            <CardGroups
+              names={names}
+              groups={[
+                { cards: [c(1, 'S'), c(1, 'S'), c(1, 'S')], dx: 2, down: true, caption: labels.stock },
+                { cards: [c(4, 'D'), c(9, 'C'), c(6, 'H')], dx: 12, caption: labels.waste },
+              ]}
+            />
+          ),
+        },
+        {
+          ...t.moving,
+          extra: (
+            <KeyRows
+              portrait={portrait}
+              rows={[
+                { keys: ['D'], text: t.moving.draw },
+                { keys: ['Z'], name: labels.undo, text: t.moving.undo },
+                { keys: ['A'], name: labels.auto, text: t.moving.auto },
+                { keys: ['N'], name: labels.newGame, text: t.moving.newGame },
+              ]}
+            />
+          ),
+        },
+        { ...t.scoring, extra: <TermRows rows={t.scoring.rows} /> },
+      ]}
+    />
+  )
 }
 
 interface CardSlot {
@@ -378,6 +474,11 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
   const [dealAnim, setDealAnim] = useState<DealAnim | null>(null)
   const [autoFinishing, setAutoFinishing] = useState(false)
   const [winPhase, setWinPhase] = useState<'cascade' | 'panel' | null>(null)
+  const tutorial = useTutorial('solitaire-tutorial-seen')
+  const helpRef = useRef(false)
+  useEffect(() => {
+    helpRef.current = tutorial.open
+  }, [tutorial.open])
   const [winStats, setWinStats] = useState<{ score: number; time: number; moves: number } | null>(null)
   const [announce, setAnnounce] = useState('')
 
@@ -510,11 +611,11 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
     if (announceTimer.current !== null) window.clearTimeout(announceTimer.current)
   }, [])
 
-  // The clock starts on the first draw or move and pauses while the tab is hidden.
+  // The clock starts on the first draw or move and pauses while the tab is hidden or How to play is open.
   useEffect(() => {
     const id = window.setInterval(() => {
       if (document.hidden) return
-      if (startedRef.current && gameRef.current && !gameRef.current.won) setElapsed((s) => s + 1)
+      if (startedRef.current && gameRef.current && !gameRef.current.won && !helpRef.current) setElapsed((s) => s + 1)
     }, 1000)
     return () => window.clearInterval(id)
   }, [])
@@ -963,6 +1064,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
         onDesktop={onDesktop}
         onBack={onBack}
       >
+        <TutorialButton tutorial={tutorial} />
         {L.portrait && (
           <>
             <ArcadeButton size="xl" tone="dark" pressed={game?.drawCount === 1} onClick={() => startNew(1)} ariaLabel={labels.drawOne}>
@@ -1204,6 +1306,7 @@ export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, o
           {announce}
         </div>
       </div>
+      {tutorial.open && <SolitaireTutorial labels={labels} names={arcade.cards} onClose={tutorial.close} />}
     </ArcadeFrame>
   )
 }

@@ -1,7 +1,7 @@
 // src/components/room/DeskBlackjack.tsx
 'use client'
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
   ARCADE,
@@ -45,6 +45,7 @@ import {
 } from '@/lib/games/blackjack-engine'
 import { BEST_KEYS, getBest, readJson, setBestIfHigher, writeJson } from '@/lib/games/storage'
 import { useSfx } from './RoomSfxProvider'
+import { GameTutorial, KeyCap, KeyRows, TutorialButton, useTutorial, type TutorialPage } from './GameTutorial'
 
 const STACK_MAX = 6
 const TUTORIAL_KEY = 'blackjack-tutorial-seen'
@@ -139,13 +140,6 @@ export interface BlackjackLabels {
 }
 
 export interface BlackjackTutorialLabels {
-  button: string
-  title: string
-  close: string
-  back: string
-  next: string
-  start: string
-  page: string
   goal: { title: string; body: string; dealer: string; you: string }
   values: { title: string; body: string; blackjack: string; soft: string; bust: string }
   betting: { title: string; body: string; clear: string; deal: string }
@@ -384,49 +378,6 @@ function ActivePointer({ centerX, top }: { centerX: number; top: number }) {
 
 const cardOf = (rank: Rank, suit: Suit): Card => ({ rank, suit })
 
-function KeyCap({ children, portrait = false }: { children: ReactNode; portrait?: boolean }) {
-  return (
-    <kbd
-      style={{
-        ...PIXEL_FONT,
-        display: 'inline-block',
-        minWidth: portrait ? 17 : 15,
-        padding: '2px 4px 1px',
-        fontSize: portrait ? 10 : 9,
-        lineHeight: 1,
-        textAlign: 'center',
-        color: ARCADE.panelText,
-        backgroundColor: ARCADE.panelDark,
-        border: `1px solid ${ARCADE.panelBorder}`,
-        borderBottomWidth: 2,
-        borderRadius: 2,
-      }}
-    >
-      {children}
-    </kbd>
-  )
-}
-
-/** Key caps, a gold name and a plain description, one row each. */
-function KeyRows({ rows, top = 10, portrait = false }: { rows: { keys: string[]; name?: string; text: string }[]; top?: number; portrait?: boolean }) {
-  const named = rows.some((row) => row.name)
-  return (
-    <div className="grid items-center" style={{ gridTemplateColumns: named ? 'auto auto 1fr' : 'auto 1fr', columnGap: 8, rowGap: portrait ? 8 : 6, marginTop: top }}>
-      {rows.map((row) => (
-        <div key={row.text} className="contents">
-          <span className="flex gap-1">
-            {row.keys.map((k) => (
-              <KeyCap key={k} portrait={portrait}>{k}</KeyCap>
-            ))}
-          </span>
-          {named && <span style={{ color: ARCADE.gold }}>{row.name}</span>}
-          <span>{row.text}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 /** A few example hands laid on a strip of felt, each with a caption. */
 function FeltExamples({ hands, names, portrait = false }: { hands: { cards: Card[]; caption: string }[]; names: CardNameLabels; portrait?: boolean }) {
   return (
@@ -448,20 +399,12 @@ function FeltExamples({ hands, names, portrait = false }: { hands: { cards: Card
   )
 }
 
-/**
- * The paged How to play dialog. Escape is caught on the window's capture phase so
- * it closes only this dialog and never reaches DeskView's leave-the-app handler.
- */
+/** The How to play pages, in the shared dialog. */
 function BlackjackTutorial({ labels, names, onClose }: { labels: BlackjackLabels; names: CardNameLabels; onClose: () => void }) {
   const { portrait } = useDeskScreen()
   const t = labels.tutorial
-  const [page, setPage] = useState(0)
-  const dialogRef = useRef<HTMLDivElement>(null)
-  const nextRef = useRef<HTMLSpanElement>(null)
-  const titleId = useId()
-  const bodyId = useId()
 
-  const pages: { title: string; body: string; extra: ReactNode }[] = [
+  const pages: TutorialPage[] = [
     {
       ...t.goal,
       extra: (
@@ -559,106 +502,7 @@ function BlackjackTutorial({ labels, names, onClose }: { labels: BlackjackLabels
       ),
     },
   ]
-  const last = pages.length - 1
-  const current = pages[page]
-
-  const go = useCallback((delta: number) => setPage((p) => Math.min(last, Math.max(0, p + delta))), [last])
-
-  // Focus lands on Next when the dialog opens, and again if the focused Back button disables itself on page 1.
-  useEffect(() => {
-    const active = document.activeElement
-    const lost = !dialogRef.current?.contains(active) || (active instanceof HTMLButtonElement && active.disabled)
-    if (lost) nextRef.current?.querySelector('button')?.focus()
-  }, [page])
-
-  useEffect(() => {
-    const stop = (e: KeyboardEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      e.stopImmediatePropagation()
-    }
-    const onKey = (e: KeyboardEvent) => {
-      const dialog = dialogRef.current
-      if (!dialog) return
-      if (e.key === 'Escape') {
-        stop(e)
-        onClose()
-      } else if (e.key === 'Tab') {
-        // Keep Tab inside the dialog, wrapping at both ends.
-        const els = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'))
-        if (els.length === 0) return
-        const i = els.indexOf(document.activeElement as HTMLButtonElement)
-        const to = e.shiftKey ? (i <= 0 ? els.length - 1 : i - 1) : i === -1 || i === els.length - 1 ? 0 : i + 1
-        stop(e)
-        els[to].focus()
-      } else if (e.ctrlKey || e.metaKey || e.altKey) {
-        return
-      } else if (e.key === 'ArrowRight') {
-        stop(e)
-        go(1)
-      } else if (e.key === 'ArrowLeft') {
-        stop(e)
-        go(-1)
-      } else if (e.key === 'Enter' && !(e.target instanceof HTMLButtonElement)) {
-        // Enter on a focused button clicks it; anywhere else it turns the page.
-        stop(e)
-        if (page === last) onClose()
-        else go(1)
-      }
-    }
-    window.addEventListener('keydown', onKey, true)
-    return () => window.removeEventListener('keydown', onKey, true)
-  }, [go, last, onClose, page])
-
-  return (
-    <ArcadeOverlay tint="rgba(12,8,6,0.7)">
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={bodyId}
-        tabIndex={-1}
-        className="outline-none"
-      >
-        <ArcadePanel style={{ width: portrait ? 308 : 448, padding: portrait ? '10px' : '10px 12px' }}>
-          <div className="flex items-center justify-between" style={{ height: portrait ? 38 : 18 }}>
-            <h2 id={titleId} style={{ fontSize: portrait ? 10 : 9, lineHeight: 1, letterSpacing: 1, textTransform: 'uppercase', color: ARCADE.gold }}>
-              {t.title}
-            </h2>
-            <ArcadeButton tone="dark" size={portrait ? 'xl' : 'sm'} onClick={onClose} title={`${t.close} (Esc)`}>
-              {t.close}
-            </ArcadeButton>
-          </div>
-          <h3 style={{ fontSize: 12, lineHeight: portrait ? '16px' : '14px', margin: portrait ? '6px 0 6px' : '4px 0 6px' }}>{current.title}</h3>
-          <div id={bodyId} aria-live="polite" style={{ height: portrait ? 196 : 144, fontSize: portrait ? 12 : 10, lineHeight: portrait ? '16px' : '14px' }}>
-            <p style={{ margin: 0 }}>{current.body}</p>
-            {current.extra}
-          </div>
-          <div className="grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr', marginTop: 8 }}>
-            <div className="justify-self-start">
-              <ArcadeButton tone="dark" size={portrait ? 'xl' : undefined} onClick={() => go(-1)} disabled={page === 0} title={`${t.back} (Left)`}>
-                {t.back}
-              </ArcadeButton>
-            </div>
-            <div className="flex items-center" style={{ gap: 8 }}>
-              <span className="flex" style={{ gap: 3 }} aria-hidden>
-                {pages.map((_, i) => (
-                  <span key={i} style={{ width: 4, height: 4, backgroundColor: i === page ? ARCADE.amber : ARCADE.panelBorder }} />
-                ))}
-              </span>
-              <span style={{ fontSize: portrait ? 10 : 9, lineHeight: 1 }}>{t.page.replace('{n}', String(page + 1)).replace('{total}', String(pages.length))}</span>
-            </div>
-            <span ref={nextRef} className="justify-self-end">
-              <ArcadeButton size={portrait ? 'xl' : undefined} onClick={() => (page === last ? onClose() : go(1))} title={page === last ? t.start : `${t.next} (Right)`}>
-                {page === last ? t.start : t.next}
-              </ArcadeButton>
-            </span>
-          </div>
-        </ArcadePanel>
-      </div>
-    </ArcadeOverlay>
-  )
+  return <GameTutorial pages={pages} onClose={onClose} />
 }
 
 interface SaveShape {
@@ -702,10 +546,8 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
   const [busy, setBusy] = useState(false)
   const [dealOrder, setDealOrder] = useState<Record<string, number>>({})
   const [dealSeq, setDealSeq] = useState(0)
-  const [helpOpen, setHelpOpen] = useState(false)
-  const helpButtonRef = useRef<HTMLSpanElement>(null)
-  // Only a keyboard-opened tutorial hands focus back to its button; otherwise Space (Deal) would reopen it.
-  const helpByKeyRef = useRef(false)
+  const tutorial = useTutorial(TUTORIAL_KEY)
+  const helpOpen = tutorial.open
   const feltRef = useRef<HTMLDivElement>(null)
 
   const tableRef = useRef(table)
@@ -726,19 +568,6 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
 
   useEffect(() => {
     setBest(getBest(BEST_KEYS.blackjack))
-  }, [])
-
-  // The tutorial opens by itself the first time a visitor ever opens Blackjack.
-  useEffect(() => {
-    if (readJson(TUTORIAL_KEY) === true) return
-    writeJson(TUTORIAL_KEY, true)
-    setHelpOpen(true)
-  }, [])
-
-  const closeHelp = useCallback(() => {
-    setHelpOpen(false)
-    if (helpByKeyRef.current) helpButtonRef.current?.querySelector('button')?.focus()
-    else (document.activeElement as HTMLElement | null)?.blur()
   }, [])
 
   const later = useCallback((fn: () => void, ms: number) => {
@@ -1236,11 +1065,7 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
   return (
     <ArcadeFrame fs={fs} background={ARCADE.felt} portrait={portrait}>
       <ArcadeStrip time={time} fs={fs} arcade={arcade} desktopLabel={desktopLabel} backLabel={backLabel} onDesktop={onDesktop} onBack={onBack}>
-        <span ref={helpButtonRef} className="contents">
-          <ArcadeButton tone="dark" size={portrait ? 'xl' : 'sm'} onClick={(e) => { helpByKeyRef.current = e.detail === 0; setHelpOpen(true) }}>
-            {labels.tutorial.button}
-          </ArcadeButton>
-        </span>
+        <TutorialButton tutorial={tutorial} compact={false} />
       </ArcadeStrip>
 
       <div ref={feltRef} role="group" aria-label={labels.table} className="relative flex-1 overflow-hidden" style={FELT_STYLE}>
@@ -1439,7 +1264,7 @@ export function DeskBlackjack({ time, backLabel, desktopLabel, labels, arcade, o
           </ArcadeOverlay>
         )}
 
-        {helpOpen && <BlackjackTutorial labels={labels} names={arcade.cards} onClose={closeHelp} />}
+        {helpOpen && <BlackjackTutorial labels={labels} names={arcade.cards} onClose={tutorial.close} />}
 
         <div className="sr-only" aria-live="polite">
           {announce}

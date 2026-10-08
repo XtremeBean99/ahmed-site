@@ -16,6 +16,7 @@ import {
 } from './DeskArcade'
 import { PORTRAIT_STRIP_H, useDeskScreen } from './ScreenStrip'
 import { useSfx } from './RoomSfxProvider'
+import { GameTutorial, KeyRows, TermRows, TutorialButton, useTutorial } from './GameTutorial'
 import { useStageScale } from '@/lib/room/useStageScale'
 import { CHESS_SAVE_KEY, CHESS_STATS_KEY, readJson, writeJson } from '@/lib/games/storage'
 import {
@@ -96,6 +97,16 @@ export interface ChessLabels {
   moveAnnounce: string
   hintKeys: string
   hintTouch: string
+  tutorial: ChessTutorialLabels
+}
+
+type Page = { title: string; body: string }
+export interface ChessTutorialLabels {
+  goal: Page
+  pieces: Page & Record<PieceType, string>
+  special: Page & { rows: { term: string; text: string }[] }
+  end: Page
+  controls: Page & { move: string; select: string; clear: string }
 }
 
 /* ---------- Pixel sprites ---------- */
@@ -241,6 +252,65 @@ function PieceSprite({ piece, size }: { piece: Piece; size: number }) {
   )
 }
 
+const TUTORIAL_PIECES: PieceType[] = ['k', 'q', 'r', 'b', 'n', 'p']
+
+function ChessTutorial({ labels, onClose }: { labels: ChessLabels; onClose: () => void }) {
+  const { portrait } = useDeskScreen()
+  const t = labels.tutorial
+  const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
+  return (
+    <GameTutorial
+      onClose={onClose}
+      bodyH={{ landscape: 160, portrait: 250 }}
+      pages={[
+        {
+          ...t.goal,
+          extra: (
+            <div className="flex justify-center" style={{ gap: 4, marginTop: 12 }}>
+              {TUTORIAL_PIECES.map((type, i) => (
+                <div key={type} className="flex items-center justify-center" style={{ width: 30, height: 30, backgroundColor: i % 2 ? DARK_SQ : LIGHT_SQ }}>
+                  <PieceSprite piece={{ type, color: i < 3 ? 'w' : 'b' }} size={24} />
+                </div>
+              ))}
+            </div>
+          ),
+        },
+        {
+          ...t.pieces,
+          extra: (
+            <div className="grid items-center" style={{ gridTemplateColumns: 'auto auto 1fr', columnGap: 8, rowGap: portrait ? 6 : 2, marginTop: 6 }}>
+              {TUTORIAL_PIECES.map((type) => (
+                <div key={type} className="contents">
+                  <span style={{ backgroundColor: LIGHT_SQ, padding: 1 }}>
+                    <PieceSprite piece={{ type, color: 'w' }} size={portrait ? 20 : 15} />
+                  </span>
+                  <span style={{ color: ARCADE.gold }}>{cap(labels.pieces[type])}</span>
+                  <span>{t.pieces[type]}</span>
+                </div>
+              ))}
+            </div>
+          ),
+        },
+        { ...t.special, extra: <TermRows rows={t.special.rows} /> },
+        t.end,
+        {
+          ...t.controls,
+          extra: (
+            <KeyRows
+              portrait={portrait}
+              rows={[
+                { keys: ['←', '↑', '→', '↓'], text: t.controls.move },
+                { keys: ['Enter', 'Space'], text: t.controls.select },
+                { keys: ['Esc'], text: t.controls.clear },
+              ]}
+            />
+          ),
+        },
+      ]}
+    />
+  )
+}
+
 /* ---------- Constants and helpers ---------- */
 
 const LIGHT_SQ = '#ecd9b0'
@@ -352,6 +422,7 @@ export function DeskChess({ time, backLabel, desktopLabel, labels, arcade, onBac
   const [resignArmed, setResignArmed] = useState(false)
   const [pgnState, setPgnState] = useState<'idle' | 'ok' | 'fail'>('idle')
   const [announce, setAnnounce] = useState('')
+  const tutorial = useTutorial('chess-tutorial-seen')
 
   const gameRef = useRef(game)
   const gameIdRef = useRef(0)
@@ -766,7 +837,7 @@ export function DeskChess({ time, backLabel, desktopLabel, labels, arcade, onBac
   // DeskView's app -> desktop -> room ladder. The capture phase lets this run ahead of DeskView's listener.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || document.fullscreenElement) return
+      if (e.key !== 'Escape' || document.fullscreenElement || tutorial.open) return
       if (promo) setPromo(null)
       else if (menuOpen) setMenuOpen(false)
       else if (overlayOpen) setOverShown(false)
@@ -776,7 +847,7 @@ export function DeskChess({ time, backLabel, desktopLabel, labels, arcade, onBac
     }
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
-  }, [promo, menuOpen, overlayOpen, sel])
+  }, [promo, menuOpen, overlayOpen, sel, tutorial.open])
 
   useEffect(() => {
     if (!promo) return
@@ -1139,6 +1210,7 @@ export function DeskChess({ time, backLabel, desktopLabel, labels, arcade, onBac
   return (
     <ArcadeFrame fs={fs} background={PANEL_BG} portrait>
       <ArcadeStrip time={time} fs={fs} arcade={arcade} desktopLabel={desktopLabel} backLabel={backLabel} onDesktop={onDesktop} onBack={onBack}>
+        <TutorialButton tutorial={tutorial} />
         {portrait && toolbarButtons}
       </ArcadeStrip>
 
@@ -1190,6 +1262,16 @@ export function DeskChess({ time, backLabel, desktopLabel, labels, arcade, onBac
 
         {menu}
         {overOverlay}
+        {tutorial.open && (
+          <ChessTutorial
+            labels={labels}
+            onClose={() => {
+              tutorial.close()
+              // The board's keys live on the board, so hand it focus back.
+              if (!menuOpen && !overlayOpen && !promo) boardRef.current?.focus({ preventScroll: true })
+            }}
+          />
+        )}
 
         <div aria-live="polite" className="sr-only">
           {announce} {statusLine}

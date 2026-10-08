@@ -20,6 +20,8 @@ export interface Prefs {
   rounds: RoundsMode
   speed: Speed
   autoPassChow: boolean
+  /** Play the automatic-table shuffle, walls and deal before each 4-player hand. */
+  tableAnim: boolean
 }
 
 export const DEFAULT_PREFS: Prefs = {
@@ -31,6 +33,7 @@ export const DEFAULT_PREFS: Prefs = {
   rounds: 'east',
   speed: 'normal',
   autoPassChow: false,
+  tableAnim: true,
 }
 
 export function loadPrefs(): Prefs {
@@ -46,6 +49,7 @@ export function loadPrefs(): Prefs {
     rounds: r.rounds === 'full' ? 'full' : 'east',
     speed: r.speed === 'fast' ? 'fast' : 'normal',
     autoPassChow: r.autoPassChow === true,
+    tableAnim: r.tableAnim !== false,
   }
 }
 

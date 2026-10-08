@@ -1246,6 +1246,16 @@ export const en = {
         faceDown: 'Face-down card',
       },
     },
+    // The How to play dialog every game shares (GameTutorial); each game's own pages are in its block.
+    tutorial: {
+      button: 'How to play',
+      title: 'How to play',
+      close: 'Close',
+      back: 'Back',
+      next: 'Next',
+      start: 'Start playing',
+      page: '{n} / {total}',
+    },
     // Each block below belongs to one game's component (its Labels interface).
     blackjackApp: {
       table: 'Blackjack table',
@@ -1286,13 +1296,6 @@ export const en = {
       resultSplitLoss: '{won} of {total} hands win, -{n}',
       resultSplitEven: '{won} of {total} hands win, even',
       tutorial: {
-        button: 'How to play',
-        title: 'How to play',
-        close: 'Close',
-        back: 'Back',
-        next: 'Next',
-        start: 'Start playing',
-        page: '{n} / {total}',
         goal: {
           title: 'Goal',
           body: 'Get closer to 21 than the dealer without going over. Going over 21 is a bust, and a bust loses right away.',
@@ -1367,6 +1370,40 @@ export const en = {
       cardAtTableau: '{card}, column {n}',
       cardAtWaste: '{card}, waste',
       cardAtFoundation: '{card}, foundation {n}',
+      tutorial: {
+        goal: {
+          title: 'Goal',
+          body: 'Move all 52 cards onto the four foundations at the top right: one pile per suit, built up from the ace to the king.',
+        },
+        columns: {
+          title: 'The columns',
+          body: 'Build down the seven columns in alternating colours, a red 9 on a black 10. A face-up run moves together, only a king can start an empty column, and the card under a moved one turns over.',
+          ok: 'Alternating colours',
+        },
+        stock: {
+          title: 'Stock and waste',
+          body: 'Click the stock (top left) to turn cards onto the waste: one at a time in Draw 1, three in Draw 3, where only the top one plays. When the stock is empty, click it to turn the waste back over.',
+        },
+        moving: {
+          title: 'Moving cards',
+          body: 'Drag a card or a run to where it goes, or click it and it jumps to the best spot it can. Once every card is face up, Auto finishes the game for you.',
+          draw: 'Turn over the stock',
+          undo: 'Take back a move (Ctrl+Z too)',
+          auto: 'Finish once every card is up',
+          newGame: 'New game',
+        },
+        scoring: {
+          title: 'Scoring',
+          body: 'The score follows the classic Windows rules. Your best score is kept.',
+          rows: [
+            { term: '+10', text: 'A card to a foundation' },
+            { term: '+5', text: 'Waste to a column, or turning a card over' },
+            { term: '-15', text: 'A card back off a foundation' },
+            { term: '-100', text: 'Turning the waste over in Draw 1 (-20 in Draw 3)' },
+            { term: 'Bonus', text: '700,000 divided by your seconds, on a win' },
+          ],
+        },
+      },
     },
     pongApp: {
       court: 'Pong court',
@@ -1390,6 +1427,24 @@ export const en = {
       player1Wins: 'PLAYER 1 WINS',
       player2Wins: 'PLAYER 2 WINS',
       scoreAnnounce: 'Score, {l} to {r}',
+      tutorial: {
+        goal: {
+          title: 'Goal',
+          body: 'Knock the ball past the other paddle. Each miss is a point to the other side, and the first to 7 wins.',
+        },
+        controls: {
+          title: 'Controls',
+          body: 'Play the CPU on Easy, Normal or Hard, or a friend on the same keyboard. On a phone, drag to move your paddle.',
+          p1: 'Player 1 (left), or move the mouse',
+          p2: 'Player 2 (right)',
+          pause: 'Pause',
+          start: 'Start from the menu, or rematch',
+        },
+        angles: {
+          title: 'Aiming',
+          body: 'Where the ball meets your paddle sets its angle: the middle sends it back flat, the ends send it away steeply. Every hit makes it a little faster, so long rallies get quick.',
+        },
+      },
     },
     breakoutApp: {
       field: 'Breakout playfield',
@@ -1411,6 +1466,39 @@ export const en = {
       over: 'Game over',
       playAgain: 'Play again',
       announceOver: 'Game over. Score {n}. Best {best}',
+      tutorial: {
+        goal: {
+          title: 'Goal',
+          body: 'Bounce the ball into the bricks to break them all, and keep it off the floor with your paddle. You start with 3 lives and can hold up to 5.',
+        },
+        bricks: {
+          title: 'Bricks',
+          body: 'Higher rows score more. Clear every breakable brick to finish a level; each level is a little faster.',
+          rows: [
+            { term: 'Brick', text: 'Breaks in one hit' },
+            { term: 'Tough', text: 'Takes two hits, double points' },
+            { term: 'Steel', text: 'Never breaks; you do not need to' },
+          ],
+        },
+        powerups: {
+          title: 'Power-ups',
+          body: 'Some bricks drop a capsule. Catch it with the paddle to use it.',
+          rows: [
+            { term: 'W', text: 'Wide paddle for 12 seconds' },
+            { term: 'M', text: 'Extra balls' },
+            { term: 'S', text: 'Slower ball for 10 seconds' },
+            { term: '+', text: 'One more life' },
+            { term: 'C', text: 'The ball sticks to the paddle; launch it again' },
+          ],
+        },
+        controls: {
+          title: 'Controls',
+          body: 'Where the ball lands on the paddle sets its angle: the ends send it off steeply. On a phone, drag anywhere to move.',
+          move: 'Move the paddle (or the mouse)',
+          launch: 'Launch the ball',
+          pause: 'Pause',
+        },
+      },
     },
     chessApp: {
       board: 'Chess board',
@@ -1470,6 +1558,42 @@ export const en = {
       moveAnnounce: '{color}: {san}',
       hintKeys: 'Arrows move, Enter selects, Esc clears',
       hintTouch: 'Tap a piece, then a square',
+      tutorial: {
+        goal: {
+          title: 'Goal',
+          body: 'Checkmate the other king: attack it so that no move saves it. White moves first. Play the CPU at four levels, or a friend on this screen.',
+        },
+        pieces: {
+          title: 'How the pieces move',
+          body: 'No piece can jump over another, except the knight. Take a piece by moving onto its square.',
+          k: 'One square in any direction',
+          q: 'Any distance, straight or diagonal',
+          r: 'Any distance, straight',
+          b: 'Any distance, diagonal',
+          n: 'An L: two one way, one across',
+          p: 'Forward one (two from its start), takes diagonally',
+        },
+        special: {
+          title: 'Special moves',
+          body: 'Three moves break the usual pattern. The board only lets you make legal ones.',
+          rows: [
+            { term: 'Castling', text: 'King two squares toward a rook, the rook hops over. Neither may have moved, and the king may not pass through check' },
+            { term: 'En passant', text: 'A pawn that rushed two squares past yours can be taken as if it moved one' },
+            { term: 'Promotion', text: 'A pawn reaching the far side becomes a queen, rook, bishop or knight (Q, R, B, N)' },
+          ],
+        },
+        end: {
+          title: 'Check and draws',
+          body: 'Check means your king is attacked, and your move must end it. With no legal move and no check it is stalemate, a draw. The fifty-move rule, a position repeated three times and too few pieces to mate are draws too.',
+        },
+        controls: {
+          title: 'Controls',
+          body: 'Click or drag a piece; its legal squares light up. Hint shows a good move, Flip turns the board, PGN copies the game.',
+          move: 'Move around the board',
+          select: 'Pick up or put down a piece',
+          clear: 'Drop the selection',
+        },
+      },
     },
     mahjongApp: {
       title: 'Mahjong',
@@ -1574,6 +1698,139 @@ export const en = {
       handAria: 'Your hand',
       riverAria: '{name} discards',
       seatAria: '{name}, {n} tiles, {score} points',
+      tableAnim: 'Table animation',
+      autoTable: {
+        shuffling: 'Shuffling the tiles…',
+        walls: 'Building the walls…',
+        dice: 'Rolling the dice…',
+        dealing: 'Dealing…',
+        skip: 'Skip',
+      },
+      tileInfo: {
+        dots: { name: '{n} of Dots', note: 'Dots (circles): count the circles to read the number.' },
+        bamboo: { name: '{n} of Bamboo', note: 'Bamboo (sticks): count the sticks to read the number.', bird: 'The 1 of Bamboo is drawn as a bird, not a stick.' },
+        characters: { name: '{n} of Characters', note: 'The top character is the number {glyph} ({pinyin}, {n}). The red 萬 below means ten thousand and marks the suit.' },
+        numerals: ['yī', 'èr', 'sān', 'sì', 'wǔ', 'liù', 'qī', 'bā', 'jiǔ'],
+        winds: [
+          { name: 'East Wind', pinyin: 'dōng' },
+          { name: 'South Wind', pinyin: 'nán' },
+          { name: 'West Wind', pinyin: 'xī' },
+          { name: 'North Wind', pinyin: 'běi' },
+        ],
+        windNote: 'Honour tile: no runs, only pungs, kongs and pairs. A pung of your seat wind or the round wind scores 1 faan.',
+        dragons: [
+          { name: 'Red Dragon', pinyin: 'zhōng', meaning: 'Means "centre".' },
+          { name: 'Green Dragon', pinyin: 'fā', meaning: 'Means "prosper", as in getting rich.' },
+          { name: 'White Dragon', pinyin: 'bái', meaning: 'Means "white"; the tile is drawn as an empty blue frame.' },
+        ],
+        dragonNote: 'Honour tile: no runs, only pungs, kongs and pairs. Any dragon pung scores 1 faan.',
+        flowers: ['Plum', 'Orchid', 'Chrysanthemum', 'Bamboo'],
+        flowerName: '{name} (Flower {n})',
+        seasons: [
+          { name: 'Spring', pinyin: 'chūn' },
+          { name: 'Summer', pinyin: 'xià' },
+          { name: 'Autumn', pinyin: 'qiū' },
+          { name: 'Winter', pinyin: 'dōng' },
+        ],
+        seasonName: '{name} (Season {n})',
+        bonusNote: 'Bonus tile: set aside as soon as you draw it and replaced. Scores 1 faan if its number is your seat (1 East, 2 South, 3 West, 4 North).',
+        suitNote: 'Suit tile: use it in a chow (three in a row of one suit), a pung, a kong or a pair.',
+        matchSame: 'Solitaire: matches any identical tile.',
+        matchBonus: 'Solitaire: matches any tile of the same group, whatever the number.',
+        kinds: { suit: 'Suit', honour: 'Honour', bonus: 'Bonus' },
+      },
+      tutorial: {
+        tiles: {
+          title: 'The tiles',
+          body: 'Three suits run from 1 to 9: dots, bamboo and characters. The honours are four winds and three dragons. Four of each, plus eight one-off bonus tiles.',
+          captions: ['Dots', 'Bamboo', 'Characters', 'Wind', 'Dragon', 'Bonus'],
+        },
+        guide: {
+          title: 'Tile guide',
+          body: 'Hover any tile, here or in a game, to see what the Chinese says, how to say it and what the tile does. Tap a tile below for the same note.',
+          pick: 'Pick a tile',
+        },
+        solitaire: {
+          goal: {
+            title: 'Solitaire: the goal',
+            body: 'Clear the board by taking off matching pairs. Identical tiles match, any flower matches any flower, and any season matches any season.',
+            match: 'Match',
+            noMatch: 'No match',
+          },
+          free: {
+            title: 'Free tiles',
+            body: 'Only free tiles can be picked: nothing on top, and the left or right side open. Blocked tiles are dimmed, which you can turn off in the menu.',
+            free: 'Free',
+            blocked: 'Blocked',
+          },
+          play: {
+            title: 'Playing',
+            body: 'Click or tap a free tile, then its match. Click it again to let go. When no pairs are left, shuffle the tiles still on the board or undo.',
+            hint: 'Flash a pair you can take',
+            undo: 'Take back the last pair',
+            shuffle: 'Shuffle the tiles left',
+            menu: 'Back to the menu',
+          },
+          saved: {
+            title: 'Layouts and times',
+            body: 'Turtle, Pyramid and Fortress each keep your best time. Your game saves itself, so you can leave and pick it up from Resume in the menu.',
+          },
+        },
+        four: {
+          goal: {
+            title: '4-Player: the goal',
+            body: 'Hong Kong mahjong against three bots. Be first to make a winning hand of 14 tiles: four sets and a pair.',
+            captions: ['Chow', 'Pung', 'Chow', 'Pung', 'Pair'],
+          },
+          sets: {
+            title: 'Sets',
+            body: 'A kong counts as one set, and you draw a spare tile for its fourth. Honours can only make pungs, kongs and pairs.',
+            rows: [
+              { term: 'Chow', text: 'Three in a row in one suit' },
+              { term: 'Pung', text: 'Three the same' },
+              { term: 'Kong', text: 'Four the same' },
+              { term: 'Pair', text: 'Two the same, the eyes' },
+            ],
+          },
+          turn: {
+            title: 'Your turn',
+            body: 'Draw a tile (it sits apart on the right), then discard one so you keep 13. Click a tile to raise it and click it again, or press Discard, to throw it out.',
+            pick: 'Pick a tile',
+            discard: 'Discard it',
+            win: 'Declare a self-drawn win',
+            kong: 'Declare a kong from your hand',
+          },
+          claim: {
+            title: 'Claiming a discard',
+            body: 'Anyone may pung, kong or win on a discard. A chow only works on the tile the player before you (on your left) threw out. A panel shows your options.',
+            pung: 'Pung it',
+            chow: 'Chow it (1 to 3 choose which)',
+            kong: 'Kong it',
+            win: 'Win on it',
+            pass: 'Let it go',
+          },
+          winds: {
+            title: 'Winds and bonus tiles',
+            body: 'Each seat has a wind, shown on its badge: the dealer is East, then South, West and North around the table. The round has a wind too. Flowers and seasons go face up beside you and are replaced.',
+          },
+          scoring: {
+            title: 'Scoring',
+            body: 'A win is worth faan, and needs at least the minimum set in the menu. The player who discarded the winning tile pays; on a self-draw all three pay. Ready shows the tiles that would finish your hand.',
+            rows: [
+              { term: '1 faan', text: 'Self-drawn, concealed hand, dragon pung, all chows' },
+              { term: '3 faan', text: 'All pungs, or one suit mixed with honours' },
+              { term: '4 faan', text: 'Seven pairs' },
+              { term: '6 faan', text: 'One suit only' },
+              { term: 'Limit', text: 'Thirteen orphans, all honours, four kongs…' },
+            ],
+          },
+          table: {
+            title: 'The automatic table',
+            body: 'Before each hand the table sweeps the tiles in, shuffles them, raises the walls and deals, like a real automatic table. Click or press Enter to skip it, or turn it off in the menu.',
+            skipKeys: 'Skip to the dealt hand (a click works too)',
+          },
+        },
+      },
     },
     paintApp: {
       pencil: 'Pencil',
@@ -1596,6 +1853,28 @@ export const en = {
       lost: 'Boom.',
       reveal: 'Reveal',
       flag: 'Flag',
+      tutorial: {
+        goal: {
+          title: 'Goal',
+          body: 'Open every square that is not a mine. The 9 by 9 board hides 10 mines, and your first click is always safe.',
+        },
+        numbers: {
+          title: 'Reading numbers',
+          body: 'A number counts the mines touching that square, diagonals included. A blank square has none, so its neighbours open for you.',
+          caption: 'The 1s and 2s point at the flagged mine',
+        },
+        flags: {
+          title: 'Flags',
+          body: 'Right-click a square (or long-press it, or switch to Flag on a phone) to mark a mine you are sure of. Flags stop misclicks and count down the mines left.',
+        },
+        controls: {
+          title: 'Controls',
+          body: 'The clock starts on your first click. Your best time is kept.',
+          move: 'Move between squares',
+          open: 'Open the square',
+          flag: 'Flag or unflag it',
+        },
+      },
     },
     snakeApp: {
       board: 'Snake board',
@@ -1614,6 +1893,19 @@ export const en = {
       dpadDown: 'Down',
       dpadLeft: 'Left',
       dpadRight: 'Right',
+      tutorial: {
+        goal: {
+          title: 'Goal',
+          body: 'Eat the apples to grow; each is a point. The snake speeds up as it grows. Hitting a wall or your own body ends the run, and filling the whole board is a perfect run.',
+        },
+        controls: {
+          title: 'Controls',
+          body: 'The snake keeps moving; you only steer. On a phone, swipe the board or use the D-pad, and a new game waits for your first move.',
+          steer: 'Steer',
+          pause: 'Pause or resume',
+          restart: 'Start again after a crash',
+        },
+      },
     },
     readmeApp: {
       title: 'README.txt',

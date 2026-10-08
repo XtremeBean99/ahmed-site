@@ -19,6 +19,7 @@ import {
 } from './DeskArcade'
 import { StripButton, useDeskScreen } from './ScreenStrip'
 import { useSfx } from './RoomSfxProvider'
+import { GameTutorial, KeyRows, TutorialButton, useTutorial, type Tutorial } from './GameTutorial'
 import { BEST_KEYS, getBest, setBestIfHigher } from '@/lib/games/storage'
 import type { BreakoutEvent, Brick, PowerUpKind } from '@/lib/games/types'
 import {
@@ -194,6 +195,78 @@ export interface BreakoutLabels {
   over: string
   playAgain: string
   announceOver: string
+  tutorial: BreakoutTutorialLabels
+}
+
+type Page = { title: string; body: string }
+type Terms = { term: string; text: string }[]
+export interface BreakoutTutorialLabels {
+  goal: Page
+  bricks: Page & { rows: Terms }
+  powerups: Page & { rows: Terms }
+  controls: Page & { move: string; launch: string; pause: string }
+}
+
+const POWERUP_ORDER: PowerUpKind[] = ['wide', 'multi', 'slow', 'life', 'catch']
+
+/** A swatch beside a gold term and a line of text, for the bricks and the capsules. */
+function SwatchRows({ rows, swatch }: { rows: Terms; swatch: (i: number) => React.ReactNode }) {
+  const { portrait } = useDeskScreen()
+  return (
+    <div className="grid items-center" style={{ gridTemplateColumns: 'auto auto 1fr', columnGap: 8, rowGap: portrait ? 7 : 4, marginTop: 8 }}>
+      {rows.map((row, i) => (
+        <div key={row.term} className="contents">
+          {swatch(i)}
+          <span style={{ color: ARCADE.gold }}>{row.term}</span>
+          <span>{row.text}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function BreakoutTutorial({ labels, onClose }: { labels: BreakoutLabels; onClose: () => void }) {
+  const { portrait } = useDeskScreen()
+  const t = labels.tutorial
+  const brick = (i: number) => {
+    const base = i === 2 ? STEEL : BAND_COLORS[3]
+    return (
+      <span aria-hidden style={{ width: 24, height: 9, backgroundColor: base, boxShadow: i === 1 ? `inset 0 0 0 2px ${BAND_COLORS[2]}` : i === 2 ? 'inset 0 -2px 0 #5a5248' : 'inset 0 1px 0 rgba(255,255,255,0.35)' }} />
+    )
+  }
+  const capsule = (i: number) => (
+    <span
+      aria-hidden
+      className="flex items-center justify-center"
+      style={{ width: 22, height: 10, borderRadius: 5, backgroundColor: POWERUP_COLORS[POWERUP_ORDER[i]], color: ARCADE.phosphor, fontSize: 8, lineHeight: 1, ...PIXEL_FONT }}
+    >
+      {POWERUP_GLYPHS[POWERUP_ORDER[i]]}
+    </span>
+  )
+  return (
+    <GameTutorial
+      onClose={onClose}
+      bodyH={{ landscape: 150, portrait: 230 }}
+      pages={[
+        t.goal,
+        { ...t.bricks, extra: <SwatchRows rows={t.bricks.rows} swatch={brick} /> },
+        { ...t.powerups, extra: <SwatchRows rows={t.powerups.rows} swatch={capsule} /> },
+        {
+          ...t.controls,
+          extra: (
+            <KeyRows
+              portrait={portrait}
+              rows={[
+                { keys: ['←', '→'], text: t.controls.move },
+                { keys: ['Space'], text: t.controls.launch },
+                { keys: ['P'], text: t.controls.pause },
+              ]}
+            />
+          ),
+        },
+      ]}
+    />
+  )
 }
 
 type ViewMode = 'ready' | 'play' | 'paused' | 'clear' | 'over'
@@ -228,6 +301,7 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
   reduceRef.current = reduce
 
   const [view, setView] = useState<ViewMode>('ready')
+  const tutorialState = useTutorial('breakout-tutorial-seen')
   const [best, setBest] = useState(0)
   const [clearBanner, setClearBanner] = useState<{ level: number; bonus: number } | null>(null)
   const [announce, setAnnounce] = useState('')
@@ -621,10 +695,19 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
   }
 
   const current = stateRef.current
+  // Opening How to play mid-game pauses it first.
+  const tutorial: Tutorial = {
+    ...tutorialState,
+    show: (e) => {
+      if (stateRef.current.status === 'play') doPause()
+      tutorialState.show(e)
+    },
+  }
 
   return (
     <ArcadeFrame fs={fs} background={ARCADE.crt} portrait={portrait}>
       <ArcadeStrip time={time} fs={fs} arcade={arcade} desktopLabel={desktopLabel} backLabel={backLabel} onDesktop={onDesktop} onBack={onBack}>
+        <TutorialButton tutorial={tutorial} />
         <StripButton onClick={doPause}>{labels.pause}</StripButton>
       </ArcadeStrip>
 
@@ -719,6 +802,7 @@ export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, on
           {announce}
         </div>
       </div>
+      {tutorial.open && <BreakoutTutorial labels={labels} onClose={tutorial.close} />}
     </ArcadeFrame>
   )
 }

@@ -26,6 +26,7 @@ import type { MahjongChrome } from './chrome'
 import { MUTED, TABLE_BG } from './chrome'
 import type { MahjongLabels } from './labels'
 import { TileView } from './tile-art'
+import { tileInfo } from './tile-info'
 import { clearSave, fmtTime, loadStats, recordSolitaireWin, writeSave, type Prefs, type Stats } from './mahjong-store'
 
 interface Props {
@@ -111,13 +112,15 @@ export function MahjongSolitaire({ chrome, labels, prefs, initial, onMenu }: Pro
   }, [areaW, areaH, ext, portrait])
 
   /* ---------- Timer and save ---------- */
+  // The clock stops while How to play is open.
+  const helpOpen = chrome.helpOpen
   useEffect(() => {
-    if (won) return
+    if (won || helpOpen) return
     const id = window.setInterval(() => {
       if (!document.hidden) setElapsed((e) => e + 1)
     }, 1000)
     return () => window.clearInterval(id)
-  }, [won])
+  }, [won, helpOpen])
 
   const saveBucket = Math.floor(elapsed / 5)
   useEffect(() => {
@@ -255,7 +258,7 @@ export function MahjongSolitaire({ chrome, labels, prefs, initial, onMenu }: Pro
   // Escape closes the innermost layer first (a panel, then the selection) before DeskView's ladder sees it.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || document.fullscreenElement) return
+      if (e.key !== 'Escape' || document.fullscreenElement || helpOpen) return
       if (overShown) setOverShown(false)
       else if (stuckOpen) setStuckOpen(false)
       else if (gameRef.current.selected !== null) commit({ ...gameRef.current, selected: null })
@@ -264,7 +267,7 @@ export function MahjongSolitaire({ chrome, labels, prefs, initial, onMenu }: Pro
     }
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
-  }, [overShown, stuckOpen, commit])
+  }, [overShown, stuckOpen, commit, helpOpen])
 
   /* ---------- Rendering ---------- */
   const blurClick = (fn: () => void) => (e: React.MouseEvent) => {
@@ -278,6 +281,7 @@ export function MahjongSolitaire({ chrome, labels, prefs, initial, onMenu }: Pro
       <ArcadeButton size={btnSize} tone="dark" onClick={blurClick(doUndo)} disabled={game.history.length === 0}>{labels.undo}</ArcadeButton>
       <ArcadeButton size={btnSize} tone="dark" onClick={blurClick(doShuffle)} disabled={won}>{labels.shuffle}</ArcadeButton>
       <ArcadeButton size={btnSize} tone="dark" onClick={onMenu}>{labels.newGame}</ArcadeButton>
+      {chrome.help}
     </>
   )
 
@@ -336,6 +340,12 @@ export function MahjongSolitaire({ chrome, labels, prefs, initial, onMenu }: Pro
     </div>
   )
 
+  // The name, plus the Chinese and how to say it, so a tap on a phone tells as much as a hover.
+  const previewText = (code: string) => {
+    const info = tileInfo(code, labels.tileInfo)
+    if (!info) return tileName(code)
+    return info.pinyin ? `${info.name} · ${info.glyph} ${info.pinyin}` : info.name
+  }
   const previewW = portrait ? 24 : 44
   const preview = (
     <div className="flex items-center gap-2 min-w-0" style={{ minHeight: previewW * 1.4 + 4 }}>
@@ -343,7 +353,7 @@ export function MahjongSolitaire({ chrome, labels, prefs, initial, onMenu }: Pro
         {previewTile && <TileView code={previewTile.code} w={previewW} h={Math.round(previewW * 1.4)} depth={2} style={{ margin: 1 }} />}
       </div>
       <span className="min-w-0" style={{ fontSize: portrait ? 12 : 10, lineHeight: 1.25, color: ARCADE.panelText, ...PIXEL_FONT }}>
-        {previewTile ? tileName(previewTile.code) : portrait ? labels.tapHint : ''}
+        {previewTile ? previewText(previewTile.code) : portrait ? labels.tapHint : ''}
       </span>
     </div>
   )

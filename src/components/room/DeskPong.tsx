@@ -38,6 +38,7 @@ import {
 import { fromView, viewSize } from '@/lib/games/pong-view'
 import { BEST_KEYS, getBest, readJson, setBestIfHigher, writeJson } from '@/lib/games/storage'
 import { useSfx } from './RoomSfxProvider'
+import { GameTutorial, KeyRows, TutorialButton, useTutorial, type Tutorial } from './GameTutorial'
 
 const DT = 1 / 120
 
@@ -63,6 +64,42 @@ export interface PongLabels {
   player1Wins: string
   player2Wins: string
   scoreAnnounce: string
+  tutorial: PongTutorialLabels
+}
+
+type Page = { title: string; body: string }
+export interface PongTutorialLabels {
+  goal: Page
+  controls: Page & { p1: string; p2: string; pause: string; start: string }
+  angles: Page
+}
+
+function PongTutorial({ labels, onClose }: { labels: PongLabels; onClose: () => void }) {
+  const { portrait } = useDeskScreen()
+  const t = labels.tutorial
+  return (
+    <GameTutorial
+      onClose={onClose}
+      pages={[
+        t.goal,
+        {
+          ...t.controls,
+          extra: (
+            <KeyRows
+              portrait={portrait}
+              rows={[
+                { keys: ['W', 'S'], text: t.controls.p1 },
+                { keys: ['↑', '↓'], text: t.controls.p2 },
+                { keys: ['Space', 'P'], text: t.controls.pause },
+                { keys: ['Enter'], text: t.controls.start },
+              ]}
+            />
+          ),
+        },
+        t.angles,
+      ]}
+    />
+  )
 }
 
 const clampNum = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v)
@@ -196,6 +233,7 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
 
   const [view, setView] = useState<'menu' | 'play' | 'over'>('menu')
   const [paused, setPaused] = useState(false)
+  const tutorialState = useTutorial('pong-tutorial-seen')
   const [mode, setMode] = useState<PongMode>('1p')
   const [difficulty, setDifficulty] = useState<PongDifficulty>('normal')
   const [bestRally, setBestRally] = useState(0)
@@ -214,6 +252,10 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
   const modeRef = useRef(mode)
   const difficultyRef = useRef(difficulty)
   const pausedRef = useRef(paused)
+  const helpRef = useRef(false)
+  useEffect(() => {
+    helpRef.current = tutorialState.open
+  }, [tutorialState.open])
 
   useEffect(() => {
     viewRef.current = view
@@ -372,7 +414,7 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
       const elapsed = Math.min(100, now - last)
       last = now
       const current = matchRef.current
-      if (current && viewRef.current === 'play' && !pausedRef.current && !document.hidden) {
+      if (current && viewRef.current === 'play' && !pausedRef.current && !helpRef.current && !document.hidden) {
         acc += elapsed / 1000
         let s = current
         while (acc >= DT && s.status !== 'over') {
@@ -551,9 +593,19 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
         : labels.player2Wins
     : ''
 
+  // Opening How to play mid-rally pauses the match, so the ball is where you left it.
+  const tutorial: Tutorial = {
+    ...tutorialState,
+    show: (e) => {
+      if (viewRef.current === 'play') setPaused(true)
+      tutorialState.show(e)
+    },
+  }
+
   return (
     <ArcadeFrame fs={fs} background={ARCADE.crt} portrait>
       <ArcadeStrip time={time} fs={fs} arcade={arcade} desktopLabel={desktopLabel} backLabel={backLabel} onDesktop={onDesktop} onBack={onBack}>
+        <TutorialButton tutorial={tutorial} />
         {portrait && view === 'play' ? (
           <ArcadeButton
             size="xl"
@@ -642,6 +694,7 @@ export function DeskPong({ time, backLabel, desktopLabel, labels, arcade, onBack
           </ArcadeOverlay>
         )}
       </div>
+      {tutorial.open && <PongTutorial labels={labels} onClose={tutorial.close} />}
     </ArcadeFrame>
   )
 }

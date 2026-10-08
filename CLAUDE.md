@@ -228,7 +228,14 @@ payments) and a match summary. Keys: arrows pick a tile, Enter discards, P/C/K/W
 hand-over panel or clears the selection before DeskView's ladder. Portrait stacks the opponents on top, the rivers
 2x2, and the hand in two rows of seven with 38 px action buttons. Storage (games storage): `mahjong-save` (the game
 in progress and its mode, validated by each engine's `validateSave`), `mahjong-prefs` (settings last used),
-`mahjong-stats` (solitaire best time and wins per layout; 4-player matches and hands won, best faan),
+`mahjong-stats` (solitaire best time and wins per layout; 4-player matches and hands won, best faan). Before each
+fresh 4-player hand `mahjong/AutoTable.tsx` plays the automatic table (tiles swept into the centre hatch, walls rise
+two high, dice, the deal off the wall at the break in blocks of four to the racks; skippable with a click, Enter,
+Space or Escape; off under reduced motion or the `tableAnim` pref); bots wait for it. Every `TileView` inside
+`TileTipLayer` (`mahjong/tile-tip.tsx`, context in `tip-context.ts`) gets a mouse-hover tooltip from
+`tile-info.ts`: the Chinese, its pinyin, the meaning and how the tile plays (copy in `mahjongApp.tileInfo`);
+`tip={false}` opts a tile out. `mahjong/Tutorial.tsx` holds How to play for each mode (tiles, a tile guide, then
+that mode's rules; `mahjong-solitaire-tutorial-seen`, `mahjong-four-tutorial-seen`),
 `readme` (`DeskReadme.tsx`: renders `site-text.txt`), `music`
 (`DeskMusic.tsx`: playlist picker), `legal` (`DeskLegal.tsx`: privacy/terms tabs, scrollable
 legal doc). The `browser` mode was removed (Spec 1, July 2026). Escape ladder app→desktop→room.
@@ -573,6 +580,14 @@ remember-summer-days ⚠ commercial. Cover: summer-days.jpg.
   catan/books/vhs format (rest + 1 px and 2 px #f6da9c highlight, −2 px lift, tooltip); each opens its desk app on the
   monitor. The book under the side table opens the Guestbook. Labels in `room.shelfGameLabels` and
   `room.guestbookBookLabel`.
+
+- **v27** `9 October 2026`: **How to play for every desk game, Mahjong table animation and tile tooltips.** The
+  Blackjack dialog became the shared `GameTutorial.tsx` (paged dialog, `useTutorial` auto-opens once per game via a
+  `<game>-tutorial-seen` key, `TutorialButton` "?" in the strip, `KeyRows`/`TermRows`; chrome copy in `desk.tutorial`,
+  pages in each game's `tutorial` labels). Chess, Solitaire, Minesweeper, Snake, Pong, Breakout and both Mahjong
+  modes have one; real-time games and clocks pause while it is open, and its capture-phase key handler swallows the
+  game's keys. Mahjong also gained the automatic-table deal animation and hover tooltips explaining each tile for
+  visitors who do not read Chinese (see the `mahjong` paragraph under Desk view).
 
 - **v26** `9 October 2026`: **Shelf games redrawn in the shelf's perspective.** `draw-shelf-games.mjs` is now a small
   oblique 3D projector (see the sprite pipeline): the objects sit deeper on the shelf at different depths and

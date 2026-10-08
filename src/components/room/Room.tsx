@@ -979,6 +979,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
               w={game.w}
               h={game.h}
               frames={game.frames}
+              hitPath={game.hit}
               frameDuration={SPRITE_FRAME_MS.shelfGame}
               mode="play-once-hold"
               onClick={() => openDeskApp(game.app)}

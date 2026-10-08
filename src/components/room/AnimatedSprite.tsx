@@ -33,6 +33,12 @@ interface AnimatedSpriteProps {
    * bedside book follows the side table). The highlight dims with it.
    */
   dimmed?: boolean
+  /**
+   * SVG path (local to the sprite box) for CSS clip-path: only these pixels
+   * take the pointer, so overlapping sprites (the shelf games) each keep their
+   * own clicks. The box itself lets the pointer through to what is behind.
+   */
+  hitPath?: string
 }
 
 export function AnimatedSprite({
@@ -49,6 +55,7 @@ export function AnimatedSprite({
   altFrame = null,
   altActive = false,
   dimmed = false,
+  hitPath,
 }: AnimatedSpriteProps) {
   const [hovered, setHovered] = useState(false)
   const lighting = useLighting()
@@ -121,8 +128,18 @@ export function AnimatedSprite({
         // Shelf sprites overlap. The hovered one comes forward so its
         // highlight outline is never clipped by the neighbour painted after it.
         zIndex: hovered ? 20 : undefined,
+        // pointer-events is inherited, so the button and art pass through too;
+        // the masked hit layer below opts back in. Focus is unaffected.
+        pointerEvents: hitPath ? 'none' : undefined,
       }}
     >
+      {hitPath && (
+        <span
+          aria-hidden
+          className="absolute inset-0"
+          style={{ clipPath: `path('${hitPath}')`, pointerEvents: 'auto' }}
+        />
+      )}
       <motion.div
         className="w-full h-full"
         animate={hovered && !reduce ? { y: -2 } : { y: 0 }}

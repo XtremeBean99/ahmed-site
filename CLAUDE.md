@@ -305,9 +305,12 @@ side table (641,409 232×210, clickable, 2 frames: drawer closed/open, click tog
 digital clock (658,386 71×55, single frame, no hover lift; SideTableClock renders live user
 time in LED green #35e65c on the blank face — digit plane (679,409) 43×22, skewY(−11°),
 1 Hz colon blink gated by reduced motion, updates every 10 s; click toggles 12/24 h via
-`clock24h` pref) · shelf games (`SHELF_GAMES` in `objects.ts`, eight 3-frame sprites right of
-the VHS, play-once-hold: chess set, mahjong tiles, card box, poker chips, floppy disk, candybar
-phone, Pong and Breakout cartridges; a click zooms to the desk and opens that app through
+`clock24h` pref) · shelf games (`SHELF_GAMES` in `objects.ts`, built from the generated
+`shelf-games.ts`: eight 3-frame sprites right of the VHS, play-once-hold: a chess set (board leaning
+on the wall, chessmen in front), mahjong wall and tiles, card box, A+K cards with chips, two
+floppies, candybar phone, Breakout and Pong cartridges. They overlap, so each passes
+`hitPath` to AnimatedSprite: the box lets the pointer through and only a clip-path pixel mask takes
+it, and the later sprite in the list is the one in front; a click zooms to the desk and opens that app through
 `openDeskApp` → `pendingApp`/`initialApp`, like the VHS, and DeskView's open event counts the
 discovery) · bedside book (`BEDSIDE_BOOK`, 739,533 46×55, the book in the side table's cubby:
 opens the Guestbook the same way; dims with the lamp via AnimatedSprite `dimmed`; not rendered
@@ -349,9 +352,14 @@ Source art is organised by category under `assets/pixel-art/`:
   frame plus two highlight frames; cropped by `scripts/extract-shelf.mjs`. The eight desk-game
   objects (`chess`, `mahjong`, `solitaire`, `blackjack`, `minesweeper`, `snake`, `pong`,
   `breakout`, each `<id>.png`/`<id>2.png`/`<id>3.png`) are generated, not hand-drawn:
-  `scripts/draw-shelf-games.mjs` holds them as ASCII colour maps, outlines each part in black,
-  shears every column up the shelf's slope (floor y 236 at x 300, rising 0.135 px/px) and grows
-  the #f6da9c highlight 1 px then 2 px. Edit the maps there and rerun
+  `scripts/draw-shelf-games.mjs` places textured faces (ASCII colour maps) in the shelf's own 3D
+  space (u along the shelf, v up, w depth 0 front lip..1 back wall) and projects them with the
+  oblique projection measured off the background (front lip y 242 at x 300 rising 0.135 px/px,
+  depth vector (-54,-16)), so boxes show their top and left side, boards and floppies lean on the
+  back wall and the objects overlap at different depths. It outlines each part in black and grows
+  the #f6da9c highlight 1 px then 2 px. `extract-shelf.mjs` crops them and writes
+  `src/lib/room/shelf-games.ts` (generated: each box in render order plus a pixel hit mask). Edit
+  the maps or placements there and rerun
   `node scripts/draw-shelf-games.mjs && node scripts/extract-shelf.mjs && npm run lighting`
 - `room-view-monitor/` — monitor+keyboard+mouse base + highlight frames,
   `room-view-monitor/monitor-loading/` — Win98 boot-screen frames,
@@ -376,10 +384,7 @@ desk-closeup-lamp-off (full canvas) · background / background-lamp-off
 side-table-1..2 (641,409 232×210) · side-table-clock (658,386 71×55) · bedside-book-1..3
 (739,533 46×55) — all extracted by scripts/extract-side-table.mjs from
 assets/pixel-art/background/; the book is cut out of side-table-1 (hole filled with the cubby
-colours) so it can lift · shelf-chess (295,204 37×38) · shelf-mahjong (329,209 46×29) ·
-shelf-solitaire (370,193 30×39) · shelf-blackjack (396,190 42×38) · shelf-minesweeper
-(436,183 38×40) · shelf-snake (470,179 24×40) · shelf-pong (490,180 30×36) ·
-shelf-breakout (514,177 30×36), each -1..3.
+colours) so it can lift · shelf-<game>-1..3 for the eight desk games (boxes generated into `src/lib/room/shelf-games.ts`).
 Background (`background.png`, ~55 KB) loads `fetchpriority="high"` as the LCP element.
 
 ### Audio licences (former audio-licences.md)
@@ -568,6 +573,11 @@ remember-summer-days ⚠ commercial. Cover: summer-days.jpg.
   catan/books/vhs format (rest + 1 px and 2 px #f6da9c highlight, −2 px lift, tooltip); each opens its desk app on the
   monitor. The book under the side table opens the Guestbook. Labels in `room.shelfGameLabels` and
   `room.guestbookBookLabel`.
+
+- **v26** `9 October 2026`: **Shelf games redrawn in the shelf's perspective.** `draw-shelf-games.mjs` is now a small
+  oblique 3D projector (see the sprite pipeline): the objects sit deeper on the shelf at different depths and
+  overlap like the books and tapes; chess is a full set (a board leaning on the back wall, six chessmen in front).
+  Overlapping hotspots use pixel masks (AnimatedSprite `hitPath`, generated into `src/lib/room/shelf-games.ts`).
 
 - **v21** `26 September 2026`: **Pixel Catan v3.** `/catan` works on desktop, tablet and phone (three layouts,
   bottom sheets, touch placement; `MobileGate` no longer blocks it) with game settings (points to win, friendly

@@ -1,3 +1,5 @@
+import { SHELF_GAME_SPRITES } from './shelf-games'
+
 /**
  * Shared animation frame durations (ms). Each value is the interval between
  * sprite frames for the matching room object or component.
@@ -228,33 +230,31 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
 ]
 
 /**
- * The desk games on the shelf, right of the VHS tapes. Drawn by
- * scripts/draw-shelf-games.mjs, cropped by scripts/extract-shelf.mjs (rest +
- * the two-step highlight, play-once-hold). Clicking one zooms to the desk and
- * opens that app, like the VHS opens the film.
+ * The desk games on the shelf, right of the VHS tapes. Drawn in the shelf's
+ * perspective by scripts/draw-shelf-games.mjs (a chess set, mahjong tiles, a
+ * card box, cards and chips, floppy disks, a phone and two cartridges, at
+ * different depths so they overlap), cropped by scripts/extract-shelf.mjs (rest
+ * + the two-step highlight, play-once-hold), which also writes their boxes and
+ * pixel hit masks to shelf-games.ts. Clicking one zooms to the desk and opens
+ * that app, like the VHS opens the film.
  */
 export interface ShelfGameDef {
   /** Desk screen mode to open; also the label key in `room.shelfGameLabels`. */
-  app: 'chess' | 'mahjong' | 'solitaire' | 'blackjack' | 'minesweeper' | 'snake' | 'pong' | 'breakout'
+  app: (typeof SHELF_GAME_SPRITES)[number]['app']
   x: number
   y: number
   w: number
   h: number
+  /** Pixel mask for CSS clip-path, local to the box: overlapping neighbours keep their own clicks. */
+  hit: string
   frames: string[]
 }
 
-const shelfFrames = (id: string) => [1, 2, 3].map((i) => `/room/shelf-${id}-${i}.png`)
-
-export const SHELF_GAMES: ShelfGameDef[] = [
-  { app: 'chess', x: 295, y: 204, w: 37, h: 38, frames: shelfFrames('chess') },
-  { app: 'mahjong', x: 329, y: 209, w: 46, h: 29, frames: shelfFrames('mahjong') },
-  { app: 'solitaire', x: 370, y: 193, w: 30, h: 39, frames: shelfFrames('solitaire') },
-  { app: 'blackjack', x: 396, y: 190, w: 42, h: 38, frames: shelfFrames('blackjack') },
-  { app: 'minesweeper', x: 436, y: 183, w: 38, h: 40, frames: shelfFrames('minesweeper') },
-  { app: 'snake', x: 470, y: 179, w: 24, h: 40, frames: shelfFrames('snake') },
-  { app: 'pong', x: 490, y: 180, w: 30, h: 36, frames: shelfFrames('pong') },
-  { app: 'breakout', x: 514, y: 177, w: 30, h: 36, frames: shelfFrames('breakout') },
-]
+/** In render order: an object later in the list stands in front of the ones it overlaps. */
+export const SHELF_GAMES: ShelfGameDef[] = SHELF_GAME_SPRITES.map((s) => ({
+  ...s,
+  frames: [1, 2, 3].map((i) => `/room/shelf-${s.app}-${i}.png`),
+}))
 
 /**
  * The book in the side table's lower cubby: the guestbook. Cut out of the

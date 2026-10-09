@@ -188,13 +188,15 @@ three rows so the Terminal's `~/Desktop` file row still fits under it; 4 columns
 so the fifth row fits at screen heights down to about 440). (Links/webring was removed
 in v19; `terminal` stays konami-only and has no icon.)
 **Shelf and iPod in the desk view (v23).** The close-up only shows the shelf's underside (rows 0..60), so
-`desk-shelf-top.png` / `-lamp-off.png` (1408x300, drawn by `scripts/draw-desk-shelf.mjs` from the close-up's own
+`desk-shelf-top.png` / `-lamp-off.png` (1408x270, drawn by `scripts/draw-desk-shelf.mjs` from the close-up's own
 colours: side boards, back wall, a top board copied from the bottom one, the wall and lamp light above) sit at
-stage y -300..0. Everything on the stage is inside a camera div; looking up translates it +300 px (0.7 s; the stage
-clips with `overflow: hidden`). `DeskShelf.tsx` draws the room's own shelf sprites at 2x (`deskShelfItems()` in
-`src/lib/room/desk-shelf.ts`: room render order, Catan/books/VHS at exact 2x spacing, the games squeezed to fit,
-feet dropped by depth; hit masks scaled with `scalePath`), then repaints the lip (close-up rows 24..61) over their
-feet, so at rest only the bottoms show. At rest the items are `inert` and the strip is one "look up" button; ▲ Shelf
+stage y -270..0. Everything on the stage is inside a camera div; looking up translates it +270 px (0.7 s; the stage
+clips with `overflow: hidden`). The items are their own art, not the room's: `scripts/draw-desk-shelf-items.mjs`
+draws each one straight on and from below (fronts only, a sliver of side face toward the eye, 1 art px = 2 stage px
+with 1 px black outlines like the close-up), one sprite each (books separate) with the room's rest + two-step
+highlight frames (`desk-shelf-<id>-1..3.png`), and writes boxes and hit masks to `desk-shelf-sprites.ts`
+(`DESK_SHELF_ITEMS` in `desk-shelf.ts`). `DeskShelf.tsx` renders them as `AnimatedSprite`s, then repaints the lip
+(close-up rows 24..61) over their feet, so at rest only the bottoms show. At rest the items are `inert` and the strip is one "look up" button; ▲ Shelf
 (on the wall right of the shelf), the wheel over the desk art, or the strip look up; ▼ Desk, the wheel or Escape (first
 rung of the ladder) look down. Clicking a game, the VHS or Typing's Highscores button opens the app and looks down;
 books open the e-reader (Room now renders `RoomReader` in the desk branch too); Catan opens /catan. Items dim with the

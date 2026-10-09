@@ -22,7 +22,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const roomDir = join(__dirname, '..', 'public', 'room')
 
 const W = 1408
-const EXT_H = 300
+const EXT_H = 270
 // Close-up columns (measured): outer outline of the left side board, its inner
 // outline (the interior starts one column right), and the same for the right.
 const L_OUT = 36
@@ -31,9 +31,9 @@ const R_IN = 911
 const R_OUT = 932
 // Top board, in stage rows (negative = above the close-up): front face from
 // TOP_FACE to TOP_UNDER - 1, underside from TOP_UNDER to INTERIOR_TOP - 1.
-const TOP_FACE = -262
-const TOP_UNDER = -242
-const INTERIOR_TOP = -226
+const TOP_FACE = -232
+const TOP_UNDER = -212
+const INTERIOR_TOP = -196
 // The left board's inner face: its edge is at x 75 on row 0 and leans 0.24 px
 // outward per row going up (measured off rows 0..22 of the close-up).
 const INNER_EDGE_X0 = 75

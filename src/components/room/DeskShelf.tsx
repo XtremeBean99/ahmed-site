@@ -1,12 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { AnimatedSprite } from './AnimatedSprite'
-import { ShelfBooks } from './ShelfBooks'
 import { SPRITE_FRAME_MS } from '@/lib/room/objects'
-import { SHELF_BOOKS } from '@/lib/room/books'
-import { DESK_SHELF, deskShelfItems } from '@/lib/room/desk-shelf'
+import { DESK_SHELF, DESK_SHELF_ITEMS } from '@/lib/room/desk-shelf'
 
 export interface DeskShelfLabels {
   catan: string
@@ -32,7 +29,6 @@ interface DeskShelfProps {
   onOpenCatan: () => void
 }
 
-const ITEMS = deskShelfItems()
 const PIXEL: React.CSSProperties = { imageRendering: 'pixelated' }
 const BUTTON_FONT: React.CSSProperties = {
   fontFamily: 'var(--font-pixel), "Courier New", monospace', fontSize: 14, color: '#e8d5b0',
@@ -52,10 +48,6 @@ export function DeskShelf({ labels, lampOn, lookingUp, onLook, onOpenApp, onOpen
   const reduce = useReducedMotion()
   const fade: React.CSSProperties = { transition: reduce ? 'none' : 'opacity 0.4s ease' }
   const lip = DESK_SHELF.lip
-  const books = useMemo(
-    () => SHELF_BOOKS.map((b) => ({ ...b, hotspot: { x: b.hotspot.x * 2, y: b.hotspot.y * 2, w: b.hotspot.w * 2, h: b.hotspot.h * 2 } })),
-    [],
-  )
 
   return (
     <div className="absolute inset-0 pointer-events-none" onClick={(e) => e.stopPropagation()}>
@@ -69,24 +61,18 @@ export function DeskShelf({ labels, lampOn, lookingUp, onLook, onOpenApp, onOpen
 
       {/* The items: inert until the camera has looked up, so at rest the strip is one button */}
       <div className="absolute inset-0" inert={!lookingUp}>
-        {ITEMS.map((it) => {
-          // A zero-size wrapper at the origin: its children keep stage coordinates and take the pointer, the stage around them does not.
-          const hold = (node: React.ReactNode) => (
-            <div key={it.id} className="absolute left-0 top-0" style={{ pointerEvents: lookingUp ? 'auto' : 'none' }}>{node}</div>
-          )
-          if (it.kind === 'books') {
-            return hold(
-              <ShelfBooks x={it.x} y={it.y} w={it.w} h={it.h} frames={it.frames}
-                frameDuration={SPRITE_FRAME_MS.books} books={books} labels={labels.books} onOpen={onOpenBook}
-                dimmed={!lampOn} />,
-            )
-          }
-          const label = it.kind === 'catan' ? labels.catan : it.kind === 'vhs' ? labels.vhs : (labels.games[it.id] ?? it.id)
-          const open = it.kind === 'catan' ? onOpenCatan : () => onOpenApp(it.kind === 'vhs' ? 'movie' : it.id)
-          return hold(
-            <AnimatedSprite label={label} x={it.x} y={it.y} w={it.w} h={it.h} frames={it.frames}
-              hitPath={it.hit} frameDuration={SPRITE_FRAME_MS.shelfGame} mode="play-once-hold" onClick={open}
-              dimmed={!lampOn} />,
+        {DESK_SHELF_ITEMS.map((it) => {
+          const label = it.kind === 'catan' ? labels.catan : it.kind === 'vhs' ? labels.vhs
+            : it.kind === 'book' ? (labels.books[it.id] ?? it.id) : (labels.games[it.id] ?? it.id)
+          const open = it.kind === 'catan' ? onOpenCatan : it.kind === 'book' ? () => onOpenBook(it.id)
+            : () => onOpenApp(it.kind === 'vhs' ? 'movie' : it.id)
+          // A zero-size wrapper at the origin: its sprite keeps stage coordinates and takes the pointer, the stage around it does not.
+          return (
+            <div key={it.id} className="absolute left-0 top-0" style={{ pointerEvents: lookingUp ? 'auto' : 'none' }}>
+              <AnimatedSprite label={label} x={it.x} y={it.y} w={it.w} h={it.h} frames={it.frames}
+                hitPath={it.hit} frameDuration={SPRITE_FRAME_MS.shelfGame} mode="play-once-hold" onClick={open}
+                dimmed={!lampOn} />
+            </div>
           )
         })}
       </div>

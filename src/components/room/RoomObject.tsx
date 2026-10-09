@@ -117,7 +117,7 @@ export function RoomObject({
       {href ? (
         <a
           href={href}
-          className={`block cursor-pointer ${focusClass}`}
+          className={`block w-full h-full cursor-pointer ${focusClass}`}
           aria-label={label}
           tabIndex={tabIndex}
           onClick={handleClick}
@@ -127,7 +127,7 @@ export function RoomObject({
         </a>
       ) : (
         <button
-          className={`block cursor-pointer ${focusClass}`}
+          className={`block w-full h-full cursor-pointer ${focusClass}`}
           aria-label={label}
           tabIndex={tabIndex}
           onClick={handleClick}

@@ -31,6 +31,12 @@ import { DeskKeyboard } from './DeskKeyboard'
 import { NowPlaying } from './NowPlaying'
 import { PortraitBezel } from './PortraitBezel'
 import { AppBoundary, AppLoading } from './AppBoundary'
+import { DeskShelf, type DeskShelfLabels } from './DeskShelf'
+import { RoomIpod } from './RoomIpod'
+import type { TypingLabels } from './DeskTyping'
+import type { HighscoresLabels } from './DeskHighscores'
+import type { RequestLabels } from './DeskRequest'
+import { DESK_IPOD, DESK_SHELF } from '@/lib/room/desk-shelf'
 
 // Every app but the README landing and the desktop is its own chunk, so the
 // first load stays small on phones; they are prefetched once the page is idle.
@@ -49,12 +55,15 @@ const DeskSettings = dynamic(() => import('./DeskSettings').then((m) => m.DeskSe
 const DeskTerminal = dynamic(() => import('./DeskTerminal').then((m) => m.DeskTerminal), { ssr: false, loading: AppLoading })
 const DeskGuestbook = dynamic(() => import('./DeskGuestbook').then((m) => m.DeskGuestbook), { ssr: false, loading: AppLoading })
 const DeskMovie = dynamic(() => import('./DeskMovie').then((m) => m.DeskMovie), { ssr: false, loading: AppLoading })
+const DeskTyping = dynamic(() => import('./DeskTyping').then((m) => m.DeskTyping), { ssr: false, loading: AppLoading })
+const DeskHighscores = dynamic(() => import('./DeskHighscores').then((m) => m.DeskHighscores), { ssr: false, loading: AppLoading })
+const DeskRequest = dynamic(() => import('./DeskRequest').then((m) => m.DeskRequest), { ssr: false, loading: AppLoading })
 const APP_CHUNKS = [
   () => import('./DeskPaint'), () => import('./DeskMinesweeper'), () => import('./DeskSnake'),
   () => import('./DeskBlackjack'), () => import('./DeskSolitaire'), () => import('./DeskPong'),
   () => import('./DeskBreakout'), () => import('./DeskChess'), () => import('./DeskMahjong'), () => import('./DeskMusic'), () => import('./DeskLegal'),
   () => import('./DeskSettings'), () => import('./DeskTerminal'), () => import('./DeskGuestbook'),
-  () => import('./DeskMovie'),
+  () => import('./DeskMovie'), () => import('./DeskTyping'), () => import('./DeskHighscores'), () => import('./DeskRequest'),
 ]
 
 const SCREEN_X = 436; const SCREEN_Y = 152
@@ -73,6 +82,8 @@ const DESK_SPEAKER_HOLES_RIGHT = [
 const MOUSE_X_MIN = 975; const MOUSE_X_MAX = 1140
 const MOUSE_Y_MIN = 572; const MOUSE_Y_MAX = 635
 const MOUSE_REST_X = 1007; const MOUSE_REST_Y = 608
+// The iPod on the close-up desk, as a room object for RoomIpod.
+const DESK_IPOD_OBJ = { id: 'ipod', ...DESK_IPOD, labelKey: 'room.ipodLabel', frames: ['/room/ipod.png'], href: null }
 
 const SCREEN_CX = SCREEN_X + SCREEN_W / 2
 const SCREEN_CY = SCREEN_Y + SCREEN_H / 2
@@ -96,7 +107,7 @@ function mobileDeskLayout(vw: number, vh: number) {
     slack: { x: slackX, y: slackY },
   }
 }
-type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'snake' | 'blackjack' | 'solitaire' | 'pong' | 'breakout' | 'chess' | 'mahjong' | 'readme' | 'music' | 'legal' | 'guestbook' | 'settings' | 'terminal' | 'movie'
+type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'snake' | 'blackjack' | 'solitaire' | 'pong' | 'breakout' | 'chess' | 'mahjong' | 'readme' | 'music' | 'legal' | 'guestbook' | 'settings' | 'terminal' | 'movie' | 'typing' | 'highscores' | 'request'
 
 interface DeskViewProps {
   shortcuts: DesktopShortcut[]
@@ -150,6 +161,18 @@ interface DeskViewProps {
   guestbookLabels: GuestbookLabels
   /** Labels for the VHS player */
   movieLabels: MovieLabels
+  typingLabels: TypingLabels
+  highscoresLabels: HighscoresLabels
+  requestLabels: RequestLabels
+  /** The shelf above the desk (look-up pan) and its items */
+  shelfLabels: DeskShelfLabels
+  /** A shelf book: Room opens the e-reader */
+  onOpenBook: (id: string) => void
+  /** The Catan boxes: Room opens /catan */
+  onOpenCatan: () => void
+  ipodLabel: string
+  /** The desk iPod was clicked (counts the discovery) */
+  onIpod: () => void
   /**
    * App to open instead of the desktop on arrival (the shelf VHS walks the
    * visitor straight into the player). Cleared through onInitialAppHandled.
@@ -171,7 +194,7 @@ const SAFE_PADDING = 'env(safe-area-inset-top) env(safe-area-inset-right) env(sa
 const PORTRAIT_STAGE: React.CSSProperties = { position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', transform: 'none' }
 
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, clickAgainLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, chessLabels, mahjongLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack, nowPlayingLabels } = props
+  const { shortcuts, backLabel, clickAgainLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, chessLabels, mahjongLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, typingLabels, highscoresLabels, requestLabels, shelfLabels, onOpenBook, onOpenCatan, ipodLabel, onIpod, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack, nowPlayingLabels } = props
   const { scale, mobile, portrait } = useStageScale()
   const t = useT().desk
   const reduce = useReducedMotion()
@@ -184,6 +207,8 @@ export function DeskView(props: DeskViewProps) {
   const [mouseJitter, setMouseJitter] = useState(false)
   const [screensaver, setScreensaver] = useState(false)
   const [backPending, setBackPending] = useState(false)
+  // Looking up at the shelf: the camera pans down by DESK_SHELF.lookUp.
+  const [lookingUp, setLookingUp] = useState(false)
   const backPendingTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const lastAppRef = useRef<string | null>(null)
   const mouseRef = useRef<HTMLDivElement>(null)
@@ -349,7 +374,9 @@ export function DeskView(props: DeskViewProps) {
       if (e.key !== 'Escape') return
       // A full-screen game: the browser's own Escape leaves full screen, and that is all it should do.
       if (document.fullscreenElement) return
-      if (screenMode !== 'desktop') {
+      if (lookingUp) {
+        setLookingUp(false)
+      } else if (screenMode !== 'desktop') {
         setScreenMode('desktop')
       } else {
         onBack()
@@ -357,7 +384,28 @@ export function DeskView(props: DeskViewProps) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [screenMode, onBack])
+  }, [screenMode, onBack, lookingUp])
+
+  // The scroll wheel over the desk art (not the screen, whose apps scroll) looks up and back down.
+  useEffect(() => {
+    if (portrait) return
+    const onWheel = (e: WheelEvent) => {
+      if ((e.target as HTMLElement).closest('[data-screen-area]') || Math.abs(e.deltaY) < 4) return
+      setLookingUp(e.deltaY < 0)
+    }
+    window.addEventListener('wheel', onWheel, { passive: true })
+    return () => window.removeEventListener('wheel', onWheel)
+  }, [portrait])
+
+  // A portrait phone has no desk art to look up from.
+  useEffect(() => { if (portrait) setLookingUp(false) }, [portrait])
+
+  // Opens an app from outside the desktop (a shelf item, the typing result card): the camera comes back down to the screen.
+  const openApp = useCallback((app: string) => {
+    setScreenMode(app as ScreenMode)
+    window.dispatchEvent(new CustomEvent('room:app-open', { detail: app }))
+    setLookingUp(false)
+  }, [])
 
   // Arrived from an object in the room that opens an app directly.
   useEffect(() => {
@@ -516,7 +564,14 @@ export function DeskView(props: DeskViewProps) {
         transform: deskTransform, transformOrigin: 'center center',
         // The mobile desk pans by drag like the room; the browser must not claim the gesture (pointercancel).
         touchAction: mobile ? 'none' : undefined,
+        // The shelf extension above the stage shows only when the camera looks up.
+        overflow: 'hidden',
       }} initial={reduce ? undefined : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+        {/* Camera: looking up at the shelf pans everything on the desk down */}
+        <div className="absolute inset-0" style={{
+          transform: lookingUp ? `translateY(${DESK_SHELF.lookUp}px)` : 'none',
+          transition: reduce ? 'none' : 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}>
         {!portrait && (<>
         {/* Lamp-off close-up */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -527,6 +582,14 @@ export function DeskView(props: DeskViewProps) {
           className={`absolute inset-0 w-full h-full ${lampFlicker && !reduce ? 'animate-[lamp-flicker_0.5s_ease-out]' : ''}`}
           style={{ imageRendering: 'pixelated', opacity: lampOn ? 1 : 0, transition: reduce ? 'none' : 'opacity 0.4s ease' }} />
         <DeskKeyboard lampOn={lampOn} />
+
+        <DeskShelf labels={shelfLabels} lampOn={lampOn} lookingUp={lookingUp} onLook={setLookingUp}
+          onOpenApp={openApp} onOpenBook={onOpenBook} onOpenCatan={onOpenCatan} />
+
+        {/* iPod on the desk: skips the track, like in the room */}
+        <div onClick={(e) => e.stopPropagation()}>
+          <RoomIpod label={ipodLabel} obj={DESK_IPOD_OBJ} onActivate={onIpod} />
+        </div>
 
         {/* Desk lamp toggle */}
         <button onClick={(e) => { e.stopPropagation(); onToggleLamp() }} aria-label={lampLabel}
@@ -549,36 +612,6 @@ export function DeskView(props: DeskViewProps) {
 
         <MusicNotes holes={DESK_SPEAKER_HOLES_LEFT} startDelay={0} />
         <MusicNotes holes={DESK_SPEAKER_HOLES_RIGHT} startDelay={550} />
-
-        {/* "Click again to return" indicator */}
-        <AnimatePresence>
-          {backPending && (
-            <motion.div
-              className="absolute pointer-events-none z-30"
-              style={{ left: '50%', top: '8px', transform: 'translateX(-50%)' }}
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: reduce ? 0 : 0.2 }}
-            >
-              <div
-                className="px-3 py-1.5 border-2"
-                style={{
-                  backgroundColor: '#3d2e1e',
-                  borderColor: '#5a4430',
-                  borderRadius: '3px',
-                  fontFamily: 'var(--font-pixel), "Courier New", monospace',
-                  fontSize: '11px',
-                  color: '#e8d5b0',
-                  whiteSpace: 'nowrap',
-                  textShadow: '1px 1px 0 #1a0e04',
-                }}
-              >
-                {clickAgainLabel}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Decorative mouse */}
         <div
@@ -816,6 +849,35 @@ export function DeskView(props: DeskViewProps) {
               </motion.div>
             )}
 
+            {screenMode === 'typing' && (
+              <motion.div key="typing" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                {boundary(<DeskTyping time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                  labels={typingLabels} arcade={arcadeLabels} onDesktop={goDesktop}
+                  onBack={backToRoom} onOpenApp={openApp} />)}
+              </motion.div>
+            )}
+
+            {screenMode === 'highscores' && (
+              <motion.div key="highscores" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                {boundary(<DeskHighscores time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                  labels={highscoresLabels} arcade={arcadeLabels} onDesktop={goDesktop}
+                  onBack={backToRoom} onOpenApp={openApp} />)}
+              </motion.div>
+            )}
+
+            {screenMode === 'request' && (
+              <motion.div key="request" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                {boundary(<DeskRequest time={time} labels={requestLabels} desktopLabel={desktopLabel}
+                  backLabel={backLabel} onDesktop={goDesktop} onBack={backToRoom} />)}
+              </motion.div>
+            )}
+
             {screenMode === "terminal" && (
               <motion.div key="terminal" className="absolute inset-0"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -837,6 +899,39 @@ export function DeskView(props: DeskViewProps) {
           </DeskClockContext.Provider>
           </DeskScreenContext.Provider>
         </div>
+        </div>
+        {!portrait && (<>
+        {/* "Click again to return" indicator */}
+        <AnimatePresence>
+          {backPending && (
+            <motion.div
+              className="absolute pointer-events-none z-30"
+              style={{ left: '50%', top: '8px', transform: 'translateX(-50%)' }}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: reduce ? 0 : 0.2 }}
+            >
+              <div
+                className="px-3 py-1.5 border-2"
+                style={{
+                  backgroundColor: '#3d2e1e',
+                  borderColor: '#5a4430',
+                  borderRadius: '3px',
+                  fontFamily: 'var(--font-pixel), "Courier New", monospace',
+                  fontSize: '11px',
+                  color: '#e8d5b0',
+                  whiteSpace: 'nowrap',
+                  textShadow: '1px 1px 0 #1a0e04',
+                }}
+              >
+                {clickAgainLabel}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        </>)}
       </motion.div>
       {portrait && (
         <div

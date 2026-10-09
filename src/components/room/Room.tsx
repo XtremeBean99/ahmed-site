@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react'
+import { useState, useEffect, useCallback, useRef, useLayoutEffect, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
 import {
@@ -45,6 +45,9 @@ import {
   ICON_PAINT,
   ICON_MINESWEEPER,
   ICON_SNAKE,
+  ICON_TYPING,
+  ICON_HIGHSCORES,
+  ICON_REQUEST,
   ICON_BLACKJACK,
   ICON_SOLITAIRE,
   ICON_PONG,
@@ -527,6 +530,20 @@ export function Room({ dict, readmeContent }: RoomProps) {
     discover('books', t.room.discoveryLabels.books)
   }, [sfx, discover, t.room.discoveryLabels.books])
 
+  const openCatan = useCallback(() => {
+    discover('catan', t.room.discoveryLabels.catan)
+    window.open('/catan', '_blank', 'noopener,noreferrer')
+  }, [discover, t.room.discoveryLabels.catan])
+
+  // The shelf as seen from the desk: the same items and labels as in the room.
+  const deskShelfLabels = useMemo(() => ({
+    catan: t.room.catanLabel,
+    vhs: t.room.vhsLabel,
+    games: t.room.shelfGameLabels as Record<string, string>,
+    books: t.room.bookLabels as Record<string, string>,
+    ...t.desk.shelf,
+  }), [t])
+
   // Shelf VHS: zoom to the desk and land straight in the player.
   const playTape = useCallback(() => {
     discover('movie', t.room.discoveryLabels.movie)
@@ -571,17 +588,20 @@ export function Room({ dict, readmeContent }: RoomProps) {
 
   const glowX = (screenCenterX / STAGE_W) * 100
   const glowY = (screenCenterY / STAGE_H) * 100
-  // A 6x3 grid on the desk (4x5 on a portrait phone): about the site, then tools and media, then the games.
+  // A 7x3 grid on the desk (4x5 on a portrait phone): about the site, then tools and media, then the games.
   const deskShortcuts: DesktopShortcut[] = [
     { id: 'readme', kind: 'app', target: 'readme', label: t.desk.readme, tooltip: t.desk.readmeTip, icon: ICON_README },
     { id: 'linkedin', kind: 'external', target: 'https://www.linkedin.com/in/ahmed-hussain-0880ba25a/', label: t.desk.linkedin, tooltip: t.desk.linkedinTip, icon: ICON_LINKEDIN, iconSize: 24 },
     { id: 'github', kind: 'external', target: 'https://github.com/XtremeBean99', label: t.desk.github, tooltip: t.desk.githubTip, icon: ICON_GITHUB, iconSize: 48 },
     { id: 'guestbook', kind: 'app', target: 'guestbook', label: t.desk.guestbook, tooltip: t.desk.guestbookTip, icon: ICON_README },
+    { id: 'request', kind: 'app', target: 'request', label: t.desk.request, tooltip: t.desk.requestTip, icon: ICON_REQUEST },
     { id: 'legal', kind: 'app', target: 'legal', label: t.desk.legal, tooltip: t.desk.legalTip, icon: ICON_LEGAL },
     { id: 'settings', kind: 'app', target: 'settings', label: t.desk.settings, tooltip: t.desk.settingsTip, icon: ICON_SETTINGS },
     { id: 'music', kind: 'app', target: 'music', label: t.desk.music, tooltip: t.desk.musicTip, icon: ICON_MUSIC, iconSize: 48 },
     { id: 'movie', kind: 'app', target: 'movie', label: t.desk.movie, tooltip: t.desk.movieTip, icon: ICON_MOVIE },
     { id: 'paint', kind: 'app', target: 'paint', label: t.desk.paint, tooltip: t.desk.paintTip, icon: ICON_PAINT },
+    { id: 'highscores', kind: 'app', target: 'highscores', label: t.desk.highscores, tooltip: t.desk.highscoresTip, icon: ICON_HIGHSCORES },
+    { id: 'typing', kind: 'app', target: 'typing', label: t.desk.typing, tooltip: t.desk.typingTip, icon: ICON_TYPING },
     { id: 'minesweeper', kind: 'app', target: 'minesweeper', label: t.desk.minesweeper, tooltip: t.desk.minesweeperTip, icon: ICON_MINESWEEPER, iconSize: 38 },
     { id: 'snake', kind: 'app', target: 'snake', label: t.desk.snake, tooltip: t.desk.snakeTip, icon: ICON_SNAKE },
     { id: 'blackjack', kind: 'app', target: 'blackjack', label: t.desk.blackjack, tooltip: t.desk.blackjackTip, icon: ICON_BLACKJACK },
@@ -641,6 +661,14 @@ export function Room({ dict, readmeContent }: RoomProps) {
           terminalLabels={{ title: "Terminal" }}
           guestbookLabels={t.desk.guestbookApp}
           movieLabels={t.desk.movieApp}
+          typingLabels={t.desk.typingApp}
+          highscoresLabels={t.desk.highscoresApp}
+          requestLabels={t.desk.requestApp}
+          shelfLabels={deskShelfLabels}
+          onOpenBook={openBook}
+          onOpenCatan={openCatan}
+          ipodLabel={t.room.ipodLabel}
+          onIpod={() => discover('ipod', t.room.discoveryLabels.ipod)}
           initialApp={pendingApp}
           onInitialAppHandled={() => setPendingApp(null)}
           konamiOpen={konamiOpen}
@@ -649,6 +677,17 @@ export function Room({ dict, readmeContent }: RoomProps) {
         />
         {/* A portrait phone shows the player in the desk's own music bar */}
         {!portrait && <NowPlaying labels={t.room.audio} />}
+        {/* E-reader, opened from a book on the desk view's shelf */}
+        <AnimatePresence>
+          {readerBook && (
+            <RoomReader
+              key={readerBook}
+              book={SHELF_BOOKS.find((b) => b.id === readerBook)!}
+              labels={t.room.reader}
+              onClose={() => setReaderBook(null)}
+            />
+          )}
+        </AnimatePresence>
       </RoomAudioProvider>
     )
   }
@@ -940,7 +979,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
             frames={catanObj.frames}
             frameDuration={SPRITE_FRAME_MS.catan}
             mode="play-once-hold"
-            onClick={() => { discover('catan', t.room.discoveryLabels.catan); window.open('/catan', '_blank', 'noopener,noreferrer') }}
+            onClick={openCatan}
           />
 
           {/* Shelf books: one sprite, a hotspot per spine, each opens the reader */}

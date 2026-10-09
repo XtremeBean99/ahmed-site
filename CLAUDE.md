@@ -19,9 +19,11 @@ The conventional site pages (`/home`, `/games`, `/projects`, `/tutoring`, `/lega
 retired in Spec 1 (July 2026) and 301-redirect to `/`. Their source code is archived under
 `_archive/` — not part of the build, recoverable via `git mv`.
 
-## Current State (28 September 2026)
+## Current State (9 October 2026)
 
-Latest: the room and desk are portrait-native and touch-first on phones (v22 below; the contract every desk app
+Latest (v23): the desk view shows the shelf (item bottoms peek over its lip; ▲ Shelf, the wheel or a click on the
+strip pans the camera up to the whole shelf, every item clickable) and the iPod; three desk apps: Typing (speed
+test), Scores (public top 10 per game) and Request (feature requests to the owner's inbox). Before that: the room and desk are portrait-native and touch-first on phones (v22 below; the contract every desk app
 follows is in "Phones" under the Room section). Before that: Pixel Catan v3 (v21) and one desk chrome (v20).
 
 
@@ -59,7 +61,8 @@ scoped to `/` and `/catan` (the pixel Catan game launched from the room's shelf)
 colour to any `(site)` page.
 
 ### 2. All user input is hostile
-Two API routes exist. `src/app/api/weather/route.ts` is read-only (Open-Meteo, fixed Canberra,
+Four API routes exist (highscores and feature-request, added in v23, follow the guestbook pattern below).
+`src/app/api/weather/route.ts` is read-only (Open-Meteo, fixed Canberra,
 hourly-cached, fail-soft, no key, no secrets — added in Spec E). `src/app/api/guestbook/route.ts`
 **accepts user input** (Spec F, v17): its `POST` runs CSRF (Origin/Referer must match the prod
 domain), IP rate-limiting (`src/lib/ratelimit.ts`, 5/hr, Upstash + in-memory fallback), a honeypot
@@ -82,7 +85,7 @@ each spine's hotspot live in `src/lib/room/books.ts`. The film is `public/video/
 (~42 MB, committed), played by `DeskMovie` on the desk monitor; it is reachable from the
 shelf VHS (which zooms to the desk via `initialApp`) and from the desktop Movie shortcut.
 
-### 3. Persistence is localStorage-first; the one server store is the guestbook
+### 3. Persistence is localStorage-first; the server stores are the guestbook, highscores and feature requests
 Room preferences live in `localStorage`, client-side only:
 `room-save-v1` = `{ audio, lampOn, visitCount, volume, clock24h, sideTableOpen, sfx, sfxVolume, calmMode }`;
 plus `room-paint-v1` (Paint canvas), `room-discoveries-v1` (discoveries set) and
@@ -90,8 +93,15 @@ plus `room-paint-v1` (Paint canvas), `room-discoveries-v1` (discoveries set) and
 `catan-save-v2` (the in-progress Catan `GameState`, validated on load; older `catan-save-v1` saves migrate). The **only**
 server-side store is the guestbook (Spec F, v17): an Upstash Redis sorted set `guestbook:entries`
 (newest 500, scored by timestamp) behind `src/services/guestbook.ts`, storing **name + message +
-timestamp only** — no email, no persisted IP (rate-limit keys expire after one hour). Any further
-server persistence goes behind `src/services/` with env-var credentials (see `_archive/services/`).
+timestamp only** — no email, no persisted IP (rate-limit keys expire after one hour). v23 added two more, same
+Redis, same guards (`src/lib/input.ts` holds the shared stripping, profanity and admin-key helpers):
+`hiscores:<game>` sorted sets (`src/services/highscores.ts`; member `n:<name>`, score = that name's best via ZADD
+GT, or LT for Minesweeper's time; 100 kept per game, top 10 shown; games and plausible ranges in
+`src/lib/games/highscores.ts`; scores are browser-reported, so the ranges keep out junk, not a determined cheat;
+`DELETE /api/highscores?game=&name=` with the admin key removes one) and `feature-requests`
+(`src/services/feature-requests.ts`; newest 500; name, optional contact, message, time; also emailed through
+Resend when `RESEND_API_KEY` + `FEATURE_REQUEST_TO_EMAIL` are set; `GET /api/feature-request` with the admin key
+lists them). Any further server persistence goes behind `src/services/` with env-var credentials.
 
 ### 4. Secrets via environment variables only
 The guestbook (Spec F, v17) requires `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and
@@ -171,12 +181,32 @@ inside its own monitor iframe (recursion guard removed — `/` is accessible fro
 Close-up art (`desk-closeup.png` and `desk-closeup-lamp-off.png`, crossfaded+flickered via
 `lampOn`/`lampFlicker` props passed from Room) with a clickable lamp toggle at (8,88 160×480)
 Screen modes: `desktop | paint | minesweeper | snake | blackjack | solitaire | pong | breakout | chess | mahjong |
-readme | music | legal | guestbook | settings | terminal | movie`. Desktop icons: LinkedIn (external),
-GitHub (external), Settings, Music, Paint, Minesweeper, Snake, Blackjack, Solitaire, Pong, Breakout, Chess,
-Mahjong, README, Guestbook, Movie, Legal (17: a 6-column grid in landscape, three rows so the Terminal's `~/Desktop`
-file row still fits under it; 4 columns and five rows in portrait, where the icon box is 48 px and the row gap 4 px
+readme | music | legal | guestbook | settings | terminal | movie | typing | highscores | request`. Desktop icons:
+LinkedIn (external), GitHub (external), Settings, Music, Paint, Minesweeper, Snake, Blackjack, Solitaire, Pong,
+Breakout, Chess, Mahjong, README, Guestbook, Request, Movie, Legal, Scores, Typing (20: a 7-column grid in landscape,
+three rows so the Terminal's `~/Desktop` file row still fits under it; 4 columns and five rows in portrait (full), where the icon box is 48 px and the row gap 4 px
 so the fifth row fits at screen heights down to about 440). (Links/webring was removed
 in v19; `terminal` stays konami-only and has no icon.)
+**Shelf and iPod in the desk view (v23).** The close-up only shows the shelf's underside (rows 0..60), so
+`desk-shelf-top.png` / `-lamp-off.png` (1408x300, drawn by `scripts/draw-desk-shelf.mjs` from the close-up's own
+colours: side boards, back wall, a top board copied from the bottom one, the wall and lamp light above) sit at
+stage y -300..0. Everything on the stage is inside a camera div; looking up translates it +300 px (0.7 s; the stage
+clips with `overflow: hidden`). `DeskShelf.tsx` draws the room's own shelf sprites at 2x (`deskShelfItems()` in
+`src/lib/room/desk-shelf.ts`: room render order, Catan/books/VHS at exact 2x spacing, the games squeezed to fit,
+feet dropped by depth; hit masks scaled with `scalePath`), then repaints the lip (close-up rows 24..61) over their
+feet, so at rest only the bottoms show. At rest the items are `inert` and the strip is one "look up" button; ▲ Shelf
+(on the wall right of the shelf), the wheel over the desk art, or the strip look up; ▼ Desk, the wheel or Escape (first
+rung of the ladder) look down. Clicking a game, the VHS or Typing's Highscores button opens the app and looks down;
+books open the e-reader (Room now renders `RoomReader` in the desk branch too); Catan opens /catan. Items dim with the
+lamp. The iPod is `RoomIpod` at 2x on the desk right of the pad (`DESK_IPOD`). `RoomObject`'s button now fills its
+box (`w-full h-full`), which the 2x sprites need; room sprites are unchanged since their box is the image.
+`ShelfBooks` lets only the spines take the pointer (the box overlapped the Catan boxes' hotspot).
+`typing` (`DeskTyping.tsx`, engine `src/lib/games/typing-engine.ts`, tests in `typing-engine.test.ts`): 15/30/60 s
+tests over the shuffled `phrases.ts`; the clock starts on the first character; a transparent input over the text takes
+the keys (phone keyboards and IME work); WPM counts correct characters, accuracy every keystroke; best WPM in
+`BEST_KEYS.typing`. `highscores` (`DeskHighscores.tsx`): your best per game from games storage beside
+`GET /api/highscores`' boards; posting sends your stored best under a name kept in `hiscore-name`. `request`
+(`DeskRequest.tsx`): name and contact optional, message 5..1000, `POST /api/feature-request` (3/hr per IP).
 `terminal` (`DeskTerminal.tsx` + `TermEditor.tsx`, engine in `src/lib/terminal/`): a client-only Linux
 shell. `shell/` is an async bash interpreter (quoting, expansions, arrays, arithmetic, control flow,
 functions, pipes, redirections, heredocs, aliases, `~/.bashrc`; an 8 s busy-time budget and Ctrl+C abort
@@ -840,11 +870,13 @@ CCBot, Bytespider, etc.; Terms prohibit scraping/AI training. Do not remove.
 |---|---|---|
 | `NEXT_PUBLIC_BASE_URL` | No | Defaults to `https://ahmedyhussain.com` |
 | `GITHUB_TOKEN` | No | Raises API rate limit for the code page |
-| `RESEND_API_KEY` | Retired | Contact form removed (Spec 1) |
+| `RESEND_API_KEY` | Feature requests | Emails desk feature requests (v23); without it they are only kept in Redis |
+| `FEATURE_REQUEST_TO_EMAIL` | Feature requests | The owner's inbox for feature requests |
+| `FEATURE_REQUEST_FROM_EMAIL` | No | Sender on a Resend-verified domain; defaults to Resend's onboarding sender (delivers only to the Resend account's own email) |
 | `CONTACT_TO_EMAIL` | Retired | Contact form removed (Spec 1) |
 | `CONTACT_FROM_EMAIL` | Retired | Contact form removed (Spec 1) |
-| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Guestbook | Upstash Redis store for the guestbook (Spec F). Absent → guestbook fails soft. |
-| `GUESTBOOK_ADMIN_KEY` | Guestbook | Secret for `DELETE /api/guestbook?id=&key=` (moderation escape hatch). |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Guestbook, highscores | Upstash Redis for the guestbook (Spec F), highscores and feature requests. Absent → they fail soft (boards show "offline"). |
+| `GUESTBOOK_ADMIN_KEY` | Guestbook | Admin key (header, never query) for guestbook and highscore deletes and listing feature requests. |
 
 Never commit `.env.local` / `.env`. (June audit flagged a stray `VERCEL_OIDC_TOKEN` in
 `.env.local` — confirm never committed, then delete; see Roadmap item 15.)

@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
-import { SpeedInsights } from '@vercel/speed-insights/next'
-import { Analytics } from '@vercel/analytics/next'
+import { VercelMetrics } from '@/components/providers/VercelMetrics'
 import { I18nProvider } from '@/lib/i18n/client'
 import { MotionProvider } from '@/components/providers/MotionProvider'
 import { getDictionary } from '@/lib/i18n/server'
@@ -75,8 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <I18nProvider locale="en" dict={dict}>
           <MotionProvider>{children}</MotionProvider>
         </I18nProvider>
-        <SpeedInsights />
-        <Analytics />
+        <VercelMetrics />
       </body>
     </html>
   )

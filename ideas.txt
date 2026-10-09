@@ -1,13 +1,5 @@
-typespeed test game
-touchpad to play snake on mobile
-full mobile compatibility
-update readme to mention that many features are desktop only
 catan graphical upgrade
 simulated stock market game
-mahjong
 promotional video for the site, edited and recorded via claude formatted for Instagram. 
-request a feature button that forwards to my email
 interactive whiteboard persistant and live across users
-chess
 full angry-birds style game
-highscores across all games 

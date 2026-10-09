@@ -20,6 +20,8 @@ interface ShelfBooksProps {
   /** Tooltip per book, keyed by book id. */
   labels: Record<string, string>
   onOpen: (bookId: string) => void
+  /** Darken with the lamp off (the desk view's shelf). */
+  dimmed?: boolean
 }
 
 /**
@@ -27,7 +29,7 @@ interface ShelfBooksProps {
  * plays the shared highlight animation, clicking one opens it in the reader.
  * The art is pointer-transparent so the spine hotspots receive the events.
  */
-export function ShelfBooks({ x, y, w, h, frames, frameDuration, books, labels, onOpen }: ShelfBooksProps) {
+export function ShelfBooks({ x, y, w, h, frames, frameDuration, books, labels, onOpen, dimmed = false }: ShelfBooksProps) {
   const reduce = useReducedMotion()
   const lighting = useLighting()
   const { tick, tickRef, advanceTo, clearTimer, start, stop } = useAnimationTimer(frameDuration, reduce)
@@ -66,6 +68,8 @@ export function ShelfBooks({ x, y, w, h, frames, frameDuration, books, labels, o
         // Forward while hovered, behind its neighbours otherwise, so the catan
         // highlight is not clipped by this sprite's (transparent) box.
         zIndex: hoveredId ? 20 : undefined,
+        // Only the spines take the pointer: the box overlaps the Catan boxes.
+        pointerEvents: 'none',
       }}
     >
       <motion.img
@@ -74,7 +78,7 @@ export function ShelfBooks({ x, y, w, h, frames, frameDuration, books, labels, o
         draggable={false}
         aria-hidden
         className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{ imageRendering: 'pixelated' }}
+        style={{ imageRendering: 'pixelated', filter: dimmed ? 'brightness(0.72)' : 'none', transition: 'filter 0.4s ease' }}
         animate={hoveredId && !reduce ? { y: -2 } : { y: 0 }}
         transition={{ duration: DURATION.fast }}
       />
@@ -94,6 +98,7 @@ export function ShelfBooks({ x, y, w, h, frames, frameDuration, books, labels, o
             top: book.hotspot.y,
             width: book.hotspot.w,
             height: book.hotspot.h,
+            pointerEvents: 'auto',
           }}
         >
           <span

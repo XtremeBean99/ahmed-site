@@ -402,3 +402,60 @@ export const ICON_SETTINGS = (
     <rect x="6" y="6" width="4" height="4" fill="#faf8f5" />
   </>
 )
+
+export const ICON_TYPING = pixels([
+  '................',
+  '................',
+  '................',
+  '.oooooooooooooo.',
+  'oSSSSSSSSSSSSSSo',
+  'oSwSwSwSwSwSwSSo',
+  'oSSSSSSSSSSSSSSo',
+  'oSSwSwSwSwSwSwSo',
+  'oSSSSSSSSSSSSSSo',
+  'oSwSwSwSwSwSwSSo',
+  'oSSSSSSSSSSSSSSo',
+  'oSSSwwwwwwwwSSSo',
+  'oSSSSSSSSSSSSSSo',
+  '.oooooooooooooo.',
+  '................',
+  '................',
+], ARCADE_ICON_PALETTE)
+
+export const ICON_HIGHSCORES = pixels([
+  '................',
+  '..oooooooooooo..',
+  'ooo.oaaaaaao.ooo',
+  'oao.oaaaaaao.oao',
+  'oao.oaawaaao.oao',
+  '.oaooaawaaaooao.',
+  '..oooaawaaaooo..',
+  '....oaaaaaao....',
+  '.....oaaaao.....',
+  '......oaao......',
+  '.......oo.......',
+  '......oaao......',
+  '......oaao......',
+  '....oooooooo....',
+  '....onnnnnno....',
+  '....oooooooo....',
+], ARCADE_ICON_PALETTE)
+
+export const ICON_REQUEST = pixels([
+  '......oooo......',
+  '....ooaaaaoo....',
+  '...oaaawwaaao...',
+  '..oaaawwaaaaao..',
+  '..oaawaaaaaaao..',
+  '..oaaaaaaaaaao..',
+  '..oaaaaaaaaaao..',
+  '...oaaaaaaaao...',
+  '....oaaaaaao....',
+  '.....oaaaao.....',
+  '.....oooooo.....',
+  '.....oSSSSo.....',
+  '.....oooooo.....',
+  '.....oSSSSo.....',
+  '......oooo......',
+  '................',
+], ARCADE_ICON_PALETTE)

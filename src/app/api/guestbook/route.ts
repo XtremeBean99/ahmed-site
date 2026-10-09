@@ -4,33 +4,7 @@ import { addEntry, listEntries, deleteEntry, trimEntries } from '@/services/gues
 import { checkRateLimit, getClientIp } from '@/lib/ratelimit'
 import { isSameSiteRequest } from '@/lib/csrf'
 import { getRedis } from '@/lib/redis'
-import { createHash, timingSafeEqual } from 'node:crypto'
-
-/**
- * Constant-time secret comparison. Both sides are hashed first so the compare
- * is over fixed-length buffers and the secret's length does not leak.
- */
-function secretMatches(provided: string, expected: string): boolean {
-  const a = createHash('sha256').update(provided).digest()
-  const b = createHash('sha256').update(expected).digest()
-  return timingSafeEqual(a, b)
-}
-
-/** Admin key from `Authorization: Bearer <key>` or `X-Admin-Key`. Never a query param. */
-function adminKeyFrom(request: NextRequest): string | null {
-  const auth = request.headers.get('authorization')
-  if (auth?.toLowerCase().startsWith('bearer ')) return auth.slice(7).trim()
-  return request.headers.get('x-admin-key')?.trim() || null
-}
-
-// Drop ASCII control characters (codes 0-31 and DEL 127) and any HTML tags; keep normal text.
-const stripUnsafe = (s: string) =>
-  Array.from(s)
-    .filter((ch) => { const c = ch.charCodeAt(0); return c > 31 && c !== 127 })
-    .join('')
-    .replace(/<[^>]*>/g, '')
-    .trim()
-const BAD = /\b(fuck|shit|cunt|nigg|faggot)\b/i // minimal; expand as needed
+import { adminKeyFrom, BAD_WORDS as BAD, secretMatches, stripUnsafe } from '@/lib/input'
 
 export async function GET(request: NextRequest) {
   // Health check: GET /api/guestbook?health=1 tests Redis connectivity
@@ -86,7 +60,7 @@ export async function DELETE(request: NextRequest) {
 
   // The key travels in a header, never the query string: query strings end up
   // in platform access logs, proxy logs and browser history.
-  const key = adminKeyFrom(request)
+  const key = adminKeyFrom(request.headers)
   const admin = process.env.GUESTBOOK_ADMIN_KEY
   if (!admin || !key || !secretMatches(key, admin))
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })

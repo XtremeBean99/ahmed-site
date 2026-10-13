@@ -10,9 +10,26 @@ interface RoomHudProps {
   mobile: boolean
   /** True once the visitor has dragged the room on a phone. */
   dismissed: boolean
+  tourLabel: string
+  /** Starts the guided tour; the button hides while it runs. */
+  onTour: () => void
+  touring: boolean
 }
 
-export function RoomHud({ hintLabel, touchHintLabel, skipLabel, mobile, dismissed }: RoomHudProps) {
+const TOUR_BUTTON: React.CSSProperties = {
+  fontFamily: 'var(--font-pixel), "Courier New", monospace',
+  fontSize: 11,
+  minHeight: 32,
+  padding: '0 10px',
+  backgroundColor: '#3d2e1e',
+  border: '2px solid #5a4430',
+  borderRadius: 3,
+  color: '#e8d5b0',
+  boxShadow: '2px 2px 0 rgba(0,0,0,0.35)',
+  cursor: 'pointer',
+}
+
+export function RoomHud({ hintLabel, touchHintLabel, skipLabel, mobile, dismissed, tourLabel, onTour, touring }: RoomHudProps) {
   const [showHint, setShowHint] = useState(true)
   const [touchHintVisible, setTouchHintVisible] = useState(!dismissed)
 
@@ -45,6 +62,18 @@ export function RoomHud({ hintLabel, touchHintLabel, skipLabel, mobile, dismisse
         {skipLabel}
       </Link>
 
+      {mobile && !touring && (
+        <button
+          type="button"
+          onClick={onTour}
+          className="fixed right-4 z-30"
+          // Top right: the bottom right holds the discoveries badge.
+          style={{ ...TOUR_BUTTON, minHeight: 40, top: 'calc(env(safe-area-inset-top, 0px) + 36px)' }}
+        >
+          {tourLabel}
+        </button>
+      )}
+
       {mobile ? (
         <div
           className="fixed left-1/2 -translate-x-1/2 z-20 pointer-events-none whitespace-nowrap text-[11px]"
@@ -61,17 +90,22 @@ export function RoomHud({ hintLabel, touchHintLabel, skipLabel, mobile, dismisse
         </div>
       ) : (
         <div
-          className="absolute right-4 z-20 flex flex-col items-end gap-1 text-[11px]"
+          className="absolute right-4 z-20 flex items-center gap-3 text-[11px]"
           style={{
             fontFamily: 'var(--font-pixel), "Courier New", monospace',
             textShadow: '0 1px 2px rgba(0,0,0,0.8)',
             bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
           }}
         >
-          {showHint && (
+          {showHint && !touring && (
             <span className="text-[#a09080] animate-fade-in">
               {hintLabel}
             </span>
+          )}
+          {!touring && (
+            <button type="button" onClick={onTour} style={TOUR_BUTTON} className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c8b89a]">
+              {tourLabel}
+            </button>
           )}
         </div>
       )}

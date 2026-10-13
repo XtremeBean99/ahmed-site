@@ -16,7 +16,10 @@ import {
   WINDOW_GLASS,
   SHELF_GAMES,
   BEDSIDE_BOOK,
+  catSpotFor,
+  type CatSpot,
 } from '@/lib/room/objects'
+import { TOUR_STEP_IDS, tourFocusX, tourTarget } from '@/lib/room/tour'
 import { useStageScale } from '@/lib/room/useStageScale'
 import { releaseVelocity, stepMomentum } from '@/lib/room/pan'
 import { loadPrefs, savePrefs } from '@/lib/room/storage'
@@ -38,7 +41,10 @@ import { RoomWeather } from './RoomWeather'
 import { RoomNightSky } from './RoomNightSky'
 import { useSfx } from './RoomSfxProvider'
 import { addDiscovery, DISCOVERY_IDS } from '@/lib/room/discoveries'
+import { appFromSearch } from '@/lib/room/deep-link'
 import { DiscoveriesBadge } from './DiscoveriesBadge'
+import { RoomCat } from './RoomCat'
+import { TourCard, TourSpotlight, type TourLabels } from './RoomTour'
 import {
   ICON_LINKEDIN,
   ICON_GITHUB,
@@ -86,6 +92,9 @@ interface RoomProps {
       bookLabels: Record<string, string>
       reader: ReaderLabels
       lampLabel: string
+      catLabel: string
+      catWake: string[]
+      tour: TourLabels
       coffeeLabel: string
       ipodLabel: string
       sideTableClockLabel: string
@@ -136,6 +145,10 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const [discoveryToast, setDiscoveryToast] = useState<string | null>(null)
   const [hintPulses, setHintPulses] = useState(false)
   const [hasDragged, setHasDragged] = useState(false)
+  // Where the cat sleeps this visit (set once prefs load, so the server render has no cat).
+  const [catSpot, setCatSpot] = useState<CatSpot | null>(null)
+  // The guided tour's step, or null when it is not running.
+  const [tourStep, setTourStep] = useState<number | null>(null)
 
   const discover = useCallback((id: string, label: string) => {
     if (addDiscovery(id)) {
@@ -314,7 +327,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
     setManualLight(LIGHTING_STATES[(LIGHTING_STATES.indexOf(light) + 1) % LIGHTING_STATES.length])
   }, [light])
 
-  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); setSfxEnabled(p.sfx); setSfxVolumeState(p.sfxVolume); setHintPulses(p.visitCount <= 1); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
+  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); setSfxEnabled(p.sfx); setSfxVolumeState(p.sfxVolume); setHintPulses(p.visitCount <= 1); setCatSpot(catSpotFor(p.visitCount)); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
 
   // Timeout refs
   const safetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -322,9 +335,19 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const navigatingRef = useRef(false)
   const keyBufRef = useRef<string[]>([])
 
-  // Deep-link: check for #desk on mount
+  // Deep-link: #desk, ?app=<id> (lands on the desk with that app open), or ?tour (the room tour)
   useEffect(() => {
-    if (window.location.hash === '#desk') {
+    const app = appFromSearch(window.location.search)
+    const url = new URL(window.location.href)
+    if (url.searchParams.has('tour')) {
+      url.searchParams.delete('tour')
+      window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash)
+      setView('room')
+      setTourStep(0)
+    } else if (app) {
+      setView('desk')
+      setPendingApp(app)
+    } else if (window.location.hash === '#desk') {
       setView('desk')
     }
   }, [])
@@ -404,6 +427,25 @@ export function Room({ dict, readmeContent }: RoomProps) {
       setView('room')
     }
   }, [])
+
+  // The guided tour runs in the room; from the desk it walks back there first.
+  const startTour = useCallback(() => {
+    if (view === 'desk') handleDeskBack()
+    setHintPulses(false)
+    setTourStep(0)
+  }, [view, handleDeskBack])
+  const closeTour = useCallback(() => setTourStep(null), [])
+
+  // On a phone only part of the room is in view: pan each step's target to the middle.
+  useEffect(() => {
+    if (tourStep === null || !mobile || view !== 'room' || !catSpot) return
+    const fx = tourFocusX(TOUR_STEP_IDS[tourStep], catSpot)
+    if (fx === null) return
+    stopMomentum()
+    const x = clampPanX((STAGE_W / 2 - fx) * (window.innerHeight / STAGE_H))
+    panXRef.current = x
+    setPan({ x, y: 0 })
+  }, [tourStep, mobile, view, catSpot, clampPanX, stopMomentum])
   // Konami code (ArrowUp ArrowUp ArrowDown ArrowDown ArrowLeft ArrowRight ArrowLeft ArrowRight b a)
   // opens the terminal easter egg.
   useEffect(() => {
@@ -466,6 +508,15 @@ export function Room({ dict, readmeContent }: RoomProps) {
     }
   }, [hintPulses])
 
+
+  const wakeCat = useCallback(() => {
+    discover('cat', t.room.discoveryLabels.cat)
+    sfx.tone('mew')
+    setTimeout(() => sfx.tone('purr'), 450)
+    const lines = t.room.catWake
+    setToast(lines[Math.floor(Math.random() * lines.length)])
+    setTimeout(() => setToast(null), 2400)
+  }, [discover, sfx, t.room.catWake, t.room.discoveryLabels])
 
   const toggleLamp = useCallback(() => {
     discover('lamp', t.room.discoveryLabels.lamp)
@@ -673,6 +724,8 @@ export function Room({ dict, readmeContent }: RoomProps) {
           onInitialAppHandled={() => setPendingApp(null)}
           konamiOpen={konamiOpen}
           onKonamiHandled={() => setKonamiOpen(false)}
+          tourLabel={t.room.tour.start}
+          onStartTour={startTour}
           nowPlayingLabels={t.room.audio}
         />
         {/* A portrait phone shows the player in the desk's own music bar */}
@@ -701,6 +754,9 @@ export function Room({ dict, readmeContent }: RoomProps) {
         skipLabel={t.room.skip}
         mobile={mobile}
         dismissed={hasDragged}
+        tourLabel={t.room.tour.start}
+        onTour={startTour}
+        touring={tourStep !== null}
       />
 
       <NowPlaying labels={t.room.audio} />
@@ -925,6 +981,9 @@ export function Room({ dict, readmeContent }: RoomProps) {
             />
           )}
 
+          {/* The cat asleep on the bed: a different spot each visit, wakes when patted */}
+          {catSpot && <RoomCat label={t.room.catLabel} spot={catSpot} onWake={wakeCat} />}
+
           <AnimatedSprite
             label={t.room.posterLabel}
             x={posterObj.x}
@@ -1098,7 +1157,11 @@ export function Room({ dict, readmeContent }: RoomProps) {
 
           {/* First-visit hint pulses: inside the stage so the outlines track the
               stage scale, zoom and letterboxing with the objects they mark. */}
-          {hintPulses && view === 'room' && (
+          {tourStep !== null && view === 'room' && catSpot && (
+            <TourSpotlight rect={tourTarget(TOUR_STEP_IDS[tourStep], catSpot)} />
+          )}
+
+          {hintPulses && view === 'room' && tourStep === null && (
             <div aria-hidden className="absolute inset-0 z-10 pointer-events-none">
               {ROOM_OBJECTS.filter(o => o.id !== 'clock').map((obj, i) => (
                 <div
@@ -1123,6 +1186,18 @@ export function Room({ dict, readmeContent }: RoomProps) {
 
         </LightingProvider>
       </nav>
+
+      {tourStep !== null && view === 'room' && (
+        <TourCard
+          labels={t.room.tour}
+          steps={TOUR_STEP_IDS}
+          index={tourStep}
+          onNext={() => setTourStep((i) => Math.min(TOUR_STEP_IDS.length - 1, (i ?? 0) + 1))}
+          onBack={() => setTourStep((i) => Math.max(0, (i ?? 0) - 1))}
+          onClose={closeTour}
+          onEnter={() => { closeTour(); handleEnter() }}
+        />
+      )}
 
       {/* Glow bloom */}
       <AnimatePresence>

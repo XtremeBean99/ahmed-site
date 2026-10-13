@@ -95,6 +95,15 @@ export function reveal(board: Board, r: number, c: number, rng: () => number = M
   return { ...b, cells, status: won ? 'won' : 'playing' }
 }
 
+/**
+ * The daily board: mines laid by `rng` (seeded from the date) around a safe
+ * centre, which is already opened. Everyone starts from the same cascade,
+ * because a board that waited for the first click would differ per player.
+ */
+export function createDailyBoard(rows: number, cols: number, mines: number, rng: () => number): Board {
+  return reveal(createBoard(rows, cols, mines), Math.floor(rows / 2), Math.floor(cols / 2), rng)
+}
+
 export function toggleFlag(board: Board, r: number, c: number): Board {
   if (board.status !== 'playing' || !inBounds(board, r, c)) return board
   const i = idx(board, r, c)

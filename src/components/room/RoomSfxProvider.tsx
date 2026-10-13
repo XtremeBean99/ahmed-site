@@ -77,6 +77,12 @@ const TONES = {
   ],
   invalid: [{ wave: 'square', f: 150, dur: 0.1, gain: 0.1 }],
   shuffle: [0, 1, 2, 3, 4, 5].map((i) => ({ wave: 'noise' as const, f: 2200 + i * 150, at: i * 0.045, dur: 0.04, gain: 0.35 })),
+  // The cat on the bed: a rising-then-falling mew, and a purr of low noise pulses.
+  mew: [
+    { wave: 'triangle', f: 620, f2: 940, dur: 0.11, gain: 0.12 },
+    { wave: 'triangle', f: 940, f2: 520, at: 0.11, dur: 0.24, gain: 0.12 },
+  ],
+  purr: Array.from({ length: 12 }, (_, i) => ({ wave: 'noise' as const, f: 140, at: i * 0.075, dur: 0.06, gain: 0.7 })),
 } satisfies Record<string, Voice[]>
 
 export type ToneName = keyof typeof TONES

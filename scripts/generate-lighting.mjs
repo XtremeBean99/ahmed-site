@@ -45,6 +45,8 @@ const FILES = [
   ...range('side-table', 2),
   'side-table-clock.png',
   'ipod.png',
+  ...range('cat', 3),
+  ...range('cat', 3).map((f) => f.replace('.png', '-hover.png')),
 ]
 
 function gradePixel(data, i, { tint, bright, sat }) {

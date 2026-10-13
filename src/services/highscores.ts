@@ -1,5 +1,6 @@
 import { getRedis } from '@/lib/redis'
 import { BOARD_SIZE, HISCORE_GAMES, hiscoreGame, type HiscoreEntry, type HiscoreGameId } from '@/lib/games/highscores'
+import type { DailyGameId } from '@/lib/games/daily'
 
 /**
  * Public highscores: one Upstash sorted set per game, `hiscores:<game>`,
@@ -53,4 +54,35 @@ export async function listBoards(): Promise<Record<HiscoreGameId, HiscoreEntry[]
 /** Admin: removes a name from one game's board. */
 export async function removeScore(game: HiscoreGameId, name: string): Promise<void> {
   await getRedis().zrem(KEY(game), PREFIX + name)
+}
+
+/**
+ * Daily boards: `hiscores:daily:<game>:<date>`, same member scheme, kept 8
+ * days then left to expire. The daily games are all times, so lower is better.
+ */
+const DAILY_KEY = (game: string, date: string) => `hiscores:daily:${game}:${date}`
+const DAILY_TTL_S = 8 * 86_400
+
+/** Records a daily time for `name` (their best stands). Returns the 1-based rank. */
+export async function submitDailyScore(game: DailyGameId, date: string, name: string, score: number): Promise<number | null> {
+  const redis = getRedis()
+  const key = DAILY_KEY(game, date)
+  const member = PREFIX + name
+  await redis.zadd(key, { lt: true }, { score, member })
+  await redis.expire(key, DAILY_TTL_S)
+  const count = await redis.zcard(key)
+  if (count > KEEP) await redis.zremrangebyrank(key, KEEP, -1)
+  const rank = await redis.zrank(key, member)
+  return rank === null ? null : rank + 1
+}
+
+/** One day's top 10, fastest first. */
+export async function listDailyBoard(game: DailyGameId, date: string): Promise<HiscoreEntry[]> {
+  const flat = (await getRedis().zrange(DAILY_KEY(game, date), 0, BOARD_SIZE - 1, { withScores: true })) as unknown[]
+  const entries: HiscoreEntry[] = []
+  for (let j = 0; j + 1 < flat.length; j += 2) {
+    const member = String(flat[j])
+    entries.push({ name: member.startsWith(PREFIX) ? member.slice(PREFIX.length) : member, score: Number(flat[j + 1]) })
+  }
+  return entries
 }

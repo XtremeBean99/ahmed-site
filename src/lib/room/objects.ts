@@ -310,3 +310,22 @@ export const CLOCK_FACE_SKEW_DEG = -11
  * bonsai sits on this window's sill, so both overlays render BEFORE the bonsai.
  */
 export const WINDOW_GLASS = { x: 1185, y: 52, w: 223, h: 300 }
+
+/**
+ * The cat on the bed (scripts/draw-cat.mjs): 100x64 sprites, two breathing
+ * frames asleep and one awake, each with a hover frame carrying the highlight.
+ */
+export const CAT_SIZE = { w: 100, h: 64 } as const
+const catFrame = (n: number) => ({ rest: `/room/cat-${n}.png`, hover: `/room/cat-${n}-hover.png` })
+export const CAT_FRAMES = { sleep: [catFrame(1), catFrame(2)], awake: catFrame(3) } as const
+
+export interface CatSpot { x: number; y: number }
+/** Where it sleeps (top-left of the sprite): mid-blanket, by the pillows, at the foot. */
+export const CAT_SPOTS: readonly CatSpot[] = [
+  { x: 1035, y: 440 },
+  { x: 905, y: 420 },
+  { x: 1150, y: 520 },
+]
+/** A different spot each visit. */
+export const catSpotFor = (visitCount: number): CatSpot =>
+  CAT_SPOTS[((visitCount % CAT_SPOTS.length) + CAT_SPOTS.length) % CAT_SPOTS.length]

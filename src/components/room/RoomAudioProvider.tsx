@@ -46,6 +46,9 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const audio = new Audio()
     audio.loop = false
+    // Fetch nothing until play(): the default ('auto') buffered megabytes of a
+    // track on every visit, music on or off. play() streams it on demand.
+    audio.preload = 'none'
     const prefs = loadPrefs()
     audio.volume = prefs.volume
     setVolumeState(prefs.volume)
@@ -55,7 +58,8 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
     const idx = Math.floor(Math.random() * PLAYLIST.length)
     trackIdxRef.current = idx
     setTrackIndex(idx)
-    loadTrack(audio, idx)
+    // No src yet: even with preload 'none' Chrome fetches the first bytes of
+    // whatever src is set. ensureLoaded() sets it right before the first play().
 
     const onEnded = () => {
       trackIdxRef.current = pickNextIndex(trackIdxRef.current, playedRef.current)
@@ -81,15 +85,14 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
 
     let cleanup: (() => void) | undefined
 
-    audioRef.current.play().then(() => {
-      setPlaying(true)
-      playingRef.current = true
-    }).catch(() => {
-      // Only user activations may start media: touchstart and touch pointerdown are not
-      // (pointerup, touchend, click and keydown are), so keep listening until play() works.
+    // Only user activations may start media: touchstart and touch pointerdown are not
+    // (pointerup, touchend, click and keydown are), so keep listening until play() works.
+    const waitForGesture = () => {
       const events = ['pointerup', 'touchend', 'click', 'keydown'] as const
       const onGesture = () => {
-        audioRef.current?.play().then(() => {
+        if (!audioRef.current) return
+        ensureLoaded(audioRef.current, trackIdxRef.current)
+        audioRef.current.play().then(() => {
           setPlaying(true)
           playingRef.current = true
           cleanup?.()
@@ -99,7 +102,21 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
         for (const type of events) document.removeEventListener(type, onGesture)
       }
       for (const type of events) document.addEventListener(type, onGesture)
-    })
+    }
+
+    // Before any gesture the browser will refuse to autoplay, but a refused
+    // play() still starts downloading the track (about 1 MB measured): wait
+    // for the gesture instead. After one (the desk <-> room switch remounts
+    // this provider) try at once.
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) {
+      waitForGesture()
+    } else {
+      ensureLoaded(audioRef.current, trackIdxRef.current)
+      audioRef.current.play().then(() => {
+        setPlaying(true)
+        playingRef.current = true
+      }).catch(waitForGesture)
+    }
 
     return () => {
       cleanup?.()
@@ -117,6 +134,7 @@ export function RoomAudioProvider({ children }: { children: ReactNode }) {
       playingRef.current = false
       savePrefs({ audio: false })
     } else {
+      ensureLoaded(audio, trackIdxRef.current)
       audio.play().then(() => {
         setPlaying(true)
         playingRef.current = true
@@ -188,4 +206,9 @@ function pickNextIndex(current: number, played: Set<number>): number {
 function loadTrack(audio: HTMLAudioElement, index: number) {
   audio.src = PLAYLIST[index].src
   audio.load()
+}
+
+/** Gives a never-played element its first track. */
+function ensureLoaded(audio: HTMLAudioElement, index: number) {
+  if (!audio.getAttribute('src')) loadTrack(audio, index)
 }

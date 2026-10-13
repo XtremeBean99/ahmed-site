@@ -32,6 +32,7 @@ export const DISCOVERY_IDS = [
   'typing',
   'highscores',
   'request',
+  'cat',
 ] as const
 
 export type DiscoveryId = (typeof DISCOVERY_IDS)[number]

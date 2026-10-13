@@ -37,6 +37,7 @@ import type { TypingLabels } from './DeskTyping'
 import type { HighscoresLabels } from './DeskHighscores'
 import type { RequestLabels } from './DeskRequest'
 import { DESK_IPOD, DESK_SHELF } from '@/lib/room/desk-shelf'
+import { withApp } from '@/lib/room/deep-link'
 
 // Every app but the README landing and the desktop is its own chunk, so the
 // first load stays small on phones; they are prefetched once the page is idle.
@@ -183,6 +184,9 @@ interface DeskViewProps {
   konamiOpen: boolean
   /** Called after the terminal has been opened so the parent can reset the flag */
   onKonamiHandled: () => void
+  /** The README's "Take the tour" button: Room walks back to the room and starts it */
+  tourLabel: string
+  onStartTour: () => void
   onToggleLamp: () => void
   onBack: () => void
   /** The music bar under the portrait phone screen */
@@ -194,7 +198,7 @@ const SAFE_PADDING = 'env(safe-area-inset-top) env(safe-area-inset-right) env(sa
 const PORTRAIT_STAGE: React.CSSProperties = { position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', transform: 'none' }
 
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, clickAgainLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, chessLabels, mahjongLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, typingLabels, highscoresLabels, requestLabels, shelfLabels, onOpenBook, onOpenCatan, ipodLabel, onIpod, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, onToggleLamp, onBack, nowPlayingLabels } = props
+  const { shortcuts, backLabel, clickAgainLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, chessLabels, mahjongLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, typingLabels, highscoresLabels, requestLabels, shelfLabels, onOpenBook, onOpenCatan, ipodLabel, onIpod, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, tourLabel, onStartTour, onToggleLamp, onBack, nowPlayingLabels } = props
   const { scale, mobile, portrait } = useStageScale()
   const t = useT().desk
   const reduce = useReducedMotion()
@@ -414,6 +418,21 @@ export function DeskView(props: DeskViewProps) {
     window.dispatchEvent(new CustomEvent('room:app-open', { detail: initialApp }))
     onInitialAppHandled?.()
   }, [initialApp, onInitialAppHandled])
+
+  // The address bar follows the open app (/?app=chess), so it can be copied and shared.
+  // Not on mount: child effects run before Room's, which still has to read an incoming ?app.
+  const urlSyncedRef = useRef(false)
+  useEffect(() => {
+    if (!urlSyncedRef.current) { urlSyncedRef.current = true; return }
+    const next = withApp(window.location.pathname + window.location.search + window.location.hash, screenMode)
+    if (next !== window.location.pathname + window.location.search + window.location.hash) {
+      window.history.replaceState(window.history.state, '', next)
+    }
+  }, [screenMode])
+  // Leaving the desk clears it again.
+  useEffect(() => () => {
+    window.history.replaceState(window.history.state, '', withApp(window.location.pathname + window.location.search + window.location.hash, null))
+  }, [])
 
   // Konami code: open terminal when triggered from Room
   useEffect(() => {
@@ -759,6 +778,8 @@ export function DeskView(props: DeskViewProps) {
                   backLabel={backLabel}
                   onDesktop={goDesktop}
                   onBack={backToRoom}
+                  tourLabel={tourLabel}
+                  onTour={onStartTour}
                 />)}
               </motion.div>
             )}

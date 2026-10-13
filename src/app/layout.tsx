@@ -4,6 +4,7 @@ import { VercelMetrics } from '@/components/providers/VercelMetrics'
 import { I18nProvider } from '@/lib/i18n/client'
 import { MotionProvider } from '@/components/providers/MotionProvider'
 import { getDictionary } from '@/lib/i18n/server'
+import { connection } from 'next/server'
 import './globals.css'
 
 const minecraft = localFont({
@@ -66,6 +67,9 @@ export const metadata: Metadata = {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Render per request: the CSP nonce (src/middleware.ts) is new on every
+  // response, and a prerendered page would carry inline scripts without it.
+  await connection()
   const dict = await getDictionary()
 
   return (

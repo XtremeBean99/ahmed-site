@@ -477,6 +477,52 @@ export const en = {
       publicDomain: 'public domain',
     },
     lampLabel: 'Desk lamp',
+    catLabel: 'Sleeping cat, give it a pat',
+    catWake: ['Mrrp?', 'The cat opens one eye, then thinks better of it.', 'Purring intensifies.', 'It was having a nice dream.'],
+    tour: {
+      start: 'Take the tour',
+      title: 'Room tour',
+      next: 'Next',
+      back: 'Back',
+      skip: 'Skip tour',
+      progress: '{n} of {total}',
+      enter: 'Sit at the computer',
+      stay: 'Look around',
+      steps: {
+        welcome: {
+          title: 'Welcome in',
+          body: "Hi, I'm Ahmed: a BComp/LLB(Hons) student at ANU, working where law meets computing and AI governance. This room is my website. Here's the 30-second tour.",
+        },
+        computer: {
+          title: 'The computer',
+          body: 'My README, a guestbook, a typing test and games: chess, mahjong, solitaire, snake and more. Click the monitor to sit down at the desk.',
+        },
+        shelf: {
+          title: 'The shelf',
+          body: 'The books open in a reader, and every game box starts that game on the monitor. The Catan box is a full game against bots.',
+        },
+        window: {
+          title: 'The window',
+          body: 'It follows the time of day where you are and the real weather in Canberra. Click it to change the light.',
+        },
+        bedside: {
+          title: 'The bedside table',
+          body: 'The book in the cubby is the guestbook: leave a note. The clock flips between 12 and 24 hours.',
+        },
+        cat: {
+          title: 'The cat',
+          body: 'Sleeps somewhere new every visit. You can pat it.',
+        },
+        music: {
+          title: 'Music',
+          body: 'My playlist. The speakers mute it and the iPod skips a track.',
+        },
+        done: {
+          title: "That's the tour",
+          body: "There's more hidden around the room, so keep clicking. At the desk, Scores has a daily Minesweeper board: same for everyone, one try a day.",
+        },
+      },
+    },
     coffeeLabel: 'Coffee mug',
     ipodLabel: 'iPod, skip the track',
     sideTableClockLabel: 'Digital clock toggle 24-hour time',
@@ -532,6 +578,7 @@ export const en = {
       typing: 'Typing test',
       highscores: 'Highscores',
       request: 'Feature request',
+      cat: 'The cat',
     },
 
   },
@@ -1868,10 +1915,23 @@ export const en = {
       lost: 'Boom.',
       reveal: 'Reveal',
       flag: 'Flag',
+      daily: {
+        button: 'Daily',
+        title: 'Daily {date}',
+        won: "You cleared today's board in {s}s!",
+        lost: "Boom. Today's board got you.",
+        next: 'New board in {h}h {m}m',
+        namePh: 'your name',
+        post: 'Post',
+        posting: 'Posting...',
+        posted: "Posted. You're #{n} today.",
+        error: 'Could not post. Try again.',
+        classic: 'Classic',
+      },
       tutorial: {
         goal: {
           title: 'Goal',
-          body: 'Open every square that is not a mine. The 9 by 9 board hides 10 mines, and your first click is always safe.',
+          body: 'Open every square that is not a mine. The 9 by 9 board hides 10 mines, and your first click is always safe. Daily gives everyone the same board each day, one try each.',
         },
         numbers: {
           title: 'Reading numbers',
@@ -2002,6 +2062,14 @@ export const en = {
       error: 'Could not post. Try again.',
       play: 'Play {game}',
       refresh: 'Refresh',
+      daily: {
+        tab: 'Daily Minesweeper',
+        board: "Today's Minesweeper ({date} UTC)",
+        yours: 'Your try today:',
+        none: 'not played yet',
+        lost: 'boom',
+        play: "Play today's board",
+      },
     },
     requestApp: {
       title: 'Request a feature',

@@ -1,6 +1,6 @@
 'use client'
 
-import { ScreenStrip, useDeskScreen } from './ScreenStrip'
+import { ScreenStrip, StripButton, useDeskScreen } from './ScreenStrip'
 
 interface ReadmeLabels {
   title: string
@@ -15,13 +15,18 @@ interface DeskReadmeProps {
   backLabel: string
   onDesktop: () => void
   onBack: (e: React.MouseEvent) => void
+  tourLabel?: string
+  /** Leaves the desk for a guided tour of the room */
+  onTour?: () => void
 }
 
-export function DeskReadme({ time, content, labels, desktopLabel, backLabel, onDesktop, onBack }: DeskReadmeProps) {
+export function DeskReadme({ time, content, labels, desktopLabel, backLabel, onDesktop, onBack, tourLabel, onTour }: DeskReadmeProps) {
   const { portrait } = useDeskScreen()
   return (
     <div className="absolute inset-0 flex flex-col" style={{ backgroundColor: '#faf8f5' }}>
-      <ScreenStrip time={time} title={labels.title} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack} />
+      <ScreenStrip time={time} title={labels.title} desktopLabel={desktopLabel} onDesktop={onDesktop} backLabel={backLabel} onBack={onBack}>
+        {onTour && tourLabel && <StripButton onClick={onTour}>{tourLabel}</StripButton>}
+      </ScreenStrip>
 
       {/* Notepad body */}
       <div

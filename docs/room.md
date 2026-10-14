@@ -86,9 +86,17 @@ hand-over panel or clears the selection before DeskView's ladder. Portrait stack
 2x2, and the hand in two rows of seven with 38 px action buttons. Storage (games storage): `mahjong-save` (the game
 in progress and its mode, validated by each engine's `validateSave`), `mahjong-prefs` (settings last used),
 `mahjong-stats` (solitaire best time and wins per layout; 4-player matches and hands won, best faan). Before each
-fresh 4-player hand `mahjong/AutoTable.tsx` plays the automatic table (tiles swept into the centre hatch, walls rise
-two high, dice, the deal off the wall at the break in blocks of four to the racks; skippable with a click, Enter,
-Space or Escape; off under reduced motion or the `tableAnim` pref); bots wait for it. Every `TileView` inside
+fresh 4-player hand `mahjong/AutoTable.tsx` plays the automatic table as pixel art: a 132x132 canvas scaled up
+`pixelated`, every sprite drawn in code on the art grid (tiles with a back and an ivory near edge, 9x9 dice, 5x7
+pixel faces on your rack) and the clock stepped at 20 fps so things hop pixel to pixel (tiles tumble into the
+centre hatch as its lid turns, pinwheel walls pop up two high, dice, the deal off the wall at the break in blocks
+of four to the racks; the overlay fades out in four hard steps; skippable with a click, Enter, Space or Escape;
+off under reduced motion or the `tableAnim` pref); bots wait for it. Hint (H, or the strip button) in 4-Player
+asks `hintFor` in `mahjong-bot.ts` (the hard bot's move plus the shanten after a suggested discard): the tile
+glows, the matching claim/Win button shows pressed, and a line says why. Practice (menu button beside Start) is a
+coached hand from `src/lib/games/mahjong-tutorial.ts`: a stacked deal where you discard a lone wind, pung, chow
+from your left, get ready and win by self-draw; the bots follow a script and pass every claim, `coachFor` reads
+the step from the state, only the coach's move is accepted (a nudge otherwise), and nothing is saved or recorded. Every `TileView` inside
 `TileTipLayer` (`mahjong/tile-tip.tsx`, context in `tip-context.ts`) gets a mouse-hover tooltip from
 `tile-info.ts`: the Chinese, its pinyin, the meaning and how the tile plays (copy in `mahjongApp.tileInfo`);
 `tip={false}` opts a tile out. `mahjong/Tutorial.tsx` holds How to play for each mode (tiles, a tile guide, then

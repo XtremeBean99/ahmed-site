@@ -437,3 +437,24 @@ export function playBots(
   }
   return s
 }
+
+// ---------------------------------------------------------------------------
+// Hints for the human
+
+export interface Hint {
+  action: Action
+  /** Shanten after a suggested discard (0 = ready, 1 = one tile away...); null for other actions. */
+  shanten: number | null
+}
+
+/** What the hard bot would do in `seat`'s place, or null when that seat has nothing to decide. */
+export function hintFor(state: GameState, seat: number): Hint | null {
+  const action = botAction(state, seat, 'hard')
+  if (!action) return null
+  if (action.type !== 'discard') return { action, shanten: null }
+  const me = state.seats[seat]
+  const c = toCounts(me.hand)
+  const k = tileIndex(action.tile)
+  if (k >= 0) c[k]--
+  return { action, shanten: shantenCounts(c, me.melds.length) }
+}

@@ -370,7 +370,7 @@ export function MahjongSolitaire({ chrome, labels, prefs, initial, onMenu }: Pro
 
   return (
     <>
-      <ArcadeStrip time={chrome.time} fs={chrome.fs} arcade={chrome.arcade} desktopLabel={chrome.desktopLabel} backLabel={chrome.backLabel} onDesktop={chrome.onDesktop} onBack={chrome.onBack}>
+      <ArcadeStrip time={chrome.time} title={labels.title} fs={chrome.fs} arcade={chrome.arcade} desktopLabel={chrome.desktopLabel} backLabel={chrome.backLabel} onDesktop={chrome.onDesktop} onBack={chrome.onBack}>
         {toolbar}
       </ArcadeStrip>
 

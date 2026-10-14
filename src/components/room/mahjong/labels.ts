@@ -3,6 +3,7 @@ import type { LayoutId } from '@/lib/games/mahjong-solitaire'
 import type { BotLevel } from '@/lib/games/mahjong-bot'
 import type { AutoTableLabels } from './AutoTable'
 import type { TileInfoLabels } from './tile-info'
+import type { CoachStep } from '@/lib/games/mahjong-tutorial'
 
 /** Every string the Mahjong desk app shows; the copy lives in en.ts `desk.mahjongApp`. */
 export interface MahjongLabels {
@@ -102,9 +103,30 @@ export interface MahjongLabels {
   riverAria: string
   seatAria: string
   tableAnim: string
+  hintDiscard: string
+  /** After a hinted discard: ready, one tile away, {n} tiles away. */
+  hintShanten: string[]
+  hintClaim: string
+  hintTsumo: string
+  hintWait: string
+  practice: MahjongPracticeLabels
   autoTable: AutoTableLabels
   tileInfo: TileInfoLabels
   tutorial: MahjongTutorialLabels
+}
+
+/** The coached practice hand (4-player rules, a stacked deal). */
+export interface MahjongPracticeLabels {
+  button: string
+  blurb: string
+  introTitle: string
+  introBody: string
+  go: string
+  coach: string
+  steps: Record<CoachStep, string>
+  nudge: string
+  doneBody: string
+  playReal: string
 }
 
 type Page = { title: string; body: string }

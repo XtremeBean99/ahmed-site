@@ -21,7 +21,8 @@ import {
   type LastAction,
   type Meld,
 } from '@/lib/games/mahjong-engine'
-import { botAction, type BotLevel } from '@/lib/games/mahjong-bot'
+import { botAction, hintFor, type BotLevel, type Hint } from '@/lib/games/mahjong-bot'
+import { coachFor, matchesCoach, tutorialBotAction } from '@/lib/games/mahjong-tutorial'
 import { compareTiles, tileName } from '@/lib/games/mahjong-tiles'
 import type { MahjongChrome } from './chrome'
 import { MUTED, TABLE_BG } from './chrome'
@@ -36,6 +37,8 @@ interface Props {
   prefs: Prefs
   initial: { game: GameState; level: BotLevel }
   onMenu: () => void
+  /** The coached practice hand: scripted bots, only the coach's move accepted, nothing saved or recorded. */
+  practice?: { onPlay: () => void }
 }
 
 const randomSeed = () => Math.floor(Math.random() * 4294967295)
@@ -56,6 +59,11 @@ function fmt(template: string, vars: Record<string, string | number>): string {
 /** A hand just dealt: nobody has discarded or melded yet. */
 function freshHand(g: GameState): boolean {
   return g.phase !== 'handOver' && g.phase !== 'matchOver' && g.seats.every((s) => s.discards.length === 0 && s.melds.length === 0)
+}
+
+/** Is `a` the move `b` (same type, same tile or chow pair)? */
+function sameMove(a: Action, b: Action): boolean {
+  return matchesCoach({ step: 'done', expect: b }, a)
 }
 
 function sameLast(a: LastAction | null, b: LastAction | null): boolean {
@@ -114,7 +122,7 @@ function River({
   )
 }
 
-export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Props) {
+export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu, practice }: Props) {
   const { tone } = useSfx()
   const { w: screenW, h: screenH, portrait } = useDeskScreen()
 
@@ -127,8 +135,12 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
   const [announce, setAnnounce] = useState('')
   // The automatic table runs before a fresh hand; bots and the clock wait for it and for How to play.
   const [dealing, setDealing] = useState(() => prefs.tableAnim && freshHand(initial.game))
+  // Practice opens on its intro card; the deal waits for it.
+  const [introOpen, setIntroOpen] = useState(practice !== undefined)
+  const [hint, setHint] = useState<Hint | null>(null)
+  const [nudge, setNudge] = useState(false)
   const helpOpen = chrome.helpOpen
-  const hold = dealing || helpOpen
+  const hold = dealing || helpOpen || introOpen
 
   const gameRef = useRef(game)
   const gameIdRef = useRef(0)
@@ -184,6 +196,8 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
       gameRef.current = next
       setGame(next)
       setSel(null)
+      setHint(null)
+      setNudge(false)
       if (!sameLast(next.lastAction, lastLoggedRef.current)) {
         lastLoggedRef.current = next.lastAction
         const a = next.lastAction
@@ -226,7 +240,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
       } else {
         const bot = pendingSeats(s).find((x) => x !== 0)
         if (bot === undefined) return
-        const act = botAction(s, bot, level) ?? legalActions(s, bot)[0]
+        const act = (practice ? tutorialBotAction(s, bot) : botAction(s, bot, level)) ?? legalActions(s, bot)[0]
         next = applyAction(s, bot, act)
         if (next === s) {
           const alts = legalActions(s, bot)
@@ -237,12 +251,18 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
       if (next !== s) commit(next)
     }, delay)
     return () => window.clearTimeout(timer)
-  }, [game, stepKind, speed, level, commit, hold])
+  }, [game, stepKind, speed, level, commit, hold, practice])
 
   /* ---------- The human's actions ---------- */
   const act = useCallback(
     (a: Action) => {
       const s = gameRef.current
+      // Practice takes only the move the coach asks for.
+      if (practice && !matchesCoach(coachFor(s), a)) {
+        tone('invalid')
+        setNudge(true)
+        return false
+      }
       const next = applyAction(s, 0, a)
       if (next === s) {
         tone('invalid')
@@ -251,20 +271,20 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
       commit(next)
       return true
     },
-    [commit, tone],
+    [commit, tone, practice],
   )
 
   // Optional: pass chow-only offers without asking.
   const chowOnly = inClaim && game.claim!.options[0].length > 0 && game.claim!.options[0].every((o) => o.type === 'chow')
   useEffect(() => {
-    if (!chowOnly || !prefs.autoPassChow || botSeatPending || hold) return
+    if (!chowOnly || !prefs.autoPassChow || botSeatPending || hold || practice) return
     const id = gameIdRef.current
     const timer = window.setTimeout(() => {
       if (id !== gameIdRef.current) return
       act({ type: 'pass' })
     }, 120)
     return () => window.clearTimeout(timer)
-  }, [chowOnly, prefs.autoPassChow, botSeatPending, game, act, hold])
+  }, [chowOnly, prefs.autoPassChow, botSeatPending, game, act, hold, practice])
 
   const discardIndex = useCallback(
     (i: number) => {
@@ -286,7 +306,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
 
   const nextHand = useCallback(() => {
     const s = gameRef.current
-    if (s.phase !== 'handOver') return
+    if (s.phase !== 'handOver' || practice) return
     const next = startHand(s)
     if (next === s) return
     lastLoggedRef.current = next.lastAction
@@ -295,7 +315,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
     if (prefs.tableAnim && freshHand(next)) setDealing(true)
     else tone('deal')
     commit(next)
-  }, [commit, tone, prefs.tableAnim])
+  }, [commit, tone, prefs.tableAnim, practice])
 
   const newMatchSame = useCallback(() => {
     const s = gameRef.current
@@ -315,11 +335,13 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
 
   /* ---------- Save and records ---------- */
   useEffect(() => {
+    if (practice) return
     if (game.phase === 'matchOver') clearSave()
     else writeSave({ mode: 'four', game, level })
-  }, [game, level])
+  }, [game, level, practice])
 
   useEffect(() => {
+    if (practice) return
     if (game.phase === 'handOver' && game.result) {
       const key = `${game.handNo}`
       if (recordedHandRef.current === key) return
@@ -333,7 +355,42 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
       setStats(recordMatch(game.seats[0].score === top))
       tone(game.seats[0].score === top ? 'win' : 'lose')
     }
-  }, [game, tone])
+  }, [game, tone, practice])
+
+  /* ---------- Hint ---------- */
+  // Practice always shows the coach's move; otherwise H or the Hint button asks the hard bot.
+  const coach = practice ? coachFor(game) : null
+  const shown: Action | null = coach ? coach.expect : (hint?.action ?? null)
+  const hinted = (a: Action) => shown !== null && sameMove(a, shown)
+  const hintTile = shown?.type === 'discard' ? shown.tile : null
+
+  const describeHint = useCallback(
+    (h: Hint): string => {
+      const a = h.action
+      if (a.type === 'discard') {
+        const sh = h.shanten
+        const tail = sh === null || sh < 0 ? '' : `, ${labels.hintShanten[Math.min(sh, 2)].replace('{n}', String(sh))}`
+        return fmt(labels.hintDiscard, { tile: tileName(a.tile) }) + tail
+      }
+      if (a.type === 'tsumo' || a.type === 'ron') return labels.hintTsumo
+      const name = a.type === 'chow' ? labels.chow : a.type === 'pung' ? labels.pung : a.type === 'pass' ? labels.pass : labels.kong
+      return fmt(labels.hintClaim, { action: name })
+    },
+    [labels],
+  )
+
+  const doHint = useCallback(() => {
+    const s = gameRef.current
+    const h = pendingFor(s, 0) ? hintFor(s, 0) : null
+    if (!h) {
+      setAnnounce(labels.hintWait)
+      tone('invalid')
+      return
+    }
+    setHint(h)
+    setAnnounce(describeHint(h))
+    tone('blip')
+  }, [describeHint, labels.hintWait, tone])
 
   /* ---------- Ready indicator ---------- */
   const waits = useMemo(() => {
@@ -365,6 +422,11 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return
       const onButton = t?.tagName === 'BUTTON'
       const k = e.key
+      if (k.toLowerCase() === 'h' && !practice && (inDiscard || inClaim)) {
+        e.preventDefault()
+        doHint()
+        return
+      }
       if (handOver && overShown) {
         if ((k === 'Enter' || k === ' ') && !onButton) {
           e.preventDefault()
@@ -409,7 +471,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [handOver, overShown, inClaim, inDiscard, claimOptions, chows, kongActions, legal, items.length, sel, portrait, act, discardIndex, nextHand])
+  }, [handOver, overShown, inClaim, inDiscard, claimOptions, chows, kongActions, legal, items.length, sel, portrait, act, discardIndex, nextHand, doHint, practice])
 
   // Escape: a claim is passed, then the hand-over panel closes, then the selection clears; only then DeskView's ladder.
   useEffect(() => {
@@ -539,12 +601,17 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
           ? labels.claimTitle.replace('{name}', nameOf(game.claim!.from)).replace('{tile}', tileName(game.claim!.tile))
           : fmt(labels.waitingFor, { name: nameOf(phase === 'claim' ? game.claim?.from ?? game.turn : game.turn) })
 
+  const hintLine = hint && !practice && (
+    <div style={{ fontSize: font, color: ARCADE.olive, lineHeight: 1.25, ...PIXEL_FONT }}>{describeHint(hint)}</div>
+  )
+
   const info = (
     <div className="flex flex-col items-center text-center" style={{ gap: 3, minWidth: 0 }}>
       <div style={{ fontSize: font, color: ARCADE.amber, lineHeight: 1.2, ...PIXEL_FONT }}>
         {fmt(labels.windRound, { wind: labels.winds[game.prevailing - 1] })} · {fmt(labels.handNo, { n: game.handNo })} · {fmt(labels.wall, { n: game.wall.length })}
       </div>
       <div style={{ fontSize: font, color: ARCADE.panelText, lineHeight: 1.25, ...PIXEL_FONT }}>{statusText}</div>
+      {hintLine}
       {!portrait && lastLines.length > 0 && (
         <div style={{ fontSize: 9, color: MUTED, lineHeight: 1.3, ...PIXEL_FONT }}>
           {lastLines.map((l, i) => <div key={i} style={{ opacity: i === lastLines.length - 1 ? 1 : 0.6 }}>{l}</div>)}
@@ -574,8 +641,15 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
 
   const tw = portrait ? PW : HW
   const th = portrait ? PH : HH
+  // The hinted discard: the drawn tile when it is that one, else the first copy in the hand.
+  const hintIdx = hintTile === null || !inDiscard
+    ? -1
+    : items.findIndex((it) => it.drawn && it.code === hintTile) >= 0
+      ? items.findIndex((it) => it.drawn && it.code === hintTile)
+      : items.findIndex((it) => it.code === hintTile)
   const handTile = (it: HandItem, i: number) => {
     const selected = sel === i && inDiscard
+    const glow = i === hintIdx
     return (
       <button
         key={`${i}-${it.code}`}
@@ -592,7 +666,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
         className="p-0 border-0 bg-transparent outline-none flex-shrink-0"
         style={{ width: tw, height: th, marginLeft: it.drawn && !portrait ? 8 : 0, cursor: inDiscard ? 'pointer' : 'default', touchAction: 'manipulation', transform: selected ? 'translateY(-6px)' : undefined }}
       >
-        <TileView code={it.code} w={tw} h={th} depth={portrait ? 3 : 2} selected={selected} accent={selected ? ARCADE.amber : it.drawn && inDiscard ? ARCADE.teal : undefined} />
+        <TileView code={it.code} w={tw} h={th} depth={portrait ? 3 : 2} selected={selected} highlight={glow && !selected} accent={selected ? ARCADE.amber : glow ? ARCADE.olive : it.drawn && inDiscard ? ARCADE.teal : undefined} />
       </button>
     )
   }
@@ -609,15 +683,15 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
         </ArcadeButton>
       )}
       {inDiscard && canTsumo && (
-        <ArcadeButton size={bsz} tone="cream" onClick={blurClick(() => act({ type: 'tsumo' }))}>{labels.tsumo}</ArcadeButton>
+        <ArcadeButton size={bsz} tone="cream" pressed={hinted({ type: 'tsumo' })} onClick={blurClick(() => act({ type: 'tsumo' }))}>{labels.tsumo}</ArcadeButton>
       )}
       {inDiscard && kongActions.map((a, i) => (
-        <ArcadeButton key={i} size={bsz} tone="dark" onClick={blurClick(() => act(a))}>
+        <ArcadeButton key={i} size={bsz} tone="dark" pressed={hinted(a)} onClick={blurClick(() => act(a))}>
           {labels.kongAction}
           {'tile' in a && <span className="ml-1.5 inline-flex">{miniTile(a.tile)}</span>}
         </ArcadeButton>
       ))}
-      {handOver && !overShown && (
+      {handOver && !overShown && !practice && (
         <ArcadeButton size={bsz} tone="cream" onClick={blurClick(nextHand)}>{labels.nextHand}</ArcadeButton>
       )}
     </>
@@ -625,7 +699,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
 
   /* ---------- Claim prompt ---------- */
   const claimPanel = inClaim && game.claim && (
-    <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+    <div className={`absolute inset-0 z-10 flex justify-center pointer-events-none ${practice ? 'items-end' : 'items-center'}`}>
       <ArcadePanel className="px-3 py-2 pointer-events-auto" style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center', maxWidth: portrait ? 300 : 380 }}>
         <div className="flex items-center gap-2">
           <span style={{ fontSize: font, ...PIXEL_FONT }}>
@@ -635,12 +709,12 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
         </div>
         <div className="flex flex-wrap items-center justify-center" style={{ gap: 6 }}>
           {claimOptions.map((o, i) => {
-            if (o.type === 'ron') return <ArcadeButton key={i} size={bsz} tone="cream" onClick={blurClick(() => act({ type: 'ron' }))}>{labels.ron}</ArcadeButton>
-            if (o.type === 'pung') return <ArcadeButton key={i} size={bsz} tone="cream" onClick={blurClick(() => act({ type: 'pung' }))}>{labels.pung}</ArcadeButton>
-            if (o.type === 'kong') return <ArcadeButton key={i} size={bsz} tone="cream" onClick={blurClick(() => act({ type: 'kong' }))}>{labels.kong}</ArcadeButton>
+            if (o.type === 'ron') return <ArcadeButton key={i} size={bsz} tone="cream" pressed={hinted(o)} onClick={blurClick(() => act({ type: 'ron' }))}>{labels.ron}</ArcadeButton>
+            if (o.type === 'pung') return <ArcadeButton key={i} size={bsz} tone="cream" pressed={hinted(o)} onClick={blurClick(() => act({ type: 'pung' }))}>{labels.pung}</ArcadeButton>
+            if (o.type === 'kong') return <ArcadeButton key={i} size={bsz} tone="cream" pressed={hinted(o)} onClick={blurClick(() => act({ type: 'kong' }))}>{labels.kong}</ArcadeButton>
             const trio = [...o.tiles, game.claim!.tile].sort(compareTiles)
             return (
-              <ArcadeButton key={i} size={bsz} tone="cream" ariaLabel={`${labels.chow}: ${trio.map((t) => tileName(t)).join(', ')}`} onClick={blurClick(() => act({ type: 'chow', tiles: o.tiles }))}>
+              <ArcadeButton key={i} size={bsz} tone="cream" pressed={hinted(o)} ariaLabel={`${labels.chow}: ${trio.map((t) => tileName(t)).join(', ')}`} onClick={blurClick(() => act({ type: 'chow', tiles: o.tiles }))}>
                 <span className="inline-flex items-center" style={{ gap: 1 }}>
                   <span className="mr-1">{labels.chow}</span>
                   {trio.map((t, j) => <span key={j} className="inline-flex">{miniTile(t)}</span>)}
@@ -648,7 +722,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
               </ArcadeButton>
             )
           })}
-          <ArcadeButton size={bsz} tone="dark" onClick={blurClick(() => act({ type: 'pass' }))}>{labels.pass}</ArcadeButton>
+          <ArcadeButton size={bsz} tone="dark" pressed={hinted({ type: 'pass' })} onClick={blurClick(() => act({ type: 'pass' }))}>{labels.pass}</ArcadeButton>
         </div>
       </ArcadePanel>
     </div>
@@ -705,7 +779,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
               <p style={{ margin: 0, fontSize: font, color: MUTED }}>{labels.drawBody}</p>
             </>
           )}
-          <div className="flex flex-col w-full" style={{ gap: 3 }} aria-label={labels.otherHands}>
+          {!practice && <div className="flex flex-col w-full" style={{ gap: 3 }} aria-label={labels.otherHands}>
             {[1, 2, 3]
               .filter((i) => !(result.kind === 'win' && result.winner === i))
               .map((i) => {
@@ -720,7 +794,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
                   </div>
                 )
               })}
-          </div>
+          </div>}
           <div className="grid w-full" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, fontSize: font, ...PIXEL_FONT }} aria-label={labels.payments}>
             {game.seats.map((s, i) => (
               <div key={i} className="flex flex-col items-center" style={{ minWidth: 0 }}>
@@ -730,10 +804,20 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
               </div>
             ))}
           </div>
-          <div className="flex gap-1.5 mt-1">
-            <ArcadeButton size={portrait ? 'xl' : 'md'} onClick={nextHand}>{labels.nextHand}</ArcadeButton>
-            <ArcadeButton size={portrait ? 'xl' : 'md'} tone="dark" onClick={() => setOverShown(false)}>{labels.seeTable}</ArcadeButton>
-          </div>
+          {practice ? (
+            <>
+              <p style={{ margin: 0, fontSize: font, lineHeight: 1.3, color: ARCADE.panelText, textAlign: 'center' }}>{labels.practice.doneBody}</p>
+              <div className="flex gap-1.5 mt-1">
+                <ArcadeButton size={portrait ? 'xl' : 'md'} onClick={practice.onPlay}>{labels.practice.playReal}</ArcadeButton>
+                <ArcadeButton size={portrait ? 'xl' : 'md'} tone="dark" onClick={onMenu}>{labels.menu}</ArcadeButton>
+              </div>
+            </>
+          ) : (
+            <div className="flex gap-1.5 mt-1">
+              <ArcadeButton size={portrait ? 'xl' : 'md'} onClick={nextHand}>{labels.nextHand}</ArcadeButton>
+              <ArcadeButton size={portrait ? 'xl' : 'md'} tone="dark" onClick={() => setOverShown(false)}>{labels.seeTable}</ArcadeButton>
+            </div>
+          )}
         </ArcadePanel>
       </div>
     </ArcadeOverlay>
@@ -762,6 +846,32 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
         </div>
       </ArcadePanel>
     </ArcadeOverlay>
+  )
+
+  /* ---------- Practice: the intro card and the coach ---------- */
+  const introPanel = practice && introOpen && (
+    <ArcadeOverlay tint="rgba(12,8,6,0.62)">
+      <ArcadePanel className="px-4 py-3" style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center', maxWidth: portrait ? 300 : 380 }}>
+        <p style={{ margin: 0, fontSize: portrait ? 15 : 13, color: ARCADE.amber }}>{labels.practice.introTitle}</p>
+        <p style={{ margin: 0, fontSize: font, lineHeight: 1.35, textAlign: 'center' }}>{labels.practice.introBody}</p>
+        <div className="flex gap-1.5 mt-1">
+          <ArcadeButton size={portrait ? 'xl' : 'md'} onClick={() => { setIntroOpen(false); if (!dealing) tone('deal') }}>{labels.practice.go}</ArcadeButton>
+          <ArcadeButton size={portrait ? 'xl' : 'md'} tone="dark" onClick={onMenu}>{labels.menu}</ArcadeButton>
+        </div>
+      </ArcadePanel>
+    </ArcadeOverlay>
+  )
+
+  const coachCard = coach && !introOpen && !dealing && coach.step !== 'done' && (
+    <div className="absolute left-0 right-0 top-0 z-20 flex justify-center pointer-events-none" style={{ padding: 2 }}>
+      <ArcadePanel className="px-2 py-1" style={{ display: 'flex', gap: 6, alignItems: 'flex-start', maxWidth: portrait ? 312 : 420 }}>
+        <span className="flex-shrink-0" style={{ fontSize: font, color: ARCADE.amber, lineHeight: 1.3, ...PIXEL_FONT }}>{labels.practice.coach}</span>
+        <div role="status" style={{ fontSize: font, lineHeight: 1.3, ...PIXEL_FONT }}>
+          {labels.practice.steps[coach.step]}
+          {nudge && <div style={{ color: '#e8a090' }}>{labels.practice.nudge}</div>}
+        </div>
+      </ArcadePanel>
+    </div>
   )
 
   /* ---------- Layouts ---------- */
@@ -793,7 +903,7 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
         </div>
         <div className="flex-shrink-0 text-center" style={{ fontSize: 12, color: ARCADE.panelText, minHeight: 16, lineHeight: 1.25, ...PIXEL_FONT }}>
           <span style={{ color: ARCADE.amber }}>{fmt(labels.windRound, { wind: labels.winds[game.prevailing - 1] })}</span>{' '}
-          {fmt(labels.wall, { n: game.wall.length })} · {lastLines[0] ?? statusText}
+          {fmt(labels.wall, { n: game.wall.length })} · {hint && !practice ? <span style={{ color: ARCADE.olive }}>{describeHint(hint)}</span> : (lastLines[0] ?? statusText)}
         </div>
         <div className="flex-shrink-0">{yourMelds}</div>
         <div className="flex-shrink-0" style={{ paddingTop: 6 }} role="group" aria-label={labels.handAria}>
@@ -845,15 +955,22 @@ export function MahjongFourPlayer({ chrome, labels, prefs, initial, onMenu }: Pr
 
   return (
     <>
-      <ArcadeStrip time={chrome.time} fs={chrome.fs} arcade={chrome.arcade} desktopLabel={chrome.desktopLabel} backLabel={chrome.backLabel} onDesktop={chrome.onDesktop} onBack={chrome.onBack}>
+      <ArcadeStrip time={chrome.time} title={labels.title} fs={chrome.fs} arcade={chrome.arcade} desktopLabel={chrome.desktopLabel} backLabel={chrome.backLabel} onDesktop={chrome.onDesktop} onBack={chrome.onBack}>
         <ArcadeButton size={portrait ? 'xl' : 'sm'} tone="dark" onClick={onMenu}>{labels.menu}</ArcadeButton>
+        {!practice && (
+          <ArcadeButton size={portrait ? 'xl' : 'sm'} tone="dark" title={`${labels.hint} (H)`} disabled={!inDiscard && !inClaim} onClick={blurClick(doHint)}>
+            {labels.hint}
+          </ArcadeButton>
+        )}
         {chrome.help}
       </ArcadeStrip>
       <div className="relative flex-1 min-h-0 overflow-hidden" style={{ backgroundColor: TABLE_BG }}>
         {table}
+        {coachCard}
         {resultPanel}
         {matchPanel}
-        {dealing && !helpOpen && (
+        {introPanel}
+        {dealing && !helpOpen && !introOpen && (
           <AutoTable
             key={`${game.opts.seed}-${game.handNo}`}
             seed={(game.opts.seed + game.handNo * 7919) >>> 0}

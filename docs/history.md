@@ -182,6 +182,13 @@ Moved out of CLAUDE.md on 13 October 2026, verbatim. The session log, the full r
   monitor. The book under the side table opens the Guestbook. Labels in `room.shelfGameLabels` and
   `room.guestbookBookLabel`.
 
+- **v29** `20 October 2026`: **Smoother splash, a growing bonsai, lighter music.** The Xtreme splash gained
+  2 generated in-betweens per keyframe (colour lerps where both frames are opaque; new pixels grow out from the
+  shared shape and old ones retract tip first) and runs at 40 ms a frame from one sprite sheet; repeat visitors
+  within a day get a short cut; the first frame holds until the room has loaded. The bonsai grows over 5 stages
+  with visits and got the room's hover highlight and falling leaves (petals in bloom). Music re-encoded to AAC
+  96 kbps `.m4a` (embedded art stripped). Fixed the music notes' `src=""` pool images refetching the page.
+
 - **v27** `9 October 2026`: **How to play for every desk game, Mahjong table animation and tile tooltips.** The
   Blackjack dialog became the shared `GameTutorial.tsx` (paged dialog, `useTutorial` auto-opens once per game via a
   `<game>-tutorial-seen` key, `TutorialButton` "?" in the strip, `KeyRows`/`TermRows`; chrome copy in `desk.tutorial`,

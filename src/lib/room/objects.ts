@@ -1,4 +1,5 @@
 import { SHELF_GAME_SPRITES } from './shelf-games'
+import { bonsaiFrames } from './bonsai'
 
 /**
  * Shared animation frame durations (ms). Each value is the interval between
@@ -107,19 +108,14 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
   },
   {
     id: 'bonsai',
-    // Windowsill bonsai plant, extracted from pixel-art/bonsai/
+    // Windowsill bonsai plant (scripts/draw-bonsai.mjs). It grows with visits, so Room
+    // swaps in the visitor's stage (lib/room/bonsai.ts); these are the full tree's frames.
     x: 1241,
     y: 291,
     w: 99,
     h: 131,
     labelKey: 'room.bonsaiLabel',
-    frames: [
-      '/room/bonsai-1.png',
-      '/room/bonsai-2.png',
-      '/room/bonsai-3.png',
-      '/room/bonsai-4.png',
-      '/room/bonsai-5.png',
-    ],
+    frames: bonsaiFrames(4),
     href: null,
   },
   {

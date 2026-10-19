@@ -444,6 +444,14 @@ export const en = {
     posterLabel: 'My Dress Up Darling Poster',
     saitamaLabel: 'Saitama Poster',
     bonsaiLabel: 'Windowsill bonsai tree',
+    // One per growth stage (lib/room/bonsai.ts); the tree grows with each visit.
+    bonsaiStageLabels: [
+      'A bonsai sprout. It grows a little every visit',
+      'Bonsai sapling, coming along',
+      'Young bonsai, taking shape',
+      'Windowsill bonsai tree, fully grown',
+      'Bonsai in bloom. Thanks for coming back',
+    ],
     catanLabel: 'Longest road ever, click to play',
     booksLabel: 'Books on the shelf',
     vhsLabel: 'VHS tape, play it on the monitor',

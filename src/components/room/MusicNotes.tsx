@@ -97,10 +97,10 @@ export function MusicNotes({ holes, startDelay = 0 }: MusicNotesProps) {
   return (
     <div ref={poolRef} aria-hidden className="absolute inset-0 pointer-events-none">
       {Array.from({ length: POOL_SIZE }, (_, i) => (
+        // No src until a note spawns: src="" would make the browser refetch the page.
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           key={i}
-          src=""
           alt=""
           className="absolute opacity-0"
           style={{ imageRendering: 'pixelated' }}

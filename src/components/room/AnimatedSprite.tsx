@@ -18,6 +18,11 @@ interface AnimatedSpriteProps {
   frames: string[]
   frameDuration: number
   mode: SpriteMode
+  /**
+   * 'loop' only: after the last frame go back to this one instead of the first, so
+   * intro frames (the bonsai's rest frame and first highlight step) play once per hover.
+   */
+  loopFrom?: number
   onClick?: () => void
   /** Tooltip alignment, forwarded to RoomObject (use 'right' near the stage edge) */
   tooltipAlign?: 'center' | 'right'
@@ -50,6 +55,7 @@ export function AnimatedSprite({
   frames,
   frameDuration,
   mode,
+  loopFrom = 0,
   onClick,
   tooltipAlign,
   altFrame = null,
@@ -87,10 +93,11 @@ export function AnimatedSprite({
     } else {
       // Loop continuously while hovered
       start(() => {
-        advanceTo((tickRef.current + 1) % frames.length)
+        const next = tickRef.current + 1
+        advanceTo(next >= frames.length ? Math.min(loopFrom, frames.length - 1) : next)
       })
     }
-  }, [reduce, frames.length, mode, start, advanceTo, clearTimer, tickRef])
+  }, [reduce, frames.length, mode, loopFrom, start, advanceTo, clearTimer, tickRef])
 
   const stopAnimation = useCallback(() => {
     setHovered(false)

@@ -15,9 +15,11 @@ interface RoomSave {
   sfxVolume: number
   /** Calm mode: enables OS reduced-motion for opted-in users */
   calmMode: boolean
+  /** When the whole Xtreme splash last played (ms epoch, 0 = never); see lib/room/splash.ts */
+  splashAt: number
 }
 
-const DEFAULTS: RoomSave = { audio: true, lampOn: true, visitCount: 0, volume: 0.3, clock24h: true, sideTableOpen: false, sfx: true, sfxVolume: 0.5, calmMode: false }
+const DEFAULTS: RoomSave = { audio: true, lampOn: true, visitCount: 0, volume: 0.3, clock24h: true, sideTableOpen: false, sfx: true, sfxVolume: 0.5, calmMode: false, splashAt: 0 }
 
 export function loadPrefs(): RoomSave {
   try {
@@ -40,6 +42,7 @@ export function loadPrefs(): RoomSave {
           ? parsed.sfxVolume
           : DEFAULTS.sfxVolume,
       calmMode: typeof parsed.calmMode === 'boolean' ? parsed.calmMode : DEFAULTS.calmMode,
+      splashAt: typeof parsed.splashAt === 'number' && Number.isFinite(parsed.splashAt) ? parsed.splashAt : DEFAULTS.splashAt,
     }
   } catch {
     return { ...DEFAULTS }

@@ -23,6 +23,7 @@ import { TOUR_STEP_IDS, tourFocusX, tourTarget } from '@/lib/room/tour'
 import { useStageScale } from '@/lib/room/useStageScale'
 import { releaseVelocity, stepMomentum } from '@/lib/room/pan'
 import { loadPrefs, savePrefs } from '@/lib/room/storage'
+import { bonsaiFrames, bonsaiStage, BONSAI_LOOP_FROM, type BonsaiStage } from '@/lib/room/bonsai'
 import { RoomStage } from './RoomStage'
 import { RoomHud } from './RoomHud'
 import { RoomAudioProvider } from './RoomAudioProvider'
@@ -84,6 +85,7 @@ interface RoomProps {
       posterLabel: string
       saitamaLabel: string
       bonsaiLabel: string
+      bonsaiStageLabels: string[]
       catanLabel: string
       booksLabel: string
       vhsLabel: string
@@ -147,6 +149,8 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const [hasDragged, setHasDragged] = useState(false)
   // Where the cat sleeps this visit (set once prefs load, so the server render has no cat).
   const [catSpot, setCatSpot] = useState<CatSpot | null>(null)
+  // How far the bonsai has grown, from the visit count (also set once prefs load).
+  const [bonsai, setBonsai] = useState<BonsaiStage | null>(null)
   // The guided tour's step, or null when it is not running.
   const [tourStep, setTourStep] = useState<number | null>(null)
 
@@ -327,7 +331,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
     setManualLight(LIGHTING_STATES[(LIGHTING_STATES.indexOf(light) + 1) % LIGHTING_STATES.length])
   }, [light])
 
-  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); setSfxEnabled(p.sfx); setSfxVolumeState(p.sfxVolume); setHintPulses(p.visitCount <= 1); setCatSpot(catSpotFor(p.visitCount)); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
+  useEffect(() => { const p = loadPrefs(); setLampOn(p.lampOn); setClock24h(p.clock24h); setSideTableOpen(p.sideTableOpen); setSfxEnabled(p.sfx); setSfxVolumeState(p.sfxVolume); setHintPulses(p.visitCount <= 1); setCatSpot(catSpotFor(p.visitCount)); setBonsai(bonsaiStage(p.visitCount, window.location.search)); savePrefs({ visitCount: p.visitCount + 1 }) }, [])
 
   // Timeout refs
   const safetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -1016,18 +1020,21 @@ export function Room({ dict, readmeContent }: RoomProps) {
             onClick={() => { sfx.play('poster'); discover('saitama', t.room.discoveryLabels.saitama) }}
           />
 
-          <AnimatedSprite
-            label={t.room.bonsaiLabel}
-            x={bonsaiObj.x}
-            y={bonsaiObj.y}
-            w={bonsaiObj.w}
-            h={bonsaiObj.h}
-            frames={bonsaiObj.frames}
-            frameDuration={SPRITE_FRAME_MS.bonsai}
-            mode="loop"
-            tooltipAlign="right"
-            onClick={() => { discover('bonsai', t.room.discoveryLabels.bonsai) }}
-          />
+          {bonsai && (
+            <AnimatedSprite
+              label={t.room.bonsaiStageLabels[bonsai - 1] ?? t.room.bonsaiLabel}
+              x={bonsaiObj.x}
+              y={bonsaiObj.y}
+              w={bonsaiObj.w}
+              h={bonsaiObj.h}
+              frames={bonsaiFrames(bonsai)}
+              frameDuration={SPRITE_FRAME_MS.bonsai}
+              mode="loop"
+              loopFrom={BONSAI_LOOP_FROM}
+              tooltipAlign="right"
+              onClick={() => { discover('bonsai', t.room.discoveryLabels.bonsai) }}
+            />
+          )}
 
           <AnimatedSprite
             label={t.room.catanLabel}

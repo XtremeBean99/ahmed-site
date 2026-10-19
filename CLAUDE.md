@@ -23,7 +23,12 @@ monitor runs a small pixel OS (README, games, guestbook, terminal...), plus `/ca
 (`/home`, `/games`, `/projects`, `/tutoring`, `/legal`, `/room`) redirect permanently (308) to `/`. Their code, the monochrome theme
 and the Inter/Playfair fonts were deleted in `4a6f3cb` (recover from `4a6f3cb^`).
 
-## Current state (13 October 2026)
+## Current state (20 October 2026)
+
+v29: the Xtreme splash runs at 25 fps (82 frames, 54 of them generated in-betweens, one sprite sheet), plays
+in full on the first visit and once a day with a short cut otherwise, and holds its first frame until the room
+behind it has loaded; the bonsai grows with visits (5 stages, hover highlight, blossoms); the music is AAC
+`.m4a` at 96 kbps (89 MB of MP3 down to 66 MB), with the MP3 masters in `assets/audio/`.
 
 v28 added: shareable desk links (`/?app=chess`, the address bar follows the open app), a daily Minesweeper
 challenge with a per-day public board, the cat on the bed, a guided room tour (`?tour`, the README's strip, the
@@ -44,7 +49,7 @@ and this docs split. Before that: the desk shelf, Typing, Scores and Request app
    guestbook (`guestbook:entries`), highscores (`hiscores:<game>`, 100 kept per game), daily boards
    (`hiscores:daily:<game>:<YYYY-MM-DD>`, expire after 8 days) and feature requests. Names, scores, messages
    and times only: no IPs (rate-limit keys expire). Everything else is `localStorage`: `room-save-v1` prefs
-   (`audio, lampOn, visitCount, volume, clock24h, sideTableOpen, sfx, sfxVolume`), `room-discoveries-v1`,
+   (`audio, lampOn, visitCount, volume, clock24h, sideTableOpen, sfx, sfxVolume, calmMode, splashAt`), `room-discoveries-v1`,
    `room-paint-v1`, `room-reader-v1`, `room-terminal-fs-v1`, `catan-save-v2`, and the games namespace
    `ahmed-site:games:v1:*` (`src/lib/games/storage.ts`).
 3. **Secrets in env vars only** (`.env.example`). Without Upstash vars everything server-side fails soft
@@ -56,7 +61,9 @@ and this docs split. Before that: the desk shelf, Typing, Scores and Request app
 6. **Room palette:** warm brown/mauve pixel art; UI bubbles `#3d2e1e` fill, `#5a4430` border, `#e8d5b0` text;
    app screens `#faf8f5` / `#fffef5` / `#e8e0d8` (`ARCADE` in `pixel-ui.tsx`). Pixel font `--font-pixel`
    (`src/fonts/Minecraft.ttf`). Pixel art is plain `<img>` with `image-rendering: pixelated`, never `next/image`.
-7. **Audio paths are case-sensitive on Vercel.** Keep `public/audio/` kebab-case lowercase.
+7. **Audio paths are case-sensitive on Vercel.** Keep `public/audio/` kebab-case lowercase. Tracks ship as
+   `public/audio/<id>.m4a` encoded by `bash scripts/encode-audio.sh` from the MP3 masters in `assets/audio/`
+   (not deployed); every track needs a cover file, since the encoded files carry no embedded art.
 
 ## Architecture
 
@@ -128,6 +135,17 @@ union bbox so frames never jitter; hover plays highlight frames (#f6da9c outline
 registry entry -> sprites in `public/room/` -> add to `FILES` in `scripts/generate-lighting.mjs` and run
 `npm run lighting` -> copy in `en.ts` -> render in `Room.tsx`. Overlapping sprites use `hitPath` masks.
 
+**Splash** (`XtremeSplash.tsx`, timing in `src/lib/room/splash.ts`, tested): one sheet
+`public/room/xtreme-sheet.png` from `scripts/extract-xtreme.mjs` (the 28 hand-drawn keyframes plus 2 generated
+in-betweens each). Full play on the first visit and when `splashAt` is a day old, else a short cut from the white
+logo. The first frame is held until every eager `<img>` behind it has finished and fonts are in (4 s cap). Any key
+or press skips it; reduced motion skips it entirely.
+
+**The bonsai** (`src/lib/room/bonsai.ts`, tested; art from `scripts/draw-bonsai.mjs`): stage by visit (1 sprout,
+2 from visit 2, 3 from visit 4, 4 the hand-drawn tree from visit 7, 5 in bloom from visit 12), `?bonsai=1..5`
+forces one. Six frames per stage (`bonsai-<stage>-<frame>.png`): rest, 1 px highlight, then four 2 px swaying
+frames that `AnimatedSprite` loops (`loopFrom`). Rendered only after prefs load, like the cat.
+
 **The cat** (`RoomCat.tsx`, art from `scripts/draw-cat.mjs`, drawn in code on a 2 px grid): sleeps at one of
 `CAT_SPOTS` chosen by `visitCount`, breathes on a 1.3 s two-frame loop with drifting Zs, wakes for 3.5 s on a
 click (mew + purr tones, a toast line from `room.catWake`, the `cat` discovery). Rendered only after prefs load.
@@ -196,13 +214,13 @@ Pixel Catan: `docs/catan.md`.
 - `npm run dev` (copy `.env.example` to `.env.local` first); production check: `npm run build && npx next start`.
 - Before deploying: `npm run type-check && npm run lint && npm run build`.
 - Tests: `npm run test:room`, `test:games`, `test:terminal`, `test:catan` (`test:catan:long` for fuzzing).
-- Art: `npm run lighting`, `node scripts/draw-cat.mjs`, others in `docs/room.md`.
+- Art: `npm run lighting`, `node scripts/draw-cat.mjs`, `node scripts/draw-bonsai.mjs`,
+  `node scripts/extract-xtreme.mjs`, others in `docs/room.md`. Music: `bash scripts/encode-audio.sh`.
 - Browser checks: the scratch Playwright approach (system Chromium via `playwright-core`) works well for the
   room; there is no committed E2E suite yet.
 
 ## Open roadmap
 
-- Bonsai growth with `visitCount` (5 stages are drawn).
 - Desk session persistence (remember the open app in `sessionStorage`), now partly covered by `?app=`.
 - Ambient presence ("N people in the room") via a Redis counter with TTL keys.
 - Playwright E2E of the room flows plus Lighthouse CI on previews.

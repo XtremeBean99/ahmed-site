@@ -45,8 +45,9 @@ export function NowPlaying({ labels, embedded }: NowPlayingProps) {
   }, [])
 
   // When track changes and has no external cover, try extracting embedded art
+  // (MP3 ID3 tags only; the encoded .m4a tracks carry none, so they need a cover file)
   useEffect(() => {
-    if (track.cover || prevTrackRef.current === track.src) return
+    if (track.cover || !track.src.endsWith('.mp3') || prevTrackRef.current === track.src) return
     prevTrackRef.current = track.src
     setEmbeddedCover(null)
 

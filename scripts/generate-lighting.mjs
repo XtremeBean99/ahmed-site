@@ -31,7 +31,7 @@ const FILES = [
   ...range('saitama', 14),
   ...range('poster', 5),
   'poster-alt.png',
-  ...range('bonsai', 5),
+  ...[1, 2, 3, 4, 5].flatMap((stage) => range(`bonsai-${stage}`, 6)),
   ...range('catan', 3),
   ...range('books', 3),
   ...range('vhs', 3),

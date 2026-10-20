@@ -182,6 +182,15 @@ Moved out of CLAUDE.md on 13 October 2026, verbatim. The session log, the full r
   monitor. The book under the side table opens the Guestbook. Labels in `room.shelfGameLabels` and
   `room.guestbookBookLabel`.
 
+- **v30** `20 October 2026`: **Pixel window, poster animation, a cat bowl.** The window glass shows a city
+  drawn in code (`draw-window.mjs`) for each lighting state and weather, with pixel rain, snow and night twinkle
+  frames, replacing the CSS moon, stars and particles (`RoomNightSky`, `RoomWeather` deleted). The poster's
+  hover is a 12-frame loop (hearts bob, a glint, a sparkle) with the room highlight instead of the yellow border;
+  a first try that waved her fingers and pulsed her blush looked unnatural. The cat has a food bowl: it walks the
+  bed, leaps down, eats and goes back, in profile sprites with a 4-frame walk. The Saitama poster is rebuilt
+  from its .ase layers: the fist comes out in front of the frame and the background moves (a cape flutter was
+  tried and dropped). The splash went back to its 28 hand-drawn frames (the v29 in-betweens were not wanted).
+
 - **v29** `20 October 2026`: **Smoother splash, a growing bonsai, lighter music.** The Xtreme splash gained
   2 generated in-betweens per keyframe (colour lerps where both frames are opaque; new pixels grow out from the
   shared shape and old ones retract tip first) and runs at 40 ms a frame from one sprite sheet; repeat visitors

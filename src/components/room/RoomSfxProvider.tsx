@@ -83,6 +83,8 @@ const TONES = {
     { wave: 'triangle', f: 940, f2: 520, at: 0.11, dur: 0.24, gain: 0.12 },
   ],
   purr: Array.from({ length: 12 }, (_, i) => ({ wave: 'noise' as const, f: 140, at: i * 0.075, dur: 0.06, gain: 0.7 })),
+  // Kibble poured into the cat's bowl: a quick patter of bright ticks.
+  kibble: Array.from({ length: 10 }, (_, i) => ({ wave: 'noise' as const, f: 2400 + (i % 3) * 500, at: i * 0.038 + (i % 2) * 0.012, dur: 0.022, gain: 0.45 })),
 } satisfies Record<string, Voice[]>
 
 export type ToneName = keyof typeof TONES

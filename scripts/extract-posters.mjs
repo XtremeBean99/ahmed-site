@@ -85,20 +85,8 @@ async function main() {
   console.log(`Crop dimensions: ${cropW} x ${cropH}`)
   console.log(`Stage origin (top-left): (${unionBox.left}, ${unionBox.top})`)
 
-  // Crop all frames to the same box
-  for (let i = 0; i < files.length; i++) {
-    const outPath = join(outputDir, `poster-${i + 1}.png`)
-    await sharp(files[i])
-      .extract({
-        left: unionBox.left,
-        top: unionBox.top,
-        width: cropW,
-        height: cropH,
-      })
-      .png()
-      .toFile(outPath)
-    console.log(`Saved ${outPath}`)
-  }
+  // The poster's own frames (poster-1..10) come from scripts/draw-poster.mjs, which
+  // animates kitagawa-1 inside this same box; only the box and the alt art are made here.
 
   // Alternate poster art (click-to-swap), cropped to the SAME box so it lands
   // exactly on the kitagawa hotspot.

@@ -8,8 +8,8 @@ import { bonsaiFrames } from './bonsai'
 export const SPRITE_FRAME_MS = {
   monitor: 80,
   coffee: 90,
-  saitama: 100,
-  poster: 130,
+  saitama: 50,
+  poster: 120,
   bonsai: 165,
   catan: 150,
   books: 120,
@@ -71,39 +71,23 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
     w: 134,
     h: 247,
     labelKey: 'room.posterLabel',
-    frames: [
-      '/room/poster-1.png',
-      '/room/poster-2.png',
-      '/room/poster-3.png',
-      '/room/poster-4.png',
-      '/room/poster-5.png',
-    ],
+    // scripts/draw-poster.mjs: rest, 1 px highlight, then a 12-frame hover loop
+    // (POSTER_LOOP_FROM): floating hearts, a glint across the print, a sparkle.
+    frames: Array.from({ length: 14 }, (_, i) => `/room/poster-${i + 1}.png`),
     href: null,
   },
   {
     id: 'saitama',
-    // Saitama (One Punch Man) poster, 14 frames: play all then loop last two
-    x: 761,
+    // Saitama (One Punch Man) poster, built from the layers of saitama.ase by
+    // scripts/draw-saitama.mjs (box 16 px wider than the art on the left, for the punch):
+    // rest, highlight, the punch out of the poster, the impact, then a 12-frame idle loop
+    // (SAITAMA_LOOP_FROM) with the background moving.
+    x: 745,
     y: 76,
-    w: 177,
+    w: 193,
     h: 243,
     labelKey: 'room.saitamaLabel',
-    frames: [
-      '/room/saitama-1.png',
-      '/room/saitama-2.png',
-      '/room/saitama-3.png',
-      '/room/saitama-4.png',
-      '/room/saitama-5.png',
-      '/room/saitama-6.png',
-      '/room/saitama-7.png',
-      '/room/saitama-8.png',
-      '/room/saitama-9.png',
-      '/room/saitama-10.png',
-      '/room/saitama-11.png',
-      '/room/saitama-12.png',
-      '/room/saitama-13.png',
-      '/room/saitama-14.png',
-    ],
+    frames: Array.from({ length: 26 }, (_, i) => `/room/saitama-${i + 1}.png`),
     href: null,
   },
   {
@@ -271,6 +255,10 @@ export const BEDSIDE_BOOK = {
  * scripts/extract-posters.mjs, so it drops onto the hotspot pixel-for-pixel.
  */
 export const POSTER_ALT_FRAME = '/room/poster-alt.png'
+/** The poster's hover loop starts on its third frame (after rest and the first highlight step). */
+export const POSTER_LOOP_FROM = 2
+/** The Saitama poster loops its idle frames once the punch has landed. */
+export const SAITAMA_LOOP_FROM = 14
 
 /**
  * Windows-98-style boot sequence drawn on the monitor glass while the PC is
@@ -301,9 +289,9 @@ export const CLOCK_FACE_RECT = { x: 679, y: 409, w: 43, h: 22 }
 export const CLOCK_FACE_SKEW_DEG = -11
 
 /**
- * Visible glass of the upper-right window (stage coords), used to clip the
- * decorative weather (RoomWeather) and night-sky (RoomNightSky) overlays. The
- * bonsai sits on this window's sill, so both overlays render BEFORE the bonsai.
+ * The upper-right window's click target (stage coords): a click cycles the time of
+ * day. The city drawn on its glass is RoomWindow (WINDOW_VIEW in window-view.ts),
+ * which renders before the bonsai on the sill.
  */
 export const WINDOW_GLASS = { x: 1185, y: 52, w: 223, h: 300 }
 

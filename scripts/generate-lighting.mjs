@@ -28,8 +28,8 @@ const FILES = [
   'background.png',
   'background-lamp-off.png',
   ...range('monitor', 4),
-  ...range('saitama', 14),
-  ...range('poster', 5),
+  ...range('saitama', 26),
+  ...range('poster', 14),
   'poster-alt.png',
   ...[1, 2, 3, 4, 5].flatMap((stage) => range(`bonsai-${stage}`, 6)),
   ...range('catan', 3),
@@ -47,6 +47,11 @@ const FILES = [
   'ipod.png',
   ...range('cat', 3),
   ...range('cat', 3).map((f) => f.replace('.png', '-hover.png')),
+  ...range('cat-walk', 4),
+  'cat-crouch.png',
+  'cat-leap.png',
+  ...range('cat-eat', 2),
+  ...['empty', 'half', 'full'].flatMap((s) => [`cat-bowl-${s}.png`, `cat-bowl-${s}-hover.png`]),
 ]
 
 function gradePixel(data, i, { tint, bright, sat }) {

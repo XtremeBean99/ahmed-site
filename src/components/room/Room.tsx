@@ -13,6 +13,8 @@ import {
   SPRITE_FRAME_MS,
   LIGHTING_FADE_MS,
   POSTER_ALT_FRAME,
+  POSTER_LOOP_FROM,
+  SAITAMA_LOOP_FROM,
   WINDOW_GLASS,
   SHELF_GAMES,
   BEDSIDE_BOOK,
@@ -38,8 +40,7 @@ import { DeskView } from './DeskView'
 import { SideTableClock } from './SideTableClock'
 import { RoomObject } from './RoomObject'
 import { RoomIpod } from './RoomIpod'
-import { RoomWeather } from './RoomWeather'
-import { RoomNightSky } from './RoomNightSky'
+import { RoomWindow } from './RoomWindow'
 import { useSfx } from './RoomSfxProvider'
 import { addDiscovery, DISCOVERY_IDS } from '@/lib/room/discoveries'
 import { appFromSearch } from '@/lib/room/deep-link'
@@ -96,6 +97,8 @@ interface RoomProps {
       lampLabel: string
       catLabel: string
       catWake: string[]
+      catBowlLabel: string
+      catFed: string[]
       tour: TourLabels
       coffeeLabel: string
       ipodLabel: string
@@ -522,6 +525,15 @@ export function Room({ dict, readmeContent }: RoomProps) {
     setTimeout(() => setToast(null), 2400)
   }, [discover, sfx, t.room.catWake, t.room.discoveryLabels])
 
+  const fillBowl = useCallback(() => { sfx.tone('kibble') }, [sfx])
+  const catEats = useCallback(() => {
+    discover('fed', t.room.discoveryLabels.fed)
+    sfx.tone('purr')
+    const lines = t.room.catFed
+    setToast(lines[Math.floor(Math.random() * lines.length)])
+    setTimeout(() => setToast(null), 2400)
+  }, [discover, sfx, t.room.catFed, t.room.discoveryLabels])
+
   const toggleLamp = useCallback(() => {
     discover('lamp', t.room.discoveryLabels.lamp)
     sfx.play('lamp')
@@ -866,10 +878,9 @@ export function Room({ dict, readmeContent }: RoomProps) {
             </div>
           )}
 
-          {/* Window atmosphere: night sky (moon+stars) + weather, clipped to the
-              glass and rendered behind the bonsai on the sill. */}
-          <RoomNightSky light={light} />
-          <RoomWeather />
+          {/* The city through the window (pixel art per time of day and weather), cut
+              to the glass and rendered behind the bonsai on the sill. */}
+          <RoomWindow light={light} prevLight={prevLight} />
 
           {/* Window is clickable: cycles dawn -> day -> dusk -> night, overriding
               the visitor-local clock for the rest of the visit. */}
@@ -986,7 +997,16 @@ export function Room({ dict, readmeContent }: RoomProps) {
           )}
 
           {/* The cat asleep on the bed: a different spot each visit, wakes when patted */}
-          {catSpot && <RoomCat label={t.room.catLabel} spot={catSpot} onWake={wakeCat} />}
+          {catSpot && (
+            <RoomCat
+              label={t.room.catLabel}
+              bowlLabel={t.room.catBowlLabel}
+              spot={catSpot}
+              onWake={wakeCat}
+              onFeed={fillBowl}
+              onEat={catEats}
+            />
+          )}
 
           <AnimatedSprite
             label={t.room.posterLabel}
@@ -996,7 +1016,8 @@ export function Room({ dict, readmeContent }: RoomProps) {
             h={posterObj.h}
             frames={posterObj.frames}
             frameDuration={SPRITE_FRAME_MS.poster}
-            mode="play-once-hold"
+            mode="loop"
+            loopFrom={POSTER_LOOP_FROM}
             altFrame={POSTER_ALT_FRAME}
             altActive={posterAlt}
             onClick={() => {
@@ -1016,7 +1037,8 @@ export function Room({ dict, readmeContent }: RoomProps) {
             h={saitamaObj.h}
             frames={saitamaObj.frames}
             frameDuration={SPRITE_FRAME_MS.saitama}
-            mode="play-all-loop-last-two"
+            mode="loop"
+            loopFrom={SAITAMA_LOOP_FROM}
             onClick={() => { sfx.play('poster'); discover('saitama', t.room.discoveryLabels.saitama) }}
           />
 

@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url'
 // Keep TWEENS in step with TOTAL_FRAMES and COLS in XtremeSplash.tsx.
 
 const KEYFRAMES = 28
-const TWEENS = 2
+const TWEENS = 0 // in-betweens per keyframe pair; 0 keeps the hand-drawn animation as drawn
 const SIZE = 128
 const COLS = 10
 

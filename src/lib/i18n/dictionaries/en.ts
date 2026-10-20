@@ -486,6 +486,8 @@ export const en = {
     },
     lampLabel: 'Desk lamp',
     catLabel: 'Sleeping cat, give it a pat',
+    catBowlLabel: 'Cat bowl, fill it with kibble',
+    catFed: ['Nom nom nom.', 'The cat would like you to know this is its favourite.', 'Crunch crunch.', 'Purring with its mouth full.'],
     catWake: ['Mrrp?', 'The cat opens one eye, then thinks better of it.', 'Purring intensifies.', 'It was having a nice dream.'],
     tour: {
       start: 'Take the tour',
@@ -587,6 +589,7 @@ export const en = {
       highscores: 'Highscores',
       request: 'Feature request',
       cat: 'The cat',
+      fed: 'Fed the cat',
     },
 
   },

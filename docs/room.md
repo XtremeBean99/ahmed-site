@@ -137,7 +137,7 @@ not one: it listens to pointerup, touchend, click and keydown until the context 
 monitor (235,257 402×350, 4 frames: rest + 3-frame hover highlight, play-once-hold,
 with an 18-frame Win98 boot-screen overlay on the glass (270,282 214×171) that plays
 simultaneously and also holds its last frame → zoom to desk; zoom origin stays at
-stage (360,331) = rect + (125,74)) · poster (997,78 134×247, 5 frames, play-once-hold,
+stage (360,331) = rect + (125,74)) · poster (997,78 134×247, 14 frames from `draw-poster.mjs`, loop from frame 3,
 click toast) · bonsai (1241,291 99×131, 5 growth stages × 6 frames, loop from frame 3, `tooltipAlign="right"` because the
 centred bubble overflowed the right edge) · lamp (60,300 110×220, hover tooltip, toggles lamp-off art
 crossfade + flicker, persisted) · coffee (160,475 83×83, 6 frames: rest + 5-frame hover
@@ -175,12 +175,13 @@ Source art is organised by category under `assets/pixel-art/`:
 - `background/` — full-canvas room backgrounds + bedroom-gen-original
 - `bonsai/` — the full-grown tree's frames (`tree1..5.png`); `scripts/draw-bonsai.mjs` builds every growth
   stage from them (stages 1-3 drawn in code on the same pot, 5 adds blossoms) plus the hover highlight frames
-- `xtreme-bean-animation/` — the splash's 28 keyframes; `scripts/extract-xtreme.mjs` adds in-betweens and packs
+- `xtreme-bean-animation/` — the splash's 28 frames; `scripts/extract-xtreme.mjs` packs them (in-betweens off) into
   `public/room/xtreme-sheet.png`
 - `close-up-desk/` — desk close-up art + mouse-only-closeup
 - `coffee/` — coffee mug + steam source frames
 - `music-sfx/` — music-note sprite art
-- `poster/` — kitagawa poster frames (`kitagawa-1..5.png`) + `hypergamy.png` (click-swap art)
+- `poster/` — kitagawa poster frames (`kitagawa-1..5.png`; only 1 is used now, animated by
+  `scripts/draw-poster.mjs`) + `hypergamy.png` (click-swap art)
 - `shelf/` — catan boxes, `books1..3.png` (three book spines) and `vhs1..3.png`, each a rest
   frame plus two highlight frames; cropped by `scripts/extract-shelf.mjs`. The eight desk-game
   objects (`chess`, `mahjong`, `solitaire`, `blackjack`, `minesweeper`, `snake`, `pong`,
@@ -206,7 +207,7 @@ Lighting variants: `public/room/lighting/<state>/` generated from the `public/ro
 originals (dusk = originals); regenerate with `npm run lighting` after ANY sprite
 re-extraction.
 
-Extracted sprite ledger: poster-1..5 (997,78 134×247) ·
+Extracted sprite ledger: poster-1..14 (997,78 134×247) · saitama-1..26 (745,76 193×243) · window/* (1211,79 197×324) · cat-bowl-* (800,640 52×30) ·
 monitor-1..4 (235,257 402×350, rest + hover highlight) ·
 monitor-loading-1..18 (270,282 214×171, boot screen on the glass) ·
 room-speakers / room-speakers-lamp-off (146,292 435×218) ·

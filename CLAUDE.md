@@ -25,7 +25,11 @@ and the Inter/Playfair fonts were deleted in `4a6f3cb` (recover from `4a6f3cb^`)
 
 ## Current state (20 October 2026)
 
-v29: the Xtreme splash runs at 25 fps (82 frames, 54 of them generated in-betweens, one sprite sheet), plays
+v30: the window shows a pixel-art city for every time of day and weather (the CSS moon, stars, rain and snow
+are gone), the My Dress Up Darling poster has a looping hover animation, the cat has a food bowl, and the
+splash is back to its 28 hand-drawn frames at 120 ms.
+
+v29: the Xtreme splash moved to one sprite sheet, plays
 in full on the first visit and once a day with a short cut otherwise, and holds its first frame until the room
 behind it has loaded; the bonsai grows with visits (5 stages, hover highlight, blossoms); the music is AAC
 `.m4a` at 96 kbps (89 MB of MP3 down to 66 MB), with the MP3 masters in `assets/audio/`.
@@ -136,8 +140,8 @@ registry entry -> sprites in `public/room/` -> add to `FILES` in `scripts/genera
 `npm run lighting` -> copy in `en.ts` -> render in `Room.tsx`. Overlapping sprites use `hitPath` masks.
 
 **Splash** (`XtremeSplash.tsx`, timing in `src/lib/room/splash.ts`, tested): one sheet
-`public/room/xtreme-sheet.png` from `scripts/extract-xtreme.mjs` (the 28 hand-drawn keyframes plus 2 generated
-in-betweens each). Full play on the first visit and when `splashAt` is a day old, else a short cut from the white
+`public/room/xtreme-sheet.png` from `scripts/extract-xtreme.mjs` (the 28 hand-drawn frames at 120 ms; the script
+can generate in-betweens with `TWEENS`, but the owner prefers the animation as drawn). Full play on the first visit and when `splashAt` is a day old, else a short cut from the white
 logo. The first frame is held until every eager `<img>` behind it has finished and fonts are in (4 s cap). Any key
 or press skips it; reduced motion skips it entirely.
 
@@ -149,6 +153,27 @@ frames that `AnimatedSprite` loops (`loopFrom`). Rendered only after prefs load,
 **The cat** (`RoomCat.tsx`, art from `scripts/draw-cat.mjs`, drawn in code on a 2 px grid): sleeps at one of
 `CAT_SPOTS` chosen by `visitCount`, breathes on a 1.3 s two-frame loop with drifting Zs, wakes for 3.5 s on a
 click (mew + purr tones, a toast line from `room.catWake`, the `cat` discovery). Rendered only after prefs load.
+Its bowl (`CAT_BOWL` in `src/lib/room/cat-feeding.ts`, tested) is on the floor by the bed: a click fills it
+(`kibble` tone) and the cat plays a timeline (`feedingTimeline`/`feedingPose`): sits up, walks to the mattress
+edge, crouches, leaps down, walks to the bowl, eats for 4.8 s while it empties (`room.catFed` toast, `fed`
+discovery), then leaps back up and curls up where it was. Profile sprites: `cat-walk-1..4` (frames advance with
+distance, so paws never slide), `cat-crouch`, `cat-leap`, `cat-eat-1..2`. Reduced motion skips the walks.
+
+**The window** (`RoomWindow.tsx`, `src/lib/room/window-view.ts`, tested; art from `scripts/draw-window.mjs`): a
+pixel city cut to the two panes of glass, one still per lighting state and weather (`/room/window/<light>-<weather>.png`,
+never graded), with looping rain, snow and night twinkle frames. Weather is Canberra's from `/api/weather`;
+`?weather=clear|rain|snow|heavy-rain|heavy-snow` forces it.
+
+**The poster** (`scripts/draw-poster.mjs`): 14 frames from `kitagawa-1.png`: rest, 1 px highlight, then a
+12-frame hover loop (`POSTER_LOOP_FROM`): the printed hearts bob behind her, a glint sweeps the glossy print, a
+sparkle at her fingertips. She herself never moves (an earlier version that moved her looked wrong).
+
+**The Saitama poster** (`scripts/draw-saitama.mjs`, box widened 16 px left to x 745 for the punch): built from
+the layers of `assets/pixel-art/poster/saitama.ase` (the script reads the .ase itself): 26 frames at 50 ms: rest,
+highlight, the fist growing out of his raised hand and over the poster's edge (drawn above the frame and cape),
+an impact (overshoot, jolt, burst), then a 12-frame idle loop (`SAITAMA_LOOP_FROM`): the
+sunburst boils with streaks flying out, power ticks round the fist, a shine on his head. Click still swaps to
+`poster-alt.png`.
 
 **The tour** (`RoomTour.tsx`, steps and target rects in `src/lib/room/tour.ts`): a spotlight inside the stage
 (stage coordinates, so it follows scale and pan) and a caption card fixed to the viewport. Phones pan each
@@ -214,8 +239,8 @@ Pixel Catan: `docs/catan.md`.
 - `npm run dev` (copy `.env.example` to `.env.local` first); production check: `npm run build && npx next start`.
 - Before deploying: `npm run type-check && npm run lint && npm run build`.
 - Tests: `npm run test:room`, `test:games`, `test:terminal`, `test:catan` (`test:catan:long` for fuzzing).
-- Art: `npm run lighting`, `node scripts/draw-cat.mjs`, `node scripts/draw-bonsai.mjs`,
-  `node scripts/extract-xtreme.mjs`, others in `docs/room.md`. Music: `bash scripts/encode-audio.sh`.
+- Art: `npm run lighting`, `node scripts/draw-cat.mjs`, `node scripts/draw-bonsai.mjs`, `draw-window.mjs`,
+  `draw-poster.mjs`, `node scripts/extract-xtreme.mjs`, others in `docs/room.md`. Music: `bash scripts/encode-audio.sh`.
 - Browser checks: the scratch Playwright approach (system Chromium via `playwright-core`) works well for the
   room; there is no committed E2E suite yet.
 

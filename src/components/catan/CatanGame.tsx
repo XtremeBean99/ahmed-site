@@ -4,7 +4,7 @@ import { Component, useCallback, useEffect, useId, useLayoutEffect, useMemo, use
 import type { ReactNode, RefObject } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { useT } from '@/lib/i18n/client'
 import { applyAction } from '@/lib/games/catan/engine'
 import { clearGame, saveKeyFor, saveSchemaV2 } from '@/lib/games/catan/save'

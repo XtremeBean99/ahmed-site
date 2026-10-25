@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import dynamic from 'next/dynamic'
-import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { useStageScale, STAGE_W, STAGE_H } from '@/lib/room/useStageScale'
 import { MUSIC_BAR_H, SCREEN_H, SCREEN_W, portraitGeometry, type PortraitGeometry } from '@/lib/room/desk-screen'
 import { useT } from '@/lib/i18n/client'

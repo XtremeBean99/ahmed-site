@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { RoomObject } from './RoomObject'
 import { useLighting, lightingSrc } from '@/lib/room/lighting'
 import { CAT_FRAMES, CAT_SIZE, type CatSpot } from '@/lib/room/objects'

@@ -2,7 +2,7 @@
 
 import { useId, useRef, useState } from 'react'
 import type { JSX } from 'react'
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { useT } from '@/lib/i18n/client'
 import { MAX_OFFERS_PER_TURN, RESOURCES } from '@/lib/games/catan/constants'
 import { emptyResources, maritimeRate, totalCards } from '@/lib/games/catan/helpers'

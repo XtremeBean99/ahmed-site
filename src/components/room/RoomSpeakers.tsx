@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { useRoomAudio } from './RoomAudioProvider'
 import { RoomObject } from './RoomObject'
 import { MusicNotes } from './MusicNotes'

@@ -2,7 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import {
   ARCADE,
   ArcadeButton,

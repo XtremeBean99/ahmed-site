@@ -10,7 +10,7 @@ import type {
   ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { EDGES, VERTICES } from '@/lib/games/catan/geometry'
 import type { GameState, Terrain } from '@/lib/games/catan/types'
 import { hoverTargetAt } from './board-hover'

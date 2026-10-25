@@ -2,7 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import {
   ARCADE,
   ArcadeButton,
@@ -274,7 +274,7 @@ type ViewMode = 'ready' | 'play' | 'paused' | 'clear' | 'over'
 export function DeskBreakout({ time, backLabel, desktopLabel, labels, arcade, onBack, onDesktop }: DeskGameProps<BreakoutLabels>) {
   const fs = useFullscreen()
   const { tone } = useSfx()
-  const reduce = useReducedMotion() ?? false
+  const reduce = useReducedMotion()
   const { portrait, w, h } = useDeskScreen()
 
   const canvasRef = useRef<HTMLCanvasElement>(null)

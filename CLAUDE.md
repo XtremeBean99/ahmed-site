@@ -23,7 +23,12 @@ monitor runs a small pixel OS (README, games, guestbook, terminal...), plus `/ca
 (`/home`, `/games`, `/projects`, `/tutoring`, `/legal`, `/room`) redirect permanently (308) to `/`. Their code, the monochrome theme
 and the Inter/Playfair fonts were deleted in `4a6f3cb` (recover from `4a6f3cb^`).
 
-## Current state (20 October 2026)
+## Current state (25 October 2026)
+
+v31: a wall calendar left of the Saitama poster shows the visitor's month with today circled (drawn in code,
+in the wall's perspective, seasonal picture, occasion dots, a click gives the day of the year and the next
+occasion; discovery `calendar`, 34 in all); the side table has its left side under the desk; visitors with
+reduced motion no longer hit a hydration error (see Accessibility); first-click toasts stack instead of overlapping.
 
 v30: the window shows a pixel-art city for every time of day and weather (the CSS moon, stars, rain and snow
 are gone), the My Dress Up Darling poster has a looping hover animation, the cat has a food bowl, and the
@@ -175,6 +180,15 @@ an impact (overshoot, jolt, burst), then a 12-frame idle loop (`SAITAMA_LOOP_FRO
 sunburst boils with streaks flying out, power ticks round the fist, a shine on his head. Click still swaps to
 `poster-alt.png`.
 
+**The calendar** (`RoomCalendar.tsx`; dates, occasions and wall geometry in `src/lib/room/calendar.ts`, art in
+`calendar-art.ts`, both tested): no sprite files. `drawCalendar` paints RGBA for `CALENDAR_RECT` at one pixel per
+stage pixel: the page is drawn flat, then bent onto the wall through `WALL_VANISHING_POINT` (measured off the
+Saitama poster), while glyphs (a 3x5 font), the ring round today and the nail are stamped whole so text never
+shears. Monday-first grid, past days faded, Sundays red, southern-hemisphere seasonal picture (spring is
+Floriade), dots on fixed-date `OCCASIONS`. It grades itself with the lighting grades copied from
+`generate-lighting.mjs` (keep them in step), draws its own two-step hover outline, and turns the page at local
+midnight and on tab return. The date is unknown until mount, so SSR and hydration agree.
+
 **The tour** (`RoomTour.tsx`, steps and target rects in `src/lib/room/tour.ts`): a spotlight inside the stage
 (stage coordinates, so it follows scale and pan) and a caption card fixed to the viewport. Phones pan each
 target to the centre. Arrow keys step, Escape closes (capture phase, before the room's own handlers). The last
@@ -190,7 +204,10 @@ and autoplay is only attempted after a user activation: Chrome fetches about 1 M
 `play()` and the first bytes of any `src`, even with `preload="none"`. Track advance is random without
 repeats. SFX are fetched once and played through Web Audio; arcade/cat sounds are synthesized `tone()`s.
 
-**Accessibility.** Reduced motion disables decorative animation, never function. Decorative layers are
+**Accessibility.** Reduced motion disables decorative animation, never function. Read it with
+`useReducedMotion` from `@/lib/use-reduced-motion`, never framer-motion's: framer's reads the media query on the
+first client render, so reduced-motion visitors hydrated different styles from the server's and React re-rendered
+the whole room. Decorative layers are
 `aria-hidden` and `pointer-events: none`. Discoveries announce through an `aria-live` region.
 
 ## Games and scores
@@ -239,7 +256,7 @@ Pixel Catan: `docs/catan.md`.
 - `npm run dev` (copy `.env.example` to `.env.local` first); production check: `npm run build && npx next start`.
 - Before deploying: `npm run type-check && npm run lint && npm run build`.
 - Tests: `npm run test:room`, `test:games`, `test:terminal`, `test:catan` (`test:catan:long` for fuzzing).
-- Art: `npm run lighting`, `node scripts/draw-cat.mjs`, `node scripts/draw-bonsai.mjs`, `draw-window.mjs`,
+- Art: `npm run lighting`, `node scripts/draw-side-table-side.mjs` (then `extract-side-table.mjs`), `node scripts/draw-cat.mjs`, `node scripts/draw-bonsai.mjs`, `draw-window.mjs`,
   `draw-poster.mjs`, `node scripts/extract-xtreme.mjs`, others in `docs/room.md`. Music: `bash scripts/encode-audio.sh`.
 - Browser checks: the scratch Playwright approach (system Chromium via `playwright-core`) works well for the
   room; there is no committed E2E suite yet.

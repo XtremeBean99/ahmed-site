@@ -17,7 +17,8 @@
  * Escape skips it; with reduced motion the hand starts at once.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { ArcadeButton, ARCADE, PIXEL_FONT } from '../DeskArcade'
 import { useSfx } from '../RoomSfxProvider'
 import { ALL_KINDS, compareTiles, mulberry32, tileCode } from '@/lib/games/mahjong-tiles'

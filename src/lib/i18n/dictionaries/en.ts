@@ -443,6 +443,20 @@ export const en = {
     monitorLabel: 'Enter the website',
     posterLabel: 'My Dress Up Darling Poster',
     saitamaLabel: 'Saitama Poster',
+    // The wall calendar (lib/room/calendar.ts). {date} reads like "Sunday 25 October".
+    calendar: {
+      label: 'Calendar: {date}',
+      dayOfYear: 'Day {n} of {total}.',
+      soon: '{days} days until {occasion}.',
+      tomorrow: '{occasion} is tomorrow.',
+      occasions: {
+        newYear: { name: "New Year's Day", today: 'Happy New Year!' },
+        valentines: { name: "Valentine's Day", today: "Happy Valentine's Day!" },
+        halloween: { name: 'Halloween', today: 'Happy Halloween!' },
+        christmas: { name: 'Christmas', today: 'Merry Christmas!' },
+        newYearsEve: { name: "New Year's Eve", today: "It's New Year's Eve!" },
+      },
+    },
     bonsaiLabel: 'Windowsill bonsai tree',
     // One per growth stage (lib/room/bonsai.ts); the tree grows with each visit.
     bonsaiStageLabels: [
@@ -590,6 +604,7 @@ export const en = {
       request: 'Feature request',
       cat: 'The cat',
       fed: 'Fed the cat',
+      calendar: 'Calendar',
     },
 
   },

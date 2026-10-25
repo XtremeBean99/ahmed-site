@@ -2,7 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { ArcadeButton, ArcadeOverlay, ArcadePanel, ArcadeStrip, ARCADE, PIXEL_FONT } from '../DeskArcade'
 import { PORTRAIT_STRIP_H, useDeskScreen } from '../ScreenStrip'
 import { useSfx } from '../RoomSfxProvider'
@@ -57,7 +57,7 @@ function extents(id: LayoutId) {
 
 export function MahjongSolitaire({ chrome, labels, prefs, initial, onMenu }: Props) {
   const { tone } = useSfx()
-  const reduceMotion = useReducedMotion() === true
+  const reduceMotion = useReducedMotion()
   const { w: screenW, h: screenH, portrait } = useDeskScreen()
 
   const [game, setGame] = useState<SolitaireState>(initial.game)

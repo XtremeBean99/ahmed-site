@@ -2,7 +2,7 @@
 
 import { type ReactNode, useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { DURATION } from '@/lib/motion'
 
 interface RoomObjectProps {

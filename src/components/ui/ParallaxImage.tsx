@@ -1,6 +1,7 @@
 'use client'
 
-import { motion, useScroll, useTransform, useSpring, useReducedMotion } from 'framer-motion'
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import Image from 'next/image'
 import { useRef } from 'react'
 

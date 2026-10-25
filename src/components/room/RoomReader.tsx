@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import type { BookData, ShelfBook } from '@/lib/room/books'
 
 const PIXEL = { fontFamily: 'var(--font-pixel), "Courier New", monospace' } as const

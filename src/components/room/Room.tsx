@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef, useLayoutEffect, useMemo } from 'react'
 import dynamic from 'next/dynamic'
-import { useReducedMotion, motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import {
   ROOM_OBJECTS,
   MONITOR_LOADING_FRAMES,
@@ -38,6 +39,7 @@ import type { ReaderLabels } from './RoomReader'
 import { SHELF_BOOKS } from '@/lib/room/books'
 import { DeskView } from './DeskView'
 import { SideTableClock } from './SideTableClock'
+import { RoomCalendar } from './RoomCalendar'
 import { RoomObject } from './RoomObject'
 import { RoomIpod } from './RoomIpod'
 import { RoomWindow } from './RoomWindow'
@@ -71,6 +73,7 @@ import {
 import type { DesktopShortcut } from './DeskDesktop'
 import { DURATION } from '@/lib/motion'
 import type { Dictionary } from '@/lib/i18n/dictionaries/en'
+import { calendarLabel, calendarNote, type CalendarCopy, type CalendarDate } from '@/lib/room/calendar'
 import { useLightingClock, LightingProvider, lightingSrc, LIGHTING_STATES, type LightingState } from '@/lib/room/lighting'
 
 // The e-reader is only needed once a book is opened.
@@ -85,6 +88,7 @@ interface RoomProps {
       monitorLabel: string
       posterLabel: string
       saitamaLabel: string
+      calendar: CalendarCopy
       bonsaiLabel: string
       bonsaiStageLabels: string[]
       catanLabel: string
@@ -584,6 +588,15 @@ export function Room({ dict, readmeContent }: RoomProps) {
   }, [toggleClockFormat])
 
 
+  // The wall calendar: a click reads out the day of the year and what's coming up.
+  const readCalendar = useCallback((today: CalendarDate) => {
+    sfx.play('poster')
+    discover('calendar', t.room.discoveryLabels.calendar)
+    setToast(calendarNote(today, t.room.calendar))
+    setTimeout(() => setToast(null), 3000)
+  }, [sfx, discover, t.room.calendar, t.room.discoveryLabels.calendar])
+  const calendarLabelFor = useCallback((today: CalendarDate) => calendarLabel(today, t.room.calendar), [t.room.calendar])
+
   // Poster swap: a click flips the kitagawa art to the alternate poster and a
   // second click flips it back. Hover animation is unaffected.
   const [posterAlt, setPosterAlt] = useState(false)
@@ -1029,6 +1042,9 @@ export function Room({ dict, readmeContent }: RoomProps) {
             }}
           />
 
+          {/* Wall calendar left of the Saitama poster: this month, today circled. */}
+          <RoomCalendar label={t.room.calendar.label.replace(': {date}', '')} labelFor={calendarLabelFor} onClick={readCalendar} />
+
           <AnimatedSprite
             label={t.room.saitamaLabel}
             x={saitamaObj.x}
@@ -1258,28 +1274,52 @@ export function Room({ dict, readmeContent }: RoomProps) {
         )}
       </AnimatePresence>
 
-      {/* Poster click toast */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none px-3 py-1.5 border-2"
-            style={{
-              backgroundColor: '#3d2e1e',
-              borderColor: '#5a4430',
-              borderRadius: '3px',
-              fontFamily: 'var(--font-pixel), "Courier New", monospace',
-              fontSize: '12px',
-              color: '#e8d5b0',
-            }}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-          >
-            {toast}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Toasts: an object's own line, and below it the discovery it counted.
+          One column, so a first click's two messages never sit on each other. */}
+      <div className="fixed top-4 inset-x-4 z-50 pointer-events-none flex flex-col items-center gap-2">
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              key="toast"
+              className="px-3 py-1.5 border-2 text-center"
+              style={{
+                backgroundColor: '#3d2e1e',
+                borderColor: '#5a4430',
+                borderRadius: '3px',
+                fontFamily: 'var(--font-pixel), "Courier New", monospace',
+                fontSize: '12px',
+                color: '#e8d5b0',
+              }}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              {toast}
+            </motion.div>
+          )}
+          {discoveryToast && (
+            <motion.div
+              key="discovery"
+              className="px-3 py-1.5 border-2 text-center"
+              style={{
+                backgroundColor: '#3d2e1e',
+                borderColor: '#5a4430',
+                borderRadius: '3px',
+                fontFamily: 'var(--font-pixel), "Courier New", monospace',
+                fontSize: '12px',
+                color: '#e8d5b0',
+              }}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              {'\u2726'} {discoveryToast}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Lamp glow */}
       {!reduce && view === 'room' && (
@@ -1304,28 +1344,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
         />
       )}
 
-      {/* Discovery toast */}
-      <AnimatePresence>
-        {discoveryToast && (
-          <motion.div
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none px-3 py-1.5 border-2"
-            style={{
-              backgroundColor: '#3d2e1e',
-              borderColor: '#5a4430',
-              borderRadius: '3px',
-              fontFamily: 'var(--font-pixel), "Courier New", monospace',
-              fontSize: '12px',
-              color: '#e8d5b0',
-            }}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-          >
-            {'\u2726'} {discoveryToast}
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* E-reader, opened from a book on the shelf */}
       <AnimatePresence>

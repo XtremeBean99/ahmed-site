@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { mapWeather, type Weather } from '@/lib/room/weather'
 import type { LightingState } from '@/lib/room/lighting'
 import {

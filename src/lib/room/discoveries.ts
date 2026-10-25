@@ -34,6 +34,7 @@ export const DISCOVERY_IDS = [
   'request',
   'cat',
   'fed',
+  'calendar',
 ] as const
 
 export type DiscoveryId = (typeof DISCOVERY_IDS)[number]

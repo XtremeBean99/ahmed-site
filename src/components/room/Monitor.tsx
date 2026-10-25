@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { RoomObject } from './RoomObject'
 import { DURATION } from '@/lib/motion'
 import { useLighting, lightingSrc } from '@/lib/room/lighting'

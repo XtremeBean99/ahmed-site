@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import type { ReactNode } from 'react'
 import { loadPrefs, savePrefs } from '@/lib/room/storage'
 import {

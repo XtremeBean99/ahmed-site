@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { useRoomAudio } from './RoomAudioProvider'
 
 const NOTES = ['/room/note-1.png', '/room/note-2.png', '/room/note-3.png']

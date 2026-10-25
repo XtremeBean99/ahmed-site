@@ -2,7 +2,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import {
   ArcadeButton,
   ArcadeFrame,
@@ -459,7 +460,7 @@ function CardSprite({
 export function DeskSolitaire({ time, backLabel, desktopLabel, labels, arcade, onBack, onDesktop }: DeskGameProps<SolitaireLabels>) {
   const fs = useFullscreen()
   const { tone } = useSfx()
-  const reduceMotion = useReducedMotion() === true
+  const reduceMotion = useReducedMotion()
   const screen = useDeskScreen()
   const L = useMemo(() => solitaireLayout(screen.w, screen.h, screen.portrait), [screen.w, screen.h, screen.portrait])
 

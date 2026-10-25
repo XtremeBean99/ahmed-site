@@ -143,7 +143,8 @@ centred bubble overflowed the right edge) · lamp (60,300 110×220, hover toolti
 crossfade + flicker, persisted) · coffee (160,475 83×83, 6 frames: rest + 5-frame hover
 highlight, play-once-hold) with three staggered CSS steam wisps (`steam-rise` keyframes,
 per-wisp `--sway`/`--dur`, negative delays, rendered behind the mug) ·
-side table (641,409 232×210, clickable, 2 frames: drawer closed/open, click toggles with tooltip, −2px hover lift, dims with the lamp, persisted in `sideTableOpen` pref) ·
+side table (641,409 232×210, clickable, 2 frames: drawer closed/open, its left side under the desk painted into both source frames by `scripts/draw-side-table-side.mjs`, click toggles with tooltip, −2px hover lift, dims with the lamp, persisted in `sideTableOpen` pref) ·
+wall calendar (`CALENDAR_RECT` 653,98 81×130, no sprite: `RoomCalendar` draws it on a canvas, see CLAUDE.md) ·
 digital clock (658,386 71×55, single frame, no hover lift; SideTableClock renders live user
 time in LED green #35e65c on the blank face — digit plane (679,409) 43×22, skewY(−11°),
 1 Hz colon blink gated by reduced motion, updates every 10 s; click toggles 12/24 h via

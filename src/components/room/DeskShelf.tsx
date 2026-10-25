@@ -1,6 +1,6 @@
 'use client'
 
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { AnimatedSprite } from './AnimatedSprite'
 import { SPRITE_FRAME_MS } from '@/lib/room/objects'
 import { DESK_SHELF, DESK_SHELF_ITEMS } from '@/lib/room/desk-shelf'

@@ -2,7 +2,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import {
   ArcadeButton,
   ArcadeFrame,
@@ -398,7 +399,7 @@ interface DragInfo { from: Square; pointerId: number; sx: number; sy: number; ac
 export function DeskChess({ time, backLabel, desktopLabel, labels, arcade, onBack, onDesktop }: DeskGameProps<ChessLabels>) {
   const fs = useFullscreen()
   const { tone } = useSfx()
-  const reduceMotion = useReducedMotion() === true
+  const reduceMotion = useReducedMotion()
   const { mobile } = useStageScale()
   const { w: screenW, h: screenH, portrait } = useDeskScreen()
 

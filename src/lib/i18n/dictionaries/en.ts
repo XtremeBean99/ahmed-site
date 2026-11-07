@@ -457,6 +457,12 @@ export const en = {
         newYearsEve: { name: "New Year's Eve", today: "It's New Year's Eve!" },
       },
     },
+    // Seasonal decorations (lib/room/seasonal.ts): up only around their occasion.
+    decor: {
+      pumpkinLabel: "Jack-o'-lantern",
+      pumpkinOut: 'You blow out the candle.',
+      pumpkinLit: 'You strike a match. The grin is back.',
+    },
     bonsaiLabel: 'Windowsill bonsai tree',
     // One per growth stage (lib/room/bonsai.ts); the tree grows with each visit.
     bonsaiStageLabels: [

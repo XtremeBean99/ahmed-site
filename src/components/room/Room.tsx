@@ -40,6 +40,7 @@ import { SHELF_BOOKS } from '@/lib/room/books'
 import { DeskView } from './DeskView'
 import { SideTableClock } from './SideTableClock'
 import { RoomCalendar } from './RoomCalendar'
+import { RoomDecor } from './RoomDecor'
 import { RoomObject } from './RoomObject'
 import { RoomIpod } from './RoomIpod'
 import { RoomWindow } from './RoomWindow'
@@ -89,6 +90,7 @@ interface RoomProps {
       posterLabel: string
       saitamaLabel: string
       calendar: CalendarCopy
+      decor: { pumpkinLabel: string; pumpkinOut: string; pumpkinLit: string }
       bonsaiLabel: string
       bonsaiStageLabels: string[]
       catanLabel: string
@@ -596,6 +598,13 @@ export function Room({ dict, readmeContent }: RoomProps) {
     setTimeout(() => setToast(null), 3000)
   }, [sfx, discover, t.room.calendar, t.room.discoveryLabels.calendar])
   const calendarLabelFor = useCallback((today: CalendarDate) => calendarLabel(today, t.room.calendar), [t.room.calendar])
+
+  // The Halloween jack-o'-lantern: a click blows its candle out or relights it.
+  const togglePumpkin = useCallback((lit: boolean) => {
+    sfx.tone(lit ? 'strike' : 'blow')
+    setToast(lit ? t.room.decor.pumpkinLit : t.room.decor.pumpkinOut)
+    setTimeout(() => setToast(null), 2200)
+  }, [sfx, t.room.decor])
 
   // Poster swap: a click flips the kitagawa art to the alternate poster and a
   // second click flips it back. Hover animation is unaffected.
@@ -1128,6 +1137,9 @@ export function Room({ dict, readmeContent }: RoomProps) {
               onClick={() => openDeskApp(game.app)}
             />
           ))}
+
+          {/* Seasonal decorations, over the shelf front and on the sill (seasonal.ts). */}
+          <RoomDecor lampOn={lampOn} pumpkinLabel={t.room.decor.pumpkinLabel} onPumpkin={togglePumpkin} />
 
           {/* Lamp toggle hotspot */}
           <div

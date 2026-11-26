@@ -148,13 +148,15 @@ wall calendar (`CALENDAR_RECT` 653,98 81×130, no sprite: `RoomCalendar` draws i
 digital clock (658,386 71×55, single frame, no hover lift; SideTableClock renders live user
 time in LED green #35e65c on the blank face — digit plane (679,409) 43×22, skewY(−11°),
 1 Hz colon blink gated by reduced motion, updates every 10 s; click toggles 12/24 h via
-`clock24h` pref) · shelf games (`SHELF_GAMES` in `objects.ts`, built from the generated
-`shelf-games.ts`: eight 3-frame sprites right of the VHS, play-once-hold: a chess set (board leaning
-on the wall, chessmen in front), mahjong wall and tiles, card box, A+K cards with chips, two
-floppies, candybar phone, Breakout and Pong cartridges. They overlap, so each passes
+`clock24h` pref) · VHS and shelf games (`SHELF_ITEMS` in `objects.ts`, built from the generated
+`shelf-games.ts`: nine 3-frame sprites right of the books, play-once-hold, in paint order: three VHS sleeves
+standing spine out (the film's cover on the side), a chessboard leaning on the wall with chessmen in front, two
+floppies, an open card box, the Breakout cartridge, a candybar phone, three mahjong tiles, the A+K cards with chip
+stacks, the Pong cartridge. Tall things lean on the back wall and small ones stand in front, packed from x ~255
+to ~477 on the front lip so the last quarter of the shelf stays bare. They overlap, so each passes
 `hitPath` to AnimatedSprite: the box lets the pointer through and only a clip-path pixel mask takes
-it, and the later sprite in the list is the one in front; a click zooms to the desk and opens that app through
-`openDeskApp` → `pendingApp`/`initialApp`, like the VHS, and DeskView's open event counts the
+it, and the later sprite in the list is the one in front; a game zooms to the desk and opens that app through
+`openDeskApp` → `pendingApp`/`initialApp`, the VHS plays the film (`playTape`), and DeskView's open event counts the
 discovery) · bedside book (`BEDSIDE_BOOK`, 739,533 46×55, the book in the side table's cubby:
 opens the Guestbook the same way; dims with the lamp via AnimatedSprite `dimmed`; not rendered
 while the drawer is open, since the drawer covers it).
@@ -183,19 +185,21 @@ Source art is organised by category under `assets/pixel-art/`:
 - `music-sfx/` — music-note sprite art
 - `poster/` — kitagawa poster frames (`kitagawa-1..5.png`; only 1 is used now, animated by
   `scripts/draw-poster.mjs`) + `hypergamy.png` (click-swap art)
-- `shelf/` — catan boxes, `books1..3.png` (three book spines) and `vhs1..3.png`, each a rest
-  frame plus two highlight frames; cropped by `scripts/extract-shelf.mjs`. The eight desk-game
-  objects (`chess`, `mahjong`, `solitaire`, `blackjack`, `minesweeper`, `snake`, `pong`,
-  `breakout`, each `<id>.png`/`<id>2.png`/`<id>3.png`) are generated, not hand-drawn:
-  `scripts/draw-shelf-games.mjs` places textured faces (ASCII colour maps) in the shelf's own 3D
-  space (u along the shelf, v up, w depth 0 front lip..1 back wall) and projects them with the
-  oblique projection measured off the background (front lip y 242 at x 300 rising 0.135 px/px,
-  depth vector (-54,-16)), so boxes show their top and left side, boards and floppies lean on the
+- `shelf/` — catan boxes and `books1..3.png` (three book spines), each a rest frame plus two highlight frames,
+  cropped by `scripts/extract-shelf.mjs`. The VHS and the eight desk-game objects (`vhs`, `chess`,
+  `minesweeper`, `solitaire`, `breakout`, `snake`, `mahjong`, `blackjack`, `pong`, each
+  `<id>.png`/`<id>2.png`/`<id>3.png`) are generated, not hand-drawn. Their textures and palette live in
+  `scripts/shelf-art.mjs`, shared with the desk close-up's shelf (`draw-desk-shelf-items.mjs`, which draws the
+  same objects straight on, back-wall ones lifted a few px). `scripts/draw-shelf-games.mjs` places the
+  textured faces in the shelf's own 3D space (u along the shelf, v up, w depth 0 front lip..1 back wall) and
+  projects them with the oblique projection measured off the background (front lip y 242 at x 300 rising
+  0.135 px/px, depth vector (-54,-16)), so boxes show their top and left side, boards and floppies lean on the
   back wall and the objects overlap at different depths. It outlines each part in black and grows
   the #f6da9c highlight 1 px then 2 px. `extract-shelf.mjs` crops them and writes
-  `src/lib/room/shelf-games.ts` (generated: each box in render order plus a pixel hit mask). Edit
-  the maps or placements there and rerun
+  `src/lib/room/shelf-games.ts` (generated: each box in paint order plus a pixel hit mask; `SHELF_IDS` there
+  must follow `OBJECTS` in the draw script). Edit the art or placements and rerun
   `node scripts/draw-shelf-games.mjs && node scripts/extract-shelf.mjs && npm run lighting`
+  (and `node scripts/draw-desk-shelf-items.mjs` for the close-up)
 - `room-view-monitor/` — monitor+keyboard+mouse base + highlight frames,
   `room-view-monitor/monitor-loading/` — Win98 boot-screen frames,
   room-speakers lamp-on/off art

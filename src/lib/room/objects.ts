@@ -1,4 +1,4 @@
-import { SHELF_GAME_SPRITES } from './shelf-games'
+import { SHELF_SPRITES } from './shelf-games'
 import { bonsaiFrames } from './bonsai'
 
 /**
@@ -137,12 +137,10 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
   },
   {
     id: 'vhs',
-    // VHS tapes on the shelf, extracted from pixel-art/shelf/vhs1-3.png.
+    // Three VHS sleeves standing spine out, drawn with the shelf games by
+    // scripts/draw-shelf-games.mjs; the box comes from the generated list.
     // Click plays the film on the desk monitor.
-    x: 239,
-    y: 188,
-    w: 53,
-    h: 53,
+    ...shelfBox('vhs'),
     labelKey: 'room.vhsLabel',
     frames: [
       '/room/vhs-1.png',
@@ -210,17 +208,20 @@ export const ROOM_OBJECTS: RoomObjectDef[] = [
 ]
 
 /**
- * The desk games on the shelf, right of the VHS tapes. Drawn in the shelf's
- * perspective by scripts/draw-shelf-games.mjs (a chess set, mahjong tiles, a
- * card box, cards and chips, floppy disks, a phone and two cartridges, at
- * different depths so they overlap), cropped by scripts/extract-shelf.mjs (rest
- * + the two-step highlight, play-once-hold), which also writes their boxes and
- * pixel hit masks to shelf-games.ts. Clicking one zooms to the desk and opens
- * that app, like the VHS opens the film.
+ * The VHS sleeves and the desk games on the shelf, right of the books. Drawn in
+ * the shelf's perspective by scripts/draw-shelf-games.mjs (VHS sleeves, a chess
+ * set, floppy disks, a card box, two cartridges, a phone, mahjong tiles, cards
+ * and chips), the tall ones leaning on the back wall and the small ones in
+ * front, so they overlap; cropped by scripts/extract-shelf.mjs (rest + the
+ * two-step highlight, play-once-hold), which also writes their boxes and pixel
+ * hit masks to shelf-games.ts. Clicking a game zooms to the desk and opens that
+ * app; the VHS plays the film.
  */
-export interface ShelfGameDef {
-  /** Desk screen mode to open; also the label key in `room.shelfGameLabels`. */
-  app: (typeof SHELF_GAME_SPRITES)[number]['app']
+export type ShelfItemId = (typeof SHELF_SPRITES)[number]['id']
+
+export interface ShelfItemDef {
+  /** 'vhs', or the desk screen mode to open (also the label key in `room.shelfGameLabels`). */
+  id: ShelfItemId
   x: number
   y: number
   w: number
@@ -231,10 +232,15 @@ export interface ShelfGameDef {
 }
 
 /** In render order: an object later in the list stands in front of the ones it overlaps. */
-export const SHELF_GAMES: ShelfGameDef[] = SHELF_GAME_SPRITES.map((s) => ({
+export const SHELF_ITEMS: ShelfItemDef[] = SHELF_SPRITES.map((s) => ({
   ...s,
-  frames: [1, 2, 3].map((i) => `/room/shelf-${s.app}-${i}.png`),
+  frames: [1, 2, 3].map((i) => (s.id === 'vhs' ? `/room/vhs-${i}.png` : `/room/shelf-${s.id}-${i}.png`)),
 }))
+
+function shelfBox(id: ShelfItemId) {
+  const s = SHELF_SPRITES.find((it) => it.id === id)!
+  return { x: s.x, y: s.y, w: s.w, h: s.h }
+}
 
 /**
  * The book in the side table's lower cubby: the guestbook. Cut out of the

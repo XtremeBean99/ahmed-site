@@ -2,6 +2,7 @@ import sharp from 'sharp'
 import { writeFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import * as art from './shelf-art.mjs'
 
 // Draws the shelf's items as seen from the desk close-up: straight on and from
 // below, so only their fronts show (no tops), with a sliver of side face that
@@ -181,201 +182,58 @@ for (const b of BOOKS) {
   })
 }
 
-// VHS: two tapes and a boxed film lying in a stack, spines out.
-item('vhs', 'vhs', (it) => {
-  const x = 179
-  const W = 46
-  const H = 8
-  // Bottom tape: black shell, white label.
-  let y = FLOOR + 1 - H
-  part(it, (l) => {
-    panel(l, x, y, W, H, { fill: '2b2729', light: '423b3d', dark: '1a1718' })
-    l.rect(x + 5, y + 2, 34, 4, 'e8e2d2')
-    l.rect(x + 7, y + 3, 18, 1, '3d5d8f')
-    l.rect(x + 7, y + 4, 10, 1, '3d5d8f')
-  })
-  side(it, x, y, W, H, '141213', 2, 1)
-  // The boxed film: a red sleeve with VHS on it.
-  y -= H + 2
-  part(it, (l) => {
-    panel(l, x - 2, y, W + 1, H + 1, { fill: 'b8442f', light: 'd4613f', dark: '832a1c' })
-    l.rect(x - 1, y + 1, 9, H - 1, '2b2729')
-    text3(l, x + 12, y + 2, 'VHS', 'f4ead2')
-    l.rect(x + 26, y + 3, 14, 1, 'f4ead2')
-    l.rect(x + 26, y + 5, 9, 1, 'e2b04a')
-  })
-  side(it, x - 2, y, W + 1, H + 1, '6a2114', 2, 1)
-  // Top tape: orange label.
-  y -= H + 1
-  part(it, (l) => {
-    panel(l, x + 2, y, W - 4, H, { fill: '2b2729', light: '423b3d', dark: '1a1718' })
-    l.rect(x + 6, y + 2, 30, 4, 'e7a24a')
-    l.rect(x + 8, y + 3, 14, 1, '5a2c10')
-  })
-  side(it, x + 2, y, W - 4, H, '141213', 2, 1)
-})
-
-// Chess: the board leaning on the wall, chessmen in front of it.
-const KING = ['....X....', '...XWw...', '....X....', '...XWw...', '..XWWWw..', '..XWWWw..', '...XWw...', '..KKKKK..', '...XWw...', '...XWw...', '...XWw...', '...XWw...', '...XWw...', '..XWWWw..', '..KKKKK..', '.XWWWWWw.', 'XWWWWWWWw', 'XWWWWWWwv']
-const QUEEN = ['.e..e..e.', '.eE.E.Ef.', '..eEEEf..', '...eEf...', '..KKKKK..', '...eEf...', '...eEf...', '...eEf...', '...eEf...', '..eEEEf..', '..KKKKK..', '.eEEEEEf.', 'eEEEEEEEf', 'eEEEEEEff']
-const KNIGHT = ['...ee.....', '..eEEf....', '.eEEEEf...', 'eEKEEEEf..', 'EEEEEEEEf.', 'eEEEEEEEf.', '.ff.eEEEf.', '...eEEEEf.', '...eEEEEf.', '..eEEEEEf.', '.KKKKKKKK.', '.eEEEEEEf.', 'eEEEEEEEEf']
-const ROOK = ['XW.XWW.Ww', 'XWWWWWWWw', '.XWWWWWw.', '..XWWWw..', '..XWWWw..', '..XWWWw..', '..XWWWw..', '.KKKKKKK.', '.XWWWWWw.', 'XWWWWWWWw', 'XWWWWWWwv']
-const PAWN_W = ['..XWw..', '.XWWWw.', '.XWWWw.', '..XWw..', '..XWw..', '.KKKKK.', '..XWw..', '.XWWWw.', 'XWWWWWw', 'XWWWWwv']
-const PAWN_B = ['..eEf..', '.eEEEf.', '.eEEEf.', '..eEf..', '..eEf..', '.KKKKK.', '..eEf..', '.eEEEf.', 'eEEEEEf', 'eEEEEff']
-const CHESSMEN = { X: 'fbf4e2', W: 'ecdcbc', w: 'cbb894', v: 'a08a68', e: '7a625c', E: '4d3b38', f: '2e2224', K: INK }
-item('chess', 'game', (it) => {
-  const bx = 229
-  const by = FLOOR - 42
-  part(it, (l) => {
-    panel(l, bx, by, 40, 40, { fill: '5c3a26', light: '7a4e33', dark: '3e2619' })
-    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) l.rect(bx + 4 + c * 4, by + 4 + r * 4, 4, 4, (r + c) % 2 ? '9c6238' : 'e6c391')
-    l.rect(bx + 3, by + 3, 34, 1, '3e2619')
-    l.rect(bx + 3, by + 3, 1, 34, '3e2619')
-  })
-  side(it, bx, by, 40, 40, '3e2619', 2, 1)
-  const piece = (rows, x) => part(it, (l) => l.stamp(x, FLOOR + 1 - rows.length, rows, CHESSMEN))
-  piece(ROOK, bx - 1)
-  piece(PAWN_W, bx + 8)
-  piece(KING, bx + 14)
-  piece(QUEEN, bx + 22)
-  piece(PAWN_B, bx + 30)
-  piece(KNIGHT, bx + 34)
-})
-
-// Mahjong: a two-high wall of tiles lying face down, three standing on it.
-const tileGlyphs = {
-  zhong: ['...R....', '...R....', 'RRRRRRR.', 'R..R..R.', 'R..R..R.', 'RRRRRRR.', '...R....', '...R....', '...r....'],
-  bamboo: ['.J...J..', '.J...J..', '.g...g..', '.J.J.J..', '.J.J.J..', '.g.g.g..', '.J.J.J..', '.J.J.J..', '.g.g.g..'],
-  dots: ['..BBB...', '.BqRqB..', '.BRrRB..', '.BqRqB..', '..BBB...', '........', '.R...R..', '........', '.R...R..'],
+// ---- the VHS and the desk games -------------------------------------------------
+// The same objects and art as the room's shelf (scripts/shelf-art.mjs, one
+// texel per art px), seen straight on: fronts only, with a sliver of right side
+// since they all stand left of the eye. Back-wall things sit a few px higher
+// (`w`, depth 0 front to 1 back, lifts by up to 8 px) so they still show over
+// the small things standing in front of them, and each object is painted back
+// to front, like the room's layout, packed from the books to x ~374 (stage
+// ~748), which leaves the last quarter of the shelf bare.
+const ART = art.PALETTE
+/** One textured part standing on the floor at x, lifted by its depth. */
+function piece(it, x, w, tex, sideColour = null, d = 0, up = 0) {
+  const y = FLOOR + 1 - tex.length - Math.round(w * 8) - up
+  part(it, (l) => l.stamp(x, y, tex, ART))
+  if (sideColour) side(it, x, y, tex[0].length, tex.length, sideColour, d, 1)
 }
-const TILE_INK = { R: 'c0463a', r: '8a2e28', J: '62a456', g: '2b5a3a', B: '3d5d8f', q: 'e07a62' }
-item('mahjong', 'game', (it) => {
-  const x = 275
-  for (let layer = 0; layer < 2; layer++) {
-    const y = FLOOR + 1 - (layer + 1) * 7
-    part(it, (l) => {
-      for (let t = 0; t < 5; t++) {
-        const tx = x + layer + t * 8
-        l.rect(tx, y, 8, 3, '3f7a52')
-        l.rect(tx, y, 8, 1, '58966a')
-        l.rect(tx, y + 3, 8, 3, 'ecdcbc')
-        l.rect(tx, y + 5, 8, 1, 'cbb894')
-        l.rect(tx + 7, y, 1, 3, '2b5a3a')
-        l.rect(tx + 7, y + 3, 1, 3, 'a08a68')
-      }
-    })
-  }
-  ;['zhong', 'bamboo', 'dots'].forEach((g, i) => {
-    const tx = x + 3 + i * 12
-    const ty = FLOOR + 1 - 14 - 15
-    part(it, (l) => {
-      panel(l, tx, ty, 11, 15, { fill: 'ecdcbc', light: 'fbf4e2', dark: 'cbb894' })
-      l.rect(tx, ty + 13, 11, 2, '3f7a52')
-      l.stamp(tx + 2, ty + 2, tileGlyphs[g], TILE_INK)
-    })
-  })
+/** Paints an object's parts back to front: [x, w, tex, sideColour?, depth?, up?]. */
+const object = (id, kind, parts) => item(id, kind, (it) => {
+  for (const p of [...parts].sort((a, b) => b[1] - a[1])) piece(it, ...p)
 })
 
-// Solitaire: a tuck box of cards, blue lattice back, a spade in the window.
-item('solitaire', 'game', (it) => {
-  const x = 318
-  const y = FLOOR + 1 - 31
-  part(it, (l) => {
-    panel(l, x, y, 18, 31, { fill: '3d5d8f', light: '6f93c6', dark: '2a4170' })
-    l.rect(x, y, 18, 4, '6f93c6')
-    l.rect(x, y + 4, 18, 1, '2a4170')
-    l.rect(x + 6, y + 2, 6, 2, '2a4170')
-    for (let r = y + 6; r < y + 29; r++) for (let c = x + 2; c < x + 16; c++) if ((r + c) % 4 === 0 || (r - c + 400) % 4 === 0) l.set(c, r, '6f93c6')
-    l.rect(x + 5, y + 12, 8, 9, 'fbf4e2')
-    l.stamp(x + 6, y + 13, ['..#...', '.###..', '#####.', '#####.', '..#...', '.###..'], { '#': '1a1718' })
-  })
-  side(it, x, y, 18, 31, '22355c', 2, 1)
-})
-
-// Blackjack: the ace of spades and king of hearts leaning together, chip stacks.
-const card = (l, x, y, rank, pip, colour) => {
-  panel(l, x, y, 13, 19, { fill: 'fbf4e2', light: 'ffffff', dark: 'cbb894' })
-  l.stamp(x + 2, y + 2, rank, { '#': colour })
-  l.stamp(x + 4, y + 9, pip, { '#': colour })
-}
-const chips = (it, x, n, side, shade, spot) => part(it, (l) => {
-  for (let i = 0; i < n; i++) {
-    const y = FLOOR - 2 - i * 3
-    l.rect(x, y, 9, 2, side)
-    l.rect(x, y + 2, 9, 1, shade)
-    for (const c of [1, 4, 7]) l.rect(x + c, y, 1, 2, spot)
-  }
-})
-item('blackjack', 'game', (it) => {
-  const x = 340
-  part(it, (l) => card(l, x, FLOOR - 21, ['.##.', '#..#', '####', '#..#', '#..#'], ['..#..', '.###.', '#####', '#####', '..#..', '.###.'], '1a1718'))
-  part(it, (l) => card(l, x + 8, FLOOR - 19, ['#..#', '#.#.', '##..', '#.#.', '#..#'], ['.#.#.', '#####', '#####', '.###.', '..#..'], 'c0463a'))
-  chips(it, x - 1, 3, '2a2a30', '17171b', 'd9d2c0')
-  chips(it, x + 12, 4, 'c0463a', '8a2e28', 'fbf4e2')
-})
-
-// Minesweeper: two 3.5" floppies leaning on the wall, a mine on the front one's label.
-function floppy(l, x, y, body, lit, shade, label) {
-  panel(l, x, y, 26, 27, { fill: body, light: lit, dark: shade })
-  l.rect(x + 7, y, 13, 9, 'c0c2ca') // metal shutter
-  l.rect(x + 19, y, 1, 9, '8a8c97')
-  l.rect(x + 7, y + 8, 13, 1, '8a8c97')
-  l.rect(x + 13, y + 1, 4, 6, '5c5e68')
-  l.rect(x + 3, y + 11, 20, 14, 'ebe4cf') // label
-  l.rect(x + 3, y + 11, 20, 2, 'c7bfa7')
-  l.rect(x + 1, y + 24, 2, 2, shade) // write-protect notch
-  l.stamp(x + 4, y + 13, label, { K: INK, S: 'c0c2ca', R: 'c0463a', x: '2d6d8f', z: '6b3f6e' })
-}
-item('minesweeper', 'game', (it) => {
-  const x = 362
-  part(it, (l) => floppy(l, x + 7, FLOOR - 30, '6b3f6e', '8a5a8d', '4a2a4d',
-    ['', '', '.zzzzzzzzzzzzz', '', '.zzzzzzzzz', '', '.zzzzzzzzzzzz'].map((r) => r.padEnd(17, '.'))))
-  part(it, (l) => floppy(l, x, FLOOR + 1 - 27, '4f5262', '6a6e80', '363946', [
-    '......K..........', '....K.K.K....RR..', '.....KKK....RRR..', '...KKKSKKK...RR..',
-    '.....KKK......K..', '....K.K.K.....K..', '......K......KKK.', '.................',
-    '.xxxxxxxxxxxxxx..', '.................', '.xxxxxxxxx.......',
-  ]))
-  side(it, x, FLOOR + 1 - 27, 26, 27, '2a2c36', 1, 0)
-})
-
-// Snake: a candybar phone with snake on its green screen.
-item('snake', 'game', (it) => {
-  const x = 397
-  const y = FLOOR + 1 - 33
-  part(it, (l) => {
-    panel(l, x, y, 14, 33, { fill: '44547a', light: '6a7b9e', dark: '2c3753' })
-    l.rect(x + 5, y + 2, 4, 1, '2c3753') // earpiece
-    l.rect(x + 2, y + 4, 10, 10, '2c3753')
-    l.rect(x + 3, y + 5, 8, 8, 'a7ba78')
-    l.stamp(x + 3, y + 5, ['........', '.pppp.p.', '....p...', '....p...', '....ppp.', '........', '........', '........'], { p: '3c4824' })
-    l.rect(x + 5, y + 15, 4, 3, '6a7b9e') // nav key
-    l.rect(x + 6, y + 16, 2, 1, '2c3753')
-    for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) l.rect(x + 2 + c * 4, y + 19 + r * 2, 2, 1, '6a7b9e')
-  })
-  side(it, x, y, 14, 33, '1f283d', 2, 1)
-})
-
-// Breakout and pong: two Atari-style cartridges, grip ridges up top, a picture label.
-const CART = { T: '77706a', X: 'fbf4e2', S: 'c0c2ca', O: 'd98a3c', Y: 'e2c45a', J: '62a456', R: 'c0463a' }
-function cartridge(it, x, label, trim) {
-  const y = FLOOR + 1 - 31
-  part(it, (l) => {
-    panel(l, x, y, 20, 31, { fill: '37312f', light: '5a514c', dark: '221e1d' })
-    for (let r = 2; r < 14; r += 2) l.rect(x + 2, y + r, 16, 1, '221e1d')
-    l.rect(x + 2, y + 15, 16, 13, trim)
-    l.rect(x + 3, y + 16, 14, 11, '1a1616')
-    l.stamp(x + 3, y + 16, label, CART)
-  })
-  side(it, x, y, 20, 31, '1a1616', 2, 1)
-}
-item('breakout', 'game', (it) => cartridge(it, 413, [
-  'RRR.RRR.RRR.RR', 'OOO.OOO.OOO.OO', 'YYY.YYY.....YY', 'JJJ.J...JJJ.JJ', '..............',
-  '......X.......', '..............', '..............', '....XXXXX.....', '..............',
-], 'd98a3c'))
-item('pong', 'game', (it) => cartridge(it, 434, [
-  '.......T......', '.X.....T......', '.X.....T......', '.X.....T....X.', '.......T....X.',
-  '.......T..S.X.', '.......T......', '.......T......', 'OOOOOOOOOOOOOO', '..............',
-], 'c0463a'))
+object('vhs', 'vhs', [[180, 0.3, art.VHS_FRONT, ART['-'], 3]])
+object('chess', 'game', [
+  [210, 0.92, art.BOARD, ART.I, 2],
+  [217, 0.52, art.KING],
+  [229, 0.44, art.BISHOP],
+  [234, 0.3, art.QUEEN],
+  [209, 0.26, art.ROOK],
+  [242, 0.12, art.KNIGHT],
+  [221, 0.1, art.PAWN_W],
+])
+object('minesweeper', 'game', [
+  [252, 0.86, art.floppy(art.PLAIN_LABEL, 'z', 'Z', '6'), ART.Z, 1, 2],
+  [263, 0.72, art.floppy(art.MINE_LABEL, 'D', 'd', 'i'), ART.d, 1, 8],
+])
+object('solitaire', 'game', [
+  [297, 0.9, art.CARD_PEEK, null, 0, art.CARDBOX_H - 2],
+  [294, 0.86, art.CARD_BOX, ART.j, 2],
+])
+object('snake', 'game', [[311, 0.5, art.PHONE, ART.m, 2]])
+object('breakout', 'game', [[329, 0.86, art.cartridge(art.BREAKOUT_LABEL, 'O'), ART.a, 2]])
+object('mahjong', 'game', [
+  [258, 0.22, art.ZHONG, ART.G, 2],
+  [271, 0.15, art.BAMBOO, ART.G, 2],
+  [284, 0.08, art.DOTS, ART.G, 2],
+])
+object('blackjack', 'game', [
+  [298, 0.3, art.ACE_SPADES, ART.w, 1],
+  [308, 0.24, art.KING_HEARTS, ART.w, 1],
+  [298, 0.06, art.BLACK_CHIPS],
+  [314, 0.04, art.RED_CHIPS],
+])
+object('pong', 'game', [[345, 0.3, art.cartridge(art.PONG_LABEL, 'R'), ART.a, 2]])
 
 // ---- export --------------------------------------------------------------------
 /** Grows the silhouette of `px` by one ring of `colour` (the hover highlight). */

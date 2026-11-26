@@ -17,7 +17,7 @@ import {
   POSTER_LOOP_FROM,
   SAITAMA_LOOP_FROM,
   WINDOW_GLASS,
-  SHELF_GAMES,
+  SHELF_ITEMS,
   BEDSIDE_BOOK,
   catSpotFor,
   type CatSpot,
@@ -644,7 +644,6 @@ export function Room({ dict, readmeContent }: RoomProps) {
   const bonsaiObj = ROOM_OBJECTS.find((o) => o.id === 'bonsai')!
   const catanObj = ROOM_OBJECTS.find((o) => o.id === 'catan')!
   const booksObj = ROOM_OBJECTS.find((o) => o.id === 'books')!
-  const vhsObj = ROOM_OBJECTS.find((o) => o.id === 'vhs')!
   const coffeeObj = ROOM_OBJECTS.find((o) => o.id === 'coffee')!
   const clockObj = ROOM_OBJECTS.find((o) => o.id === 'clock')!
   const ipodObj = ROOM_OBJECTS.find((o) => o.id === 'ipod')!
@@ -1099,33 +1098,20 @@ export function Room({ dict, readmeContent }: RoomProps) {
             onOpen={openBook}
           />
 
-          {/* Shelf VHS: plays the film on the desk monitor */}
-          <AnimatedSprite
-            label={t.room.vhsLabel}
-            x={vhsObj.x}
-            y={vhsObj.y}
-            w={vhsObj.w}
-            h={vhsObj.h}
-            frames={vhsObj.frames}
-            frameDuration={SPRITE_FRAME_MS.vhs}
-            mode="play-once-hold"
-            onClick={playTape}
-          />
-
-          {/* Shelf games: each opens its desk app on the monitor */}
-          {SHELF_GAMES.map((game) => (
+          {/* Shelf VHS and games, in paint order: the VHS plays the film, each game opens its desk app */}
+          {SHELF_ITEMS.map((item) => (
             <AnimatedSprite
-              key={game.app}
-              label={t.room.shelfGameLabels[game.app] ?? game.app}
-              x={game.x}
-              y={game.y}
-              w={game.w}
-              h={game.h}
-              frames={game.frames}
-              hitPath={game.hit}
-              frameDuration={SPRITE_FRAME_MS.shelfGame}
+              key={item.id}
+              label={item.id === 'vhs' ? t.room.vhsLabel : (t.room.shelfGameLabels[item.id] ?? item.id)}
+              x={item.x}
+              y={item.y}
+              w={item.w}
+              h={item.h}
+              frames={item.frames}
+              hitPath={item.hit}
+              frameDuration={item.id === 'vhs' ? SPRITE_FRAME_MS.vhs : SPRITE_FRAME_MS.shelfGame}
               mode="play-once-hold"
-              onClick={() => openDeskApp(game.app)}
+              onClick={item.id === 'vhs' ? playTape : () => openDeskApp(item.id)}
             />
           ))}
 

@@ -2,25 +2,27 @@
 // scripts/draw-shelf-games.mjs. Do not edit: rerun
 //   node scripts/draw-shelf-games.mjs && node scripts/extract-shelf.mjs && npm run lighting
 //
-// Each desk game's sprite box on the stage, in render order (an object later in
-// the list stands in front of the ones it overlaps), and `hit`, its pixel
-// mask as an SVG path local to that box for CSS clip-path.
+// The VHS and each desk game's sprite box on the stage, in render order (an
+// object later in the list stands in front of the ones it overlaps), and
+// `hit`, its pixel mask as an SVG path local to that box for CSS clip-path.
 
-export const SHELF_GAME_SPRITES = [
-  { app: 'chess', x: 286, y: 171, w: 59, h: 67,
-    hit: 'M42 0h3v1h-3zM35 1h11v1h-11zM28 2h19v1h-19zM20 3h28v1h-28zM13 4h35v1h-35zM5 5h43v1h-43zM4 6h44v1h-44zM3 7h45v1h-45zM2 8h46v3h-46zM2 11h47v7h-47zM3 18h46v3h-46zM3 21h47v7h-47zM4 28h46v2h-46zM4 30h47v7h-47zM4 37h48v1h-48zM5 38h48v1h-48zM5 39h49v1h-49zM5 40h50v4h-50zM5 44h49v1h-49zM5 45h48v1h-48zM5 46h49v1h-49zM6 47h48v1h-48zM6 48h49v1h-49zM6 49h50v3h-50zM7 52h49v1h-49zM8 53h48v1h-48zM9 54h48v1h-48zM8 55h49v3h-49zM8 58h48v1h-48zM9 59h21v1h-21zM35 59h11v1h-11zM48 59h7v1h-7zM10 60h20v1h-20zM36 60h9v1h-9zM49 60h5v1h-5zM11 61h18v1h-18zM37 61h7v1h-7zM50 61h3v1h-3zM12 62h5v1h-5zM18 62h10v1h-10zM38 62h5v1h-5zM19 63h8v1h-8zM39 63h3v1h-3zM20 64h6v1h-6z' },
-  { app: 'mahjong', x: 335, y: 197, w: 58, h: 37,
-    hit: 'M41 0h6v1h-6zM34 1h17v1h-17zM26 2h27v1h-27zM19 3h35v1h-35zM11 4h44v1h-44zM5 5h51v1h-51zM4 6h52v1h-52zM3 7h53v1h-53zM2 8h54v11h-54zM2 19h53v1h-53zM2 20h52v1h-52zM2 21h51v1h-51zM3 22h47v1h-47zM3 23h42v7h-42zM3 30h41v1h-41zM4 31h39v1h-39zM5 32h37v1h-37zM6 33h35v1h-35zM7 34h10v1h-10zM18 34h9v1h-9zM31 34h3v1h-3z' },
-  { app: 'solitaire', x: 380, y: 181, w: 37, h: 41,
-    hit: 'M21 0h3v1h-3zM14 1h14v1h-14zM6 2h25v1h-25zM5 3h27v1h-27zM4 4h29v1h-29zM3 5h31v1h-31zM2 6h33v28h-33zM3 34h31v1h-31zM4 35h29v1h-29zM5 36h27v1h-27zM8 37h19v1h-19zM12 38h7v1h-7z' },
-  { app: 'blackjack', x: 391, y: 196, w: 56, h: 29,
-    hit: 'M15 0h2v1h-2zM7 1h11v1h-11zM23 1h4v1h-4zM5 2h23v1h-23zM32 2h5v1h-5zM4 3h25v1h-25zM30 3h9v1h-9zM43 3h5v1h-5zM3 4h37v1h-37zM41 4h9v1h-9zM2 5h49v1h-49zM2 6h50v1h-50zM2 7h51v1h-51zM2 8h52v2h-52zM3 10h51v4h-51zM4 14h50v4h-50zM5 18h49v1h-49zM5 19h48v1h-48zM5 20h47v1h-47zM5 21h46v1h-46zM6 22h37v2h-37zM7 24h35v1h-35zM8 25h33v1h-33zM9 26h5v1h-5zM18 26h6v1h-6zM29 26h11v1h-11z' },
-  { app: 'minesweeper', x: 435, y: 165, w: 46, h: 43,
-    hit: 'M24 0h7v1h-7zM16 1h20v1h-20zM9 2h28v1h-28zM5 3h33v1h-33zM4 4h35v1h-35zM3 5h36v1h-36zM2 6h37v2h-37zM2 8h38v2h-38zM3 10h37v4h-37zM3 14h38v5h-38zM3 19h39v1h-39zM4 20h38v4h-38zM4 24h39v5h-39zM4 29h40v2h-40zM5 31h39v3h-39zM5 34h38v1h-38zM5 35h37v1h-37zM6 36h35v1h-35zM7 37h31v1h-31zM8 38h2v1h-2zM13 38h18v1h-18zM14 39h10v1h-10zM15 40h1v1h-1z' },
-  { app: 'snake', x: 463, y: 177, w: 27, h: 41,
-    hit: 'M13 0h7v1h-7zM6 1h16v1h-16zM5 2h18v1h-18zM4 3h20v1h-20zM3 4h22v1h-22zM2 5h23v29h-23zM2 34h22v1h-22zM3 35h20v1h-20zM4 36h18v1h-18zM5 37h13v1h-13zM8 38h3v1h-3z' },
-  { app: 'breakout', x: 484, y: 163, w: 38, h: 40,
-    hit: 'M23 0h3v1h-3zM16 1h14v1h-14zM9 2h24v1h-24zM5 3h29v1h-29zM4 4h31v1h-31zM3 5h33v1h-33zM2 6h34v27h-34zM3 33h32v1h-32zM4 34h30v1h-30zM5 35h28v1h-28zM7 36h18v1h-18zM11 37h7v1h-7z' },
-  { app: 'pong', x: 501, y: 170, w: 38, h: 40,
-    hit: 'M24 0h2v1h-2zM16 1h14v1h-14zM9 2h24v1h-24zM5 3h29v1h-29zM4 4h31v1h-31zM3 5h33v1h-33zM2 6h34v27h-34zM3 33h32v1h-32zM4 34h30v1h-30zM5 35h28v1h-28zM7 36h19v1h-19zM11 37h7v1h-7z' },
+export const SHELF_SPRITES = [
+  { id: 'vhs', x: 251, y: 174, w: 55, h: 69,
+    hit: 'M31 0h1v1h-1zM24 1h11v1h-11zM16 2h23v1h-23zM9 3h33v1h-33zM5 4h40v1h-40zM4 5h45v1h-45zM3 6h47v1h-47zM2 7h49v1h-49zM2 8h50v1h-50zM2 9h51v50h-51zM3 59h50v1h-50zM4 60h49v1h-49zM5 61h47v1h-47zM6 62h45v1h-45zM9 63h41v1h-41zM13 64h32v1h-32zM16 65h22v1h-22zM20 66h11v1h-11z' },
+  { id: 'chess', x: 296, y: 155, w: 65, h: 87,
+    hit: 'M55 0h2v1h-2zM48 1h10v1h-10zM40 2h19v1h-19zM33 3h27v1h-27zM26 4h34v1h-34zM18 5h42v1h-42zM5 6h1v1h-1zM11 6h49v1h-49zM4 7h57v1h-57zM3 8h58v1h-58zM2 9h59v7h-59zM3 16h58v11h-58zM3 27h59v9h-59zM4 36h58v10h-58zM4 46h59v9h-59zM5 55h58v3h-58zM5 58h57v1h-57zM5 59h56v1h-56zM5 60h55v1h-55zM5 61h51v1h-51zM5 62h44v2h-44zM5 64h45v1h-45zM5 65h46v1h-46zM4 66h48v1h-48zM4 67h49v3h-49zM5 70h48v1h-48zM6 71h47v2h-47zM6 73h48v1h-48zM5 74h49v1h-49zM5 75h50v1h-50zM4 76h25v1h-25zM32 76h22v1h-22zM5 77h25v1h-25zM33 77h22v1h-22zM4 78h27v1h-27zM38 78h16v1h-16zM5 79h25v1h-25zM39 79h14v1h-14zM6 80h25v1h-25zM40 80h12v1h-12zM7 81h23v1h-23zM41 81h10v1h-10zM8 82h8v1h-8zM18 82h11v1h-11zM19 83h9v1h-9zM20 84h7v1h-7z' },
+  { id: 'minesweeper', x: 338, y: 169, w: 60, h: 53,
+    hit: 'M38 0h3v1h-3zM31 1h11v1h-11zM50 1h1v1h-1zM24 2h28v1h-28zM16 3h37v1h-37zM5 4h2v1h-2zM9 4h45v1h-45zM4 5h50v1h-50zM3 6h51v1h-51zM2 7h52v4h-52zM2 11h53v2h-53zM3 13h52v7h-52zM3 20h53v6h-53zM4 26h52v3h-52zM4 29h53v8h-53zM4 37h54v3h-54zM5 40h53v4h-53zM5 44h52v1h-52zM5 45h51v1h-51zM5 46h50v1h-50zM6 47h43v1h-43zM7 48h34v1h-34zM8 49h2v1h-2zM18 49h16v1h-16zM19 50h8v1h-8z' },
+  { id: 'solitaire', x: 393, y: 159, w: 42, h: 54,
+    hit: 'M29 0h7v1h-7zM22 1h15v1h-15zM18 2h20v1h-20zM17 3h22v1h-22zM16 4h23v1h-23zM15 5h24v1h-24zM12 6h27v1h-27zM5 7h35v1h-35zM4 8h36v1h-36zM3 9h37v1h-37zM2 10h38v35h-38zM2 45h37v1h-37zM3 46h35v1h-35zM4 47h33v1h-33zM5 48h31v1h-31zM6 49h23v1h-23zM9 50h13v1h-13zM12 51h2v1h-2z' },
+  { id: 'breakout', x: 411, y: 160, w: 46, h: 50,
+    hit: 'M31 0h3v1h-3zM24 1h14v1h-14zM16 2h25v1h-25zM9 3h33v1h-33zM5 4h38v1h-38zM4 5h40v1h-40zM3 6h41v1h-41zM2 7h42v35h-42zM2 42h41v1h-41zM3 43h39v1h-39zM4 44h37v1h-37zM5 45h28v1h-28zM7 46h19v1h-19zM11 47h7v1h-7z' },
+  { id: 'snake', x: 379, y: 169, w: 33, h: 54,
+    hit: 'M21 0h2v1h-2zM14 1h13v1h-13zM6 2h22v1h-22zM5 3h24v1h-24zM4 4h26v1h-26zM3 5h28v1h-28zM2 6h29v41h-29zM2 47h28v1h-28zM3 48h26v1h-26zM4 49h24v1h-24zM5 50h19v1h-19zM7 51h9v1h-9z' },
+  { id: 'mahjong', x: 342, y: 202, w: 55, h: 33,
+    hit: 'M18 0h1v1h-1zM30 0h2v1h-2zM42 0h4v1h-4zM10 1h39v1h-39zM5 2h45v1h-45zM4 3h47v1h-47zM3 4h49v1h-49zM2 5h51v21h-51zM2 26h50v1h-50zM3 27h48v1h-48zM4 28h46v1h-46zM5 29h39v1h-39zM9 30h4v1h-4zM22 30h3v1h-3zM36 30h1v1h-1z' },
+  { id: 'blackjack', x: 382, y: 191, w: 48, h: 41,
+    hit: 'M16 0h6v1h-6zM31 0h3v1h-3zM8 1h15v1h-15zM24 1h11v1h-11zM5 2h31v1h-31zM4 3h33v1h-33zM3 4h34v1h-34zM2 5h36v6h-36zM3 11h36v3h-36zM3 14h38v1h-38zM3 15h39v1h-39zM4 16h39v1h-39zM4 17h40v1h-40zM4 18h41v1h-41zM4 19h42v1h-42zM5 20h41v5h-41zM6 25h40v4h-40zM7 29h39v3h-39zM8 32h38v2h-38zM8 34h37v1h-37zM8 35h36v1h-36zM9 36h34v1h-34zM10 37h17v1h-17zM11 38h15v1h-15z' },
+  { id: 'pong', x: 435, y: 170, w: 46, h: 50,
+    hit: 'M30 0h5v1h-5zM22 1h16v1h-16zM15 2h26v1h-26zM8 3h34v1h-34zM5 4h38v1h-38zM4 5h40v1h-40zM3 6h41v1h-41zM2 7h42v34h-42zM2 41h41v1h-41zM2 42h40v1h-40zM3 43h38v1h-38zM4 44h35v1h-35zM5 45h27v1h-27zM8 46h16v1h-16zM11 47h6v1h-6z' },
 ] as const

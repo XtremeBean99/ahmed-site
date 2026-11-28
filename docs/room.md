@@ -10,7 +10,8 @@ readme | music | legal | guestbook | settings | terminal | movie | typing | high
 LinkedIn (external), GitHub (external), Settings, Music, Paint, Minesweeper, Snake, Blackjack, Solitaire, Pong,
 Breakout, Chess, Mahjong, Gurtle, README, Guestbook, Request, Movie, Legal, Scores, Typing (21: a 7-column grid in
 landscape, three full rows so the Terminal's `~/Desktop` file row still fits under it; 4 columns and six rows in
-portrait (full), where the icon box is 48 px and the row gap 4 px). `gurtle` (`DeskGurtle.tsx`) has its own notes in
+portrait (full), where the icon box is 48 px and the row gap 4 px). Known issue: six rows fit a 640 px tall phone but
+are clipped on a short one (seen at 375x553). `gurtle` (`DeskGurtle.tsx`) has its own notes in
 `docs/gurtle.md`. (Links/webring was removed
 in v19; `terminal` stays konami-only and has no icon.)
 **Shelf and iPod in the desk view (v23).** The close-up only shows the shelf's underside (rows 0..60), so

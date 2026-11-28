@@ -19,8 +19,8 @@ const securityHeaders = [
       // (webpack dev runtime evals modules; production doesn't need it)
       // va.vercel-scripts.com serves both Speed Insights and Web Analytics
       `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''} https://va.vercel-scripts.com`,
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self'",
       "img-src 'self' data: blob:",
       "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com",
       // 'none': the in-monitor browser was removed (Spec 1, Jul 2026)
@@ -31,16 +31,10 @@ const securityHeaders = [
   },
 ]
 
-// The Ninja game files are served as a standalone top-level page (not in an iframe).
-// The game opens via a link so it runs in its own browsing context with no embedding
-// restrictions. COOP + COEP and blob: CSP permissions are set via vercel.json (which
-// reliably applies to static public/ files) rather than here.
-
 const nextConfig: NextConfig = {
-  images: {
-    formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
-  },
+  // next/image is never used (it resamples pixel art), so the optimiser stays off.
+  // That also closes /_next/image, which has had remote code execution advisories.
+  images: { unoptimized: true },
   async headers() {
     return [
       {

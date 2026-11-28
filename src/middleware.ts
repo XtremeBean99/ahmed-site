@@ -17,8 +17,8 @@ function buildCsp(nonce: string, dev: boolean): string {
     // unsafe-eval only in `next dev` (webpack's dev runtime evals modules).
     // va.vercel-scripts.com serves Speed Insights and Web Analytics.
     `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ''} https://va.vercel-scripts.com`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self'",
     "img-src 'self' data: blob:",
     "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com",
     "frame-ancestors 'none'",

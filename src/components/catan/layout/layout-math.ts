@@ -1,10 +1,7 @@
 /** Shared pixel sizes for the three Catan game layouts. */
 
-export const TOP_BAR_HEIGHT = 40
-export const TOP_BAR_STACK_HEIGHT = 44
 export const OPPONENT_STRIP_HEIGHT = 48
 export const OPPONENT_STRIP_STACK_HEIGHT = 52
-export const HAND_STRIP_HEIGHT = 84
 export const STACK_ACTION_BAR_HEIGHT = 56
 export const LOG_DRAWER_WIDTH = 320
 

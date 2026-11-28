@@ -666,3 +666,15 @@ test('command substitution output cap and nested run', async () => {
   await run(t.shell, 'echo $(echo a; echo b)')
   assert.equal(t.getOut(), 'a b\n')
 })
+
+test('a function keeps its locals after a subshell or command substitution', async () => {
+  const t = makeShell()
+  await run(t.shell, 'f() { local x=1; ( echo sub ); echo "after=[$x]"; }; f')
+  assert.equal(t.getOut(), 'sub\nafter=[1]\n')
+  t.resetOut()
+  await run(t.shell, 'g() { local y=2; z=$(echo hi); echo "after=[$y] $z"; }; g')
+  assert.equal(t.getOut(), 'after=[2] hi\n')
+  t.resetOut()
+  await run(t.shell, 'h() { local v=out; ( v=in ); echo "$v"; }; h; echo "[$v]"')
+  assert.equal(t.getOut(), 'out\n[]\n')
+})

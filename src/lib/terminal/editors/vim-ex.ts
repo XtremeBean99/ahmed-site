@@ -28,7 +28,7 @@ export class VimEx extends VimCore {
     this.dispatch(cmd, range)
   }
 
-  protected cmdWriteQuit(_force: boolean): void {
+  protected cmdWriteQuit(): void {
     if (this.readOnly) {
       this.doneFlag = true
       return

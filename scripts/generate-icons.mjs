@@ -5,7 +5,7 @@
 // Next's App Router picks up src/app/icon.png and src/app/apple-icon.png by
 // file convention and emits the <link> tags itself, so nothing needs wiring
 // into layout.tsx's metadata. Files in public/ are NOT auto-detected: that is
-// why public/favicon.svg never showed up in a browser tab.
+// why the old public/favicon.svg never showed up in a browser tab.
 //
 // The favicon is cropped to the red X because the full lockup is unreadable at
 // 16-32px, where only the mark survives. The Apple touch icon is 180px, big

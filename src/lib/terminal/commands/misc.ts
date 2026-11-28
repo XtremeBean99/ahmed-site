@@ -1,7 +1,6 @@
 // system, utility and fun commands (misc scope). Thin editor launchers delegate to ctx.io.edit.
 import type { Cmd, CmdCtx, CmdInfo, ExecResult } from '../types'
 import { VFS, FsError } from '../vfs'
-import { HOME } from '../seed'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -1040,7 +1039,7 @@ function gitCmd(ctx: CmdCtx): number {
   return 1
 }
 
-function aptLike(name: string): Cmd {
+function aptLike(): Cmd {
   return (ctx: CmdCtx) => {
     if (ctx.args.includes('--help')) return helpOut(ctx, ctx.argv0)
     ctx.err('E: Could not open lock file /var/lib/dpkg/lock-frontend - open (13: Permission denied)\n')
@@ -1080,7 +1079,7 @@ function chshCmd(ctx: CmdCtx): number {
   return 1
 }
 
-function powerCmd(name: string): Cmd {
+function powerCmd(): Cmd {
   return (ctx: CmdCtx) => {
     if (ctx.args.includes('--help')) return helpOut(ctx, ctx.argv0)
     ctx.err('Failed to connect to bus: browser tabs cannot power off. Nice try.\n')
@@ -1271,7 +1270,7 @@ function xdgOpenCmd(ctx: CmdCtx): number {
   return 1
 }
 
-function dnsFailCmd(name: string): Cmd {
+function dnsFailCmd(): Cmd {
   return (ctx: CmdCtx) => {
     if (ctx.args.includes('--help')) return helpOut(ctx, ctx.argv0)
     ctx.err('connection timed out; no servers could be reached\n')
@@ -1477,16 +1476,16 @@ export const commands: Record<string, Cmd> = {
   scp: sshLike('scp'),
   sftp: sshLike('sftp'),
   git: gitCmd,
-  apt: aptLike('apt'),
-  'apt-get': aptLike('apt-get'),
+  apt: aptLike(),
+  'apt-get': aptLike(),
   sudo: sudoCmd,
   su: suCmd,
   passwd: passwdCmd,
   chsh: chshCmd,
-  reboot: powerCmd('reboot'),
-  shutdown: powerCmd('shutdown'),
-  halt: powerCmd('halt'),
-  poweroff: powerCmd('poweroff'),
+  reboot: powerCmd(),
+  shutdown: powerCmd(),
+  halt: powerCmd(),
+  poweroff: powerCmd(),
   mount: mountCmd,
   umount: umountCmd,
   crontab: crontabCmd,
@@ -1501,9 +1500,9 @@ export const commands: Record<string, Cmd> = {
   watch: watchCmd,
   'xdg-open': xdgOpenCmd,
   open: xdgOpenCmd,
-  dig: dnsFailCmd('dig'),
-  nslookup: dnsFailCmd('nslookup'),
-  host: dnsFailCmd('host'),
+  dig: dnsFailCmd(),
+  nslookup: dnsFailCmd(),
+  host: dnsFailCmd(),
   screen: screenCmd('screen'),
   tmux: screenCmd('tmux'),
   whereis: whereisCmd,

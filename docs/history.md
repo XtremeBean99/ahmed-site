@@ -2,6 +2,40 @@
 
 Moved out of CLAUDE.md on 13 October 2026, verbatim. The session log, the full roadmap as it stood, and notes on the conventional site that was retired in July 2026 and deleted in commit `4a6f3cb` (recover from `4a6f3cb^` if ever needed). Treat everything here as history, not current fact.
 
+## v32 onwards
+
+- **v34** `28 November 2026`: **Clean-out.** Removed the retired site's modules, public files and dictionary
+  sections, unused packages (three.js, react-hook-form, clsx and friends), dead code and three obsolete scripts.
+  Next.js 15.5.29 and Zod 4 (`npm audit` clean), the image optimiser turned off, lint moved to the ESLint CLI with no
+  warnings. Fixed two desk terminal bugs: vim's `p` pasted before the cursor, and a subshell inside a function
+  dropped its local variables. The Privacy Policy now covers score boards, feature requests and analytics.
+- **v33** `28 November 2026`: **Gurtle.** A daily word ladder to GURT with a turtle mascot (and Jurtle, its pink
+  look), a turtle on the room's rug, a public streak board and two discoveries (36 in all). See `docs/gurtle.md`.
+- **v32** `26 November 2026`: **Shelf redraw.** New, larger VHS sleeves and desk games drawn from one art module
+  (`scripts/shelf-art.mjs`) for both shelves, overlapping at different depths with a quarter of the shelf left bare.
+
+## v28-v31 (moved from CLAUDE.md, 27 November 2026)
+
+v31: a wall calendar left of the Saitama poster shows the visitor's month with today circled (drawn in code,
+in the wall's perspective, seasonal picture, occasion dots, a click gives the day of the year and the next
+occasion; discovery `calendar`, 34 in all); the side table has its left side under the desk; visitors with
+reduced motion no longer hit a hydration error (see Accessibility); first-click toasts stack instead of overlapping.
+
+v30: the window shows a pixel-art city for every time of day and weather (the CSS moon, stars, rain and snow
+are gone), the My Dress Up Darling poster has a looping hover animation, the cat has a food bowl, and the
+splash is back to its 28 hand-drawn frames at 120 ms.
+
+v29: the Xtreme splash moved to one sprite sheet, plays
+in full on the first visit and once a day with a short cut otherwise, and holds its first frame until the room
+behind it has loaded; the bonsai grows with visits (5 stages, hover highlight, blossoms); the music is AAC
+`.m4a` at 96 kbps (89 MB of MP3 down to 66 MB), with the MP3 masters in `assets/audio/`.
+
+v28 added: shareable desk links (`/?app=chess`, the address bar follows the open app), a daily Minesweeper
+challenge with a per-day public board, the cat on the bed, a guided room tour (`?tour`, the README's strip, the
+room HUD), a per-request CSP nonce (no more `unsafe-inline` scripts), music that downloads nothing until it plays,
+and this docs split. Before that: the desk shelf, Typing, Scores and Request apps (v23), phones (v22). See
+`docs/history.md`.
+
 ## Session history (condensed from the retired PLAN.md specs)
 - **v1** `b70857e`–`a109482`: `(site)` restructure, room v1 (monitor→/home, poster, bonsai).
 - **v2** `5643ee2`–`e7a40e4`+: defect fixes, Minecraft font, desk view + shortcuts.

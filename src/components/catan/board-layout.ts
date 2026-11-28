@@ -15,9 +15,6 @@ export interface Point {
   y: number
 }
 
-/** Logical hex circumradius in pixels (kept for callers that scale by it). */
-export const HEX_RADIUS = 22
-
 /** Logical canvas size: island vertex span plus a 44 px sea border on all sides. */
 export const BOARD_WIDTH = 279
 export const BOARD_HEIGHT = 265
@@ -111,9 +108,4 @@ export function hexAtPixel(px: number, py: number): number | null {
     }
   }
   return AXIAL_BY_ID.get(`${bestQ},${bestR}`) ?? null
-}
-
-/** All logical points are inside the canvas. */
-export function isInsideBoard(p: Point): boolean {
-  return p.x >= 0 && p.x < BOARD_WIDTH && p.y >= 0 && p.y < BOARD_HEIGHT
 }

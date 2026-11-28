@@ -19,8 +19,6 @@ export { ARCADE, ArcadeButton, PIXEL_FONT } from './pixel-ui'
 /** The desk monitor glass, in CSS pixels before the stage scale. */
 export { SCREEN_W, SCREEN_H }
 const DESK_SCREEN: DeskScreen = { w: SCREEN_W, h: SCREEN_H, portrait: false }
-/** Height under the 28px ScreenStrip. */
-export const APP_H = SCREEN_H - 28
 /** The music bar under a full-screen app. */
 const FS_BAR_H = 52
 const FS_BG = '#0e0a08'

@@ -249,7 +249,7 @@ class Parser {
   pos = 0
   constructor(private src: string) {}
 
-  fail(msg: string): never {
+  fail(): never {
     const tok = this.src.slice(this.pos, this.pos + 12) || 'end of input'
     throw new ParseFail(`syntax error, unexpected '${tok}'`)
   }
@@ -270,7 +270,7 @@ class Parser {
   }
 
   expect(s: string): void {
-    if (!this.eat(s)) this.fail(`expected '${s}'`)
+    if (!this.eat(s)) this.fail()
   }
 
   isWord(w: string): boolean {
@@ -284,7 +284,7 @@ class Parser {
     this.skipWs()
     const f = this.parsePipe()
     this.skipWs()
-    if (this.pos < this.src.length) this.fail('trailing input')
+    if (this.pos < this.src.length) this.fail()
     return f
   }
 
@@ -355,7 +355,7 @@ class Parser {
 
   private expectWord(w: string): void {
     this.skipWs()
-    if (!this.isWord(w)) this.fail(`expected '${w}'`)
+    if (!this.isWord(w)) this.fail()
     this.pos += w.length
   }
 
@@ -465,7 +465,7 @@ class Parser {
   parseIdent(): string {
     this.skipWs()
     const m = /^[a-zA-Z_][a-zA-Z0-9_]*/.exec(this.src.slice(this.pos))
-    if (!m) this.fail('identifier')
+    if (!m) this.fail()
     this.pos += m[0].length
     return m[0]
   }
@@ -502,7 +502,7 @@ class Parser {
     }
     if (/[0-9]/.test(c)) {
       const m = /^[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?/.exec(this.src.slice(this.pos))
-      if (!m) this.fail('number')
+      if (!m) this.fail()
       this.pos += m[0].length
       return { k: 'literal', val: Number(m[0]) }
     }
@@ -528,7 +528,7 @@ class Parser {
       }
       return { k: 'call', name: word, args }
     }
-    this.fail('expression')
+    this.fail()
   }
 
   private parseStringLiteral(): Filter {
@@ -536,7 +536,7 @@ class Parser {
     const parts: (string | Filter)[] = []
     let buf = ''
     for (;;) {
-      if (this.pos >= this.src.length) this.fail('unterminated string')
+      if (this.pos >= this.src.length) this.fail()
       const c = this.src[this.pos]
       if (c === '"') {
         this.pos++
@@ -606,7 +606,7 @@ class Parser {
       if (this.peek() === '"') {
         const sf = this.parseStringLiteral()
         if (sf.k === 'literal' && typeof sf.val === 'string') key = sf.val
-        else this.fail('dynamic object key')
+        else this.fail()
       } else {
         key = this.parseIdent()
       }

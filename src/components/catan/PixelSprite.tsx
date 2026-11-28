@@ -8,11 +8,6 @@ import { UI_SPRITES, type UiSpriteName } from './ui-sprites'
 
 export type AnySpriteName = SpriteName | UiSpriteName
 
-export function spriteSize(name: AnySpriteName): { width: number; height: number } {
-  const meta = name in SPRITES ? SPRITES[name as SpriteName] : UI_SPRITES[name as UiSpriteName]
-  return { width: meta.width, height: meta.height }
-}
-
 const KEY_BASE = [255, 0, 255]
 const KEY_HIGHLIGHT = [255, 128, 255]
 const KEY_SHADE = [128, 0, 128]

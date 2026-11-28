@@ -389,8 +389,6 @@ function drawText(buffer: PixelBuffer, x: number, y: number, text: string, color
 // --- Sprites -----------------------------------------------------------------------
 
 export const SETTLEMENT_SIZE = { w: 11, h: 11 } as const
-export const CITY_SIZE = { w: 15, h: 13 } as const
-
 const SETTLEMENT_SPRITE = [
   '.....O.....',
   '....OHO....',

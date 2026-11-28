@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src",
     "type-check": "tsc --noEmit",
     "test:catan": "tsx --test \"src/lib/games/catan/**/*.test.ts\" \"src/components/catan/**/*.test.ts\"",
     "test:catan:long": "tsx --test \"src/lib/games/catan/**/*.longtest.ts\"",
@@ -23,34 +23,33 @@
     "test:room": "tsx --test \"src/lib/room/*.test.ts\""
   },
   "dependencies": {
-    "@hookform/resolvers": "^3.9.0",
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.6.1",
     "@upstash/redis": "^1.38.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
-    "clsx": "^2.1.1",
     "framer-motion": "^11.18.2",
-    "next": "^15.5.25",
+    "next": "^15.5.29",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-hook-form": "^7.54.0",
     "resend": "^4.0.0",
-    "tailwind-merge": "^2.6.0",
-    "three": "^0.184.0",
-    "zod": "^3.23.0"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@types/three": "^0.184.1",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.0.0",
-    "eslint-config-next": "^15.1.0",
-    "postcss": "^8.4.47",
+    "eslint-config-next": "^15.5.29",
+    "postcss": "^8.5.34",
+    "sharp": "^0.35.5",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "$postcss"
+    }
   }
 }

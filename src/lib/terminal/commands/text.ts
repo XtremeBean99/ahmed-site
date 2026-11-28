@@ -1,4 +1,4 @@
-import type { Cmd, CmdCtx, CmdInfo, CmdModule } from '../types'
+import type { Cmd, CmdCtx, CmdInfo } from '../types'
 import { FsError } from '../vfs'
 import { compilePosix } from '../regex'
 import { matchGlob } from '../glob'
@@ -259,27 +259,6 @@ function grepColorize(line: string, ms: GrepMatch[], color: boolean): string {
   return out
 }
 
-interface GrepPrefixOpts {
-  name: string
-  lineNum: boolean
-  byteOffset: boolean
-  sep: ':' | '-'
-  color: boolean
-  line: number
-  byte: number
-}
-
-function grepPrefix(o: GrepPrefixOpts): string {
-  let out = ''
-  if (o.color) out += C_FILE + o.name + '\x1b[m'
-  else out += o.name
-  const se = (s: string) => (o.color ? C_SEP + s + '\x1b[m' : s)
-  if (o.lineNum) out += se(':') + String(o.line)
-  if (o.byteOffset) out += se(':') + String(o.byte)
-  out += se(o.sep)
-  return out
-}
-
 function parseGrepArgs(args: string[], ctx: CmdCtx, name: 'grep' | 'egrep' | 'fgrep'): { flags: GrepFlags; operands: string[]; patterns: string[]; patternFiles: string[] } | number {
   const flags: GrepFlags = {
     ere: false, fixed: false, icase: false, invert: false, lineNum: false, count: false,
@@ -400,220 +379,6 @@ function parseGrepArgs(args: string[], ctx: CmdCtx, name: 'grep' | 'egrep' | 'fg
     i++
   }
   return { flags, operands, patterns, patternFiles }
-}
-
-async function cmdGrep(ctx: CmdCtx): Promise<number> {
-  const name = 'grep'
-  const parsed = parseGrepArgs(ctx.args, ctx, name)
-  if (typeof parsed === 'number') return parsed
-  const { flags, operands } = parsed
-  const patterns = [...parsed.patterns]
-  const before = flags.before > 0 ? flags.before : flags.context
-  const after = flags.after > 0 ? flags.after : flags.context
-  const useColor = flags.color === 'always' || (flags.color === 'auto' && ctx.isTTYOut)
-
-  for (const pf of parsed.patternFiles) {
-    const t = readFileText(ctx, name, pf, () => {})
-    if (t === null) return 2
-    for (const line of splitLines(t)) {
-      if (line === '') continue
-      patterns.push(line)
-    }
-  }
-  if (patterns.length === 0) {
-    if (operands.length === 0) {
-      ctx.err(info.grep.usage + '\n')
-      ctx.err(`Try '${name} --help' for more information.\n`)
-      return 2
-    }
-    patterns.push(operands.shift()!)
-  }
-
-  const matchers = buildMatchers(patterns, flags)
-  const lineMatches = (line: string): GrepMatch[] => {
-    const best: GrepMatch[] = []
-    for (let i = 0; i < line.length; i++) {
-      for (const m of matchers) {
-        const re = m as unknown as { _re?: RegExp }
-        void re
-        break
-      }
-      break
-    }
-    // leftmost-longest scan across matchers
-    const bestAt: GrepMatch[] = []
-    const bestLen = -1
-    for (const mt of matchers) {
-      const ms = mt.matches(line)
-      if (ms.length) {
-        const first = ms[0]
-        if (true) { /* collected below */ }
-      }
-    }
-    void best; void bestAt; void bestLen
-    return matcherScan(matchers, line)
-  }
-
-  let anyMatch = false
-  const status = 1
-  let bad = 0
-
-  const wantName = (fileCount: number): boolean => {
-    if (flags.neverName) return false
-    if (flags.alwaysName || flags.recursive) return true
-    return fileCount > 1
-  }
-
-  const files: { shown: string; abs: string }[] = []
-  const collectFiles = (operand: string, base: string, out: { shown: string; abs: string }[]): boolean => {
-    const abs = ctx.resolve(operand)
-    if (!ctx.fs.exists(abs)) { errMissing(ctx, name, operand); bad = 2; return false }
-    if (ctx.fs.isDir(abs)) {
-      if (!flags.recursive) { ctx.err(`${name}: ${operand}: Is a directory\n`); bad = 2; return false }
-      let names: string[]
-      try { names = ctx.fs.list(abs) } catch { return false }
-      for (const kid of names) {
-        if (ctx.signal.aborted) return false
-        const childAbs = abs + '/' + kid
-        const childShown = (operand === '.' ? './' : operand.endsWith('/') ? operand : operand + '/') + kid
-        if (ctx.fs.isDir(childAbs)) {
-          collectFiles(childShown, childAbs, out)
-        } else {
-          const bn = kid
-          if (flags.include.length && !flags.include.some((g) => matchGlob(g, bn))) continue
-          if (flags.exclude.some((g) => matchGlob(g, bn))) continue
-          out.push({ shown: childShown, abs: childAbs })
-        }
-      }
-      return true
-    }
-    const bn = abs.slice(abs.lastIndexOf('/') + 1)
-    if (flags.include.length && !flags.include.some((g) => matchGlob(g, bn))) return false
-    if (flags.exclude.some((g) => matchGlob(g, bn))) return false
-    out.push({ shown: operand, abs })
-    return true
-  }
-
-  let fileOperands = operands
-  if (flags.recursive && fileOperands.length === 0) fileOperands = ['.']
-  for (const op of fileOperands) {
-    if (ctx.signal.aborted) return 130
-    collectFiles(op, ctx.resolve(op), files)
-  }
-  const showName = wantName(files.length)
-
-  const colorize = (line: string, ms: GrepMatch[]): string => {
-    if (!useColor) return line
-    return grepColorize(line, ms, true)
-  }
-
-  for (const f of files) {
-    if (ctx.signal.aborted) return 130
-    let text: string
-    try { text = ctx.fs.readFile(f.abs) } catch (e) {
-      if (e instanceof FsError) ctx.err(`${name}: ${f.shown}: ${e.reason}\n`)
-      else ctx.err(`${name}: ${f.shown}: ${e instanceof Error ? e.message : String(e)}\n`)
-      bad = 2
-      continue
-    }
-    const lines = splitLines(text)
-    const byteOffs: number[] = []
-    let acc = 0
-    for (const l of lines) { byteOffs.push(acc); acc += encoder.encode(l).length + 1 }
-
-    const selected: boolean[] = new Array(lines.length).fill(false)
-    const allMatches: GrepMatch[][] = lines.map(() => [])
-    let count = 0
-    for (let li = 0; li < lines.length; li++) {
-      if (ctx.signal.aborted) return 130
-      const ms = matcherScan(matchers, lines[li])
-      const matched = ms.length > 0
-      const sel = flags.invert ? !matched : matched
-      if (sel) {
-        count++
-        anyMatch = true
-        selected[li] = true
-        allMatches[li] = flags.invert ? [] : ms
-        if (flags.maxCount > 0 && count >= flags.maxCount && !flags.count) break
-      }
-    }
-
-    if (flags.quiet) {
-      if (anyMatch) return 0
-      continue
-    }
-
-    if (flags.count) {
-      const label = showName ? `${f.shown}:${count}` : String(count)
-      if (count > 0) anyMatch = true
-      ctx.out(label + '\n')
-      continue
-    }
-    if (flags.filesWith || flags.filesWithout) {
-      const has = count > 0
-      if (flags.filesWith && has) { ctx.out(f.shown + '\n'); anyMatch = true }
-      if (flags.filesWithout && !has) ctx.out(f.shown + '\n')
-      continue
-    }
-
-    const lineOut = (li: number, sep: ':' | '-', onlyText?: string): string => {
-      const p = grepPrefix({
-        name: f.shown,
-        lineNum: flags.lineNum,
-        byteOffset: flags.byteOffset,
-        sep,
-        color: useColor,
-        line: li + 1,
-        byte: byteOffs[li],
-      })
-      const content = onlyText !== undefined ? onlyText : colorize(lines[li], allMatches[li])
-      return showName || flags.lineNum || flags.byteOffset ? p + content : content
-    }
-
-    if (before > 0 || after > 0) {
-      const groups: { start: number; end: number }[] = []
-      let cur: { start: number; end: number } | null = null
-      for (let li = 0; li < lines.length; li++) {
-        if (!selected[li]) continue
-        const ws = Math.max(0, li - before)
-        const we = Math.min(lines.length - 1, li + after)
-        if (cur === null) cur = { start: ws, end: we }
-        else if (ws <= cur.end + 1) cur.end = Math.max(cur.end, we)
-        else { groups.push(cur); cur = { start: ws, end: we } }
-      }
-      if (cur) groups.push(cur)
-      for (let gi = 0; gi < groups.length; gi++) {
-        const g = groups[gi]
-        if (gi > 0) ctx.out('--\n')
-        for (let li = g.start; li <= g.end; li++) {
-          if (flags.only) {
-            if (selected[li]) {
-              for (const m of allMatches[li]) ctx.out(lineOut(li, ':') + '\n')
-            } else {
-              ctx.out(lineOut(li, '-') + '\n')
-            }
-          } else {
-            ctx.out(lineOut(li, selected[li] ? ':' : '-') + '\n')
-          }
-        }
-      }
-      continue
-    }
-
-    for (let li = 0; li < lines.length; li++) {
-      if (!selected[li]) continue
-      if (flags.only) {
-        for (const m of allMatches[li]) {
-          if (m.end > m.start) ctx.out(lineOut(li, ':', m.text) + '\n')
-        }
-      } else {
-        ctx.out(lineOut(li, ':') + '\n')
-      }
-    }
-  }
-
-  if (bad) return 2
-  return anyMatch ? 0 : 1
 }
 
 // Leftmost-longest scan across matchers: at each position pick the longest match.
@@ -2643,7 +2408,7 @@ function mkGrep(name: 'grep' | 'egrep' | 'fgrep'): Cmd {
   }
 }
 
-// cmdGrep is a thin wrapper used by egrep/fgrep via grepRun.
+// The body of grep, egrep and fgrep.
 async function grepRun(ctx: CmdCtx, parsed: Exclude<ReturnType<typeof parseGrepArgs>, number>, name: 'grep' | 'egrep' | 'fgrep'): Promise<number> {
   const { flags, operands } = parsed
   const patterns = [...parsed.patterns]

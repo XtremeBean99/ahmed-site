@@ -155,13 +155,6 @@ export const COASTAL_EDGES: readonly number[] = BOARD.coastal
 /** The 9 coastal edges that carry a harbour. */
 export const PORT_EDGES: readonly number[] = PORT_EDGE_SLOTS.map((slot) => BOARD.coastal[slot])
 
-export const BOARD_BOUNDS = {
-  minX: Math.min(...VERTICES.map((v) => v.x)),
-  maxX: Math.max(...VERTICES.map((v) => v.x)),
-  minY: Math.min(...VERTICES.map((v) => v.y)),
-  maxY: Math.max(...VERTICES.map((v) => v.y)),
-}
-
 /** The edge joining two adjacent vertices, or null. */
 export function edgeBetween(a: number, b: number): number | null {
   return VERTICES[a].edges.find((e) => EDGES[e].vertices.includes(b)) ?? null

@@ -370,7 +370,7 @@ export abstract class VimCore {
     }
     if (this.pendingZBig) {
       this.pendingZBig = false
-      if (key === 'Z') { this.cmdWriteQuit(false); return }
+      if (key === 'Z') { this.cmdWriteQuit(); return }
       if (key === 'Q') { this.doneFlag = true; return }
       return
     }
@@ -1931,7 +1931,7 @@ export abstract class VimCore {
   }
 
   protected abstract executeEx(input: string): void
-  protected abstract cmdWriteQuit(force: boolean): void
+  protected abstract cmdWriteQuit(): void
 
   // ---- search ----
 

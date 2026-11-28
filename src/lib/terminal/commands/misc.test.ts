@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { VFS, FsError } from '../vfs'
+import { VFS } from '../vfs'
 import { seedFs, HOME } from '../seed'
 import type { CmdCtx, ExecResult } from '../types'
 import { Stdin } from '../types'

@@ -1,6 +1,5 @@
 // Shell builtins. `ip` is the interpreter (type-only import keeps the module graph acyclic at runtime).
 import { VFS } from '../vfs'
-import { Stdin } from '../types'
 import { lex } from './lexer'
 import { parse } from './parser'
 import { expandAssignValue } from './expand'
@@ -404,7 +403,6 @@ const READ: Builtin = async (ip, args, io) => {
   let raw = false
   let prompt: string | null = null
   let arrName: string | null = null
-  let delim = '\n'
   let nchars = 0
   const names: string[] = []
   for (let i = 0; i < args.length; i++) {
@@ -413,7 +411,7 @@ const READ: Builtin = async (ip, args, io) => {
     if (a === '-s' || a === '-t') continue
     if (a === '-p' && i + 1 < args.length) { prompt = args[++i]; continue }
     if (a === '-a' && i + 1 < args.length) { arrName = args[++i]; continue }
-    if (a === '-d' && i + 1 < args.length) { delim = args[++i]; continue }
+    if (a === '-d' && i + 1 < args.length) { i++; continue } // accepted, not supported
     if (a === '-n' && i + 1 < args.length) { nchars = parseNum(args[++i]); continue }
     if (a.startsWith('-')) continue
     names.push(a)
@@ -441,7 +439,6 @@ const READ: Builtin = async (ip, args, io) => {
     }
     line = out
   }
-  const ifs = ip.getVar('IFS')?.value ?? ' \t\n'
   const fields = line.split(/[ \t\n]+/).filter((f) => f !== '')
   if (arrName) {
     const v: VarValue = { value: fields[0] ?? '', exported: false, readonly: false, integer: false, lower: false, upper: false, array: fields, assoc: null }
@@ -461,7 +458,6 @@ const READ: Builtin = async (ip, args, io) => {
       ip.setVar(names[i], '')
     }
   }
-  void delim
   return 0
 }
 

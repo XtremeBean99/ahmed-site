@@ -348,6 +348,7 @@ test('rm removes files and directories, refuses . and /', async () => {
   assert.equal(root.status, 1)
   assert.ok(root.err.includes("rm: it is dangerous to operate recursively on '/'"))
   const dirNoR = await exec(fs, ['rm', 'sub2'])
+  assert.equal(dirNoR.status, 1)
   fs.mkdir('/home/guest/sub2')
   const d2 = await exec(fs, ['rm', 'sub2'])
   assert.equal(d2.status, 1)
@@ -602,6 +603,7 @@ test('chmod octal and symbolic modes', async () => {
   assert.equal(sym.status, 0)
   assert.equal(fs.stat('/home/guest/a.txt').mode & 0o777, 0o704)
   const plus = await exec(fs, ['chmod', '+x', 'empty.txt'])
+  assert.equal(plus.status, 0)
   assert.equal(fs.stat('/home/guest/empty.txt').mode & 0o111, 0o111)
 })
 
@@ -638,6 +640,7 @@ test('truncate -s sets file size', async () => {
   assert.equal(r.status, 0)
   assert.equal(fs.readFile('/home/guest/a.txt'), 'hello\n\0\0\0\0')
   const shrink = await exec(fs, ['truncate', '-s', '2', 'a.txt'])
+  assert.equal(shrink.status, 0)
   assert.equal(fs.readFile('/home/guest/a.txt'), 'he')
 })
 

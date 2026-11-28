@@ -146,7 +146,7 @@ class Parser {
         if (rt.kind === 'op' && this.isRedirOp(rt.op)) {
           const redirs: Redir[] = []
           while (this.peek().kind === 'op' && this.isRedirOp((this.peek() as Tok & { kind: 'op' }).op)) {
-            const r = this.parseRedir(this.peek())
+            const r = this.parseRedir()
             if (!r) return null
             redirs.push(r)
           }
@@ -572,7 +572,7 @@ class Parser {
       if (t.kind === 'op') {
         if (t.op === ';' || t.op === '&' || t.op === ';;' || t.op === ';&' || t.op === ';;&' || t.op === '|' || t.op === '|&' || t.op === '&&' || t.op === '||') break
         if (this.isRedirOp(t.op)) {
-          const r = this.parseRedir(t)
+          const r = this.parseRedir()
           if (!r) return null
           redirs.push(r)
           continue
@@ -637,7 +637,7 @@ class Parser {
     return /^(\d+)?(>>|<<-|<<<|<<|>&|<&|<>|>|<|&>>|&>|>\|)$/.test(op)
   }
 
-  private parseRedir(t: Tok): Redir | null {
+  private parseRedir(): Redir | null {
     const opTok = this.next() as Tok & { kind: 'op' }
     const op = opTok.op
     let fd = op === '<' || op === '<<' || op === '<<-' || op === '<<<' || op === '<&' || op === '<>' ? 0 : 1

@@ -32,7 +32,7 @@ function align(a: BcNum, s: number): bigint {
   return a.d * pow10(s - a.s)
 }
 
-export function numAdd(a: BcNum, b: BcNum, scale: number): BcNum {
+export function numAdd(a: BcNum, b: BcNum): BcNum {
   const s = Math.max(a.s, b.s)
   const da = align(a, s)
   const db = align(b, s)
@@ -42,7 +42,7 @@ export function numAdd(a: BcNum, b: BcNum, scale: number): BcNum {
   return makeNum(sum < 0n, sum, s)
 }
 
-export function numSub(a: BcNum, b: BcNum, scale: number): BcNum {
+export function numSub(a: BcNum, b: BcNum): BcNum {
   const s = Math.max(a.s, b.s)
   const da = align(a, s)
   const db = align(b, s)
@@ -683,8 +683,8 @@ class Interpreter {
         const a = this.evalExpr(e.a)
         const b = this.evalExpr(e.b)
         switch (e.op) {
-          case '+': return numAdd(a, b, scale)
-          case '-': return numSub(a, b, scale)
+          case '+': return numAdd(a, b)
+          case '-': return numSub(a, b)
           case '*': return numMul(a, b, scale)
           case '/': return numDiv(a, b, scale)
           case '%': return numMod(a, b, scale)
@@ -708,13 +708,13 @@ class Interpreter {
       case 'post': {
         const v = this.getVar(e.name)
         const one: BcNum = { neg: e.op === '--', d: 1n, s: 0 }
-        this.setVar(e.name, numAdd(v, one, v.s))
+        this.setVar(e.name, numAdd(v, one))
         return v
       }
       case 'pre': {
         const v = this.getVar(e.name)
         const one: BcNum = { neg: e.op === '--', d: 1n, s: 0 }
-        const nv = numAdd(v, one, v.s)
+        const nv = numAdd(v, one)
         this.setVar(e.name, nv)
         return nv
       }

@@ -1,5 +1,5 @@
 // Filesystem commands: ls, cat, cp, mv, find, du, ... Behaviour mirrors GNU coreutils closely.
-import type { Cmd, CmdCtx, CmdInfo, CmdModule } from '../types'
+import type { Cmd, CmdCtx, CmdInfo } from '../types'
 import { FsError, MAX_TOTAL_BYTES, VFS } from '../vfs'
 import type { Node } from '../vfs'
 import { matchGlob } from '../glob'
@@ -132,16 +132,6 @@ function fakeInode(abs: string): number {
 }
 
 function nameKey(n: string): string { return n.replace(/^\.+/, '').toLowerCase() }
-
-function sortNames(names: string[]): string[] {
-  return names.slice().sort((a, b) => {
-    const ka = nameKey(a)
-    const kb = nameKey(b)
-    if (ka < kb) return -1
-    if (ka > kb) return 1
-    return a < b ? -1 : a > b ? 1 : 0
-  })
-}
 
 // ---- ls -----------------------------------------------------------------------------------------
 

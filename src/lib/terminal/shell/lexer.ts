@@ -39,8 +39,8 @@ export function lex(src: string): LexResult {
   }
 
   // Balanced group scanners return the index just past the closing character, or -1.
-  const skipBalanced = (openIdx: number, open: string, close: string, isDollar: boolean): number => {
-    // openIdx points at the opening char. When isDollar, a `$` precedes it and `${`/`$(` subtleties apply.
+  const skipBalanced = (openIdx: number, open: string, close: string): number => {
+    // openIdx points at the opening char.
     let depth = 0
     let j = openIdx
     while (j < src.length) {
@@ -61,8 +61,8 @@ export function lex(src: string): LexResult {
           if (d === '"') break
           if (d === '$') {
             const nxt = src[j + 1]
-            if (nxt === '(') { const e = skipBalanced(j + 1, '(', ')', true); if (e < 0) return -1; j = e; continue }
-            if (nxt === '{') { const e = skipBalanced(j + 1, '{', '}', true); if (e < 0) return -1; j = e; continue }
+            if (nxt === '(') { const e = skipBalanced(j + 1, '(', ')'); if (e < 0) return -1; j = e; continue }
+            if (nxt === '{') { const e = skipBalanced(j + 1, '{', '}'); if (e < 0) return -1; j = e; continue }
           }
           j++
         }
@@ -93,13 +93,13 @@ export function lex(src: string): LexResult {
           continue
         }
         if (nxt === '(') {
-          const e = skipBalanced(j + 1, '(', ')', true)
+          const e = skipBalanced(j + 1, '(', ')')
           if (e < 0) return -1
           j = e
           continue
         }
         if (nxt === '{') {
-          const e = skipBalanced(j + 1, '{', '}', true)
+          const e = skipBalanced(j + 1, '{', '}')
           if (e < 0) return -1
           j = e
           continue
@@ -151,11 +151,11 @@ export function lex(src: string): LexResult {
           if (d === '\\') { i += 2; continue }
           if (d === '$') {
             const nxt = src[i + 1]
-            if (nxt === '(') { const e = skipBalanced(i + 1, '(', ')', true); if (e < 0) { incomplete = true; i = src.length; break } i = e; continue }
-            if (nxt === '{') { const e = skipBalanced(i + 1, '{', '}', true); if (e < 0) { incomplete = true; i = src.length; break } i = e; continue }
+            if (nxt === '(') { const e = skipBalanced(i + 1, '(', ')'); if (e < 0) { incomplete = true; i = src.length; break } i = e; continue }
+            if (nxt === '{') { const e = skipBalanced(i + 1, '{', '}'); if (e < 0) { incomplete = true; i = src.length; break } i = e; continue }
           }
           if (d === '`') {
-            const e = skipBalanced(i, '`', '`', false)
+            const e = skipBalanced(i, '`', '`')
             if (e < 0) { incomplete = true; i = src.length; break }
             i = e
             continue
@@ -183,7 +183,7 @@ export function lex(src: string): LexResult {
         }
         if (nxt === '(') {
           const start = i
-          const e = skipBalanced(i + 1, '(', ')', true)
+          const e = skipBalanced(i + 1, '(', ')')
           if (e < 0) { incomplete = true; out.push(src.slice(start)); i = src.length; break }
           i = e
           out.push(src.slice(start, i))
@@ -191,7 +191,7 @@ export function lex(src: string): LexResult {
         }
         if (nxt === '{') {
           const start = i
-          const e = skipBalanced(i + 1, '{', '}', true)
+          const e = skipBalanced(i + 1, '{', '}')
           if (e < 0) { incomplete = true; out.push(src.slice(start)); i = src.length; break }
           i = e
           out.push(src.slice(start, i))
@@ -200,7 +200,7 @@ export function lex(src: string): LexResult {
       }
       if (c === '`') {
         const start = i
-        const e = skipBalanced(i, '`', '`', false)
+        const e = skipBalanced(i, '`', '`')
         if (e < 0) { incomplete = true; out.push(src.slice(start)); i = src.length; break }
         i = e
         out.push(src.slice(start, i))

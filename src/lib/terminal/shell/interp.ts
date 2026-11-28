@@ -844,7 +844,7 @@ export class Interp implements ExpandCtx {
       io: this.io,
       signal: this.signal,
       resolve: (p) => VFS.resolve(this.cwd, p, this.home),
-      exec: (argv2, stdin) => this.execCtx(argv2, stdin, io),
+      exec: (argv2, stdin) => this.execCtx(argv2, stdin),
       runScript: (text, args) => this.runCtxScript(text, args, io),
       isTTYOut: io.ttyOut,
       commandNames: () => this.commandNames(),
@@ -852,7 +852,7 @@ export class Interp implements ExpandCtx {
     }
   }
 
-  private async execCtx(argv2: string[], stdin: string | undefined, parentIo: RunIO): Promise<{ status: number; out: string; err: string }> {
+  private async execCtx(argv2: string[], stdin: string | undefined): Promise<{ status: number; out: string; err: string }> {
     let out = ''
     let err = ''
     const io: RunIO = {

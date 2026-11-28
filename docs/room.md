@@ -232,3 +232,64 @@ at the owner's informed risk; revisit before public promotion. The domain is pub
 reachable. (General information, not legal advice.) Tracks in `public/audio/` (`.m4a`, masters in `assets/audio/`):
 cant-look-in-my-eyes ⚠ commercial ·
 remember-summer-days ⚠ commercial. Cover: summer-days.jpg.
+
+## Room features (moved from CLAUDE.md, 27 November 2026)
+
+**Splash** (`XtremeSplash.tsx`, timing in `src/lib/room/splash.ts`, tested): one sheet
+`public/room/xtreme-sheet.png` from `scripts/extract-xtreme.mjs` (the 28 hand-drawn frames at 120 ms; the script
+can generate in-betweens with `TWEENS`, but the owner prefers the animation as drawn). Full play on the first visit and when `splashAt` is a day old, else a short cut from the white
+logo. The first frame is held until every eager `<img>` behind it has finished and fonts are in (4 s cap). Any key
+or press skips it; reduced motion skips it entirely.
+
+**The bonsai** (`src/lib/room/bonsai.ts`, tested; art from `scripts/draw-bonsai.mjs`): stage by visit (1 sprout,
+2 from visit 2, 3 from visit 4, 4 the hand-drawn tree from visit 7, 5 in bloom from visit 12), `?bonsai=1..5`
+forces one. Six frames per stage (`bonsai-<stage>-<frame>.png`): rest, 1 px highlight, then four 2 px swaying
+frames that `AnimatedSprite` loops (`loopFrom`). Rendered only after prefs load, like the cat.
+
+**The cat** (`RoomCat.tsx`, art from `scripts/draw-cat.mjs`, drawn in code on a 2 px grid): sleeps at one of
+`CAT_SPOTS` chosen by `visitCount`, breathes on a 1.3 s two-frame loop with drifting Zs, wakes for 3.5 s on a
+click (mew + purr tones, a toast line from `room.catWake`, the `cat` discovery). Rendered only after prefs load.
+Its bowl (`CAT_BOWL` in `src/lib/room/cat-feeding.ts`, tested) is on the floor by the bed: a click fills it
+(`kibble` tone) and the cat plays a timeline (`feedingTimeline`/`feedingPose`): sits up, walks to the mattress
+edge, crouches, leaps down, walks to the bowl, eats for 4.8 s while it empties (`room.catFed` toast, `fed`
+discovery), then leaps back up and curls up where it was. Profile sprites: `cat-walk-1..4` (frames advance with
+distance, so paws never slide), `cat-crouch`, `cat-leap`, `cat-eat-1..2`. Reduced motion skips the walks.
+
+**The window** (`RoomWindow.tsx`, `src/lib/room/window-view.ts`, tested; art from `scripts/draw-window.mjs`): a
+pixel city cut to the two panes of glass, one still per lighting state and weather (`/room/window/<light>-<weather>.png`,
+never graded), with looping rain, snow and night twinkle frames. Weather is Canberra's from `/api/weather`;
+`?weather=clear|rain|snow|heavy-rain|heavy-snow` forces it.
+
+**The poster** (`scripts/draw-poster.mjs`): 14 frames from `kitagawa-1.png`: rest, 1 px highlight, then a
+12-frame hover loop (`POSTER_LOOP_FROM`): the printed hearts bob behind her, a glint sweeps the glossy print, a
+sparkle at her fingertips. She herself never moves (an earlier version that moved her looked wrong).
+
+**The Saitama poster** (`scripts/draw-saitama.mjs`, box widened 16 px left to x 745 for the punch): built from
+the layers of `assets/pixel-art/poster/saitama.ase` (the script reads the .ase itself): 26 frames at 50 ms: rest,
+highlight, the fist growing out of his raised hand and over the poster's edge (drawn above the frame and cape),
+an impact (overshoot, jolt, burst), then a 12-frame idle loop (`SAITAMA_LOOP_FROM`): the
+sunburst boils with streaks flying out, power ticks round the fist, a shine on his head. Click still swaps to
+`poster-alt.png`.
+
+**The calendar** (`RoomCalendar.tsx`; dates, occasions and wall geometry in `src/lib/room/calendar.ts`, art in
+`calendar-art.ts`, both tested): no sprite files. `drawCalendar` paints RGBA for `CALENDAR_RECT` at one pixel per
+stage pixel: the page is drawn flat, then bent onto the wall through `WALL_VANISHING_POINT` (measured off the
+Saitama poster), while glyphs (a 3x5 font), the ring round today and the nail are stamped whole so text never
+shears. Monday-first grid, past days faded, Sundays red, southern-hemisphere seasonal picture (spring is
+Floriade), dots on fixed-date `OCCASIONS`. It grades itself with the lighting grades copied from
+`generate-lighting.mjs` (keep them in step), draws its own two-step hover outline, and turns the page at local
+midnight and on tab return. The date is unknown until mount, so SSR and hydration agree.
+
+**The tour** (`RoomTour.tsx`, steps and target rects in `src/lib/room/tour.ts`): a spotlight inside the stage
+(stage coordinates, so it follows scale and pan) and a caption card fixed to the viewport. Phones pan each
+target to the centre. Arrow keys step, Escape closes (capture phase, before the room's own handlers). The last
+step can zoom straight to the desk.
+
+## Daily challenge
+
+**Daily challenge** (`src/lib/games/daily.ts`): the day is the UTC date, so the whole world shares one board.
+Minesweeper's daily board is seeded from `dailySeed('minesweeper', date)` (FNV-1a -> `mulberry32`) with the
+centre pre-opened (`createDailyBoard`), so it does not depend on the first click. One try a day, remembered in
+games storage (`minesweeper-daily`); the clock starts on the first move; daily wins never touch the classic best.
+`POST /api/highscores/daily` accepts today or yesterday (UTC) only. Scores has a "Daily Minesweeper" tab. To add
+a daily game, extend `DAILY_GAMES`; Solitaire would need a solver first, since some Klondike deals cannot be won.

@@ -4,14 +4,15 @@ Read this before touching code. It holds the rules and the map; the detail lives
 
 | File | What is in it |
 |---|---|
-| `docs/room.md` | Every desk app in depth, room-object coordinates, the sprite pipeline and style guide, audio internals, audio licences |
+| `docs/room.md` | Every desk app in depth, room features (splash, cat, bonsai, window, posters, calendar, tour, daily), room-object coordinates, the sprite pipeline and style guide, audio internals, audio licences |
 | `docs/catan.md` | Pixel Catan (`/catan`): engine, bots, UI, saves, tests |
-| `docs/history.md` | Session log v1-v27, the old roadmap, notes on the retired conventional site |
+| `docs/recipes.md` | The cookbook / recipe blog: design draft (not built yet) |
+| `docs/history.md` | Session log v1-v31, the old roadmap, notes on the retired conventional site |
 | `docs/archive/todo-2026.md` | Design logs and build plans (Catan CAT*, mobile MOB*, terminal TRM, snake SNK) |
 | `CONTENT.md` | Owner-editable site copy |
 | `SECURITY-REVIEW.md` | The June 2026 audit |
 
-Last consolidated: 13 October 2026.
+Last consolidated: 27 November 2026 (per-feature room detail and the v28-v31 log moved to `docs/room.md` and `docs/history.md`).
 
 ## What this project is
 
@@ -23,27 +24,9 @@ monitor runs a small pixel OS (README, games, guestbook, terminal...), plus `/ca
 (`/home`, `/games`, `/projects`, `/tutoring`, `/legal`, `/room`) redirect permanently (308) to `/`. Their code, the monochrome theme
 and the Inter/Playfair fonts were deleted in `4a6f3cb` (recover from `4a6f3cb^`).
 
-## Current state (25 October 2026)
+## Current state
 
-v31: a wall calendar left of the Saitama poster shows the visitor's month with today circled (drawn in code,
-in the wall's perspective, seasonal picture, occasion dots, a click gives the day of the year and the next
-occasion; discovery `calendar`, 34 in all); the side table has its left side under the desk; visitors with
-reduced motion no longer hit a hydration error (see Accessibility); first-click toasts stack instead of overlapping.
-
-v30: the window shows a pixel-art city for every time of day and weather (the CSS moon, stars, rain and snow
-are gone), the My Dress Up Darling poster has a looping hover animation, the cat has a food bowl, and the
-splash is back to its 28 hand-drawn frames at 120 ms.
-
-v29: the Xtreme splash moved to one sprite sheet, plays
-in full on the first visit and once a day with a short cut otherwise, and holds its first frame until the room
-behind it has loaded; the bonsai grows with visits (5 stages, hover highlight, blossoms); the music is AAC
-`.m4a` at 96 kbps (89 MB of MP3 down to 66 MB), with the MP3 masters in `assets/audio/`.
-
-v28 added: shareable desk links (`/?app=chess`, the address bar follows the open app), a daily Minesweeper
-challenge with a per-day public board, the cat on the bed, a guided room tour (`?tour`, the README's strip, the
-room HUD), a per-request CSP nonce (no more `unsafe-inline` scripts), music that downloads nothing until it plays,
-and this docs split. Before that: the desk shelf, Typing, Scores and Request apps (v23), phones (v22). See
-`docs/history.md`.
+v31 (25 October 2026). What each version added: `docs/history.md`.
 
 ## Critical constraints
 
@@ -144,55 +127,11 @@ union bbox so frames never jitter; hover plays highlight frames (#f6da9c outline
 registry entry -> sprites in `public/room/` -> add to `FILES` in `scripts/generate-lighting.mjs` and run
 `npm run lighting` -> copy in `en.ts` -> render in `Room.tsx`. Overlapping sprites use `hitPath` masks.
 
-**Splash** (`XtremeSplash.tsx`, timing in `src/lib/room/splash.ts`, tested): one sheet
-`public/room/xtreme-sheet.png` from `scripts/extract-xtreme.mjs` (the 28 hand-drawn frames at 120 ms; the script
-can generate in-betweens with `TWEENS`, but the owner prefers the animation as drawn). Full play on the first visit and when `splashAt` is a day old, else a short cut from the white
-logo. The first frame is held until every eager `<img>` behind it has finished and fonts are in (4 s cap). Any key
-or press skips it; reduced motion skips it entirely.
-
-**The bonsai** (`src/lib/room/bonsai.ts`, tested; art from `scripts/draw-bonsai.mjs`): stage by visit (1 sprout,
-2 from visit 2, 3 from visit 4, 4 the hand-drawn tree from visit 7, 5 in bloom from visit 12), `?bonsai=1..5`
-forces one. Six frames per stage (`bonsai-<stage>-<frame>.png`): rest, 1 px highlight, then four 2 px swaying
-frames that `AnimatedSprite` loops (`loopFrom`). Rendered only after prefs load, like the cat.
-
-**The cat** (`RoomCat.tsx`, art from `scripts/draw-cat.mjs`, drawn in code on a 2 px grid): sleeps at one of
-`CAT_SPOTS` chosen by `visitCount`, breathes on a 1.3 s two-frame loop with drifting Zs, wakes for 3.5 s on a
-click (mew + purr tones, a toast line from `room.catWake`, the `cat` discovery). Rendered only after prefs load.
-Its bowl (`CAT_BOWL` in `src/lib/room/cat-feeding.ts`, tested) is on the floor by the bed: a click fills it
-(`kibble` tone) and the cat plays a timeline (`feedingTimeline`/`feedingPose`): sits up, walks to the mattress
-edge, crouches, leaps down, walks to the bowl, eats for 4.8 s while it empties (`room.catFed` toast, `fed`
-discovery), then leaps back up and curls up where it was. Profile sprites: `cat-walk-1..4` (frames advance with
-distance, so paws never slide), `cat-crouch`, `cat-leap`, `cat-eat-1..2`. Reduced motion skips the walks.
-
-**The window** (`RoomWindow.tsx`, `src/lib/room/window-view.ts`, tested; art from `scripts/draw-window.mjs`): a
-pixel city cut to the two panes of glass, one still per lighting state and weather (`/room/window/<light>-<weather>.png`,
-never graded), with looping rain, snow and night twinkle frames. Weather is Canberra's from `/api/weather`;
-`?weather=clear|rain|snow|heavy-rain|heavy-snow` forces it.
-
-**The poster** (`scripts/draw-poster.mjs`): 14 frames from `kitagawa-1.png`: rest, 1 px highlight, then a
-12-frame hover loop (`POSTER_LOOP_FROM`): the printed hearts bob behind her, a glint sweeps the glossy print, a
-sparkle at her fingertips. She herself never moves (an earlier version that moved her looked wrong).
-
-**The Saitama poster** (`scripts/draw-saitama.mjs`, box widened 16 px left to x 745 for the punch): built from
-the layers of `assets/pixel-art/poster/saitama.ase` (the script reads the .ase itself): 26 frames at 50 ms: rest,
-highlight, the fist growing out of his raised hand and over the poster's edge (drawn above the frame and cape),
-an impact (overshoot, jolt, burst), then a 12-frame idle loop (`SAITAMA_LOOP_FROM`): the
-sunburst boils with streaks flying out, power ticks round the fist, a shine on his head. Click still swaps to
-`poster-alt.png`.
-
-**The calendar** (`RoomCalendar.tsx`; dates, occasions and wall geometry in `src/lib/room/calendar.ts`, art in
-`calendar-art.ts`, both tested): no sprite files. `drawCalendar` paints RGBA for `CALENDAR_RECT` at one pixel per
-stage pixel: the page is drawn flat, then bent onto the wall through `WALL_VANISHING_POINT` (measured off the
-Saitama poster), while glyphs (a 3x5 font), the ring round today and the nail are stamped whole so text never
-shears. Monday-first grid, past days faded, Sundays red, southern-hemisphere seasonal picture (spring is
-Floriade), dots on fixed-date `OCCASIONS`. It grades itself with the lighting grades copied from
-`generate-lighting.mjs` (keep them in step), draws its own two-step hover outline, and turns the page at local
-midnight and on tab return. The date is unknown until mount, so SSR and hydration agree.
-
-**The tour** (`RoomTour.tsx`, steps and target rects in `src/lib/room/tour.ts`): a spotlight inside the stage
-(stage coordinates, so it follows scale and pan) and a caption card fixed to the viewport. Phones pan each
-target to the centre. Arrow keys step, Escape closes (capture phase, before the room's own handlers). The last
-step can zoom straight to the desk.
+**Room features.** Splash, bonsai, cat and bowl, window, both posters, calendar and tour each have their own
+module in `src/lib/room/` (most with tests) and an art script in `scripts/`. Read their section in `docs/room.md`
+("Room features") before changing one. Rules that apply to all of them: the cat and bonsai render only after prefs
+load; the calendar's date is unknown until mount, so SSR and hydration agree; the owner prefers the splash's 28
+hand-drawn frames as drawn, and the Kitagawa poster's figure never moves.
 
 **Lighting.** Visitor-local dawn/day/dusk/night picks graded sprite sets in `public/room/lighting/<state>/`
 (dusk = originals). Rerun `npm run lighting` after any sprite change. Emissive layers (boot screen, notes, LED
@@ -217,12 +156,7 @@ Desk games live in `src/components/room/Desk*.tsx` with pure engines and `node:t
 public top 10 per game (`HISCORE_GAMES` in `highscores.ts` sets each game's plausible range; scores are
 browser-reported, so ranges keep out junk, not a determined cheat).
 
-**Daily challenge** (`src/lib/games/daily.ts`): the day is the UTC date, so the whole world shares one board.
-Minesweeper's daily board is seeded from `dailySeed('minesweeper', date)` (FNV-1a -> `mulberry32`) with the
-centre pre-opened (`createDailyBoard`), so it does not depend on the first click. One try a day, remembered in
-games storage (`minesweeper-daily`); the clock starts on the first move; daily wins never touch the classic best.
-`POST /api/highscores/daily` accepts today or yesterday (UTC) only. Scores has a "Daily Minesweeper" tab. To add
-a daily game, extend `DAILY_GAMES`; Solitaire would need a solver first, since some Klondike deals cannot be won.
+**Daily challenge** (`src/lib/games/daily.ts`): one UTC-dated board for the whole world; details in `docs/room.md`.
 
 Pixel Catan: `docs/catan.md`.
 
@@ -269,3 +203,4 @@ Pixel Catan: `docs/catan.md`.
 - Daily Solitaire (needs a winnable-deal solver); a share card for scores (`next/og`).
 - Seasonal art variants; a blog notebook (MDX); an admin page for moderating boards.
 - Ideas backlog from the owner: `ideas.txt`.
+

@@ -9,3 +9,5 @@ assets/svgs/
 *.md
 !README.md
 ideas.txt
+# MP3 masters: re-encode with scripts/encode-audio.sh. The site ships public/audio/*.m4a.
+assets/audio/

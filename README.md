@@ -77,7 +77,8 @@ npm run test:room && npm run test:games && npm run test:terminal && npm run test
 
 ## Deployment
 
-Pushing to `master` deploys to production on Vercel. `vercel.json` is needed: the Vercel project has no framework
+Pushing to `master` builds a preview on Vercel, not production. To release, open that deployment in the Vercel
+dashboard and choose Promote to Production. `vercel.json` is needed: the Vercel project has no framework
 preset of its own.
 
 ## Documentation

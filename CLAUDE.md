@@ -189,6 +189,8 @@ Gurtle (daily word ladder, public streak board, turtle mascot): `docs/gurtle.md`
 
 - `npm run dev` (copy `.env.example` to `.env.local` first); production check: `npm run build && npx next start`.
 - Before deploying: `npm run type-check && npm run lint && npm run build`. Lint is clean; keep it that way.
+- Releases: a push to `master` only builds a preview. Production is a separate step (Promote to Production in
+  the Vercel dashboard), and previews share the production Redis, so do not post test data from them.
 - Keep `vercel.json`: the Vercel project has no framework preset, so that file is what tells it this is Next.js.
 - `package.json` overrides Next's pinned PostCSS with the root one (audit fix); drop it when Next ships a
   patched version.

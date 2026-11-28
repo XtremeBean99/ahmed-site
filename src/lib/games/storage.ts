@@ -84,6 +84,14 @@ export const MAHJONG_SAVE_KEY = 'mahjong-save'
 export const MAHJONG_PREFS_KEY = 'mahjong-prefs'
 export const MAHJONG_STATS_KEY = 'mahjong-stats'
 
+/** Gurtle: today's daily and the practice game in progress, the daily record, and the tutorial flag. */
+export const GURTLE_KEYS = {
+  daily: 'gurtle-daily',
+  practice: 'gurtle-practice',
+  stats: 'gurtle-stats',
+  tutorialSeen: 'gurtle-tutorial-seen',
+} as const
+
 export const SCORES_KEYS = {
   breakout: 'breakout-scores',
 } as const

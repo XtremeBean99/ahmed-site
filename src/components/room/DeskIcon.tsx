@@ -459,3 +459,23 @@ export const ICON_REQUEST = pixels([
   '......oooo......',
   '................',
 ], ARCADE_ICON_PALETTE)
+
+// Gurtle the turtle, the word game's mascot (the full sprite is public/gurtle/).
+export const ICON_GURTLE = pixels([
+  '................',
+  '................',
+  '................',
+  '............ooo.',
+  '.....oooo..okkko',
+  '....oGgGGo.okkeo',
+  '...oGgGdGGooKkko',
+  '..oGGGdGdGGoKkmo',
+  '.oGGGdGGGdGGoKo.',
+  '.oyyyyyyyyyyoKo.',
+  'ooooooooooooooo.',
+  '..okko...okko...',
+  '..oooo...oooo...',
+  '................',
+  '................',
+  '................',
+], { ...ARCADE_ICON_PALETTE, G: '#56803a', g: '#8ab85a', d: '#2c4620', y: '#decc80', k: '#a4ca68', K: '#7aa04c', e: '#2a2520', m: '#8a3a2a' })

@@ -56,6 +56,7 @@ import {
   ICON_MINESWEEPER,
   ICON_SNAKE,
   ICON_TYPING,
+  ICON_GURTLE,
   ICON_HIGHSCORES,
   ICON_REQUEST,
   ICON_BLACKJACK,
@@ -667,7 +668,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
 
   const glowX = (screenCenterX / STAGE_W) * 100
   const glowY = (screenCenterY / STAGE_H) * 100
-  // A 7x3 grid on the desk (4x5 on a portrait phone): about the site, then tools and media, then the games.
+  // A 7x3 grid on the desk (4 across on a portrait phone): about the site, then tools and media, then the games.
   const deskShortcuts: DesktopShortcut[] = [
     { id: 'readme', kind: 'app', target: 'readme', label: t.desk.readme, tooltip: t.desk.readmeTip, icon: ICON_README },
     { id: 'linkedin', kind: 'external', target: 'https://www.linkedin.com/in/ahmed-hussain-0880ba25a/', label: t.desk.linkedin, tooltip: t.desk.linkedinTip, icon: ICON_LINKEDIN, iconSize: 24 },
@@ -689,6 +690,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
     { id: 'breakout', kind: 'app', target: 'breakout', label: t.desk.breakout, tooltip: t.desk.breakoutTip, icon: ICON_BREAKOUT },
     { id: 'chess', kind: 'app', target: 'chess', label: t.desk.chess, tooltip: t.desk.chessTip, icon: ICON_CHESS },
     { id: 'mahjong', kind: 'app', target: 'mahjong', label: t.desk.mahjong, tooltip: t.desk.mahjongTip, icon: ICON_MAHJONG },
+    { id: 'gurtle', kind: 'app', target: 'gurtle', label: t.desk.gurtle, tooltip: t.desk.gurtleTip, icon: ICON_GURTLE },
   ]
 
   // How far the phone can pan before the stage edge hits the viewport edge.
@@ -743,6 +745,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
           typingLabels={t.desk.typingApp}
           highscoresLabels={t.desk.highscoresApp}
           requestLabels={t.desk.requestApp}
+          gurtleLabels={t.desk.gurtleApp}
           shelfLabels={deskShelfLabels}
           onOpenBook={openBook}
           onOpenCatan={openCatan}

@@ -23,6 +23,7 @@ test('withApp sets, replaces and clears the param, keeping the rest', () => {
 
 test('isLinkableApp narrows strings', () => {
   assert.ok(isLinkableApp('mahjong'))
+  assert.ok(isLinkableApp('gurtle'))
   assert.ok(!isLinkableApp('readme'))
   assert.ok(!isLinkableApp(undefined))
 })

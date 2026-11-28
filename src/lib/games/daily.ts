@@ -35,6 +35,15 @@ export function isAcceptedDailyDate(date: string, now: Date = new Date()): boole
   return date === today || date === yesterday
 }
 
+/** Gurtle #1's date: puzzle numbers count UTC days from here (lib/games/gurtle.ts). */
+export const GURTLE_LAUNCH_DATE = '2026-11-28'
+
+/** Gurtle #n for a UTC date (#1 on launch day). Also caps a believable streak (highscores.ts). */
+export function gurtleNumber(date: string): number {
+  const ms = Date.parse(`${date}T00:00:00Z`) - Date.parse(`${GURTLE_LAUNCH_DATE}T00:00:00Z`)
+  return Math.floor(ms / 86_400_000) + 1
+}
+
 /** Milliseconds until the next UTC midnight, when a new board comes out. */
 export function msUntilNextDaily(now: Date = new Date()): number {
   const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)

@@ -6,7 +6,7 @@
  */
 export const LINKABLE_APPS = [
   'paint', 'minesweeper', 'snake', 'blackjack', 'solitaire', 'pong', 'breakout', 'chess', 'mahjong',
-  'music', 'legal', 'guestbook', 'settings', 'movie', 'typing', 'highscores', 'request',
+  'music', 'legal', 'guestbook', 'settings', 'movie', 'typing', 'highscores', 'request', 'gurtle',
 ] as const
 
 export type LinkableApp = (typeof LINKABLE_APPS)[number]

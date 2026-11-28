@@ -35,6 +35,7 @@ import { AppBoundary, AppLoading } from './AppBoundary'
 import { DeskShelf, type DeskShelfLabels } from './DeskShelf'
 import { RoomIpod } from './RoomIpod'
 import type { TypingLabels } from './DeskTyping'
+import type { GurtleLabels } from './DeskGurtle'
 import type { HighscoresLabels } from './DeskHighscores'
 import type { RequestLabels } from './DeskRequest'
 import { DESK_IPOD, DESK_SHELF } from '@/lib/room/desk-shelf'
@@ -60,12 +61,14 @@ const DeskMovie = dynamic(() => import('./DeskMovie').then((m) => m.DeskMovie), 
 const DeskTyping = dynamic(() => import('./DeskTyping').then((m) => m.DeskTyping), { ssr: false, loading: AppLoading })
 const DeskHighscores = dynamic(() => import('./DeskHighscores').then((m) => m.DeskHighscores), { ssr: false, loading: AppLoading })
 const DeskRequest = dynamic(() => import('./DeskRequest').then((m) => m.DeskRequest), { ssr: false, loading: AppLoading })
+const DeskGurtle = dynamic(() => import('./DeskGurtle').then((m) => m.DeskGurtle), { ssr: false, loading: AppLoading })
 const APP_CHUNKS = [
   () => import('./DeskPaint'), () => import('./DeskMinesweeper'), () => import('./DeskSnake'),
   () => import('./DeskBlackjack'), () => import('./DeskSolitaire'), () => import('./DeskPong'),
   () => import('./DeskBreakout'), () => import('./DeskChess'), () => import('./DeskMahjong'), () => import('./DeskMusic'), () => import('./DeskLegal'),
   () => import('./DeskSettings'), () => import('./DeskTerminal'), () => import('./DeskGuestbook'),
   () => import('./DeskMovie'), () => import('./DeskTyping'), () => import('./DeskHighscores'), () => import('./DeskRequest'),
+  () => import('./DeskGurtle'),
 ]
 
 const SCREEN_X = 436; const SCREEN_Y = 152
@@ -109,7 +112,7 @@ function mobileDeskLayout(vw: number, vh: number) {
     slack: { x: slackX, y: slackY },
   }
 }
-type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'snake' | 'blackjack' | 'solitaire' | 'pong' | 'breakout' | 'chess' | 'mahjong' | 'readme' | 'music' | 'legal' | 'guestbook' | 'settings' | 'terminal' | 'movie' | 'typing' | 'highscores' | 'request'
+type ScreenMode = 'desktop' | 'paint' | 'minesweeper' | 'snake' | 'blackjack' | 'solitaire' | 'pong' | 'breakout' | 'chess' | 'mahjong' | 'readme' | 'music' | 'legal' | 'guestbook' | 'settings' | 'terminal' | 'movie' | 'typing' | 'highscores' | 'request' | 'gurtle'
 
 interface DeskViewProps {
   shortcuts: DesktopShortcut[]
@@ -166,6 +169,7 @@ interface DeskViewProps {
   typingLabels: TypingLabels
   highscoresLabels: HighscoresLabels
   requestLabels: RequestLabels
+  gurtleLabels: GurtleLabels
   /** The shelf above the desk (look-up pan) and its items */
   shelfLabels: DeskShelfLabels
   /** A shelf book: Room opens the e-reader */
@@ -199,7 +203,7 @@ const SAFE_PADDING = 'env(safe-area-inset-top) env(safe-area-inset-right) env(sa
 const PORTRAIT_STAGE: React.CSSProperties = { position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', transform: 'none' }
 
 export function DeskView(props: DeskViewProps) {
-  const { shortcuts, backLabel, clickAgainLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, chessLabels, mahjongLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, typingLabels, highscoresLabels, requestLabels, shelfLabels, onOpenBook, onOpenCatan, ipodLabel, onIpod, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, tourLabel, onStartTour, onToggleLamp, onBack, nowPlayingLabels } = props
+  const { shortcuts, backLabel, clickAgainLabel, screenLabel, desktopLabel, speakersLabel, lampOn, lampFlicker, lampLabel, paintLabels, minesLabels, snakeLabels, blackjackLabels, solitaireLabels, pongLabels, breakoutLabels, chessLabels, mahjongLabels, arcadeLabels, readmeLabels, musicLabels, legalLabels, legalPrivacy, legalTerms, legalEffectiveDate, settingsLabels, sfxOn, onSfx, sfxVolume, onSfxVolume, musicVolume, onMusicVolume, is24h, onClock, readmeContent, terminalLabels, guestbookLabels, movieLabels, typingLabels, highscoresLabels, requestLabels, gurtleLabels, shelfLabels, onOpenBook, onOpenCatan, ipodLabel, onIpod, initialApp, onInitialAppHandled, konamiOpen, onKonamiHandled, tourLabel, onStartTour, onToggleLamp, onBack, nowPlayingLabels } = props
   const { scale, mobile, portrait } = useStageScale()
   const t = useT().desk
   const reduce = useReducedMotion()
@@ -888,6 +892,16 @@ export function DeskView(props: DeskViewProps) {
                 {boundary(<DeskHighscores time={time} backLabel={backLabel} desktopLabel={desktopLabel}
                   labels={highscoresLabels} arcade={arcadeLabels} onDesktop={goDesktop}
                   onBack={backToRoom} onOpenApp={openApp} />)}
+              </motion.div>
+            )}
+
+            {screenMode === 'gurtle' && (
+              <motion.div key="gurtle" className="absolute inset-0"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: reduce ? 0 : 0.2 }}>
+                {boundary(<DeskGurtle time={time} backLabel={backLabel} desktopLabel={desktopLabel}
+                  labels={gurtleLabels} arcade={arcadeLabels} onDesktop={goDesktop}
+                  onBack={backToRoom} />)}
               </motion.div>
             )}
 

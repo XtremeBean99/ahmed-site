@@ -310,7 +310,7 @@ export class Interp implements ExpandCtx {
     return t.length > CAPTURE_MAX ? t.slice(0, CAPTURE_MAX) : t
   }
 
-  private snapshot(): { vars: Map<string, VarValue>; pos: string[][]; cwd: string; posTop: string[] } {
+  private snapshot(): { vars: Map<string, VarValue>; scopes: Map<string, VarValue>[]; pos: string[][]; cwd: string; posTop: string[] } {
     const vars = new Map<string, VarValue>()
     for (const [k, v] of this.vars) vars.set(k, { ...v, array: v.array ? v.array.slice() : null, assoc: v.assoc ? new Map(v.assoc) : null })
     const scopes = this.scopes.map((s) => {
@@ -319,11 +319,11 @@ export class Interp implements ExpandCtx {
       return m
     })
     const pos = this.positionalsStack.map((p) => p.slice())
-    return { vars, pos, cwd: this.cwd, posTop: pos[pos.length - 1] ?? [] }
+    return { vars, scopes, pos, cwd: this.cwd, posTop: pos[pos.length - 1] ?? [] }
   }
-  private restore(s: { vars: Map<string, VarValue>; pos: string[][]; cwd: string; posTop: string[] }): void {
+  private restore(s: { vars: Map<string, VarValue>; scopes: Map<string, VarValue>[]; pos: string[][]; cwd: string; posTop: string[] }): void {
     this.vars = s.vars
-    this.scopes = []
+    this.scopes = s.scopes
     this.positionalsStack = s.pos
     this.cwd = s.cwd
   }

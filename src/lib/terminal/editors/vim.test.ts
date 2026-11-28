@@ -1394,3 +1394,15 @@ test('undo after dd restores content and cursor', () => {
   feed(t, 'u')
   assert.deepEqual(t.linesArr(), ['a', 'b', 'c'])
 })
+
+test('p pastes characters after the cursor and P before it', () => {
+  const after = makeVim('abc\n')
+  feed(after.t, 'xp')
+  assert.equal(after.t.linesArr()[0], 'bac')
+  const before = makeVim('abc\n')
+  feed(before.t, 'xP')
+  assert.equal(before.t.linesArr()[0], 'abc')
+  const empty = makeVim('a\n')
+  feed(empty.t, 'xp')
+  assert.equal(empty.t.linesArr()[0], 'a')
+})

@@ -894,12 +894,6 @@ async function expandTilde(raw: string, ctx: ExpandCtx): Promise<string> {
   return raw
 }
 
-export async function expandWords(words: string[], ctx: ExpandCtx): Promise<string[]> {
-  const out: string[] = []
-  for (const w of words) out.push(...await expandWord(w, ctx))
-  return out
-}
-
 /** Assignment values: tilde, params, cmdsub, arith, quote removal; no splitting/globbing. */
 export async function expandAssignValue(raw: string, ctx: ExpandCtx): Promise<string> {
   const text = await expandTilde(raw, ctx)

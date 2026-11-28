@@ -43,20 +43,8 @@ import {
   type ScoreResult,
 } from './mahjong-scoring'
 
-export type { Meld, ScoreResult, ScoreInput, ScoreItem } from './mahjong-scoring'
-export {
-  PAYOUT_TABLE,
-  faanToPoints,
-  scoreHand,
-  shanten,
-  shantenCounts,
-  waitingTiles,
-  isWinningHand,
-  decompositions,
-  toCounts,
-  tileIndex,
-  indexToCode,
-} from './mahjong-scoring'
+export type { Meld } from './mahjong-scoring'
+export { waitingTiles } from './mahjong-scoring'
 
 // ---------------------------------------------------------------------------
 // Types

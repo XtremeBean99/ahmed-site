@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRoomAudio } from './RoomAudioProvider'
 import { PLAYLIST } from '@/lib/room/playlist'
-import { extractCoverFromMp3 } from '@/lib/room/id3'
 import { isMediaVolumeReadOnly } from '@/lib/room/media'
 
 interface NowPlayingProps {
@@ -31,10 +30,8 @@ const releaseAfterClick = (e: React.MouseEvent<HTMLElement>) => {
 export function NowPlaying({ labels, embedded }: NowPlayingProps) {
   const { playing, trackIndex, volume, toggle, nextTrack, setVolume } = useRoomAudio()
   const [coverError, setCoverError] = useState(false)
-  const [embeddedCover, setEmbeddedCover] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const [volumeReadOnly, setVolumeReadOnly] = useState(false)
-  const prevTrackRef = useRef('')
   const track = PLAYLIST[trackIndex]
 
   // The server HTML must not include the cover: it would preload track 0's
@@ -44,31 +41,8 @@ export function NowPlaying({ labels, embedded }: NowPlayingProps) {
     setVolumeReadOnly(isMediaVolumeReadOnly())
   }, [])
 
-  // When track changes and has no external cover, try extracting embedded art
-  // (MP3 ID3 tags only; the encoded .m4a tracks carry none, so they need a cover file)
-  useEffect(() => {
-    if (track.cover || !track.src.endsWith('.mp3') || prevTrackRef.current === track.src) return
-    prevTrackRef.current = track.src
-    setEmbeddedCover(null)
-
-    let revoked = false
-    let blobUrl: string | null = null
-
-    extractCoverFromMp3(track.src).then((cover) => {
-      if (cover && !revoked) {
-        const blob = new Blob([new Uint8Array(cover.data)], { type: cover.mime })
-        blobUrl = URL.createObjectURL(blob)
-        setEmbeddedCover(blobUrl)
-      }
-    }).catch(() => {})
-
-    return () => {
-      revoked = true
-      if (blobUrl) URL.revokeObjectURL(blobUrl)
-    }
-  }, [track.src, track.cover])
-
-  const coverSrc = track.cover || embeddedCover
+  // Every track ships a cover file: the encoded .m4a files carry no embedded art.
+  const coverSrc = track.cover
 
   return (
     <div

@@ -11,12 +11,7 @@ interface I18nValue {
 
 const I18nContext = createContext<I18nValue | null>(null)
 
-/**
- * Makes the active locale + dictionary available to client components. Fed by
- * the server layout, which reads the locale cookie. On a language switch the
- * layout re-renders (via router.refresh) and passes a new dictionary down, so
- * consumers re-render in the new language while keeping their local state.
- */
+/** Makes the dictionary available to client components. Fed by the root layout. */
 export function I18nProvider({
   locale,
   dict,

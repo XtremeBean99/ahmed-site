@@ -21,8 +21,6 @@ export const BRICK_GAP = 2
 export const GRID_X = 17
 export const GRID_Y = 36
 export const COLS = 14
-export const MAX_ROWS = 8
-
 export const STEP_MS = 1000 / 120
 const STEP_SEC = STEP_MS / 1000
 const EPS = 0.001

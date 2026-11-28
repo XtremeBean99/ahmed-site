@@ -92,67 +92,6 @@ export function DeskIcon({ label, tooltip, href, icon, iconSize = 32, portraitSi
 
 // 16×16 pixel icons (each rect is 1px in the 16×16 grid)
 
-export const ICON_HOME = (
-  <>
-    <rect x="2" y="6" width="12" height="9" fill="#3a3028" />
-    <rect x="4" y="8" width="3" height="7" fill="#faf8f5" />
-    <rect x="10" y="11" width="2" height="4" fill="#faf8f5" />
-    <rect x="1" y="5" width="14" height="2" fill="#5a4a3a" />
-    <rect x="7" y="2" width="2" height="4" fill="#5a4a3a" />
-    <rect x="6" y="1" width="4" height="2" fill="#5a4a3a" />
-  </>
-)
-
-export const ICON_GAMES = (
-  <>
-    <rect x="2" y="3" width="4" height="2" fill="#3a3028" />
-    <rect x="8" y="3" width="4" height="2" fill="#3a3028" />
-    <rect x="3" y="5" width="2" height="3" fill="#3a3028" />
-    <rect x="9" y="5" width="2" height="3" fill="#3a3028" />
-    <rect x="4" y="9" width="7" height="1" fill="#5a4a3a" />
-    <rect x="5" y="10" width="5" height="2" fill="#5a4a3a" />
-    {/* D-pad */}
-    <rect x="3" y="12" width="1" height="2" fill="#5a4a3a" />
-    <rect x="2" y="13" width="3" height="1" fill="#5a4a3a" />
-  </>
-)
-
-export const ICON_PROJECTS = (
-  <>
-    <rect x="3" y="2" width="10" height="10" fill="#faf8f5" />
-    <rect x="2" y="1" width="10" height="1" fill="#5a4a3a" />
-    <rect x="2" y="1" width="1" height="11" fill="#5a4a3a" />
-    <rect x="3" y="5" width="6" height="1" fill="#3a3028" />
-    <rect x="3" y="7" width="4" height="1" fill="#3a3028" />
-    <rect x="3" y="9" width="5" height="1" fill="#3a3028" />
-  </>
-)
-
-export const ICON_TUTORING = (
-  <>
-    <rect x="5" y="1" width="4" height="2" fill="#3a3028" />
-    <rect x="5" y="3" width="4" height="7" fill="#faf8f5" />
-    <rect x="4" y="3" width="1" height="7" fill="#5a4a3a" />
-    <rect x="9" y="3" width="1" height="7" fill="#5a4a3a" />
-    <rect x="5" y="10" width="4" height="1" fill="#5a4a3a" />
-    <rect x="3" y="13" width="2" height="1" fill="#3a3028" />
-    <rect x="9" y="13" width="2" height="1" fill="#3a3028" />
-    <rect x="6" y="13" width="2" height="2" fill="#5a4a3a" />
-  </>
-)
-
-export const ICON_CONTACT = (
-  <>
-    <rect x="2" y="3" width="10" height="8" fill="#faf8f5" />
-    <rect x="1" y="2" width="12" height="1" fill="#5a4a3a" />
-    <rect x="1" y="3" width="1" height="8" fill="#5a4a3a" />
-    <rect x="12" y="3" width="1" height="8" fill="#5a4a3a" />
-    <rect x="2" y="11" width="10" height="1" fill="#5a4a3a" />
-    {/* Envelope flap */}
-    <polygon points="2,3 7,8 12,3" fill="#3a3028" />
-  </>
-)
-
 export const ICON_LEGAL = (
   <>
     <circle cx="7" cy="7" r="2" fill="none" stroke="#3a3028" strokeWidth="1" />
@@ -342,20 +281,6 @@ export const ICON_LINKEDIN = (
 
 export const ICON_GITHUB = (
   <image href="/icons/github-logo.png" x="0" y="0" width="16" height="16" preserveAspectRatio="xMidYMid meet" />
-)
-
-export const ICON_BROWSER = (
-  <>
-    {/* Compass/globe */}
-    <circle cx="8" cy="8" r="5" fill="none" stroke="#3a3028" strokeWidth="2" />
-    {/* Meridian */}
-    <ellipse cx="8" cy="8" rx="2" ry="5" fill="none" stroke="#3a3028" strokeWidth="1" />
-    {/* Equator */}
-    <rect x="3" y="7" width="10" height="2" fill="none" stroke="#3a3028" strokeWidth="1" />
-    {/* Stand */}
-    <rect x="6" y="13" width="4" height="1" fill="#3a3028" />
-    <rect x="7" y="14" width="2" height="1" fill="#3a3028" />
-  </>
 )
 
 export const ICON_README = (

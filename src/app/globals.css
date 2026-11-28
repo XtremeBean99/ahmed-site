@@ -38,11 +38,8 @@
     border-radius: 2px;
   }
 
-  /* Animations are intentionally always on for this site: the reduced-motion
-     override that previously flattened CSS animations/transitions here has been
-     removed so the full experience plays even when the OS requests reduced
-     motion. Motion behaviour is centralised via MotionProvider and
-     prefersReducedMotion() in @/lib/motion. */
+  /* No CSS reduced-motion override: components that animate decoration check
+     useReducedMotion (@/lib/use-reduced-motion) themselves. */
 }
 
 
@@ -84,13 +81,6 @@
   55%  { opacity: 0.4; }
   65%  { opacity: 1; }
   100% { opacity: 1; }
-}
-
-@keyframes dust-float {
-  0%   { transform: translate(0, 0) scale(1); opacity: 0; }
-  10%  { opacity: var(--dust-opacity, 0.6); }
-  90%  { opacity: var(--dust-opacity, 0.6); }
-  100% { transform: translate(var(--dx), var(--dy)) scale(var(--ds, 1)); opacity: 0; }
 }
 
 @keyframes mouse-jitter {

@@ -8,7 +8,6 @@ import {
   legalRoads,
   legalSettlements,
   playerPortTypes,
-  satisfiesDistanceRule,
   totalCards,
   victoryPoints,
 } from '../helpers'
@@ -340,14 +339,6 @@ export function longestRoadAfterEdge(state: GameState, bot: PlayerId, edge: numb
   return longestRoadFor({ ...state, roads }, bot)
 }
 
-export function roadWouldGainLongestRoad(state: GameState, bot: PlayerId, edge: number): boolean {
-  if (state.longestRoadHolder === bot) return false
-  const lr = longestRoadAfterEdge(state, bot, edge)
-  if (lr < MIN_LONGEST_ROAD) return false
-  const maxOpponent = state.players.reduce((max, p) => (p.id === bot ? max : Math.max(max, p.longestRoad)), 0)
-  return lr > maxOpponent
-}
-
 export function roadLrBonus(state: GameState, bot: PlayerId, edge: number): number {
   const lr = longestRoadAfterEdge(state, bot, edge)
   if (lr < MIN_LONGEST_ROAD) return 0
@@ -405,13 +396,4 @@ export function positionValue(state: GameState, bot: PlayerId): number {
   if (vp + 1 >= state.settings.vpToWin) value += 30
   else if (vp + 2 >= state.settings.vpToWin) value += 10
   return value
-}
-
-/** True when the vertex is a legal settlement spot for the bot (helper for planning). */
-export function isReachableSettlementSpot(state: GameState, bot: PlayerId, vertex: number): boolean {
-  return (
-    state.players[bot].settlementsLeft > 0 &&
-    satisfiesDistanceRule(state, vertex) &&
-    VERTICES[vertex].edges.some((e) => state.roads[e] === bot)
-  )
 }

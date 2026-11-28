@@ -34,9 +34,3 @@ export const phrases: string[] = [
   'Incident response is judged by the hours, not the apology that follows.',
   'Fair process matters most when the stakes are highest.',
 ]
-
-/** Pick a random phrase, avoiding an exact immediate repeat where possible. */
-export function pickRandomPhrase(exclude?: string): string {
-  const pool = exclude && phrases.length > 1 ? phrases.filter((p) => p !== exclude) : phrases
-  return pool[Math.floor(Math.random() * pool.length)]
-}

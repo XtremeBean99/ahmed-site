@@ -32,10 +32,6 @@ export const FONT = { small: 10, body: 12, title: 16, big: 24 } as const
 export const FOCUS_CLASS =
   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(200,184,154,0.7)]'
 
-export function pixelStyle(extra?: CSSProperties): CSSProperties {
-  return { ...PIXEL_FONT, ...extra }
-}
-
 export interface PixelButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'primary' | 'danger' | 'good' | 'ghost'
   /** sm keeps the old compact look; md and lg are for primary game actions. All grow to 44 px on touch. */
@@ -151,30 +147,6 @@ export function Overlay({ children, fullScreen = false }: { children: ReactNode;
         justifyContent: 'center',
         backgroundColor: 'rgba(26, 14, 4, 0.72)',
         padding: fullScreen ? 0 : 16,
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-export function DialogPanel({ children, style }: { children: ReactNode; style?: CSSProperties }) {
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      style={{
-        ...PIXEL_FONT,
-        fontSize: 10,
-        backgroundColor: COLORS.panel,
-        border: `2px solid ${COLORS.panelBorder}`,
-        boxShadow: `4px 4px 0 ${COLORS.panelDark}`,
-        color: COLORS.text,
-        padding: 12,
-        maxWidth: 'min(92vw, 640px)',
-        maxHeight: '88vh',
-        overflowY: 'auto',
-        ...style,
       }}
     >
       {children}

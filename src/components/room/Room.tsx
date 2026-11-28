@@ -79,6 +79,7 @@ import { DURATION } from '@/lib/motion'
 import type { Dictionary } from '@/lib/i18n/dictionaries/en'
 import { calendarLabel, calendarNote, type CalendarCopy, type CalendarDate } from '@/lib/room/calendar'
 import { useLightingClock, LightingProvider, lightingSrc, LIGHTING_STATES, type LightingState } from '@/lib/room/lighting'
+import { loadSprites } from '@/lib/room/sprites'
 
 // The e-reader is only needed once a book is opened.
 const RoomReader = dynamic(() => import('./RoomReader').then((m) => m.RoomReader), { ssr: false })
@@ -293,10 +294,8 @@ export function Room({ dict, readmeContent }: RoomProps) {
   // Preload desk close-up art on idle so entering the desk is instant
   useEffect(() => {
     const preload = () => {
-      for (const src of MONITOR_LOADING_FRAMES) {
-        const img = new window.Image()
-        img.src = src
-      }
+      // The same copies the Monitor animates with, so each file is fetched once.
+      loadSprites(MONITOR_LOADING_FRAMES)
       const deskArts = ['/room/desk-closeup.png', '/room/desk-closeup-lamp-off.png']
       for (const src of deskArts) {
         const img = new window.Image()

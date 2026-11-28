@@ -138,6 +138,11 @@ hand-drawn frames as drawn, and the Kitagawa poster's figure never moves.
 (dusk = originals). Rerun `npm run lighting` after any sprite change. Emissive layers (boot screen, notes, LED
 clock, the cat's Zs) are never graded.
 
+**Animated sprites.** Any `<img>` whose `src` animates calls `loadSprites()` for all its frames and renders
+`spriteSrc(path)` (`src/lib/room/sprites.ts`), which swaps between in-memory `blob:` copies. `public/` is served
+with `max-age=0`, so pointed at the files a swap can revalidate over the network, and a fast loop (rain, 90 ms)
+is cancelled and re-requested forever. Preloading with `new Image()` does not prevent it.
+
 **Audio.** One `Audio` element per provider. The provider must ALWAYS render its context (gating it on reduced
 motion once crashed every such visitor). The element gets no `src` until the first `play()` (`ensureLoaded`)
 and autoplay is only attempted after a user activation: Chrome fetches about 1 MB of a track for a refused

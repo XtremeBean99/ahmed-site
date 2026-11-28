@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { RoomObject } from './RoomObject'
 import { useLighting, lightingSrc } from '@/lib/room/lighting'
+import { loadSprites, spriteSrc } from '@/lib/room/sprites'
 import { CAT_FRAMES, CAT_SIZE, type CatSpot } from '@/lib/room/objects'
 import { CAT_BOWL, feedingPose, feedingTimeline, timelineMs, type CatSprite } from '@/lib/room/cat-feeding'
 
@@ -94,13 +95,13 @@ export function RoomCat({ label, bowlLabel, spot, onWake, onFeed, onEat }: RoomC
     if (pose.done || (phase.kind === 'out' && now - phase.started > timelineMs(timeline) + 200)) setPhase({ kind: 'sleep' })
   }, [pose, phase, now, timeline, onEat])
 
-  // Warm every frame for the current lighting so a swap never flashes.
+  // Load every frame for the current lighting: a swap never flashes or refetches.
   useEffect(() => {
     const srcs = [
       ...[...CAT_FRAMES.sleep, CAT_FRAMES.awake].flatMap((f) => [f.rest, f.hover]),
       ...Object.values(SPRITES), ...BOWL_ART.flatMap((b) => [b.rest, b.hover]),
     ]
-    for (const src of srcs) new window.Image().src = lightingSrc(src, lighting)
+    loadSprites(srcs.map((src) => lightingSrc(src, lighting)))
   }, [lighting])
 
   useEffect(() => () => clearTimeout(timer.current), [])
@@ -152,7 +153,7 @@ export function RoomCat({ label, bowlLabel, spot, onWake, onFeed, onEat }: RoomC
         {away ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={lightingSrc(src, lighting)}
+            src={spriteSrc(lightingSrc(src, lighting))}
             alt=""
             aria-hidden
             draggable={false}
@@ -170,7 +171,7 @@ export function RoomCat({ label, bowlLabel, spot, onWake, onFeed, onEat }: RoomC
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={lightingSrc(src, lighting)}
+              src={spriteSrc(lightingSrc(src, lighting))}
               alt=""
               draggable={false}
               width={CAT_SIZE.w}
@@ -220,7 +221,7 @@ export function RoomCat({ label, bowlLabel, spot, onWake, onFeed, onEat }: RoomC
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={lightingSrc(bowlHovered && food === 0 ? bowl.hover : bowl.rest, lighting)}
+            src={spriteSrc(lightingSrc(bowlHovered && food === 0 ? bowl.hover : bowl.rest, lighting))}
             alt=""
             draggable={false}
             width={CAT_BOWL.w}

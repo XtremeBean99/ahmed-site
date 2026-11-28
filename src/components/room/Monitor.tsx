@@ -9,6 +9,7 @@ import { DURATION } from '@/lib/motion'
 import { useLighting, lightingSrc } from '@/lib/room/lighting'
 import { SPRITE_FRAME_MS } from '@/lib/room/objects'
 import { useAnimationTimer } from '@/lib/room/useAnimationTimer'
+import { loadSprites, spriteSrc } from '@/lib/room/sprites'
 
 interface MonitorProps {
   label: string
@@ -48,14 +49,12 @@ export function Monitor({
     router.prefetch(href)
   }, [router, href])
 
-  // Warm the browser cache for the highlight + loading frames so the first
-  // hover doesn't skip frames while 21 images stream in.
+  // Load the rest, highlight and loading frames so the first hover
+  // doesn't skip frames while 21 images stream in. Only the loading screens are
+  // emissive; the rest are graded for the current lighting.
   useEffect(() => {
-    for (const src of [...frames.slice(1), ...loadingFrames]) {
-      const img = new window.Image()
-      img.src = src
-    }
-  }, [frames, loadingFrames])
+    loadSprites([...frames.map((src) => lightingSrc(src, lighting)), ...loadingFrames])
+  }, [frames, loadingFrames, lighting])
 
   const startHover = useCallback(() => {
     setHovered(true)
@@ -109,7 +108,7 @@ export function Monitor({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={frameSrc}
+          src={spriteSrc(frameSrc)}
           alt=""
           draggable={false}
           className="block w-full h-full"
@@ -131,7 +130,7 @@ export function Monitor({
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={loadingSrc}
+            src={spriteSrc(loadingSrc)}
             alt=""
             draggable={false}
             className="block w-full h-full"

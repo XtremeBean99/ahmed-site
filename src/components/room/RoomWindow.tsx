@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { mapWeather, type Weather } from '@/lib/room/weather'
+import { loadSprites, spriteSrc } from '@/lib/room/sprites'
 import type { LightingState } from '@/lib/room/lighting'
 import {
   WINDOW_VIEW,
@@ -58,11 +59,11 @@ export function RoomWindow({ light, prevLight }: { light: LightingState; prevLig
     return () => clearInterval(id)
   }, [reduce, twinkling])
 
-  // Warm the cache for the looping frames so the first loop does not stutter.
+  // Load every looping frame, the first one too: the rain swaps faster than a round trip.
   useEffect(() => {
     const srcs = weather.kind === 'clear' ? [] : Array.from({ length: PRECIP_FRAMES[weather.kind] }, (_, f) => precipSrcs(weather, f)).flat()
-    if (twinkling) srcs.push(twinkleSrc(1))
-    for (const src of srcs) new window.Image().src = src
+    if (twinkling) srcs.push(...Array.from({ length: TWINKLE_FRAMES }, (_, f) => twinkleSrc(f)))
+    loadSprites(srcs)
   }, [weather, twinkling])
 
   return (
@@ -79,11 +80,11 @@ export function RoomWindow({ light, prevLight }: { light: LightingState; prevLig
       )}
       {twinkling && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={twinkleSrc(twinkleFrame)} alt="" draggable={false} style={layer} />
+        <img src={spriteSrc(twinkleSrc(twinkleFrame))} alt="" draggable={false} style={layer} />
       )}
       {precipSrcs(weather, precipFrame).map((src, i) => (
         // eslint-disable-next-line @next/next/no-img-element
-        <img key={i} src={src} alt="" draggable={false} style={layer} />
+        <img key={i} src={spriteSrc(src)} alt="" draggable={false} style={layer} />
       ))}
     </div>
   )

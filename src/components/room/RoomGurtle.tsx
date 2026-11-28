@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { RoomObject } from './RoomObject'
 import { useLighting, lightingSrc } from '@/lib/room/lighting'
+import { loadSprites, spriteSrc } from '@/lib/room/sprites'
 import { TURTLE_RECT } from '@/lib/room/objects'
 import { GURTLE_LOOKS, toggleLook, useGurtleLook, type GurtleLook } from '@/lib/games/gurtle-look'
 
@@ -61,9 +62,9 @@ export function RoomGurtle({ labels, onSwap }: RoomGurtleProps) {
     return () => pending.forEach(clearTimeout)
   }, [])
 
-  // Warm every frame of both looks for the current lighting, so a swap never flashes.
+  // Load every frame of both looks for the current lighting: a swap never flashes or refetches.
   useEffect(() => {
-    for (const l of GURTLE_LOOKS) for (const f of FRAMES) for (const h of [false, true]) new window.Image().src = lightingSrc(art(l, f, h), lighting)
+    loadSprites(GURTLE_LOOKS.flatMap((l) => FRAMES.flatMap((f) => [false, true].map((h) => lightingSrc(art(l, f, h), lighting)))))
   }, [lighting])
 
   useEffect(() => {
@@ -117,7 +118,7 @@ export function RoomGurtle({ labels, onSwap }: RoomGurtleProps) {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={lightingSrc(art(look, frame, hovered), lighting)}
+            src={spriteSrc(lightingSrc(art(look, frame, hovered), lighting))}
             alt=""
             draggable={false}
             width={TURTLE_RECT.w}

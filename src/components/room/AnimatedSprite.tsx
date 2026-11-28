@@ -7,6 +7,7 @@ import { RoomObject } from './RoomObject'
 import { DURATION } from '@/lib/motion'
 import { useLighting, lightingSrc } from '@/lib/room/lighting'
 import { useAnimationTimer } from '@/lib/room/useAnimationTimer'
+import { loadSprites, spriteSrc } from '@/lib/room/sprites'
 
 export type SpriteMode = 'loop' | 'play-once-hold' | 'play-all-loop-last-two'
 
@@ -105,17 +106,14 @@ export function AnimatedSprite({
     stop()
   }, [stop])
 
-  // Warm the browser cache for the frames AT THE CURRENT LIGHTING STATE so the
-  // first play does not skip while images stream in. Preloading only the base
-  // (dusk) paths missed the graded dawn/day/night variants (lightingSrc) — that
-  // was the "delayed on first play" bug. Re-runs when the lighting state changes.
+  // Load and keep the frames AT THE CURRENT LIGHTING STATE so the first play does
+  // not skip while images stream in, and later plays make no requests. Preloading
+  // only the base (dusk) paths missed the graded dawn/day/night variants
+  // (lightingSrc), the "delayed on first play" bug. Re-runs when lighting changes.
   useEffect(() => {
     const sources = altFrame ? [...frames, altFrame] : frames
     if (sources.length <= 1) return
-    for (const src of sources) {
-      const img = new window.Image()
-      img.src = lightingSrc(src, lighting)
-    }
+    loadSprites(sources.map((src) => lightingSrc(src, lighting)))
   }, [frames, lighting, altFrame])
 
   return (
@@ -155,7 +153,7 @@ export function AnimatedSprite({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={lightingSrc(altActive && altFrame ? altFrame : frames[tick], lighting)}
+          src={spriteSrc(lightingSrc(altActive && altFrame ? altFrame : frames[tick], lighting))}
           alt=""
           draggable={false}
           className="block w-full h-full"

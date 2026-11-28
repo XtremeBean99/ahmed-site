@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { GURTLE_LOOKS, useGurtleLook, type GurtleLook } from '@/lib/games/gurtle-look'
+import { loadSprites, spriteSrc } from '@/lib/room/sprites'
 
 /** Art size of every frame (scripts/draw-gurtle.mjs). */
 export const GURTLE_W = 44
@@ -39,9 +40,9 @@ export function GurtleMascot({ mood, scale = 2, beat = 0, onTap, tapLabel }: Gur
   const [blink, setBlink] = useState(false)
   const [step, setStep] = useState(0)
 
-  // Load every frame of both looks up front so a change never flashes empty.
+  // Load every frame of both looks: a change never flashes empty or refetches.
   useEffect(() => {
-    for (const l of GURTLE_LOOKS) for (const f of FRAMES) new Image().src = src(l, f)
+    loadSprites(GURTLE_LOOKS.flatMap((l) => FRAMES.map((f) => src(l, f))))
   }, [])
 
   useEffect(() => {
@@ -88,7 +89,7 @@ export function GurtleMascot({ mood, scale = 2, beat = 0, onTap, tapLabel }: Gur
       }} />
       <motion.div key={`${mood}-${beat}`} className="absolute left-0" style={{ top: 0 }} {...motionProps}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src(look, frame)} alt="" width={w} height={h} draggable={false} style={{ imageRendering: 'pixelated', display: 'block', width: w, height: h }} />
+        <img src={spriteSrc(src(look, frame))} alt="" width={w} height={h} draggable={false} style={{ imageRendering: 'pixelated', display: 'block', width: w, height: h }} />
       </motion.div>
     </>
   )

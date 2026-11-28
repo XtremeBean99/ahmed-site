@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { loadSprites, spriteSrc } from '@/lib/room/sprites'
 import { useRoomAudio } from './RoomAudioProvider'
 
 const NOTES = ['/room/note-1.png', '/room/note-2.png', '/room/note-3.png']
@@ -53,6 +54,8 @@ export function MusicNotes({ holes, startDelay = 0 }: MusicNotesProps) {
     const pool = poolRef.current
     if (!pool) return
 
+    loadSprites(NOTES)
+
     const spawn = () => {
       const imgs = pool.querySelectorAll<HTMLImageElement>('img')
       const img = imgs[slotRef.current % POOL_SIZE]
@@ -70,7 +73,7 @@ export function MusicNotes({ holes, startDelay = 0 }: MusicNotesProps) {
         const dx = Math.round(Math.cos(angle) * 14 + (Math.random() - 0.5) * 12)
         const dy = Math.round(-46 - Math.random() * 16)
 
-        img.src = NOTES[Math.floor(Math.random() * NOTES.length)]
+        img.src = spriteSrc(NOTES[Math.floor(Math.random() * NOTES.length)])
         img.style.left = `${Math.round(sx)}px`
         img.style.top = `${Math.round(sy)}px`
         img.style.setProperty('--dx', `${dx}px`)

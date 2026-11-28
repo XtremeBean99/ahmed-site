@@ -1,12 +1,13 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { RoomObject } from './RoomObject'
 import { DURATION } from '@/lib/motion'
 import { useLighting, lightingSrc } from '@/lib/room/lighting'
 import { useAnimationTimer } from '@/lib/room/useAnimationTimer'
+import { loadSprites, spriteSrc } from '@/lib/room/sprites'
 import type { ShelfBook } from '@/lib/room/books'
 
 interface ShelfBooksProps {
@@ -35,6 +36,10 @@ export function ShelfBooks({ x, y, w, h, frames, frameDuration, books, labels, o
   const lighting = useLighting()
   const { tick, tickRef, advanceTo, clearTimer, start, stop } = useAnimationTimer(frameDuration, reduce)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadSprites(frames.map((src) => lightingSrc(src, lighting)))
+  }, [frames, lighting])
 
   const activate = useCallback(
     (id: string) => {
@@ -74,7 +79,7 @@ export function ShelfBooks({ x, y, w, h, frames, frameDuration, books, labels, o
       }}
     >
       <motion.img
-        src={lightingSrc(frames[tick], lighting)}
+        src={spriteSrc(lightingSrc(frames[tick], lighting))}
         alt=""
         draggable={false}
         aria-hidden

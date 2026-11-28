@@ -2102,8 +2102,8 @@ export const en = {
       routeRow: "{name}'s way: {word}",
       say: {
         hello: 'Practice time! Change one letter at a time and get me to GURT.',
-        helloDaily: "Help me get home to GURT! Change one letter at a time, real words only.",
-        done: "You've done today's Gurtle. Fancy some practice?",
+        helloDaily: "Help me get home to GURT! Change one letter at a time.",
+        done: "Yo: Gurt, Gurt: Done.",
         newPuzzle: "A fresh word! Let's go.",
         closer: ['Closer!', 'Shell yeah!', 'Ooh, warmer.', 'Nice step!', 'I can smell gurt from here.'],
         same: ['Hmm, sideways.', 'Not closer, not further.', 'Scenic route?'],
@@ -2116,7 +2116,7 @@ export const en = {
           notOneLetter: 'Change exactly one letter.',
           notWord: "I don't know that word.",
           repeat: "We've been there already.",
-          over: 'This one is finished.',
+          over: 'Get Gurted On',
         },
         won: {
           under: "Under par?! You know words I don't.",

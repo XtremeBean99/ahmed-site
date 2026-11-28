@@ -52,6 +52,9 @@ const FILES = [
   'cat-leap.png',
   ...range('cat-eat', 2),
   ...['empty', 'half', 'full'].flatMap((s) => [`cat-bowl-${s}.png`, `cat-bowl-${s}-hover.png`]),
+  // Gurtle on the rug, and Jurtle (scripts/draw-gurtle.mjs)
+  ...['gurtle', 'jurtle'].flatMap((look) => ['idle', 'blink', 'happy', 'hide']
+    .flatMap((f) => [`turtle-${look}-${f}.png`, `turtle-${look}-${f}-hover.png`])),
 ]
 
 function gradePixel(data, i, { tint, bright, sat }) {

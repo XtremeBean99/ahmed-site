@@ -8,13 +8,13 @@
  * daily), plus practice puzzles at three lengths. Pure: no DOM, no storage.
  */
 import { mulberry32, shuffle } from './cards'
-import { dailyDate } from './daily'
+import { dailyDate, GURTLE_LAUNCH_DATE, gurtleNumber } from './daily'
 import { COMMON_WORDS, EXTRA_WORDS } from './gurtle-words'
 
 export const TARGET = 'gurt'
 export const WORD_LEN = 4
-/** Gurtle #1. The puzzle number counts UTC days from here. */
-export const LAUNCH_DATE = '2026-11-28'
+/** Gurtle #1. The puzzle number counts UTC days from here (kept in daily.ts, which the score API also reads). */
+export const LAUNCH_DATE = GURTLE_LAUNCH_DATE
 
 const WORD_RE = /^[a-z]{4}$/
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -182,10 +182,7 @@ export function startPool(lex: Lexicon, range: readonly [number, number]): strin
 }
 
 /** Gurtle #n for a UTC date (#1 on LAUNCH_DATE). */
-export function puzzleNumber(date: string): number {
-  const ms = Date.parse(`${date}T00:00:00Z`) - Date.parse(`${LAUNCH_DATE}T00:00:00Z`)
-  return Math.floor(ms / 86_400_000) + 1
-}
+export const puzzleNumber = gurtleNumber
 
 /**
  * The day's start word: the daily pool in a fixed shuffled order, one word per

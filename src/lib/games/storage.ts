@@ -14,6 +14,8 @@ export const BEST_KEYS = {
   pong: 'pong-best',
   /** The desk Breakout scores bricks, unlike the retired time-scored page, so it keeps its own best. */
   breakoutDesk: 'breakout-desk-best',
+  /** Gurtle's longest daily streak (kept beside its stats so the Scores app can read it like any best). */
+  gurtleStreak: 'gurtle-streak-best',
 } as const
 
 /** Parsed JSON stored under a games key, or undefined. Callers validate the shape. SSR-safe. */
@@ -84,12 +86,16 @@ export const MAHJONG_SAVE_KEY = 'mahjong-save'
 export const MAHJONG_PREFS_KEY = 'mahjong-prefs'
 export const MAHJONG_STATS_KEY = 'mahjong-stats'
 
-/** Gurtle: today's daily and the practice game in progress, the daily record, and the tutorial flag. */
+/**
+ * Gurtle: today's daily and the practice game in progress, the daily record, the
+ * tutorial flag, and which turtle the visitor last clicked into (Gurtle or Jurtle).
+ */
 export const GURTLE_KEYS = {
   daily: 'gurtle-daily',
   practice: 'gurtle-practice',
   stats: 'gurtle-stats',
   tutorialSeen: 'gurtle-tutorial-seen',
+  look: 'gurtle-look',
 } as const
 
 export const SCORES_KEYS = {

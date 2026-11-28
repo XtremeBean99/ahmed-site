@@ -9,6 +9,8 @@ import {
 } from './gurtle'
 import { COMMON_WORDS, EXTRA_WORDS } from './gurtle-words'
 import { mulberry32 } from './cards'
+import { GURTLE_LOOKS, otherLook, parseLook } from './gurtle-look'
+import { HISCORE_GAMES, isPlausibleScore, sortBoard } from './highscores'
 
 const lex = lexicon()
 
@@ -242,4 +244,27 @@ test('saved games and stats are validated when read back', () => {
     { played: 3, won: 2, streak: 1, maxStreak: 2, lastDate: '2026-12-01', dist: [1, 1, 0, 0, 0] })
   assert.deepEqual(parseStats({ played: -1, dist: [1] }), EMPTY_STATS)
   assert.deepEqual(parseWordList(' Bark  b4rk fish\nGURT '), ['bark', 'fish', 'gurt'])
+})
+
+test('Gurtle and Jurtle: a stored look is read safely and a tap swaps them', () => {
+  assert.equal(parseLook('jurtle'), 'jurtle')
+  assert.equal(parseLook('gurtle'), 'gurtle')
+  for (const junk of [undefined, null, 'JURTLE', 7, {}]) assert.equal(parseLook(junk), 'gurtle')
+  for (const look of GURTLE_LOOKS) assert.equal(otherLook(otherLook(look)), look)
+  assert.equal(otherLook('gurtle'), 'jurtle')
+})
+
+test('the streak board: longest first, never longer than the puzzles so far', () => {
+  assert.ok(HISCORE_GAMES.some((g) => g.id === 'gurtle' && !g.lowerIsBetter))
+  const launch = new Date(`${LAUNCH_DATE}T12:00:00Z`)
+  assert.ok(isPlausibleScore('gurtle', 1, launch))
+  assert.ok(isPlausibleScore('gurtle', 2, launch)) // a day's grace for a fast clock
+  assert.ok(!isPlausibleScore('gurtle', 3, launch))
+  assert.ok(!isPlausibleScore('gurtle', 0, launch))
+  assert.ok(!isPlausibleScore('gurtle', 1.5, launch))
+  const later = new Date(Date.parse(`${LAUNCH_DATE}T00:00:00Z`) + 99 * 86_400_000) // Gurtle #100
+  assert.ok(isPlausibleScore('gurtle', 100, later))
+  assert.ok(!isPlausibleScore('gurtle', 102, later))
+  const board = [{ name: 'a', score: 3 }, { name: 'b', score: 12 }, { name: 'c', score: 7 }]
+  assert.deepEqual(sortBoard('gurtle', board).map((e) => e.name), ['b', 'c', 'a'])
 })

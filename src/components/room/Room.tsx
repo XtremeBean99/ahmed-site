@@ -48,6 +48,8 @@ import { addDiscovery, DISCOVERY_IDS } from '@/lib/room/discoveries'
 import { appFromSearch } from '@/lib/room/deep-link'
 import { DiscoveriesBadge } from './DiscoveriesBadge'
 import { RoomCat } from './RoomCat'
+import { RoomGurtle } from './RoomGurtle'
+import { GURTLE_LOOK_EVENT, useGurtleLook, type GurtleLook } from '@/lib/games/gurtle-look'
 import { TourCard, TourSpotlight, type TourLabels } from './RoomTour'
 import {
   ICON_LINKEDIN,
@@ -57,6 +59,7 @@ import {
   ICON_SNAKE,
   ICON_TYPING,
   ICON_GURTLE,
+  ICON_JURTLE,
   ICON_HIGHSCORES,
   ICON_REQUEST,
   ICON_BLACKJACK,
@@ -104,6 +107,9 @@ interface RoomProps {
       catWake: string[]
       catBowlLabel: string
       catFed: string[]
+      turtleLabel: Record<GurtleLook, string>
+      turtleToJurtle: string[]
+      turtleToGurtle: string[]
       tour: TourLabels
       coffeeLabel: string
       ipodLabel: string
@@ -530,6 +536,23 @@ export function Room({ dict, readmeContent }: RoomProps) {
     setTimeout(() => setToast(null), 2400)
   }, [discover, sfx, t.room.catWake, t.room.discoveryLabels])
 
+  // Gurtle on the rug, or Jurtle: the look follows a click here or in the game.
+  const gurtleLook = useGurtleLook()
+  const swapTurtle = useCallback((look: GurtleLook) => {
+    sfx.tone('sparkle')
+    const lines = look === 'jurtle' ? t.room.turtleToJurtle : t.room.turtleToGurtle
+    setToast(lines[Math.floor(Math.random() * lines.length)])
+    setTimeout(() => setToast(null), 2400)
+  }, [sfx, t.room.turtleToJurtle, t.room.turtleToGurtle])
+  // Meeting Jurtle is a discovery, wherever the swap happened.
+  useEffect(() => {
+    const onLook = (e: Event) => {
+      if ((e as CustomEvent<GurtleLook>).detail === 'jurtle') discover('jurtle', t.room.discoveryLabels.jurtle)
+    }
+    window.addEventListener(GURTLE_LOOK_EVENT, onLook)
+    return () => window.removeEventListener(GURTLE_LOOK_EVENT, onLook)
+  }, [discover, t.room.discoveryLabels])
+
   const fillBowl = useCallback(() => { sfx.tone('kibble') }, [sfx])
   const catEats = useCallback(() => {
     discover('fed', t.room.discoveryLabels.fed)
@@ -690,7 +713,7 @@ export function Room({ dict, readmeContent }: RoomProps) {
     { id: 'breakout', kind: 'app', target: 'breakout', label: t.desk.breakout, tooltip: t.desk.breakoutTip, icon: ICON_BREAKOUT },
     { id: 'chess', kind: 'app', target: 'chess', label: t.desk.chess, tooltip: t.desk.chessTip, icon: ICON_CHESS },
     { id: 'mahjong', kind: 'app', target: 'mahjong', label: t.desk.mahjong, tooltip: t.desk.mahjongTip, icon: ICON_MAHJONG },
-    { id: 'gurtle', kind: 'app', target: 'gurtle', label: t.desk.gurtle, tooltip: t.desk.gurtleTip, icon: ICON_GURTLE },
+    { id: 'gurtle', kind: 'app', target: 'gurtle', label: t.desk.gurtle, tooltip: t.desk.gurtleTip, icon: gurtleLook === 'jurtle' ? ICON_JURTLE : ICON_GURTLE },
   ]
 
   // How far the phone can pan before the stage edge hits the viewport edge.
@@ -1022,6 +1045,9 @@ export function Room({ dict, readmeContent }: RoomProps) {
               onEat={catEats}
             />
           )}
+
+          {/* Gurtle on the rug: a click turns him into Jurtle, and back */}
+          <RoomGurtle labels={t.room.turtleLabel} onSwap={swapTurtle} />
 
           <AnimatedSprite
             label={t.room.posterLabel}

@@ -2,7 +2,8 @@
 
 A desk app (`/?app=gurtle`): a daily word ladder in the spirit of the word-a-day games. Start from a four-letter
 word and turn it into **GURT** by changing one letter at a time, every step a real word. Gurtle the turtle is the
-mascot and reacts to each move.
+mascot and reacts to each move. He also sits on the room's rug, and a click there (or on him in the game) turns him
+into **Jurtle**, his pink look with a bow. The look holds everywhere he appears. Daily streaks go on a public board.
 
 Added 28 November 2026 on `feat/gurtle`. Puzzle #1 is that day (FISH).
 
@@ -12,15 +13,20 @@ Added 28 November 2026 on `feat/gurtle`. Puzzle #1 is that day (FISH).
 |---|---|
 | `src/lib/games/gurtle.ts` | Pure engine: lexicon, distances, moves, hints, daily/practice starts, ratings, share grid, stats |
 | `src/lib/games/gurtle-words.ts` | `COMMON_WORDS` (1624 everyday words) and `EXTRA_WORDS` (400 rarer but valid) |
-| `src/lib/games/gurtle.test.ts` | 19 `node:test` cases (in `npm run test:games`) |
-| `src/components/room/DeskGurtle.tsx` | The app: ladder, keyboard, mascot stage, result and stats panels, tutorial |
-| `src/components/room/GurtleMascot.tsx` | The animated mascot (moods, blink, walk, hops) |
-| `scripts/draw-gurtle.mjs` | Draws the mascot frames into `public/gurtle/` |
-| `public/gurtle/*.png` | 7 frames at 44x30: idle, blink, happy, worried, hide, walk-1, walk-2 |
+| `src/lib/games/gurtle.test.ts` | 21 `node:test` cases (in `npm run test:games`) |
+| `src/lib/games/gurtle-look.ts` | Gurtle or Jurtle: the stored look, `toggleLook`, the `useGurtleLook` hook |
+| `src/components/room/DeskGurtle.tsx` | The app: ladder, keyboard, mascot stage, result, stats and streak-board panels, tutorial |
+| `src/components/room/GurtleMascot.tsx` | The animated mascot (moods, blink, walk, hops), a button when given `onTap` |
+| `src/components/room/RoomGurtle.tsx` | The turtle on the rug: blinks, swaps looks on a click |
+| `scripts/draw-gurtle.mjs` | Draws both looks: the app frames and the room frames |
+| `public/gurtle/{gurtle,jurtle}-*.png` | 7 frames each at 44x30: idle, blink, happy, worried, hide, walk-1, walk-2 |
+| `public/room/turtle-{gurtle,jurtle}-*.png` | Room frames, 92x64: idle, blink, happy, hide, each with `-hover`; graded in `lighting/` |
 
-Wiring: `ICON_GURTLE` in `DeskIcon.tsx`, the shortcut after Mahjong in Room's `deskShortcuts`, the dynamic chunk +
-`APP_CHUNKS` + `'gurtle'` screen mode in `DeskView.tsx`, `desk.gurtle*` copy in `en.ts`, discovery id `gurtle`,
-`LINKABLE_APPS`, and `GURTLE_KEYS` in `src/lib/games/storage.ts`.
+Wiring: `ICON_GURTLE` / `ICON_JURTLE` in `DeskIcon.tsx`, the shortcut after Mahjong in Room's `deskShortcuts`
+(its icon follows the look), the dynamic chunk + `APP_CHUNKS` + `'gurtle'` screen mode in `DeskView.tsx`,
+`desk.gurtle*` and `room.turtle*` copy in `en.ts`, discovery ids `gurtle` (opened the app) and `jurtle` (met
+Jurtle), `LINKABLE_APPS`, `GURTLE_KEYS` and `BEST_KEYS.gurtleStreak` in `src/lib/games/storage.ts`, the `gurtle`
+board in `HISCORE_GAMES`, `TURTLE_RECT` in `objects.ts`, the `sparkle` tone in `RoomSfxProvider`.
 
 ## Rules
 
@@ -46,7 +52,8 @@ Wiring: `ICON_GURTLE` in `DeskIcon.tsx`, the shortcut after Mahjong in Room's `d
   (67), Medium 4-5 (552), Long 6-8 (576).
 - **Daily** (`dailyStart`): one UTC date for the whole world. The daily pool is shuffled once with a fixed seed
   (`mulberry32(0x67757274)`, "gurt") and puzzle `n` takes word `n - 1`, so no start comes back for 873 days.
-  `puzzleNumber` is days since `LAUNCH_DATE` (2026-11-28) plus one. Changing either word list or `DAILY_PAR`
+  `puzzleNumber` is days since `LAUNCH_DATE` (2026-11-28) plus one (both live in `daily.ts` as
+  `gurtleNumber` / `GURTLE_LAUNCH_DATE`, so the score API can use them without the word lists). Changing either word list or `DAILY_PAR`
   reshuffles every future daily, so do that only with care.
 - `moveTrend` compares `anyDist` before and after a move: closer, same or further. The mascot and bubble react.
 - `rateRun`: under par, par, bogey (+1), double (+2), slow (+3 or more).
@@ -58,12 +65,41 @@ Wiring: `ICON_GURTLE` in `DeskIcon.tsx`, the shortcut after Mahjong in Room's `d
 
 `localStorage` under the games namespace (`ahmed-site:games:v1:`), keys in `GURTLE_KEYS`:
 `gurtle-daily` (today's game; a save from another date is ignored), `gurtle-practice`, `gurtle-stats`,
-`gurtle-tutorial-seen`.
+`gurtle-tutorial-seen`, `gurtle-look` (`gurtle` or `jurtle`). The longest streak is also copied to
+`gurtle-streak-best` (`BEST_KEYS.gurtleStreak`) so the Scores app reads it like any other best.
 
 Stats count dailies only: played, won, streak, max streak and a distribution over Par, +1, +2, +3, +4 or
 more (an under-par win counts under Par). `recordDaily` ignores a second record for the same date. A win extends the
 streak only if the last daily was yesterday. `liveStreak` shows 0 once a whole day has gone unplayed.
-Nothing goes to the server yet.
+
+## Streak board
+
+The longest daily streak is the one Gurtle score that goes public: game id `gurtle` in `HISCORE_GAMES`
+(higher is better), stored like every board in `hiscores:gurtle` and served by `/api/highscores`, so it gets
+that route's guards (CSRF, rate limit, honeypot, Zod, name stripping and profanity check). Besides the 1 to 3650
+range, `isPlausibleScore` refuses a streak longer than the puzzles out so far (`gurtleNumber(today) + 1`, a
+day's grace for a fast clock). The browser still reports the number, so this keeps out junk, not a cheat.
+
+Two ways in: **Stats > Top streaks** in the game (top 10, your best, post under the name shared with the Scores
+app and Minesweeper, `hiscore-name`), and the **Gurtle** tab in the Scores app. Without Upstash it says the
+board is offline.
+
+## Gurtle and Jurtle
+
+`lib/games/gurtle-look.ts` keeps the look in games storage and fires a `gurtle-look` window event (with the
+new look as `detail`) on every change. `useGurtleLook` is a `useSyncExternalStore` over that event and the
+`storage` event, so every view swaps at once, other tabs included. The server and the hydrating render see
+Gurtle; the room turtle renders only after mount, so it never shows the wrong look.
+
+- **Room:** `RoomGurtle` on the rug at `TURTLE_RECT` (770, 690), clear of the cat's walk to its bowl. Drawn
+  facing right and flipped in CSS to face into the room. A click tucks him into the shell (280 ms), swaps the
+  look, then a happy hop with three hearts (green or pink, emissive, never graded), the `sparkle` tone and a
+  toast. The tooltip says him or her.
+- **Game:** the stage mascot is a button ("Tap Gurtle to swap looks"); the same tuck, swap and a line in the
+  bubble. Copy that names the mascot uses `{name}` (`gurtleApp.mascot`); the game itself stays Gurtle.
+- **Desk icon:** `ICON_JURTLE` while Jurtle is out.
+- Room listens for the event and counts the `jurtle` discovery the first time anyone meets her.
+- Reduced motion keeps the swap and drops the hop and the hearts.
 
 ## UI
 
@@ -90,22 +126,25 @@ Nothing goes to the server yet.
 `scripts/draw-gurtle.mjs` builds the turtle in code (as the cat and bonsai scripts do). It has a domed shell
 with three scutes split by Voronoi seams, a two-row rim, a round head, four legs posed per frame, a tail and a
 cream belly. All of it gets a dark ink outline. Art is 44x30 and scaled in CSS (`image-rendering: pixelated`).
+Jurtle (`LOOKS.jurtle`) swaps the shell, rim and belly to pinks, adds lashes and puts a bow on her head (on the
+shell when she hides). The room frames are the same art on the cat's 2 px grid with black ink and a 2 px
+`#f6da9c` hover highlight.
 
 ```
-node scripts/draw-gurtle.mjs            # writes public/gurtle/*.png
-node scripts/draw-gurtle.mjs --preview  # also an 8x contact sheet in the OS temp folder
+node scripts/draw-gurtle.mjs && npm run lighting   # public/gurtle/*, public/room/turtle-*, then the grades
+node scripts/draw-gurtle.mjs --preview             # also an 8x contact sheet in the OS temp folder
 ```
 
 `GurtleMascot` takes `mood` (`idle | happy | worried | hide | walk`), `scale` and `beat` (bump it to replay the
-reaction for the same mood). Idle blinks at random, walk swaps frames every 200 ms, happy hops, worried wobbles.
-Reduced motion keeps the frames but drops the movement. The mascot is `aria-hidden`, and the bubble beside it is the
-`aria-live` text.
+reaction for the same mood), plus `onTap` and `tapLabel` to make it a button. Idle blinks at random, walk swaps
+frames every 200 ms, happy hops, worried wobbles. Reduced motion keeps the frames but drops the movement. Without
+`onTap` the mascot is `aria-hidden`, and the bubble beside it is the `aria-live` text.
 
-The sprite is outside the room lighting grades: it only appears on the monitor, which is emissive.
+The app frames are outside the room lighting grades (the monitor is emissive); the room frames are graded.
 
 ## Ideas not built
 
-- A public daily board (moves and hints per day), using `hiscores:daily:*` as daily Minesweeper does.
-- A Gurtle room object (the turtle walking along the shelf or desk), which would need lit sprite sets.
+- A per-day board (moves and hints for today's puzzle), using `hiscores:daily:*` as daily Minesweeper does.
+- Gurtle wandering the rug (walk frames exist for the app; the room would need graded walk frames).
 - Hard mode (hints off), or a "par only" mode that accepts only everyday words.
 - Word list tuning from play: watch for reasonable words players get refused.

@@ -479,3 +479,23 @@ export const ICON_GURTLE = pixels([
   '................',
   '................',
 ], { ...ARCADE_ICON_PALETTE, G: '#56803a', g: '#8ab85a', d: '#2c4620', y: '#decc80', k: '#a4ca68', K: '#7aa04c', e: '#2a2520', m: '#8a3a2a' })
+
+// Jurtle: Gurtle after a click (pink shell, a bow on her head). Room picks this icon while she is out.
+export const ICON_JURTLE = pixels([
+  '................',
+  '................',
+  '..........bb.bb.',
+  '..........bbBbb.',
+  '.....oooo..okkko',
+  '....oGgGGo.okkeo',
+  '...oGgGdGGooKkko',
+  '..oGGGdGdGGoKkmo',
+  '.oGGGdGGGdGGoKo.',
+  '.oyyyyyyyyyyoKo.',
+  'ooooooooooooooo.',
+  '..okko...okko...',
+  '..oooo...oooo...',
+  '................',
+  '................',
+  '................',
+], { ...ARCADE_ICON_PALETTE, G: '#d06a98', g: '#f2a2c6', d: '#76284e', y: '#f6d8d0', k: '#a4ca68', K: '#7aa04c', e: '#2a2520', m: '#8a3a2a', b: '#ec4a80', B: '#a82a5c' })

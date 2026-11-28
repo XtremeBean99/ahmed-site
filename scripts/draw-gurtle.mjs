@@ -1,12 +1,19 @@
 // Draws Gurtle, the turtle mascot of the Gurtle word game, in profile facing
 // right: a domed moss-green shell with three scutes and a cream rim, a round
-// head with one big eye, stubby legs and a little tail. Frames:
+// head with one big eye, stubby legs and a little tail. Clicking him turns him
+// into Jurtle, the same turtle with a pink shell, a bow and lashes (the bow
+// moves onto the shell when she hides). Frames, for each look (gurtle-*, jurtle-*):
 //
-//   gurtle-idle     standing, eye open            gurtle-blink   eye shut
-//   gurtle-happy    ^ eye, open smile, legs out   gurtle-worried brow, sweat drop
-//   gurtle-hide     tucked into the shell         gurtle-walk-1/2 legs swapping
+//   idle     standing, eye open            blink    eye shut
+//   happy    ^ eye, open smile, legs out   worried  brow, sweat drop
+//   hide     tucked into the shell         walk-1/2 legs swapping
 //
-//   node scripts/draw-gurtle.mjs            -> public/gurtle/*.png at art size (CSS scales them)
+// The desk app uses them at art size (public/gurtle/, CSS scales them). The room
+// gets idle, blink, happy and hide on its 2 stage px grid with black ink and a
+// hover frame with the #f6da9c highlight grown 2 px (public/room/turtle-<look>-*,
+// then `npm run lighting`), like the cat.
+//
+//   node scripts/draw-gurtle.mjs && npm run lighting
 //   node scripts/draw-gurtle.mjs --preview  -> also an 8x contact sheet in the OS temp folder
 //
 // Built from shapes on the art grid, like draw-cat.mjs: an ellipse dome cut
@@ -21,13 +28,19 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const outDir = join(__dirname, '..', 'public', 'gurtle')
+const roomDir = join(__dirname, '..', 'public', 'room')
 
 const AW = 44
 const AH = 30
-const OY = 3 // headroom for the sweat drop and the happy hop pose
+const OY = 3 // headroom for the sweat drop, the bow and the happy hop pose
+const PX = 2 // room: stage px per art px (the cat's grid)
+const PAD = 2 // room: stage px of padding for the highlight
+const HIGHLIGHT = [0xf6, 0xda, 0x9c]
+const APP_INK = [38, 30, 22]
+const ROOM_INK = [0, 0, 0] // the room's outlines are black, and the lighting grades leave them alone
 
-const C = {
-  ink: [38, 30, 22],
+const BASE = {
+  ink: APP_INK,
   shell: [86, 128, 58],
   shellLight: [116, 160, 72],
   shellDark: [62, 98, 44],
@@ -48,14 +61,39 @@ const C = {
   tongue: [222, 104, 104],
   sweat: [150, 204, 236],
   hole: [30, 24, 18],
+  bow: [232, 62, 112],
+  bowLight: [255, 136, 172],
+  bowKnot: [176, 34, 80],
+}
+
+// Jurtle: the shell, rim and belly go pink, the cheeks rosier; the skin stays green.
+const LOOKS = {
+  gurtle: { palette: {}, girl: false },
+  jurtle: {
+    girl: true,
+    palette: {
+      shell: [222, 116, 160],
+      shellLight: [242, 156, 194],
+      shellDark: [182, 82, 126],
+      shine: [255, 216, 232],
+      seam: [112, 38, 74],
+      rim: [255, 230, 222],
+      rimShade: [226, 180, 184],
+      belly: [252, 228, 216],
+      bellyShade: [224, 188, 178],
+      cheek: [246, 120, 150],
+    },
+  },
 }
 
 // Paint order: later regions sit in front. Seams are inked on the region behind.
-const R = { farLeg: 1, tail: 2, belly: 3, shell: 4, rim: 5, neck: 6, head: 7, leg: 8, drop: 9 }
-const GROUP = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 4, 6: 6, 7: 6, 8: 8, 9: 9 }
-const ORDER = { 1: 1, 2: 2, 3: 3, 4: 4, 6: 5, 8: 6, 9: 7 }
+const R = { farLeg: 1, tail: 2, belly: 3, shell: 4, rim: 5, neck: 6, head: 7, leg: 8, drop: 9, bow: 10 }
+const GROUP = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 4, 6: 6, 7: 6, 8: 8, 9: 9, 10: 10 }
+const ORDER = { 1: 1, 2: 2, 3: 3, 4: 4, 6: 5, 8: 6, 9: 7, 10: 8 }
 
-function frame({ eye = 'open', legs = 'stand', hidden = false, drop = false }) {
+function frame({ eye = 'open', legs = 'stand', hidden = false, drop = false }, look = 'gurtle', inkColour = APP_INK) {
+  const { palette, girl } = LOOKS[look]
+  const C = { ...BASE, ...palette, ink: inkColour }
   const region = new Uint8Array(AW * AH)
   const colour = new Array(AW * AH).fill(null)
   const set = (x, y, r) => { if (x >= 0 && y >= 0 && x < AW && y < AH) region[y * AW + x] = r }
@@ -109,6 +147,24 @@ function frame({ eye = 'open', legs = 'stand', hidden = false, drop = false }) {
   if (drop) {
     for (const [x, y] of [[41, 6], [40, 7], [41, 7], [40, 8], [41, 8]]) set(x, y + OY, R.drop)
   }
+  // Jurtle's bow: two loops either side of a knot, on top of the head, or on
+  // the shell when she hides. Each loop is lit on its top-left pixel.
+  const bowColour = new Map()
+  if (girl) {
+    const [bx, by] = hidden ? [19, 6 + sy] : [33, 5]
+    const BOW = [
+      [-3, -1], [-2, -1], [2, -1], [3, -1],
+      [-3, 0], [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0], [3, 0],
+      [-3, 1], [-2, 1], [-1, 1], [0, 1], [1, 1], [2, 1], [3, 1],
+      [-3, 2], [-2, 2], [2, 2], [3, 2],
+    ]
+    for (const [dx, dy] of BOW) {
+      const x = bx + dx, y = by + dy + OY
+      set(x, y, R.bow)
+      const lit = (dx === -3 || dx === 2) && dy === -1
+      bowColour.set(y * AW + x, dx === 0 ? C.bowKnot : lit ? C.bowLight : dy === 2 ? C.bowKnot : C.bow)
+    }
+  }
 
   // Scute centres on the dome (art px before OY).
   const scutes = [[19, 11 + sy], [11.2, 15.6 + sy], [26.8, 15.6 + sy]]
@@ -151,6 +207,8 @@ function frame({ eye = 'open', legs = 'stand', hidden = false, drop = false }) {
       c = py > 20 ? C.skinShade : C.skin
     } else if (r === R.drop) {
       c = C.sweat
+    } else if (r === R.bow) {
+      c = bowColour.get(y * AW + x) ?? C.bow
     }
     colour[y * AW + x] = c
   }
@@ -181,6 +239,12 @@ function frame({ eye = 'open', legs = 'stand', hidden = false, drop = false }) {
     }
     put(hx - 1, hy + 1, C.cheek); put(hx, hy + 1, C.cheek)
     put(hx + 5, hy - 1, C.skinShade) // nostril
+    if (girl) {
+      // Lashes: two flicks off the back of the eye (or of the shut lid).
+      if (eye === 'open' || eye === 'worried') { put(hx, hy - 3, C.eye); put(hx - 1, hy - 4, C.eye) }
+      else if (eye === 'blink') { put(hx, hy, C.eye); put(hx + 2, hy, C.eye) }
+      else if (eye === 'happy') { put(hx - 1, hy - 2, C.eye) }
+    }
   } else {
     // Peeking out of the shell: a dark opening at the front with two glints.
     for (const [x, y] of [[27, 15], [28, 15], [29, 15], [26, 16], [27, 16], [28, 16], [29, 16], [30, 16], [26, 17], [27, 17], [28, 17], [29, 17], [30, 17]]) put(x, y + sy, C.hole)
@@ -209,36 +273,85 @@ function frame({ eye = 'open', legs = 'stand', hidden = false, drop = false }) {
 }
 
 const FRAMES = {
-  'gurtle-idle': { eye: 'open' },
-  'gurtle-blink': { eye: 'blink' },
-  'gurtle-happy': { eye: 'happy', legs: 'jump' },
-  'gurtle-worried': { eye: 'worried', drop: true },
-  'gurtle-hide': { hidden: true },
-  'gurtle-walk-1': { eye: 'open', legs: 'walk1' },
-  'gurtle-walk-2': { eye: 'open', legs: 'walk2' },
+  idle: { eye: 'open' },
+  blink: { eye: 'blink' },
+  happy: { eye: 'happy', legs: 'jump' },
+  worried: { eye: 'worried', drop: true },
+  hide: { hidden: true },
+  'walk-1': { eye: 'open', legs: 'walk1' },
+  'walk-2': { eye: 'open', legs: 'walk2' },
 }
+const ROOM_FRAMES = ['idle', 'blink', 'happy', 'hide']
+
+/** Art px to the room's grid: each pixel becomes PX x PX, with PAD of clear border. */
+function toRoom(data) {
+  const W = AW * PX + PAD * 2, H = AH * PX + PAD * 2
+  const out = Buffer.alloc(W * H * 4)
+  for (let y = 0; y < AH; y++) for (let x = 0; x < AW; x++) {
+    const s = (y * AW + x) * 4
+    if (!data[s + 3]) continue
+    for (let yy = 0; yy < PX; yy++) for (let xx = 0; xx < PX; xx++) data.copy(out, ((PAD + y * PX + yy) * W + PAD + x * PX + xx) * 4, s, s + 4)
+  }
+  return { W, H, data: out }
+}
+
+/** The room's hover frame: the sprite with the #f6da9c highlight grown `n` px around it (as draw-cat.mjs). */
+function highlight({ W, H, data }, n) {
+  const out = Buffer.from(data)
+  let edge = new Uint8Array(W * H)
+  for (let i = 0; i < W * H; i++) edge[i] = data[i * 4 + 3] ? 1 : 0
+  for (let step = 0; step < n; step++) {
+    const next = Uint8Array.from(edge)
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (edge[y * W + x]) continue
+      const hit = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+        const nx = x + dx, ny = y + dy
+        return nx >= 0 && ny >= 0 && nx < W && ny < H && edge[ny * W + nx]
+      })
+      if (hit) {
+        next[y * W + x] = 1
+        const i = (y * W + x) * 4
+        out[i] = HIGHLIGHT[0]; out[i + 1] = HIGHLIGHT[1]; out[i + 2] = HIGHLIGHT[2]; out[i + 3] = 255
+      }
+    }
+    edge = next
+  }
+  return { W, H, data: out }
+}
+
+const png = (W, H, data, file) => sharp(data, { raw: { width: W, height: H, channels: 4 } }).png({ compressionLevel: 9 }).toFile(file)
 
 mkdirSync(outDir, { recursive: true })
 const rendered = []
-for (const [name, opts] of Object.entries(FRAMES)) {
-  const data = frame(opts)
-  rendered.push(data)
-  await sharp(data, { raw: { width: AW, height: AH, channels: 4 } }).png({ compressionLevel: 9 }).toFile(join(outDir, `${name}.png`))
-  console.log(`public/gurtle/${name}.png ${AW}x${AH}`)
+for (const look of Object.keys(LOOKS)) {
+  for (const [name, opts] of Object.entries(FRAMES)) {
+    const data = frame(opts, look)
+    rendered.push(data)
+    await png(AW, AH, data, join(outDir, `${look}-${name}.png`))
+  }
+  for (const name of ROOM_FRAMES) {
+    const room = toRoom(frame(FRAMES[name], look, ROOM_INK))
+    await png(room.W, room.H, room.data, join(roomDir, `turtle-${look}-${name}.png`))
+    const hover = highlight(room, 2)
+    await png(hover.W, hover.H, hover.data, join(roomDir, `turtle-${look}-${name}-hover.png`))
+  }
+  console.log(`${look}: public/gurtle/${look}-*.png ${AW}x${AH}, public/room/turtle-${look}-{${ROOM_FRAMES}}{,-hover}.png ${AW * PX + PAD * 2}x${AH * PX + PAD * 2}`)
 }
 
 if (process.argv.includes('--preview')) {
   const S = 8
-  const n = rendered.length
-  const W = (AW * S + 8) * n, H = AH * S
+  const perRow = Object.keys(FRAMES).length
+  const rows = rendered.length / perRow
+  const W = (AW * S + 8) * perRow, H = (AH * S + 8) * rows
   const sheet = Buffer.alloc(W * H * 4)
   for (let i = 0; i < W * H; i++) { sheet[i * 4] = 250; sheet[i * 4 + 1] = 248; sheet[i * 4 + 2] = 245; sheet[i * 4 + 3] = 255 }
   rendered.forEach((data, f) => {
+    const ox = (f % perRow) * (AW * S + 8), oy = Math.floor(f / perRow) * (AH * S + 8)
     for (let y = 0; y < AH; y++) for (let x = 0; x < AW; x++) {
       const s = (y * AW + x) * 4
       if (!data[s + 3]) continue
       for (let yy = 0; yy < S; yy++) for (let xx = 0; xx < S; xx++) {
-        const d = ((y * S + yy) * W + f * (AW * S + 8) + x * S + xx) * 4
+        const d = ((oy + y * S + yy) * W + ox + x * S + xx) * 4
         sheet[d] = data[s]; sheet[d + 1] = data[s + 1]; sheet[d + 2] = data[s + 2]
       }
     }

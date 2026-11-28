@@ -319,3 +319,9 @@ export const CAT_SPOTS: readonly CatSpot[] = [
 /** A different spot each visit. */
 export const catSpotFor = (visitCount: number): CatSpot =>
   CAT_SPOTS[((visitCount % CAT_SPOTS.length) + CAT_SPOTS.length) % CAT_SPOTS.length]
+
+/**
+ * Gurtle on the rug, facing into the room (scripts/draw-gurtle.mjs: 92x64 on the
+ * cat's 2 px grid, flipped in CSS). Clear of the cat's walk from the bed to its bowl.
+ */
+export const TURTLE_RECT = { x: 770, y: 690, w: 92, h: 64 } as const

@@ -5,7 +5,9 @@ import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { useStageScale } from '@/lib/room/useStageScale'
 import { dailyDate, msUntilNextDaily } from '@/lib/games/daily'
-import { GURTLE_KEYS, readJson, writeJson } from '@/lib/games/storage'
+import { BEST_KEYS, GURTLE_KEYS, readJson, setBestIfHigher, writeJson } from '@/lib/games/storage'
+import { toggleLook, useGurtleLook, type GurtleLook } from '@/lib/games/gurtle-look'
+import type { HiscoreEntry } from '@/lib/games/highscores'
 import {
   DIFFICULTIES, TARGET, WORD_LEN, currentWord, diffPositions, giveUp, ladderOf, lexicon, moveTrend, newDaily,
   newPractice, nextStep, parseGame, parseStats, playMove, puzzleNumber, rateRun, recordDaily, liveStreak, shareGrid,
@@ -22,6 +24,10 @@ type Page = { title: string; body: string }
 
 export interface GurtleLabels {
   title: string
+  /** The mascot's name in each look; copy that names the mascot says `{name}`. */
+  mascot: Record<GurtleLook, string>
+  /** The mascot's button label. */
+  tapMascot: string
   daily: string
   practice: string
   stats: string
@@ -60,6 +66,8 @@ export interface GurtleLabels {
     won: Record<Rating, string>
     gaveUp: string
     newDay: string
+    /** After a tap on the mascot, by the look it changed into. */
+    swap: Record<GurtleLook, string[]>
   }
   result: {
     title: string
@@ -83,6 +91,24 @@ export interface GurtleLabels {
     best: string
     dist: string
     buckets: string[]
+    board: string
+    close: string
+  }
+  /** The public board of longest daily streaks (/api/highscores, game `gurtle`). */
+  board: {
+    title: string
+    yours: string
+    none: string
+    day: string
+    days: string
+    namePh: string
+    post: string
+    posting: string
+    ranked: string
+    empty: string
+    offline: string
+    loading: string
+    error: string
     close: string
   }
   shareText: { daily: string; practice: string; line: string; hints: string; gaveUp: string }
@@ -115,6 +141,9 @@ const fill = (s: string, vars: Record<string, string | number>) =>
   Object.entries(vars).reduce((out, [k, v]) => out.split(`{${k}}`).join(String(v)), s)
 
 const pick = (list: string[]) => list[Math.floor(Math.random() * list.length)] ?? ''
+
+/** The name a visitor posts scores under, shared with the Scores app and Minesweeper. */
+const NAME_KEY = 'hiscore-name'
 
 function loadDaily(lex: Lexicon, date: string): GurtleGame {
   const saved = parseGame(lex, readJson(GURTLE_KEYS.daily))
@@ -321,12 +350,20 @@ export function DeskGurtle({ time, backLabel, desktopLabel, labels, arcade, onBa
   const [mood, setMood] = useState<GurtleMood>('walk')
   const [beat, setBeat] = useState(0)
   const [say, setSay] = useState(() => (daily.status === 'playing' ? labels.say.helloDaily : labels.say.done))
-  const [overlay, setOverlay] = useState<'result' | 'stats' | null>(null)
+  const [overlay, setOverlay] = useState<'result' | 'stats' | 'board' | null>(null)
   const [confirmGiveUp, setConfirmGiveUp] = useState(false)
   const [shareMsg, setShareMsg] = useState('')
   const moodTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const resultTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const look = useGurtleLook()
+  const name = labels.mascot[look]
+  // The streak board: undefined while loading, null when offline.
+  const [board, setBoard] = useState<HiscoreEntry[] | null | undefined>(undefined)
+  const [playerName, setPlayerName] = useState('')
+  const [website, setWebsite] = useState('') // honeypot
+  const [posting, setPosting] = useState(false)
+  const [boardMsg, setBoardMsg] = useState('')
 
   const game = mode === 'daily' ? daily : practice
   const setGame = mode === 'daily' ? setDaily : setPractice
@@ -346,6 +383,9 @@ export function DeskGurtle({ time, backLabel, desktopLabel, labels, arcade, onBa
     })
   }, [daily])
 
+  // The longest streak is also a "best", so the Scores app can show and post it like any game's.
+  useEffect(() => { if (stats.maxStreak > 0) setBestIfHigher(BEST_KEYS.gurtleStreak, stats.maxStreak) }, [stats.maxStreak])
+
   /** Gurtle's reaction: a mood, a line, and back to idle after `ms` (if given). */
   const react = useCallback((m: GurtleMood, text: string, ms?: number) => {
     clearTimeout(moodTimer.current)
@@ -354,6 +394,21 @@ export function DeskGurtle({ time, backLabel, desktopLabel, labels, arcade, onBa
     setBeat((b) => b + 1)
     if (ms) moodTimer.current = setTimeout(() => setMood('idle'), ms)
   }, [])
+
+  // A tap on the mascot: into the shell, out as the other turtle (Gurtle or Jurtle, everywhere).
+  const swapping = useRef(false)
+  const swapLook = useCallback(() => {
+    if (swapping.current) return
+    swapping.current = true
+    clearTimeout(moodTimer.current)
+    setMood('hide')
+    moodTimer.current = setTimeout(() => {
+      const next = toggleLook()
+      tone('sparkle')
+      react('happy', pick(labels.say.swap[next]), 1000)
+      swapping.current = false
+    }, reduce ? 0 : 260)
+  }, [react, labels, tone, reduce])
 
   // Gurtle walks on, then settles.
   useEffect(() => {
@@ -514,10 +569,10 @@ export function DeskGurtle({ time, backLabel, desktopLabel, labels, arcade, onBa
     const start = g.start.toUpperCase()
     const line = g.status === 'won'
       ? fill(labels.shareText.line, { start, moves: g.moves.length, par: g.par })
-      : fill(labels.shareText.gaveUp, { start })
+      : fill(labels.shareText.gaveUp, { start, name })
     const hints = g.hints ? ` ${fill(labels.shareText.hints, { n: g.hints })}` : ''
     return `${header}\n${line}${hints}\n${shareGrid(g)}\n${window.location.origin}/?app=gurtle`
-  }, [labels])
+  }, [labels, name])
 
   const share = async (g: GurtleGame) => {
     const text = shareText(g)
@@ -535,6 +590,45 @@ export function DeskGurtle({ time, backLabel, desktopLabel, labels, arcade, onBa
     const ok = await copyText(text)
     setShareMsg(ok ? labels.result.copied : labels.result.shareFailed)
     if (ok) tone('chip')
+  }
+
+  // ---- The streak board ----
+  const bestStreak = stats.maxStreak
+  const dayCount = (n: number) => fill(n === 1 ? labels.board.day : labels.board.days, { n })
+
+  const loadBoard = useCallback(() => {
+    setBoard(undefined)
+    fetch('/api/highscores').then((r) => r.json())
+      .then((d) => setBoard(d.boards ? (d.boards.gurtle ?? []) : null))
+      .catch(() => setBoard(null))
+  }, [])
+
+  const openBoard = () => {
+    setBoardMsg('')
+    const saved = readJson(NAME_KEY)
+    if (typeof saved === 'string' && !playerName) setPlayerName(saved)
+    setOverlay('board')
+    loadBoard()
+  }
+
+  const postStreak = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const nm = playerName.trim()
+    if (posting || !bestStreak || !nm) return
+    setPosting(true)
+    setBoardMsg('')
+    writeJson(NAME_KEY, nm)
+    try {
+      const r = await fetch('/api/highscores', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game: 'gurtle', name: nm, score: bestStreak, website }),
+      })
+      const d = await r.json()
+      if (!r.ok || !d.success) { setBoardMsg(d.error || labels.board.error); return }
+      setBoardMsg(typeof d.rank === 'number' ? fill(labels.board.ranked, { n: d.rank }) : '')
+      tone('score')
+      loadBoard()
+    } catch { setBoardMsg(labels.board.error) } finally { setPosting(false) }
   }
 
   // ---- Ladder rows ----
@@ -583,7 +677,7 @@ export function DeskGurtle({ time, backLabel, desktopLabel, labels, arcade, onBa
         </motion.div>
       )}
       {game.status === 'gaveUp' && game.reveal.map((word, i) => (
-        <div key={`r-${i}-${word}`} role="listitem" aria-label={fill(labels.routeRow, { word: word.toUpperCase() })} className="flex items-center" style={{ gap }}>
+        <div key={`r-${i}-${word}`} role="listitem" aria-label={fill(labels.routeRow, { word: word.toUpperCase(), name })} className="flex items-center" style={{ gap }}>
           {stepNo(ladder.length + i)}
           {word.split('').map((ch, j) => (
             <Tile key={j} ch={ch} size={tile} kind="route" hit={tileHits(word)[j]}
@@ -669,6 +763,7 @@ export function DeskGurtle({ time, backLabel, desktopLabel, labels, arcade, onBa
   )
 
   const mascotScale = portrait ? 2 : 3
+  const mascot = <GurtleMascot mood={mood} scale={mascotScale} beat={beat} onTap={swapLook} tapLabel={fill(labels.tapMascot, { name })} />
   const stage = (
     <div className="relative flex-1 min-h-0 flex flex-col">
       {/* The ground Gurtle stands on */}
@@ -678,11 +773,11 @@ export function DeskGurtle({ time, backLabel, desktopLabel, labels, arcade, onBa
         {portrait ? (
           <>
             <Bubble text={say} tail="down" width={136} fontSize={11} />
-            <GurtleMascot mood={mood} scale={mascotScale} beat={beat} />
+            {mascot}
           </>
         ) : (
           <>
-            <GurtleMascot mood={mood} scale={mascotScale} beat={beat} />
+            {mascot}
             <div style={{ marginBottom: 40 }}><Bubble text={say} tail="left" width={168} fontSize={10} /></div>
           </>
         )}
@@ -718,7 +813,7 @@ export function DeskGurtle({ time, backLabel, desktopLabel, labels, arcade, onBa
             <GurtleMascot mood={won ? 'happy' : 'hide'} scale={2} beat={beat} />
             <div className="flex flex-col min-w-0" style={{ gap: 4 }}>
               <h2 style={{ margin: 0, fontSize: portrait ? 14 : 12, color: ARCADE.amber }}>
-                {won ? labels.result.ratings[rating] : labels.result.gaveUp}
+                {won ? labels.result.ratings[rating] : fill(labels.result.gaveUp, { name })}
               </h2>
               <span style={{ fontSize: portrait ? 12 : 10 }}>
                 {fill(labels.result.route, { start: game.start.toUpperCase() })}
@@ -778,13 +873,66 @@ export function DeskGurtle({ time, backLabel, desktopLabel, labels, arcade, onBa
             ))}
           </div>
           <div className="flex items-center justify-between flex-wrap" style={{ gap: 6, marginTop: 10 }}>
-            <span style={{ fontSize: portrait ? 11 : 9, color: ARCADE.inkSoft }}>{fill(labels.result.next, { time: clockText(untilNext) })}</span>
+            <ArcadeButton size={btn} onClick={openBoard}>{labels.statsPanel.board}</ArcadeButton>
             <span className="flex" style={{ gap: 6 }}>
               {daily.status !== 'playing' && <ArcadeButton size={btn} onClick={() => void share(daily)}>{labels.share}</ArcadeButton>}
               <ArcadeButton size={btn} tone="dark" onClick={() => setOverlay(null)}>{labels.statsPanel.close}</ArcadeButton>
             </span>
           </div>
-          <span aria-live="polite" className="block text-right" style={{ fontSize: portrait ? 11 : 9, color: ARCADE.amber, minHeight: 12, marginTop: 4 }}>{shareMsg}</span>
+          <div className="flex items-center justify-between flex-wrap" style={{ gap: 6, marginTop: 6, minHeight: 12 }}>
+            <span style={{ fontSize: portrait ? 11 : 9, color: ARCADE.inkSoft }}>{fill(labels.result.next, { time: clockText(untilNext) })}</span>
+            <span aria-live="polite" style={{ fontSize: portrait ? 11 : 9, color: ARCADE.amber }}>{shareMsg}</span>
+          </div>
+        </ArcadePanel>
+      </div>
+    </ArcadeOverlay>
+  )
+
+  const inputStyle: React.CSSProperties = {
+    ...PIXEL_FONT, color: ARCADE.ink, backgroundColor: '#fffef5', border: `1px solid ${ARCADE.stripBorder}`, minWidth: 0,
+    fontSize: touch ? 16 : 10, padding: portrait ? '6px' : '2px 4px', height: portrait ? 38 : touch ? 30 : 22,
+  }
+  const boardRow = portrait ? 24 : 13
+  const boardPanel = overlay === 'board' && (
+    <ArcadeOverlay>
+      <div role="dialog" aria-modal="true" aria-label={labels.board.title} onPointerDown={(e) => e.stopPropagation()}>
+        <ArcadePanel style={{ width: portrait ? 296 : 340, padding: portrait ? 12 : 10 }}>
+          <div className="flex items-center justify-between">
+            <h2 style={{ margin: 0, fontSize: portrait ? 12 : 10, letterSpacing: 1, textTransform: 'uppercase', color: ARCADE.gold }}>{labels.board.title}</h2>
+            <GurtleMascot mood="idle" scale={1} />
+          </div>
+          <ol aria-label={labels.board.title} className="overflow-y-auto" style={{ margin: '4px 0 0', padding: 0, listStyle: 'none', maxHeight: boardRow * 10, fontSize: portrait ? 12 : 9, scrollbarWidth: 'thin' }}>
+            {board === undefined ? <li style={{ color: '#b8a488' }}>{labels.board.loading}</li>
+              : board === null ? <li style={{ color: '#b8a488' }}>{labels.board.offline}</li>
+              : board.length === 0 ? <li style={{ color: '#b8a488' }}>{labels.board.empty}</li>
+              : board.map((en, i) => (
+                <li key={en.name} className="flex items-center" style={{ gap: 6, height: boardRow, borderBottom: `1px dotted ${ARCADE.panelBorder}` }}>
+                  <span style={{ width: portrait ? 26 : 20, color: i < 3 ? ARCADE.gold : '#b8a488' }}>{i + 1}.</span>
+                  <span className="flex-1 truncate" style={{ color: en.name === playerName.trim() ? ARCADE.amber : undefined }}>{en.name}</span>
+                  <span style={{ fontVariantNumeric: 'tabular-nums' }}>{dayCount(en.score)}</span>
+                </li>
+              ))}
+          </ol>
+          <form onSubmit={postStreak} className="flex flex-col" style={{ gap: 4, marginTop: 8 }}>
+            <span style={{ fontSize: portrait ? 11 : 9 }}>
+              {bestStreak ? fill(labels.board.yours, { n: dayCount(bestStreak) }) : labels.board.none}
+            </span>
+            {bestStreak > 0 && (
+              <div className="flex items-center" style={{ gap: 6 }}>
+                <input aria-label={labels.board.namePh} placeholder={labels.board.namePh} maxLength={16} value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)} className="flex-1" style={inputStyle} />
+                <input tabIndex={-1} autoComplete="off" aria-hidden value={website} onChange={(e) => setWebsite(e.target.value)}
+                  style={{ position: 'absolute', left: '-9999px', width: 1, height: 1 }} />
+                <ArcadeButton type="submit" size={portrait ? 'xl' : 'sm'} disabled={posting || !playerName.trim()}>
+                  {posting ? labels.board.posting : labels.board.post}
+                </ArcadeButton>
+              </div>
+            )}
+          </form>
+          <div className="flex items-center justify-between" style={{ gap: 6, marginTop: 6 }}>
+            <span aria-live="polite" className="min-w-0" style={{ fontSize: portrait ? 11 : 9, color: ARCADE.amber }}>{boardMsg}</span>
+            <ArcadeButton size={btn} tone="dark" onClick={() => setOverlay('stats')}>{labels.board.close}</ArcadeButton>
+          </div>
         </ArcadePanel>
       </div>
     </ArcadeOverlay>
@@ -809,6 +957,7 @@ export function DeskGurtle({ time, backLabel, desktopLabel, labels, arcade, onBa
           <div style={{ padding: '0 4px 6px' }}>{keyboard}</div>
           {resultPanel}
           {statsPanel}
+          {boardPanel}
         </div>
       ) : (
         <div className="relative flex-1 min-h-0 flex" style={{ backgroundColor: ARCADE.paper }}>
@@ -820,18 +969,20 @@ export function DeskGurtle({ time, backLabel, desktopLabel, labels, arcade, onBa
           </div>
           {resultPanel}
           {statsPanel}
+          {boardPanel}
         </div>
       )}
 
-      {tutorial.open && <GurtleTutorial labels={labels} onClose={tutorial.close} />}
+      {tutorial.open && <GurtleTutorial labels={labels} name={name} onClose={tutorial.close} />}
     </ArcadeFrame>
   )
 }
 
 /** How to play: the goal, a move, what the colours mean, and the helpers. */
-function GurtleTutorial({ labels, onClose }: { labels: GurtleLabels; onClose: () => void }) {
+function GurtleTutorial({ labels, name, onClose }: { labels: GurtleLabels; name: string; onClose: () => void }) {
   const { portrait } = useDeskScreen()
-  const t = labels.tutorial
+  const named = (p: Page): Page => ({ title: fill(p.title, { name }), body: fill(p.body, { name }) })
+  const t = { ...labels.tutorial, goal: named(labels.tutorial.goal), moves: named(labels.tutorial.moves), help: named(labels.tutorial.help) }
   const size = portrait ? 24 : 18
   const example = ['cart', 'curt', 'gurt']
   const exampleLadder = (

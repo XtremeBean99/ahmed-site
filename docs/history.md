@@ -2,6 +2,18 @@
 
 Moved out of CLAUDE.md on 13 October 2026, verbatim. The session log, the full roadmap as it stood, and notes on the conventional site that was retired in July 2026 and deleted in commit `4a6f3cb` (recover from `4a6f3cb^` if ever needed). Treat everything here as history, not current fact.
 
+## v32 onwards
+
+- **v34** `28 November 2026`: **Clean-out.** Removed the retired site's modules, public files and dictionary
+  sections, unused packages (three.js, react-hook-form, clsx and friends), dead code and three obsolete scripts.
+  Next.js 15.5.29 and Zod 4 (`npm audit` clean), the image optimiser turned off, lint moved to the ESLint CLI with no
+  warnings. Fixed two desk terminal bugs: vim's `p` pasted before the cursor, and a subshell inside a function
+  dropped its local variables. The Privacy Policy now covers score boards, feature requests and analytics.
+- **v33** `28 November 2026`: **Gurtle.** A daily word ladder to GURT with a turtle mascot (and Jurtle, its pink
+  look), a turtle on the room's rug, a public streak board and two discoveries (36 in all). See `docs/gurtle.md`.
+- **v32** `26 November 2026`: **Shelf redraw.** New, larger VHS sleeves and desk games drawn from one art module
+  (`scripts/shelf-art.mjs`) for both shelves, overlapping at different depths with a quarter of the shelf left bare.
+
 ## v28-v31 (moved from CLAUDE.md, 27 November 2026)
 
 v31: a wall calendar left of the Saitama poster shows the visitor's month with today circled (drawn in code,

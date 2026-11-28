@@ -6,13 +6,13 @@ Read this before touching code. It holds the rules and the map; the detail lives
 |---|---|
 | `docs/room.md` | Every desk app in depth, room features (splash, cat, bonsai, window, posters, calendar, tour, daily), room-object coordinates, the sprite pipeline and style guide, audio internals, audio licences |
 | `docs/catan.md` | Pixel Catan (`/catan`): engine, bots, UI, saves, tests |
+| `docs/gurtle.md` | Gurtle, the daily word ladder: engine, saves, streak board, mascot |
 | `docs/recipes.md` | The cookbook / recipe blog: design draft (not built yet) |
-| `docs/history.md` | Session log v1-v31, the old roadmap, notes on the retired conventional site |
+| `docs/history.md` | Session log v1-v34, the old roadmap, notes on the retired conventional site |
 | `docs/archive/todo-2026.md` | Design logs and build plans (Catan CAT*, mobile MOB*, terminal TRM, snake SNK) |
-| `CONTENT.md` | Owner-editable site copy |
-| `SECURITY-REVIEW.md` | The June 2026 audit |
+| `SECURITY-REVIEW.md` | Security status: what is open, fixed and accepted |
 
-Last consolidated: 27 November 2026 (per-feature room detail and the v28-v31 log moved to `docs/room.md` and `docs/history.md`).
+Last consolidated: 28 November 2026 (removed the retired site's leftovers; see v34 in `docs/history.md`).
 
 ## What this project is
 
@@ -26,7 +26,7 @@ and the Inter/Playfair fonts were deleted in `4a6f3cb` (recover from `4a6f3cb^`)
 
 ## Current state
 
-v31 (25 October 2026). What each version added: `docs/history.md`.
+v34 (28 November 2026). What each version added: `docs/history.md`.
 
 ## Critical constraints
 
@@ -38,12 +38,15 @@ v31 (25 October 2026). What each version added: `docs/history.md`.
    the constant-time compare. Error text stays in server logs (Upstash errors can carry the token). A new
    input route copies this pattern.
 2. **Persistence is localStorage-first.** Server state is only Upstash Redis behind `src/services/`: the
-   guestbook (`guestbook:entries`), highscores (`hiscores:<game>`, 100 kept per game), daily boards
-   (`hiscores:daily:<game>:<YYYY-MM-DD>`, expire after 8 days) and feature requests. Names, scores, messages
-   and times only: no IPs (rate-limit keys expire). Everything else is `localStorage`: `room-save-v1` prefs
-   (`audio, lampOn, visitCount, volume, clock24h, sideTableOpen, sfx, sfxVolume, calmMode, splashAt`), `room-discoveries-v1`,
-   `room-paint-v1`, `room-reader-v1`, `room-terminal-fs-v1`, `catan-save-v2`, and the games namespace
-   `ahmed-site:games:v1:*` (`src/lib/games/storage.ts`).
+   guestbook (`guestbook:entries`, newest 500), highscores (`hiscores:<game>`, 100 kept per game, Gurtle streaks
+   included), daily boards (`hiscores:daily:<game>:<YYYY-MM-DD>`, expire after 8 days) and feature requests
+   (`feature-requests`, newest 500, with the optional contact). Names, scores, messages, contacts and times only:
+   no IPs (rate-limit keys hold them for one hour, then expire). Everything else is `localStorage`: `room-save-v1`
+   prefs (`audio, lampOn, visitCount, volume, clock24h, sideTableOpen, sfx, sfxVolume, splashAt`),
+   `room-discoveries-v1`, `room-paint-v1`, `room-reader-v1`, `room-terminal-fs-v1`, `room-terminal-history-v1`,
+   `catan-save-v2`, and the games namespace `ahmed-site:games:v1:*` (`src/lib/games/storage.ts`).
+   **The Privacy Policy (`legal.privacy` in `en.ts`) lists all of this.** A change that stores or sends anything
+   new updates the policy and its date in the same change.
 3. **Secrets in env vars only** (`.env.example`). Without Upstash vars everything server-side fails soft
    (boards say "offline"); `getRedis()` and the Resend client are lazy so builds never need them.
 4. **English only.** One dictionary, `src/lib/i18n/dictionaries/en.ts`; its shape is the `Dictionary` type. No
@@ -52,7 +55,8 @@ v31 (25 October 2026). What each version added: `docs/history.md`.
    `public/video/shrek.mp4`), never services.
 6. **Room palette:** warm brown/mauve pixel art; UI bubbles `#3d2e1e` fill, `#5a4430` border, `#e8d5b0` text;
    app screens `#faf8f5` / `#fffef5` / `#e8e0d8` (`ARCADE` in `pixel-ui.tsx`). Pixel font `--font-pixel`
-   (`src/fonts/Minecraft.ttf`). Pixel art is plain `<img>` with `image-rendering: pixelated`, never `next/image`.
+   (`src/fonts/Minecraft.ttf`). Pixel art is plain `<img>` with `image-rendering: pixelated`, never `next/image`;
+   the image optimiser is off (`images.unoptimized`), so keep it off unless something truly needs it.
 7. **Audio paths are case-sensitive on Vercel.** Keep `public/audio/` kebab-case lowercase. Tracks ship as
    `public/audio/<id>.m4a` encoded by `bash scripts/encode-audio.sh` from the MP3 masters in `assets/audio/`
    (not deployed); every track needs a cover file, since the encoded files carry no embedded art.
@@ -70,19 +74,16 @@ src/
   components/
     room/                Room.tsx (room view, state machine), DeskView.tsx (desk + screen modes), Desk*.tsx apps,
                          RoomObject/AnimatedSprite (hotspots), RoomCat, RoomTour, audio + SFX providers, ...
-    catan/  providers/  seo/  ui/
+    catan/  providers/  seo/
   lib/
     room/                objects.ts (hotspot registry), deep-link.ts, tour.ts, lighting.tsx, storage.ts, ...
     games/               pure engines + tests (minesweeper, snake, chess, mahjong, solitaire, ...), highscores.ts,
                          daily.ts, storage.ts; catan/ engine
     terminal/            the desk terminal's bash, commands and editors
-    i18n/ redis.ts ratelimit.ts input.ts csrf.ts validations.ts motion.ts utils.ts
+    i18n/ redis.ts ratelimit.ts input.ts csrf.ts validations.ts motion.ts use-reduced-motion.ts
   services/              guestbook.ts, highscores.ts, feature-requests.ts (all Redis access)
 scripts/                 sprite drawing/extraction, lighting grades, icons, covers
 ```
-
-Dead code from the retired site, safe to delete when convenient: `src/lib/{aglc4,convert,github,ninja}/`,
-`src/lib/og.tsx`, `public/favicon.svg`, `public/games/`, `public/lawyer.jpg` (check with grep first).
 
 ## The room (`/`)
 
@@ -103,7 +104,7 @@ terminal is deliberately not linkable (Konami secret). `/?app=minesweeper&daily`
 
 **Desk apps.** Screen modes: `desktop | readme | paint | minesweeper | snake | blackjack | solitaire | pong |
 breakout | chess | mahjong | music | legal | guestbook | settings | terminal | movie | typing | highscores |
-request`. Each app but README and the desktop is a `next/dynamic` chunk listed in `APP_CHUNKS`, wrapped in
+request | gurtle`. Each app but README and the desktop is a `next/dynamic` chunk listed in `APP_CHUNKS`, wrapped in
 `AppBoundary`. Escape ladder: app's own layers -> desktop -> room. Details per app: `docs/room.md`.
 Adding an app: build the 536x308 layout, then a portrait layout from `useDeskScreen()` checked at h 440 and 640;
 add the dynamic import + `APP_CHUNKS` + screen mode in DeskView, a shortcut in Room's `deskShortcuts`, copy in
@@ -158,7 +159,7 @@ browser-reported, so ranges keep out junk, not a determined cheat).
 
 **Daily challenge** (`src/lib/games/daily.ts`): one UTC-dated board for the whole world; details in `docs/room.md`.
 
-Pixel Catan: `docs/catan.md`.
+Gurtle (daily word ladder, public streak board, turtle mascot): `docs/gurtle.md`. Pixel Catan: `docs/catan.md`.
 
 ## Security
 
@@ -179,16 +180,18 @@ Pixel Catan: `docs/catan.md`.
 
 | Variable | Needed for | Notes |
 |---|---|---|
-| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | guestbook, scores, daily, requests, rate limits | absent: fail soft |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | guestbook, scores, daily, requests, rate limits | absent: fail soft; `KV_REST_API_URL` / `_TOKEN` (Vercel's names) work too |
 | `GUESTBOOK_ADMIN_KEY` | admin deletes and listing | header only, never a query param |
 | `RESEND_API_KEY`, `FEATURE_REQUEST_TO_EMAIL` | emailing feature requests | otherwise only stored |
 | `FEATURE_REQUEST_FROM_EMAIL` | optional sender | defaults to Resend's onboarding sender |
-| `NEXT_PUBLIC_BASE_URL` | optional | defaults to `https://ahmedyhussain.com` |
 
 ## Commands
 
 - `npm run dev` (copy `.env.example` to `.env.local` first); production check: `npm run build && npx next start`.
-- Before deploying: `npm run type-check && npm run lint && npm run build`.
+- Before deploying: `npm run type-check && npm run lint && npm run build`. Lint is clean; keep it that way.
+- Keep `vercel.json`: the Vercel project has no framework preset, so that file is what tells it this is Next.js.
+- `package.json` overrides Next's pinned PostCSS with the root one (audit fix); drop it when Next ships a
+  patched version.
 - Tests: `npm run test:room`, `test:games`, `test:terminal`, `test:catan` (`test:catan:long` for fuzzing).
 - Art: `npm run lighting`, `node scripts/draw-side-table-side.mjs` (then `extract-side-table.mjs`), `node scripts/draw-cat.mjs`, `node scripts/draw-bonsai.mjs`, `draw-window.mjs`,
   `draw-poster.mjs`, `node scripts/extract-xtreme.mjs`, others in `docs/room.md`. Music: `bash scripts/encode-audio.sh`.
